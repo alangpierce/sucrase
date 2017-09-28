@@ -4,11 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test"
   },
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/mocha": "^2.2.43",
+    "mocha": "^3.5.3",
+    "ts-node": "^3.3.0",
     "typescript": "^2.5.3"
+  },
+  "dependencies": {
+    "@types/node": "^8.0.31"
   }
 }

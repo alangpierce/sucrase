@@ -66,7 +66,23 @@ describe('transform', () => {
         React.createElement('div', null, "foo  bar baz"
 
 
-)
+        )
+      );
+    `);
+  });
+
+  it('handles nested JSX tags', () => {
+    assertResult(`
+      const x = (
+        <div>
+          <Span />
+        </div>
+      );
+    `, `
+      const x = (
+        React.createElement('div', null
+          , React.createElement(Span, null )
+        )
       );
     `);
   });

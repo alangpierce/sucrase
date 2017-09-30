@@ -92,22 +92,24 @@ export default function transform(code: string): string {
         // Closing tag, so no more children.
         return;
       }
-      resultCode += ', ';
       if (matches(['{'])) {
         // Interpolated expression.
-        replaceToken('');
+        replaceToken(', ');
         processBalancedCode();
         replaceToken('');
       } else if (matches(['jsxTagStart'])) {
         // Child JSX element
+        resultCode += ', ';
         processJSXTag();
       } else if (matches(['jsxText'])) {
         const value = tokens[tokenIndex].value;
-        resultCode += formatJSXTextLiteral(value);
-        // Emit blank lines to make sure the line numbers match up. Note this
-        // results in the last line losing all indentation, so it could be
-        // improved in the future.
-        replaceToken(value.split('\n').map((s: string) => '').join('\n'));
+        const replacementCode = formatJSXTextReplacement(value);
+        const literalCode = formatJSXTextLiteral(value);
+        if (literalCode === '""') {
+          replaceToken(replacementCode);
+        } else {
+          replaceToken(', ' + literalCode + replacementCode);
+        }
       } else {
         throw new Error('Unexpected token when processing JSX children.');
       }
@@ -143,7 +145,7 @@ export default function transform(code: string): string {
       if (matches(['jsxTagStart'])) {
         processJSXTag();
       } else {
-        if (matches(['{'])) {
+        if (matches(['{']) || matches(['${'])) {
           braceDepth++;
         } else if (matches(['}'])) {
           if (braceDepth === 0) {
@@ -194,4 +196,19 @@ function formatJSXTextLiteral(text: string): string {
   lines[lines.length - 1] = lines[lines.length - 1].slice(0, -1);
   lines = lines.filter((line) => line);
   return JSON.stringify(lines.join(' '));
+}
+
+/**
+ * Produce the code that should be printed after the JSX text string literal,
+ * with most content removed, but all newlines preserved and all spacing at the
+ * end preserved.
+ */
+function formatJSXTextReplacement(text: string): string {
+  let lines = text.split('\n');
+  lines = lines.map((line: string, i: number) =>
+    i < lines.length - 1
+      ? ''
+      : Array.from(line).filter((char) => char === ' ').join('')
+  );
+  return lines.join('\n');
 }

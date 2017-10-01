@@ -2,16 +2,16 @@
 require('ts-node/register');
 const babel = require('babel-core');
 const fs = require('fs');
-const transform = require('../src/transform').default;
+const hyperbole = require('../src/index');
 
 console.log('Processing file ' + process.argv[process.argv.length - 1]);
 const code = fs.readFileSync(process.argv[process.argv.length - 1]).toString();
 
-transform(code);
-transform(code);
+hyperbole.transform(code);
+hyperbole.transform(code);
 console.time('Hyperbole');
 for (let i = 0; i < 100; i++) {
-  transform(code);
+  hyperbole.transform(code);
 }
 console.timeEnd('Hyperbole');
 

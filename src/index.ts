@@ -1,6 +1,6 @@
 import {tokenize} from 'babylon';
 
-export default function transform(code: string): string {
+export function transform(code: string): string {
   let resultCode = '';
 
   let tokens = tokenize(code, {sourceType: 'module', plugins: ['jsx']});

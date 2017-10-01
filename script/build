@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIST="${DIST:-dist}"
+TSC="${TSC:-node_modules/.bin/tsc}"
+
+rm -rf "${DIST}"
+
+echo 'Building ES module version.'
+"${TSC}" \
+  --project . \
+  --outDir "${DIST}" \
+  --module ES2015 \
+  --moduleResolution node
+
+for js in $(find "${DIST}" -name '*.js'); do
+  mv "${js}" "$(dirname "${js}")/$(basename "${js}" .js).mjs"
+done
+
+echo 'Building CommonJS version.'
+"${TSC}" \
+  --project . \
+  --outDir "${DIST}" \
+  --module commonjs \
+  --moduleResolution node
+
+# Restructure.
+rm -rf dist/test
+mv dist/src/* dist/
+rmdir dist/src

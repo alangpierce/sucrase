@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 
-import transform from '../src/transform';
+import {transform} from '../src/index';
 
 function assertResult(code: string, expectedResult: string): void {
   assert.equal(transform(code), expectedResult);

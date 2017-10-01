@@ -16,6 +16,7 @@
     "@types/mocha": "^2.2.43",
     "babel-core": "^6.26.0",
     "babel-preset-react": "^6.24.1",
+    "buble": "^0.16.0",
     "mocha": "^3.5.3",
     "ts-node": "^3.3.0",
     "typescript": "^2.5.3"

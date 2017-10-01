@@ -4,11 +4,11 @@ import * as fs from 'fs';
 import * as babel from 'babel-core';
 // Use require rather than import to hack around missing type info.
 const buble = require('buble');
-import * as hyperbole from '../src/index';
+import * as sucrase from '../src/index';
 
 function main(): void {
   const code = fs.readFileSync('./benchmark/sample.js').toString();
-  runBenchmark('Hyperbole', () => hyperbole.transform(code));
+  runBenchmark('Sucrase', () => sucrase.transform(code));
   runBenchmark('Buble', () => buble.transform(code, {transforms: {modules: false}}));
   runBenchmark('Babel', () => babel.transform(code, {presets: ['react']}));
 }

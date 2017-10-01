@@ -1,4 +1,4 @@
-# Hyperbole (temporary name)
+# Sucrase
 
 A faster Babel alternative.
 

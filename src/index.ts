@@ -1,9 +1,13 @@
-import {tokenize} from 'babylon';
+import {parse} from 'babylon';
 
 export function transform(code: string): string {
   let resultCode = '';
 
-  let tokens = tokenize(code, {sourceType: 'module', plugins: ['jsx']});
+  const ast = parse(
+    code,
+    {tokens: true, sourceType: 'module', plugins: ['jsx']} as any
+  );
+  let tokens = ast.tokens;
   tokens = tokens.filter((token) =>
     token.type !== 'CommentLine' && token.type !== 'CommentBlock');
   let tokenIndex = 0;

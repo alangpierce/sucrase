@@ -167,8 +167,7 @@ export default function transform(code: string): string {
 
   function copyToken() {
     resultCode += code.slice(
-      tokenIndex > 0 ? tokens[tokenIndex - 1].end : 0, tokens[tokenIndex].start);
-    resultCode += code.slice(tokens[tokenIndex].start, tokens[tokenIndex].end);
+      tokenIndex > 0 ? tokens[tokenIndex - 1].end : 0, tokens[tokenIndex].end);
     tokenIndex++;
   }
 

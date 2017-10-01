@@ -4,7 +4,8 @@ const babel = require('babel-core');
 const fs = require('fs');
 const transform = require('../src/transform').default;
 
-const code = fs.readFileSync(process.argv[2]).toString();
+console.log('Processing file ' + process.argv[process.argv.length - 1]);
+const code = fs.readFileSync(process.argv[process.argv.length - 1]).toString();
 
 transform(code);
 transform(code);

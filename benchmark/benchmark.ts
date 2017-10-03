@@ -5,12 +5,23 @@ import * as babel from 'babel-core';
 // Use require rather than import to hack around missing type info.
 const buble = require('buble');
 import * as sucrase from '../src/index';
+import * as TypeScript from 'typescript';
 
 function main(): void {
   console.log('Simulating transpilation of 100,000 lines of code:');
   const code = fs.readFileSync('./benchmark/sample.js').toString();
   runBenchmark('Sucrase', () => sucrase.transform(code));
-  runBenchmark('Buble', () => buble.transform(code, {transforms: {modules: false}}));
+  runBenchmark('Buble', () =>
+    buble.transform(code, {transforms: {modules: false}})
+  );
+  runBenchmark('TypeScript', () =>
+    TypeScript.transpileModule(code, {
+      compilerOptions: {
+        jsx: TypeScript.JsxEmit.React,
+        target: TypeScript.ScriptTarget.ESNext
+      }
+    })
+  );
   runBenchmark('Babel', () => babel.transform(code, {presets: ['react']}));
 }
 

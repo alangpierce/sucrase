@@ -15,6 +15,10 @@ and maintain each transform.
 Currently Sucrase only implements the JSX to `React.createElement` transform and
 can only be used as a library. You can use it like this:
 
+```
+yarn add sucrase  # Or npm install sucrase
+```
+
 ```js
 import {transform} from 'sucrase';
 const codeWithoutJSX = transform(codeWithJSX);
@@ -51,10 +55,11 @@ Currently, Sucrase runs about 10x faster than Babel. Here's the output of one
 run of `npm run benchmark`:
 
 ```
-Simulating transpilation for 100,000 lines of code.
-Sucrase: 922.607ms
-Buble: 2408.051ms
-Babel: 9605.458ms
+Simulating transpilation of 100,000 lines of code:
+Sucrase: 980.442ms
+Buble: 2320.480ms
+TypeScript: 2443.063ms
+Babel: 9682.259ms
 ```
 
 When using a forked version of Babylon that avoids unused parsing work, the

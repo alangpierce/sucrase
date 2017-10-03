@@ -1,17 +1,35 @@
 {
   "name": "sucrase",
   "version": "1.0.0",
-  "description": "",
+  "description": "Super-fast alternative to Babel for when you can target modern JS runtimes",
+  "author": "Alan Pierce <alangpierce@gmail.com>",
+  "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "script/build",
     "benchmark": "ts-node ./benchmark/benchmark.ts",
+    "prepublish": "yarn run build",
     "test": "mocha test"
   },
-  "author": "",
-  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alangpierce/sucrase.git"
+  },
+  "keywords": [
+    "babel",
+    "jsx",
+    "typescript",
+    "flow"
+  ],
+  "bugs": {
+    "url": "https://github.com/decaffeinate/bulk-decaffeinate/issues"
+  },
+  "homepage": "https://github.com/decaffeinate/bulk-decaffeinate#readme",
   "devDependencies": {
     "@types/babel-core": "^6.25.2",
     "@types/mocha": "^2.2.43",

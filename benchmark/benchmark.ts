@@ -7,6 +7,7 @@ const buble = require('buble');
 import * as sucrase from '../src/index';
 
 function main(): void {
+  console.log('Simulating transpilation of 100,000 lines of code:');
   const code = fs.readFileSync('./benchmark/sample.js').toString();
   runBenchmark('Sucrase', () => sucrase.transform(code));
   runBenchmark('Buble', () => buble.transform(code, {transforms: {modules: false}}));
@@ -14,7 +15,7 @@ function main(): void {
 }
 
 function runBenchmark(name: string, runTrial: () => void): void {
-  // Run twice to warm up the JIT, caches, etc.
+  // Run twice before starting the clock to warm up the JIT, caches, etc.
   runTrial();
   runTrial();
   console.time(name);

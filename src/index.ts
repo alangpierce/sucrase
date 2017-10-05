@@ -53,7 +53,7 @@ export function transform(code: string, babylonPlugins: Array<string> = DEFAULT_
           processBalancedCode();
           replaceToken('');
         } else {
-          copyToken();
+          processStringPropValue();
         }
       } else if (matches(['jsxName'])) {
         copyToken();
@@ -68,6 +68,13 @@ export function transform(code: string, babylonPlugins: Array<string> = DEFAULT_
       resultCode += ',';
     }
     resultCode += '}';
+  }
+
+  function processStringPropValue() {
+    const value = tokens[tokenIndex].value;
+    const replacementCode = formatJSXTextReplacement(value);
+    const literalCode = formatJSXStringValueLiteral(value);
+    replaceToken(literalCode + replacementCode);
   }
 
   /**
@@ -119,17 +126,21 @@ export function transform(code: string, babylonPlugins: Array<string> = DEFAULT_
         resultCode += ', ';
         processJSXTag();
       } else if (matches(['jsxText'])) {
-        const value = tokens[tokenIndex].value;
-        const replacementCode = formatJSXTextReplacement(value);
-        const literalCode = formatJSXTextLiteral(value);
-        if (literalCode === '""') {
-          replaceToken(replacementCode);
-        } else {
-          replaceToken(', ' + literalCode + replacementCode);
-        }
+        processChildTextElement();
       } else {
         throw new Error('Unexpected token when processing JSX children.');
       }
+    }
+  }
+
+  function processChildTextElement() {
+    const value = tokens[tokenIndex].value;
+    const replacementCode = formatJSXTextReplacement(value);
+    const literalCode = formatJSXTextLiteral(value);
+    if (literalCode === '""') {
+      replaceToken(replacementCode);
+    } else {
+      replaceToken(', ' + literalCode + replacementCode);
     }
   }
 
@@ -227,4 +238,14 @@ function formatJSXTextReplacement(text: string): string {
       : Array.from(line).filter((char) => char === ' ').join('')
   );
   return lines.join('\n');
+}
+
+/**
+ * Format a string in the value position of a JSX prop.
+ *
+ * Use the same implementation as convertAttribute from
+ * babel-helper-builder-react-jsx.
+ */
+function formatJSXStringValueLiteral(text: string): string {
+  return JSON.stringify(text.replace(/\n\s+/g, " "));
 }

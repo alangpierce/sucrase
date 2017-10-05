@@ -35,7 +35,7 @@ describe('transform', () => {
     assertResult(`
       <A foo='bar' />
     `, `
-      React.createElement(A, { foo: 'bar',} )
+      React.createElement(A, { foo: "bar",} )
     `);
   });
 
@@ -47,8 +47,8 @@ describe('transform', () => {
       />
     `, `
       React.createElement(A, {
-        b: 'c', // A comment
-        d: 'e',} /* Another comment */
+        b: "c", // A comment
+        d: "e",} /* Another comment */
       )
     `);
   });
@@ -91,7 +91,7 @@ describe('transform', () => {
     assertResult(`
       <a.b c='d' />
     `, `
-      React.createElement(a.b, { c: 'd',} )
+      React.createElement(a.b, { c: "d",} )
     `);
   });
 
@@ -99,15 +99,15 @@ describe('transform', () => {
     assertResult(`
       <a {...b} c='d' />
     `, `
-      React.createElement('a', { ...b, c: 'd',} )
+      React.createElement('a', { ...b, c: "d",} )
     `);
   });
 
   it('handles HTML entities', () => {
     assertResult(`
-      <span>a&nbsp;b</span>
+      <span>a&gt;b</span>
     `, `
-      React.createElement('span', null, "a b")
+      React.createElement('span', null, "a>b")
     `);
   });
 
@@ -151,6 +151,50 @@ describe('transform', () => {
       React.createElement('div', {
         a: 1,
         'data-id': 2,}
+      )
+    `);
+  });
+
+  it('handles multi-line prop strings', () => {
+    assertResult(`
+      <div
+        value='This is a
+               multi-line string.'
+      />
+    `, `
+      React.createElement('div', {
+        value: "This is a multi-line string."
+                ,}
+      )
+    `);
+  });
+
+  it('handles leading and trailing spaces in multi-line prop strings', () => {
+    assertResult(`
+      <div
+        value='   
+               This is a longer
+               multi-line string.
+                  '
+      />
+    `, `
+      React.createElement('div', {
+        value: "    This is a longer multi-line string. "
+
+
+                  ,}
+      )
+    `);
+  });
+
+  it('handles prop string values with entities', () => {
+    assertResult(`
+      <div
+        value='a&gt;b'
+      />
+    `, `
+      React.createElement('div', {
+        value: "a>b",}
       )
     `);
   });

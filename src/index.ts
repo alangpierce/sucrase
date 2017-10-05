@@ -1,11 +1,13 @@
 import {parse} from 'babylon';
 
-export function transform(code: string): string {
+const DEFAULT_PLUGINS = ['jsx', 'objectRestSpread'];
+
+export function transform(code: string, babylonPlugins: Array<string> = DEFAULT_PLUGINS): string {
   let resultCode = '';
 
   const ast = parse(
     code,
-    {tokens: true, sourceType: 'module', plugins: ['jsx']} as any
+    {tokens: true, sourceType: 'module', plugins: babylonPlugins} as any
   );
   let tokens = ast.tokens;
   tokens = tokens.filter((token) =>

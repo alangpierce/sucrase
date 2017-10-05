@@ -126,4 +126,18 @@ describe('transform', () => {
       );
     `);
   });
+
+  it('handles parsing object rest/spread', () => {
+    assertResult(`
+      const foo = {
+        ...bar,
+        baz: <Baz />,
+      };
+    `, `
+      const foo = {
+        ...bar,
+        baz: React.createElement(Baz, null ),
+      };
+    `);
+  });
 });

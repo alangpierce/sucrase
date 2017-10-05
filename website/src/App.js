@@ -3,11 +3,24 @@ import MonacoEditor from 'react-monaco-editor';
 import './App.css';
 import {transform} from 'sucrase';
 
+const INITIAL_CODE = `\
+// Try typing or pasting some code into the left editor!
+import React, { Component } from 'react';
+
+class App extends Component {
+  render() {
+    return <span>Hello, world!</span>;
+  }
+}
+
+export default App;
+`;
+
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      code: '// Type or paste some JavaScript on the left!'
+      code: INITIAL_CODE,
     };
     this._handleCodeChange = this._handleCodeChange.bind(this);
   }
@@ -39,6 +52,9 @@ class App extends Component {
               theme="vs-dark"
               value={this.state.code}
               onChange={this._handleCodeChange}
+              options={{
+
+              }}
             />
           </div>
           <div className='Editor-right'>

@@ -97,10 +97,17 @@ export function transform(code: string): string {
         return;
       }
       if (matches(['{'])) {
-        // Interpolated expression.
-        replaceToken(', ');
-        processBalancedCode();
-        replaceToken('');
+        if (matches(['{', '}'])) {
+          // Empty interpolations and comment-only interpolations are allowed
+          // and don't create an extra child arg.
+          replaceToken('');
+          replaceToken('');
+        } else {
+          // Interpolated expression.
+          replaceToken(', ');
+          processBalancedCode();
+          replaceToken('');
+        }
       } else if (matches(['jsxTagStart'])) {
         // Child JSX element
         resultCode += ', ';

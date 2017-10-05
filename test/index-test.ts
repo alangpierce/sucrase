@@ -110,4 +110,20 @@ describe('transform', () => {
       React.createElement('span', null, "a b")
     `);
   });
+
+  it('handles comment-only JSX interpolations', () => {
+    assertResult(`
+      <div>
+        <span />
+        { /* foo */ }
+        <span />
+      </div>;
+    `, `
+      React.createElement('div', null
+        , React.createElement('span', null )
+         /* foo */ 
+        , React.createElement('span', null )
+      );
+    `);
+  });
 });

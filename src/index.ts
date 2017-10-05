@@ -218,7 +218,8 @@ function formatJSXTextLiteral(text: string): string {
   // Introduce fake characters at the start and end to avoid trimming the start
   // of the first line or the end of the last line.
   let lines = `!${text}!`.split('\n');
-  lines = lines.map((line) => line.trim());
+  // Trim spaces and tabs, but NOT non-breaking spaces.
+  lines = lines.map((line) => line.replace(/^[ \t]*/, '').replace(/[ \t]*$/, ''));
   lines[0] = lines[0].slice(1);
   lines[lines.length - 1] = lines[lines.length - 1].slice(0, -1);
   lines = lines.filter((line) => line);

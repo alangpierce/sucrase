@@ -111,6 +111,18 @@ describe('transform', () => {
     `);
   });
 
+  it('handles non-breaking spaces in JSX text', () => {
+    assertResult(`
+      <span>
+        a&nbsp;
+      </span>
+    `, `
+      React.createElement('span', null, "a "
+
+      )
+    `);
+  });
+
   it('handles comment-only JSX interpolations', () => {
     assertResult(`
       <div>

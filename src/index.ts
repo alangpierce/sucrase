@@ -42,7 +42,11 @@ export function transform(code: string, babylonPlugins: Array<string> = DEFAULT_
     resultCode += ', {';
     while (true) {
       if (matches(['jsxName', '='])) {
-        copyToken();
+        if (tokens[tokenIndex].value.includes('-')) {
+          replaceToken(`'${tokens[tokenIndex].value}'`);
+        } else {
+          copyToken();
+        }
         replaceToken(': ');
         if (matches(['{'])) {
           replaceToken('');

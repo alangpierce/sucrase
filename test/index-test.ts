@@ -140,4 +140,18 @@ describe('transform', () => {
       };
     `);
   });
+
+  it('handles non-identifier prop names', () => {
+    assertResult(`
+      <div
+        a={1}
+        data-id={2}
+      />
+    `, `
+      React.createElement('div', {
+        a: 1,
+        'data-id': 2,}
+      )
+    `);
+  });
 });

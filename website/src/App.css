@@ -1,0 +1,30 @@
+body {
+  background-color: #222;
+}
+
+.App-header {
+  background-color: #222;
+  height: 40px;
+  padding: 20px;
+  color: white;
+}
+
+.App-title {
+  font-size: 1.5em;
+}
+
+.App-intro {
+  font-size: large;
+}
+
+.Editors {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+}
+
+.Editor-left, .Editor-right {
+  flex: 1;
+  margin: 12px;
+}

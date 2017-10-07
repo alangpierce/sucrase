@@ -1,10 +1,20 @@
+/* Make fullscreen. */
+html, body, #root, .App {
+  height: 100%;
+}
+
 body {
   background-color: #222;
 }
 
+.App {
+  display: flex;
+  flex-direction: column;
+}
+
 .App-header {
   background-color: #222;
-  height: 40px;
+  height: 60px;
   padding: 20px;
   color: white;
 }
@@ -18,13 +28,33 @@ body {
 }
 
 .Editors {
+  flex: 1;
   display: flex;
   flex-direction: row;
   align-items: center;
   width: 100%;
 }
 
-.Editor-left, .Editor-right {
+.Editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   flex: 1;
-  margin: 12px;
+  /*
+   * When adding a third editor, we need the container size to shrink so that
+   * the Monaco layout code will adjust to the container size.
+   */
+  overflow-x: hidden;
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+.Editor-label {
+  color: white;
+  line-height: 30px;
+  padding: 8px;
+}
+
+.Editor-container {
+  flex: 1;
 }

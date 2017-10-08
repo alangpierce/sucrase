@@ -5971,8 +5971,8 @@ style-loader@0.18.2:
     schema-utils "^0.3.0"
 
 sucrase@^1.0.0:
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.1.3.tgz#d17ec4c27352c6a59426f4b9864587559eda2fa5"
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.2.0.tgz#03b9ecde6d9a432702ef98201ee33cf22f91eb52"
   dependencies:
     "@types/node" "^8.0.31"
     babylon "^7.0.0-beta.27"

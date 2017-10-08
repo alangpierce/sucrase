@@ -9,6 +9,7 @@ export default class Editor extends Component {
     timeMs: PropTypes.number,
     onChange: PropTypes.func,
     isReadOnly: PropTypes.bool,
+    options: PropTypes.object,
   };
 
   invalidate() {
@@ -18,7 +19,7 @@ export default class Editor extends Component {
   }
 
   render() {
-    const {label, code, timeMs, onChange, isReadOnly} = this.props;
+    const {label, code, timeMs, onChange, isReadOnly, options} = this.props;
     return (
       <div className='Editor'>
         <span className='Editor-label'>
@@ -37,6 +38,7 @@ export default class Editor extends Component {
             options={{
               minimap: {enabled: false},
               readOnly: isReadOnly,
+              ...options,
             }}
           />
         </span>

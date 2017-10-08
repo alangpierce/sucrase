@@ -2,8 +2,23 @@ import {parse} from 'babylon';
 
 const DEFAULT_PLUGINS = ['jsx', 'objectRestSpread'];
 
-export function transform(code: string, babylonPlugins: Array<string> = DEFAULT_PLUGINS): string {
+export type Options = {
+  transforms?: Array<'jsx' | 'imports'>,
+  babylonPlugins?: Array<string>,
+};
+
+export function transform(code: string, options: Options = {}): string {
   let resultCode = '';
+
+  const babylonPlugins = options.babylonPlugins || DEFAULT_PLUGINS;
+  const transforms = options.transforms || ['jsx'];
+
+  if (transforms.includes('imports')) {
+    throw new Error('Import transform is not supported yet.');
+  }
+  if (!transforms.includes('jsx')) {
+    return code;
+  }
 
   const ast = parse(
     code,

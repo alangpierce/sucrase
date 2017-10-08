@@ -27,6 +27,10 @@ body {
   font-size: large;
 }
 
+.App-optionBox {
+  margin-right: 20px;
+}
+
 .Editors {
   flex: 1;
   display: flex;

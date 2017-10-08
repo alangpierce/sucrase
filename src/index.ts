@@ -1,4 +1,6 @@
 import {parse} from 'babylon';
+import JSXTransformer from './jsx';
+import TokenProcessor from './tokens';
 
 const DEFAULT_PLUGINS = ['jsx', 'objectRestSpread'];
 
@@ -8,8 +10,6 @@ export type Options = {
 };
 
 export function transform(code: string, options: Options = {}): string {
-  let resultCode = '';
-
   const babylonPlugins = options.babylonPlugins || DEFAULT_PLUGINS;
   const transforms = options.transforms || ['jsx'];
 
@@ -19,7 +19,6 @@ export function transform(code: string, options: Options = {}): string {
   if (!transforms.includes('jsx')) {
     return code;
   }
-
   const ast = parse(
     code,
     {tokens: true, sourceType: 'module', plugins: babylonPlugins} as any
@@ -27,241 +26,39 @@ export function transform(code: string, options: Options = {}): string {
   let tokens = ast.tokens;
   tokens = tokens.filter((token) =>
     token.type !== 'CommentLine' && token.type !== 'CommentBlock');
-  let tokenIndex = 0;
+  const tokenProcessor = new TokenProcessor(code, tokens);
+  return new RootTransformer(tokenProcessor).transform();
+}
 
-  function matchesAtIndex(index: number, tagLabels: Array<string>): boolean {
-    for (let i = 0; i < tagLabels.length; i++) {
-      if (index + i >= tokens.length) {
-        return false;
-      }
-      if (tokens[index + i].type.label !== tagLabels[i]) {
-        return false;
-      }
-    }
-    return true;
+export class RootTransformer {
+  private jsxTransformer: JSXTransformer;
+
+  constructor(readonly tokens: TokenProcessor) {
+    this.jsxTransformer = new JSXTransformer(this, tokens);
   }
 
-  function matches(tagLabels: Array<string>): boolean {
-    return matchesAtIndex(tokenIndex, tagLabels);
+  transform() {
+    this.tokens.reset();
+    this.processBalancedCode();
+    return this.tokens.finish();
   }
 
-  /**
-   * Produce the props arg to createElement, starting at the first token of the
-   * props, if any.
-   */
-  function processProps() {
-    if (!matches(['jsxName']) && !matches(['{'])) {
-      resultCode += ', null';
-      return;
-    }
-    resultCode += ', {';
-    while (true) {
-      if (matches(['jsxName', '='])) {
-        if (tokens[tokenIndex].value.includes('-')) {
-          replaceToken(`'${tokens[tokenIndex].value}'`);
-        } else {
-          copyToken();
-        }
-        replaceToken(': ');
-        if (matches(['{'])) {
-          replaceToken('');
-          processBalancedCode();
-          replaceToken('');
-        } else {
-          processStringPropValue();
-        }
-      } else if (matches(['jsxName'])) {
-        copyToken();
-        resultCode += ': true';
-      } else if (matches(['{'])) {
-        replaceToken('');
-        processBalancedCode();
-        replaceToken('');
-      } else {
-        break;
-      }
-      resultCode += ',';
-    }
-    resultCode += '}';
-  }
-
-  function processStringPropValue() {
-    const value = tokens[tokenIndex].value;
-    const replacementCode = formatJSXTextReplacement(value);
-    const literalCode = formatJSXStringValueLiteral(value);
-    replaceToken(literalCode + replacementCode);
-  }
-
-  /**
-   * Process the first part of a tag, before any props.
-   */
-  function processTagIntro() {
-    // Walk forward until we see one of these patterns:
-    // [jsxIdentifer, equals] to start the first prop.
-    // [open brace] to start the first prop.
-    // [jsxTagEnd] to end the open-tag.
-    // [slash, jsxTagEnd] to end the self-closing tag.
-    let introEnd = tokenIndex + 1;
-    while (
-      !matchesAtIndex(introEnd, ['jsxName', '=']) &&
-      !matchesAtIndex(introEnd, ['{']) &&
-      !matchesAtIndex(introEnd, ['jsxTagEnd']) &&
-      !matchesAtIndex(introEnd, ['/', 'jsxTagEnd'])
-    ) {
-      introEnd++;
-    }
-    if (introEnd === tokenIndex + 1 && startsWithLowerCase(tokens[tokenIndex].value)) {
-      replaceToken(`'${tokens[tokenIndex].value}'`);
-    }
-    while (tokenIndex < introEnd) {
-      copyToken();
-    }
-  }
-
-  function processChildren() {
-    while (true) {
-      if (matches(['jsxTagStart', '/'])) {
-        // Closing tag, so no more children.
-        return;
-      }
-      if (matches(['{'])) {
-        if (matches(['{', '}'])) {
-          // Empty interpolations and comment-only interpolations are allowed
-          // and don't create an extra child arg.
-          replaceToken('');
-          replaceToken('');
-        } else {
-          // Interpolated expression.
-          replaceToken(', ');
-          processBalancedCode();
-          replaceToken('');
-        }
-      } else if (matches(['jsxTagStart'])) {
-        // Child JSX element
-        resultCode += ', ';
-        processJSXTag();
-      } else if (matches(['jsxText'])) {
-        processChildTextElement();
-      } else {
-        throw new Error('Unexpected token when processing JSX children.');
-      }
-    }
-  }
-
-  function processChildTextElement() {
-    const value = tokens[tokenIndex].value;
-    const replacementCode = formatJSXTextReplacement(value);
-    const literalCode = formatJSXTextLiteral(value);
-    if (literalCode === '""') {
-      replaceToken(replacementCode);
-    } else {
-      replaceToken(', ' + literalCode + replacementCode);
-    }
-  }
-
-  function processJSXTag() {
-    // First tag is always jsxTagStart.
-    replaceToken('React.createElement(');
-    processTagIntro();
-    processProps();
-
-    if (matches(['/', 'jsxTagEnd'])) {
-      // Self-closing tag.
-      replaceToken('');
-      replaceToken(')')
-    } else if (matches(['jsxTagEnd'])) {
-      replaceToken('');
-      // Tag with children.
-      processChildren();
-      while (!matches(['jsxTagEnd'])) {
-        replaceToken('');
-      }
-      replaceToken(')');
-    } else {
-      throw new Error('Expected either /> or > at the end of the tag.');
-    }
-  }
-
-  function processBalancedCode() {
+  processBalancedCode() {
     let braceDepth = 0;
-    while (tokenIndex < tokens.length) {
-      if (matches(['jsxTagStart'])) {
-        processJSXTag();
+    while (!this.tokens.isAtEnd()) {
+      if (this.tokens.matches(['jsxTagStart'])) {
+        this.jsxTransformer.processJSXTag();
       } else {
-        if (matches(['{']) || matches(['${'])) {
+        if (this.tokens.matches(['{']) || this.tokens.matches(['${'])) {
           braceDepth++;
-        } else if (matches(['}'])) {
+        } else if (this.tokens.matches(['}'])) {
           if (braceDepth === 0) {
             return;
           }
           braceDepth--;
         }
-        copyToken();
+        this.tokens.copyToken();
       }
     }
   }
-
-  function replaceToken(newCode: string) {
-    resultCode += code.slice(
-      tokenIndex > 0 ? tokens[tokenIndex - 1].end : 0, tokens[tokenIndex].start);
-    resultCode += newCode;
-    tokenIndex++;
-  }
-
-  function copyToken() {
-    resultCode += code.slice(
-      tokenIndex > 0 ? tokens[tokenIndex - 1].end : 0, tokens[tokenIndex].end);
-    tokenIndex++;
-  }
-
-  processBalancedCode();
-  resultCode += code.slice(tokens[tokens.length - 1].end);
-  return resultCode;
-}
-
-function startsWithLowerCase(s: string): boolean {
-  return s[0] == s[0].toLowerCase();
-}
-
-/**
- * Turn the given jsxText string into a JS string literal.
- *
- * We use JSON.stringify to introduce escape characters as necessary, and trim
- * the start and end of each line and remove blank lines.
- */
-function formatJSXTextLiteral(text: string): string {
-  // Introduce fake characters at the start and end to avoid trimming the start
-  // of the first line or the end of the last line.
-  let lines = `!${text}!`.split('\n');
-  // Trim spaces and tabs, but NOT non-breaking spaces.
-  lines = lines.map((line) => line.replace(/^[ \t]*/, '').replace(/[ \t]*$/, ''));
-  lines[0] = lines[0].slice(1);
-  lines[lines.length - 1] = lines[lines.length - 1].slice(0, -1);
-  lines = lines.filter((line) => line);
-  return JSON.stringify(lines.join(' '));
-}
-
-/**
- * Produce the code that should be printed after the JSX text string literal,
- * with most content removed, but all newlines preserved and all spacing at the
- * end preserved.
- */
-function formatJSXTextReplacement(text: string): string {
-  let lines = text.split('\n');
-  lines = lines.map((line: string, i: number) =>
-    i < lines.length - 1
-      ? ''
-      : Array.from(line).filter((char) => char === ' ').join('')
-  );
-  return lines.join('\n');
-}
-
-/**
- * Format a string in the value position of a JSX prop.
- *
- * Use the same implementation as convertAttribute from
- * babel-helper-builder-react-jsx.
- */
-function formatJSXStringValueLiteral(text: string): string {
-  return JSON.stringify(text.replace(/\n\s+/g, " "));
 }

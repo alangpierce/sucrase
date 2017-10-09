@@ -1,8 +1,17 @@
 import { RootTransformer } from './index';
 import TokenProcessor from './tokens';
+import { Transformer } from './transformer';
 
-export default class JSXTransformer {
+export default class JSXTransformer implements Transformer {
   constructor(readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor) {
+  }
+
+  process(): boolean {
+    if (this.tokens.matches(['jsxTagStart'])) {
+      this.processJSXTag();
+      return true;
+    }
+    return false;
   }
 
   /**

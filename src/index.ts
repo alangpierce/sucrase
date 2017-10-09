@@ -1,24 +1,22 @@
 import {parse} from 'babylon';
 import JSXTransformer from './jsx';
 import TokenProcessor from './tokens';
+import { Transformer } from './transformer';
+import ImportTransformer from './imports';
 
-const DEFAULT_PLUGINS = ['jsx', 'objectRestSpread'];
+const DEFAULT_BABYLON_PLUGINS = ['jsx', 'objectRestSpread'];
+
+export type Transform = 'jsx' | 'imports';
 
 export type Options = {
-  transforms?: Array<'jsx' | 'imports'>,
+  transforms?: Array<Transform>,
   babylonPlugins?: Array<string>,
 };
 
 export function transform(code: string, options: Options = {}): string {
-  const babylonPlugins = options.babylonPlugins || DEFAULT_PLUGINS;
+  const babylonPlugins = options.babylonPlugins || DEFAULT_BABYLON_PLUGINS;
   const transforms = options.transforms || ['jsx'];
 
-  if (transforms.includes('imports')) {
-    throw new Error('Import transform is not supported yet.');
-  }
-  if (!transforms.includes('jsx')) {
-    return code;
-  }
   const ast = parse(
     code,
     {tokens: true, sourceType: 'module', plugins: babylonPlugins} as any
@@ -27,14 +25,19 @@ export function transform(code: string, options: Options = {}): string {
   tokens = tokens.filter((token) =>
     token.type !== 'CommentLine' && token.type !== 'CommentBlock');
   const tokenProcessor = new TokenProcessor(code, tokens);
-  return new RootTransformer(tokenProcessor).transform();
+  return new RootTransformer(tokenProcessor, transforms).transform();
 }
 
 export class RootTransformer {
-  private jsxTransformer: JSXTransformer;
+  private transformers: Array<Transformer> = [];
 
-  constructor(readonly tokens: TokenProcessor) {
-    this.jsxTransformer = new JSXTransformer(this, tokens);
+  constructor(readonly tokens: TokenProcessor, transforms: Array<Transform>) {
+    if (transforms.includes('jsx')) {
+      this.transformers.push(new JSXTransformer(this, tokens));
+    }
+    if (transforms.includes('imports')) {
+      this.transformers.push(new ImportTransformer(this, tokens));
+    }
   }
 
   transform() {
@@ -46,9 +49,14 @@ export class RootTransformer {
   processBalancedCode() {
     let braceDepth = 0;
     while (!this.tokens.isAtEnd()) {
-      if (this.tokens.matches(['jsxTagStart'])) {
-        this.jsxTransformer.processJSXTag();
-      } else {
+      let wasProcessed = false;
+      for (const transformer of this.transformers) {
+        wasProcessed = transformer.process();
+        if (wasProcessed) {
+          break;
+        }
+      }
+      if (!wasProcessed) {
         if (this.tokens.matches(['{']) || this.tokens.matches(['${'])) {
           braceDepth++;
         } else if (this.tokens.matches(['}'])) {

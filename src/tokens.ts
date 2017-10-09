@@ -36,6 +36,13 @@ export default class TokenProcessor {
     this.tokenIndex++;
   }
 
+  copyExpectedToken(label: string) {
+    if (this.tokens[this.tokenIndex].type.label !== label) {
+      throw new Error(`Expected token ${label}`);
+    }
+    this.copyToken();
+  }
+
   copyToken() {
     this.resultCode += this.code.slice(
       this.tokenIndex > 0

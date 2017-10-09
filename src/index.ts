@@ -48,6 +48,7 @@ export class RootTransformer {
 
   processBalancedCode() {
     let braceDepth = 0;
+    let parenDepth = 0;
     while (!this.tokens.isAtEnd()) {
       let wasProcessed = false;
       for (const transformer of this.transformers) {
@@ -64,6 +65,14 @@ export class RootTransformer {
             return;
           }
           braceDepth--;
+        }
+        if (this.tokens.matches(['('])) {
+          parenDepth++;
+        } else if (this.tokens.matches([')'])) {
+          if (parenDepth === 0) {
+            return;
+          }
+          parenDepth--;
         }
         this.tokens.copyToken();
       }

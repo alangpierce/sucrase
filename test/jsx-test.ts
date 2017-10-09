@@ -1,12 +1,6 @@
-import * as assert from 'assert';
+import {assertResult} from './util';
 
-import {transform} from '../src/index';
-
-function assertResult(code: string, expectedResult: string): void {
-  assert.equal(transform(code), expectedResult);
-}
-
-describe('transform', () => {
+describe('transform JSX', () => {
   it('transforms a self-closing JSX element', () => {
     assertResult(`
       <Foo />

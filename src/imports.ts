@@ -3,18 +3,26 @@ import { RootTransformer } from './index';
 import TokenProcessor from './tokens';
 
 export default class ImportTransformer implements Transformer {
+  private hadExport: boolean = false;
+
   constructor(readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor) {
   }
 
   process(): boolean {
-    if (this.tokens.matches(['export', 'default'])) {
-      this.processExportDefault();
-      return true;
-    } else if (this.tokens.matches(['export'])) {
+    if (this.tokens.matches(['export'])) {
+      this.hadExport = true;
       this.processExport();
       return true;
     }
     return false;
+  }
+
+  getPrefixCode(): string {
+    let prefix = "'use strict';";
+    if (this.hadExport) {
+      prefix += 'Object.defineProperty(exports, "__esModule", {value: true});';
+    }
+    return prefix;
   }
 
   processExport() {

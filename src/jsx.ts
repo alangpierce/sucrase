@@ -14,6 +14,10 @@ export default class JSXTransformer implements Transformer {
     return false;
   }
 
+  getPrefixCode(): string {
+    return '';
+  }
+
   /**
    * Produce the props arg to createElement, starting at the first token of the
    * props, if any.

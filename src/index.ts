@@ -43,7 +43,11 @@ export class RootTransformer {
   transform() {
     this.tokens.reset();
     this.processBalancedCode();
-    return this.tokens.finish();
+    let prefix = '';
+    for (const transformer of this.transformers) {
+      prefix += transformer.getPrefixCode();
+    }
+    return prefix + this.tokens.finish();
   }
 
   processBalancedCode() {

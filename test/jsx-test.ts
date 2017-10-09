@@ -1,4 +1,8 @@
-import {assertResult} from './util';
+import * as util from './util';
+
+function assertResult(code: string, expectedResult: string) {
+  return util.assertResult(code, expectedResult, ['jsx']);
+}
 
 describe('transform JSX', () => {
   it('transforms a self-closing JSX element', () => {

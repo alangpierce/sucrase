@@ -6,6 +6,10 @@ export default class JSXTransformer implements Transformer {
   constructor(readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor) {
   }
 
+  preprocess() {
+    // Do nothing.
+  }
+
   process(): boolean {
     if (this.tokens.matches(['jsxTagStart'])) {
       this.processJSXTag();

@@ -1,11 +1,41 @@
 import { Transformer } from './transformer';
 import { RootTransformer } from './index';
-import TokenProcessor from './tokens';
+import TokenProcessor, { Token } from './tokens';
 
 export default class ImportTransformer implements Transformer {
   private hadExport: boolean = false;
+  private readonly usedNames: Set<string> = new Set();
+  private interopRequireWildcardName: string;
+  private interopRequireDefaultName: string;
 
   constructor(readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor) {
+  }
+
+  preprocess(tokens: Array<Token>): void {
+    for (const token of tokens) {
+      if (token.type.label === 'name') {
+        this.usedNames.add(token.value);
+      }
+    }
+    this.interopRequireWildcardName = this.claimFreeName('_interopRequireWildcard');
+    this.interopRequireDefaultName = this.claimFreeName('_interopRequireDefault');
+  }
+
+  claimFreeName(name: string): string {
+    const newName = this.findFreeName(name);
+    this.usedNames.add(newName);
+    return newName;
+  }
+
+  findFreeName(name: string): string {
+    if (!this.usedNames.has(name)) {
+      return name;
+    }
+    let suffixNum = 2;
+    while (this.usedNames.has(name + suffixNum)) {
+      suffixNum++;
+    }
+    return name + suffixNum;
   }
 
   process(): boolean {
@@ -19,6 +49,26 @@ export default class ImportTransformer implements Transformer {
 
   getPrefixCode(): string {
     let prefix = "'use strict';";
+    prefix += `
+      function ${this.interopRequireWildcardName}(obj) {
+        if (obj && obj.__esModule) {
+          return obj;
+        } else {
+          var newObj = {};
+          if (obj != null) {
+            for (var key in obj) {
+              if (Object.prototype.hasOwnProperty.call(obj, key))
+                newObj[key] = obj[key];
+              }
+            }
+          newObj.default = obj;
+          return newObj;
+        }
+      }`.replace(/\s+/g, ' ');
+    prefix += `
+      function ${this.interopRequireDefaultName}(obj) {
+        return obj && obj.__esModule ? obj : { default: obj };
+      }`.replace(/\s+/g, ' ');
     if (this.hadExport) {
       prefix += 'Object.defineProperty(exports, "__esModule", {value: true});';
     }

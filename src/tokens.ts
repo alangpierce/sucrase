@@ -1,8 +1,19 @@
+export type TokenType = {
+  label: string;
+};
+
+export type Token = {
+  type: TokenType;
+  start: number;
+  end: number;
+  value: any;
+};
+
 export default class TokenProcessor {
   private resultCode: string = '';
   private tokenIndex = 0;
 
-  constructor(readonly code: string, readonly tokens: Array<any>) {
+  constructor(readonly code: string, readonly tokens: Array<Token>) {
   }
 
   reset() {

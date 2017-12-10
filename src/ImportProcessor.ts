@@ -31,7 +31,7 @@ export class ImportProcessor {
       const {defaultNames, wildcardNames, namedImports} = this.importInfoByPath[path];
 
       if (defaultNames.length === 0 && wildcardNames.length === 0 && namedImports.length === 0) {
-        this.importsToReplace[path] = `require('${path}'); `;
+        this.importsToReplace[path] = `require('${path}');`;
       } else {
         const primaryImportName = this.getFreeIdentifierForPath(path);
         const secondaryImportName = wildcardNames.length > 0
@@ -132,8 +132,14 @@ export class ImportProcessor {
     this.importInfoByPath[path].namedImports.push(...namedImports);
   }
 
-  getImportCode(importPath: string): string {
-    return this.importsToReplace[importPath];
+  /**
+   * Return the code to use for the import for this path, or the empty string if
+   * the code has already been "claimed" by a previous import.
+   */
+  claimImportCode(importPath: string): string {
+    const result = this.importsToReplace[importPath];
+    this.importsToReplace[importPath] = '';
+    return result;
   }
 
   getIdentifierReplacement(identifierName: string): string | null {

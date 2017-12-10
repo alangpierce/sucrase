@@ -137,5 +137,27 @@ return obj && obj.__esModule ? obj : { default: obj }; }
       var _moduleName = require('moduleName');
     `);
   });
+
+  it('rewrites a bare import', () => {
+    assertResult(`
+      import 'moduleName';
+    `, `${PREFIX}
+      require('moduleName');
+    `);
+  });
+
+  it('rewrites a duplicated import', () => {
+    assertResult(`
+      import a from 'moduleName';
+      import * as b from 'otherModuleName';
+      import * as c from 'moduleName';
+      import * as d from 'otherModuleName';
+    `, `${PREFIX}
+      var _moduleName = require('moduleName'); var c = _interopRequireWildcard(_moduleName);
+      var _otherModuleName = require('otherModuleName'); var b = _interopRequireWildcard(_otherModuleName); var d = _interopRequireWildcard(_otherModuleName);
+      
+      
+    `);
+  });
 });
 

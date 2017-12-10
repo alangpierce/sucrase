@@ -82,7 +82,7 @@ export default class ImportTransformer implements Transformer {
     }
     const path = this.tokens.currentToken().value;
     this.tokens.replaceTokenTrimmingLeftWhitespace(
-      this.importProcessor.getImportCode(path)
+      this.importProcessor.claimImportCode(path)
     );
     if (this.tokens.matches([';'])) {
       this.tokens.removeToken();

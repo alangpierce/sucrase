@@ -43,7 +43,7 @@ export class RootTransformer {
   transform() {
     this.tokens.reset();
     for (const transformer of this.transformers) {
-      transformer.preprocess(this.tokens.tokens);
+      transformer.preprocess();
     }
     this.processBalancedCode();
     let prefix = '';

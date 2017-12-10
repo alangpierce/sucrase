@@ -1,50 +1,29 @@
 import { Transformer } from './transformer';
 import { RootTransformer } from './index';
 import TokenProcessor, { Token } from './tokens';
+import { ImportProcessor } from './ImportProcessor';
+import { NameManager } from './NameManager';
 
 export default class ImportTransformer implements Transformer {
   private hadExport: boolean = false;
-  private readonly usedNames: Set<string> = new Set();
+
+  private readonly nameManager: NameManager;
+  private readonly importProcessor: ImportProcessor;
   private interopRequireWildcardName: string;
   private interopRequireDefaultName: string;
 
   constructor(readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor) {
+    this.nameManager = new NameManager(this.tokens);
+    this.importProcessor = new ImportProcessor(this.nameManager, tokens);
   }
 
-  preprocess(tokens: Array<Token>): void {
-    for (const token of tokens) {
-      if (token.type.label === 'name') {
-        this.usedNames.add(token.value);
-      }
-    }
-    this.interopRequireWildcardName = this.claimFreeName('_interopRequireWildcard');
-    this.interopRequireDefaultName = this.claimFreeName('_interopRequireDefault');
-  }
-
-  claimFreeName(name: string): string {
-    const newName = this.findFreeName(name);
-    this.usedNames.add(newName);
-    return newName;
-  }
-
-  findFreeName(name: string): string {
-    if (!this.usedNames.has(name)) {
-      return name;
-    }
-    let suffixNum = 2;
-    while (this.usedNames.has(name + suffixNum)) {
-      suffixNum++;
-    }
-    return name + suffixNum;
-  }
-
-  process(): boolean {
-    if (this.tokens.matches(['export'])) {
-      this.hadExport = true;
-      this.processExport();
-      return true;
-    }
-    return false;
+  preprocess(): void {
+    this.nameManager.preprocessNames(this.tokens.tokens);
+    this.interopRequireWildcardName = this.nameManager.claimFreeName('_interopRequireWildcard');
+    this.interopRequireDefaultName = this.nameManager.claimFreeName('_interopRequireDefault');
+    this.importProcessor.preprocessTokens(
+      this.interopRequireWildcardName, this.interopRequireDefaultName
+    );
   }
 
   getPrefixCode(): string {
@@ -73,6 +52,41 @@ export default class ImportTransformer implements Transformer {
       prefix += 'Object.defineProperty(exports, "__esModule", {value: true});';
     }
     return prefix;
+  }
+
+  process(): boolean {
+    if (this.tokens.matches(['import'])) {
+      this.processImport();
+      return true;
+    }
+    if (this.tokens.matches(['export'])) {
+      this.hadExport = true;
+      this.processExport();
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Transform this:
+   * import foo, {bar} from 'baz';
+   * into
+   * var _baz = require('baz'); var _baz2 = _interopRequireDefault(_baz);
+   *
+   * and capture the renevant
+   */
+  processImport() {
+    this.tokens.removeInitialToken();
+    while (!this.tokens.matches(['string'])) {
+      this.tokens.removeToken();
+    }
+    const path = this.tokens.currentToken().value;
+    this.tokens.replaceTokenTrimmingLeftWhitespace(
+      this.importProcessor.getImportCode(path)
+    );
+    if (this.tokens.matches([';'])) {
+      this.tokens.removeToken();
+    }
   }
 
   processExport() {

@@ -37,14 +37,33 @@ export default class TokenProcessor {
     return this.matchesAtIndex(this.tokenIndex, tagLabels);
   }
 
-  replaceToken(newCode: string) {
-    this.resultCode += this.code.slice(
+  previousWhitespace() {
+    return this.code.slice(
       this.tokenIndex > 0
         ? this.tokens[this.tokenIndex - 1].end
         : 0,
-      this.tokens[this.tokenIndex].start);
+      this.tokens[this.tokenIndex].start
+    );
+  }
+
+  replaceToken(newCode: string) {
+    this.resultCode += this.previousWhitespace();
     this.resultCode += newCode;
     this.tokenIndex++;
+  }
+
+  replaceTokenTrimmingLeftWhitespace(newCode: string) {
+    this.resultCode += this.previousWhitespace().replace(/[\t ]/g, '');
+    this.resultCode += newCode;
+    this.tokenIndex++;
+  }
+
+  removeInitialToken() {
+    this.replaceToken('');
+  }
+
+  removeToken() {
+    this.replaceTokenTrimmingLeftWhitespace('');
   }
 
   copyExpectedToken(label: string) {
@@ -67,7 +86,7 @@ export default class TokenProcessor {
     this.resultCode += code;
   }
 
-  currentToken(): any {
+  currentToken(): Token {
     return this.tokens[this.tokenIndex];
   }
 

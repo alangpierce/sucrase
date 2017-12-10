@@ -64,6 +64,9 @@ export default class ImportTransformer implements Transformer {
       this.processExport();
       return true;
     }
+    if (this.tokens.matches(['name'])) {
+      return this.processIdentifier();
+    }
     return false;
   }
 
@@ -87,6 +90,23 @@ export default class ImportTransformer implements Transformer {
     if (this.tokens.matches([';'])) {
       this.tokens.removeToken();
     }
+  }
+
+  processIdentifier(): boolean {
+    const token = this.tokens.currentToken();
+    const lastToken = this.tokens.tokens[this.tokens.currentIndex() - 1];
+    // Skip identifiers that are part of property accesses.
+    if (lastToken && lastToken.type.label === '.') {
+      return false;
+    }
+    const replacement = this.importProcessor.getIdentifierReplacement(token.value);
+    if (!replacement) {
+      return false;
+    }
+    // For now, always use the (0, a) syntax so that non-expression replacements
+    // are more likely to become syntax errors.
+    this.tokens.replaceToken(`(0, ${replacement})`);
+    return true;
   }
 
   processExport() {

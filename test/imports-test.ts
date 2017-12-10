@@ -159,5 +159,42 @@ return obj && obj.__esModule ? obj : { default: obj }; }
       
     `);
   });
-});
 
+  it('transforms default import access to property access', () => {
+    assertResult(`
+      import foo from 'my-module';
+      
+      foo.test();
+      test.foo();
+    `, `${PREFIX}
+      var _mymodule = require('my-module'); var _mymodule2 = _interopRequireDefault(_mymodule);
+      
+      (0, _mymodule2.default).test();
+      test.foo();
+    `);
+  });
+
+  it('transforms named import access to property access', () => {
+    assertResult(`
+      import {bar} from 'my-module';
+      
+      bar();
+    `, `${PREFIX}
+      var _mymodule = require('my-module');
+      
+      (0, _mymodule.bar)();
+    `);
+  });
+
+  it('uses wildcard name on default access when possible', () => {
+    assertResult(`
+      import defaultName, * as wildcardName from 'my-module';
+      
+      defaultName.methodName();
+    `, `${PREFIX}
+      var _mymodule = require('my-module'); var wildcardName = _interopRequireWildcard(_mymodule);
+      
+      (0, wildcardName.default).methodName();
+    `);
+  });
+});

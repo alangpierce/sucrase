@@ -297,4 +297,24 @@ var _moduleName = require('moduleName');
       }
     `);
   });
+
+  it('properly handles code with a class constructor', () => {
+    assertResult(`
+      import foo from 'foo';
+      
+      class A {
+        constructor() {
+          this.val = foo();
+        }
+      }
+    `, `${PREFIX}
+      var _foo = require('foo'); var _foo2 = _interopRequireDefault(_foo);
+      
+      class A {
+        constructor() {
+          this.val = (0, _foo2.default)();
+        }
+      }
+    `);
+  });
 });

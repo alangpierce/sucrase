@@ -14,9 +14,9 @@ type ImportInfo = {
 }
 
 export class ImportProcessor {
-  private importInfoByPath: {[path: string]: ImportInfo} = {};
-  private importsToReplace: {[path: string]: string} = {};
-  private identifierReplacements: {[identifier: string]: string} = {};
+  private importInfoByPath: Map<string, ImportInfo> = new Map();
+  private importsToReplace: Map<string, string> = new Map();
+  private identifierReplacements: Map<string, string> = new Map();
 
   constructor(readonly nameManager: NameManager, readonly tokens: TokenProcessor) {
   }
@@ -29,11 +29,9 @@ export class ImportProcessor {
       }
     }
 
-    for (const path of Object.keys(this.importInfoByPath)) {
-      const {defaultNames, wildcardNames, namedImports} = this.importInfoByPath[path];
-
+    for (const [path, {defaultNames, wildcardNames, namedImports}] of this.importInfoByPath.entries()) {
       if (defaultNames.length === 0 && wildcardNames.length === 0 && namedImports.length === 0) {
-        this.importsToReplace[path] = `require('${path}');`;
+        this.importsToReplace.set(path, `require('${path}');`);
       } else {
         const primaryImportName = this.getFreeIdentifierForPath(path);
         const secondaryImportName = wildcardNames.length > 0
@@ -47,13 +45,13 @@ export class ImportProcessor {
         } else if (defaultNames.length > 0) {
           requireCode += ` var ${secondaryImportName} = ${interopRequireDefaultName}(${primaryImportName});`;
         }
-        this.importsToReplace[path] = requireCode;
+        this.importsToReplace.set(path, requireCode);
 
         for (const defaultName of defaultNames) {
-          this.identifierReplacements[defaultName] = `${secondaryImportName}.default`;
+          this.identifierReplacements.set(defaultName, `${secondaryImportName}.default`);
         }
         for (const {importedName, localName} of namedImports) {
-          this.identifierReplacements[localName] = `${primaryImportName}.${importedName}`;
+          this.identifierReplacements.set(localName, `${primaryImportName}.${importedName}`);
         }
       }
     }
@@ -123,16 +121,18 @@ export class ImportProcessor {
       throw new Error('Expected string token at the end of import statement.');
     }
     const path = this.tokens.tokens[index].value;
-    if (!this.importInfoByPath[path]) {
-      this.importInfoByPath[path] = {
+    let importInfo = this.importInfoByPath.get(path);
+    if (!importInfo) {
+      importInfo = {
         defaultNames: [],
         wildcardNames: [],
         namedImports: [],
       };
+      this.importInfoByPath.set(path, importInfo);
     }
-    this.importInfoByPath[path].defaultNames.push(...defaultNames);
-    this.importInfoByPath[path].wildcardNames.push(...wildcardNames);
-    this.importInfoByPath[path].namedImports.push(...namedImports);
+    importInfo.defaultNames.push(...defaultNames);
+    importInfo.wildcardNames.push(...wildcardNames);
+    importInfo.namedImports.push(...namedImports);
   }
 
   /**
@@ -140,12 +140,12 @@ export class ImportProcessor {
    * the code has already been "claimed" by a previous import.
    */
   claimImportCode(importPath: string): string {
-    const result = this.importsToReplace[importPath];
-    this.importsToReplace[importPath] = '';
-    return result;
+    const result = this.importsToReplace.get(importPath);
+    this.importsToReplace.set(importPath, '');
+    return result || '';
   }
 
   getIdentifierReplacement(identifierName: string): string | null {
-    return this.identifierReplacements[identifierName] || null;
+    return this.identifierReplacements.get(identifierName) || null;
   }
 }

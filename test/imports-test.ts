@@ -69,6 +69,32 @@ describe('transform imports', () => {
     `);
   });
 
+  it('allows exporting names directly', () => {
+    assertResult(`
+      let a = 1, b = 2;
+      export {a, b as c};
+    `, `${PREFIX}${ESMODULE_PREFIX}
+      let a = 1, b = 2;
+      exports.a = a; exports.c = b;
+    `);
+  });
+
+  it('allows trailing commas in exported names', () => {
+    assertResult(`
+      let a = 1, b = 2;
+      export {
+        a,
+        b,
+      };
+    `, `${PREFIX}${ESMODULE_PREFIX}
+      let a = 1, b = 2;
+      
+
+
+exports.a = a; exports.b = b;
+    `);
+  });
+
   it('deconflicts generated names', () => {
     assertResult(`
       function _interopRequireWildcard() {

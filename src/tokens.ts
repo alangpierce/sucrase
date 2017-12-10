@@ -33,8 +33,16 @@ export default class TokenProcessor {
     return true;
   }
 
+  matchesNameAtIndex(index: number, name: string): boolean {
+    return this.matchesAtIndex(index, ['name']) && this.tokens[index].value === name;
+  }
+
   matches(tagLabels: Array<string>): boolean {
     return this.matchesAtIndex(this.tokenIndex, tagLabels);
+  }
+
+  matchesName(name: string): boolean {
+    return this.matchesNameAtIndex(this.tokenIndex, name);
   }
 
   previousWhitespace() {

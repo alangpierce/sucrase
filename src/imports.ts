@@ -125,6 +125,8 @@ export default class ImportTransformer implements Transformer {
       this.processExportFunction();
     } else if (this.tokens.matches(['export', 'class'])) {
       this.processExportClass();
+    } else if (this.tokens.matches(['export', '{'])) {
+      this.processExportBindings();
     } else {
       throw new Error('Unrecognized export syntax.');
     }
@@ -204,5 +206,49 @@ export default class ImportTransformer implements Transformer {
     this.rootTransformer.processBalancedCode();
     this.tokens.copyExpectedToken('}');
     this.tokens.appendCode(` exports.${name} = ${name};`);
+  }
+
+  /**
+   * Transform this:
+   * export {a, b as c};
+   * into this:
+   * exports.a = a; exports.c = b;
+   */
+  processExportBindings() {
+    this.tokens.removeInitialToken();
+    this.tokens.removeToken();
+
+    const exportStatements = [];
+    while (true) {
+      const localName = this.tokens.currentToken().value;
+      let exportedName;
+      this.tokens.removeToken();
+      if (this.tokens.matchesName('as')) {
+        this.tokens.removeToken();
+        exportedName = this.tokens.currentToken().value;
+        this.tokens.removeToken();
+      } else {
+        exportedName = localName;
+      }
+      exportStatements.push(`exports.${exportedName} = ${localName};`);
+
+      if (this.tokens.matches(['}'])) {
+        this.tokens.removeToken();
+        break;
+      } if (this.tokens.matches([',', '}'])) {
+        this.tokens.removeToken();
+        this.tokens.removeToken();
+        break;
+      } else if (this.tokens.matches([','])) {
+        this.tokens.removeToken();
+      } else {
+        throw new Error('Unexpected token');
+      }
+    }
+
+    this.tokens.appendCode(exportStatements.join(' '));
+    if (this.tokens.currentToken().type.label === ';') {
+      this.tokens.removeToken();
+    }
   }
 }

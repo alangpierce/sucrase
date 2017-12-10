@@ -91,8 +91,7 @@ export class ImportProcessor {
         const importedName = this.tokens.tokens[index].value;
         let localName;
         index++;
-        if (this.tokens.matchesAtIndex(index, ['name']) &&
-            this.tokens.tokens[index].value === 'as') {
+        if (this.tokens.matchesNameAtIndex(index, 'as')) {
           index++;
           localName = this.tokens.tokens[index].value;
           index++;
@@ -111,8 +110,7 @@ export class ImportProcessor {
       }
     }
 
-    if (this.tokens.matchesAtIndex(index, ['name']) &&
-        this.tokens.tokens[index].value === 'from') {
+    if (this.tokens.matchesNameAtIndex(index, 'from')) {
       index++;
     }
 

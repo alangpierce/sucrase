@@ -203,8 +203,28 @@ export default class ImportTransformer implements Transformer {
     }
     const name = this.tokens.currentToken().value;
     this.tokens.copyToken();
-    // Don't support "extends" for now. That requires smarter expression parsing
-    // to handle cases like `export class A extends b(<Foo />) {}`.
+    if (this.tokens.matches(['extends'])) {
+      // There are only some limited expressions that are allowed within the
+      // `extends` expression, e.g. no top-level binary operators, so we can
+      // skip past even fairly complex expressions by being a bit careful.
+      this.tokens.copyToken();
+      if (this.tokens.matches(['{'])) {
+        // Extending an object literal.
+        this.tokens.copyExpectedToken('{');
+        this.rootTransformer.processBalancedCode();
+        this.tokens.copyExpectedToken('}');
+      } else {
+        while (!this.tokens.matches(['{']) && !this.tokens.matches(['('])) {
+          this.tokens.copyToken();
+        }
+        if (this.tokens.matches(['('])) {
+          this.tokens.copyExpectedToken('(');
+          this.rootTransformer.processBalancedCode();
+          this.tokens.copyExpectedToken(')');
+        }
+      }
+    }
+
     this.tokens.copyExpectedToken('{');
     this.rootTransformer.processBalancedCode();
     this.tokens.copyExpectedToken('}');

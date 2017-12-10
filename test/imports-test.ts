@@ -69,6 +69,38 @@ describe('transform imports', () => {
     `);
   });
 
+  it('transforms export class with superclass', () => {
+    assertResult(`
+      export class A extends B {
+        c() {
+          return d;
+        }
+      }
+    `, `${PREFIX}${ESMODULE_PREFIX}
+       class A extends B {
+        c() {
+          return d;
+        }
+      } exports.A = A;
+    `);
+  });
+
+  it('transforms export class with complex superclass', () => {
+    assertResult(`
+      export class A extends b(C) {
+        d() {
+          return e;
+        }
+      }
+    `, `${PREFIX}${ESMODULE_PREFIX}
+       class A extends b(C) {
+        d() {
+          return e;
+        }
+      } exports.A = A;
+    `);
+  });
+
   it('allows exporting names directly', () => {
     assertResult(`
       let a = 1, b = 2;

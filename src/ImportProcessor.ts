@@ -99,11 +99,14 @@ export class ImportProcessor {
           localName = importedName;
         }
         namedImports.push({ importedName, localName });
-        if (this.tokens.matchesAtIndex(index, [','])) {
-          index++;
+        if (this.tokens.matchesAtIndex(index, [',', '}'])) {
+          index += 2;
+          break;
         } else if (this.tokens.matchesAtIndex(index, ['}'])) {
           index++;
           break;
+        } else if (this.tokens.matchesAtIndex(index, [','])) {
+          index++;
         } else {
           throw new Error('Unexpected token.');
         }

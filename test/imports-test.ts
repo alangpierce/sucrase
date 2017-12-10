@@ -164,6 +164,22 @@ return obj && obj.__esModule ? obj : { default: obj }; }
     `);
   });
 
+  it('handles trailing commas in named imports', () => {
+    assertResult(`
+      import {
+        a,
+        b,
+      } from 'moduleName';
+      console.log(a + b);
+    `, `${PREFIX}
+      
+
+
+var _moduleName = require('moduleName');
+      console.log((0, _moduleName.a) + (0, _moduleName.b));
+    `);
+  });
+
   it('rewrites a bare import', () => {
     assertResult(`
       import 'moduleName';

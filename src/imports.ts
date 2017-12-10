@@ -99,8 +99,20 @@ export default class ImportTransformer implements Transformer {
   processIdentifier(): boolean {
     const token = this.tokens.currentToken();
     const lastToken = this.tokens.tokens[this.tokens.currentIndex() - 1];
+    const nextToken = this.tokens.tokens[this.tokens.currentIndex() + 1];
     // Skip identifiers that are part of property accesses.
     if (lastToken && lastToken.type.label === '.') {
+      return false;
+    }
+    // Skip identifiers that are in object keys. Object keys have a colon to the
+    // right and either a comma or open-brace to the left. Ternary expressions
+    // can't have a comma or open-brace in that position, so they won't be false
+    // positives. This doesn't yet handle shorthand object keys.
+    if (
+      nextToken && nextToken.type.label === ':' && lastToken && (
+        lastToken.type.label === ',' || lastToken.type.label === '{'
+      )
+    ) {
       return false;
     }
     const replacement = this.importProcessor.getIdentifierReplacement(token.value);

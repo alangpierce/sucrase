@@ -357,4 +357,28 @@ var _moduleName = require('moduleName');
       }
     `);
   });
+
+  it('allows imported names as object keys', () => {
+    assertResult(`
+      import foo from 'foo';
+      
+      const o = {
+        foo: 3,
+      };
+      
+      function f() {
+        return true ? foo : 3;
+      }
+    `, `${PREFIX}
+      var _foo = require('foo'); var _foo2 = _interopRequireDefault(_foo);
+      
+      const o = {
+        foo: 3,
+      };
+      
+      function f() {
+        return true ? (0, _foo2.default) : 3;
+      }
+    `);
+  });
 });

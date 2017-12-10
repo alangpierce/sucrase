@@ -79,7 +79,8 @@ export default class ImportTransformer implements Transformer {
    * into
    * var _baz = require('baz'); var _baz2 = _interopRequireDefault(_baz);
    *
-   * and capture the renevant
+   * The import code was already generated in the import preprocessing step, so
+   * we just need to look it up.
    */
   processImport() {
     this.tokens.removeInitialToken();
@@ -136,9 +137,26 @@ export default class ImportTransformer implements Transformer {
   }
 
   processExportDefault() {
-    this.tokens.replaceToken('exports.');
-    this.tokens.copyToken();
-    this.tokens.appendCode(' =');
+    if (
+      this.tokens.matches(['export', 'default', 'function', 'name']) ||
+      this.tokens.matches(['export', 'default', 'name', 'function', 'name'])
+    ) {
+      this.tokens.removeInitialToken();
+      this.tokens.removeToken();
+      // Named function export case: change it to a top-level function
+      // declaration followed by exports statement.
+      const name = this.processNamedFunction();
+      this.tokens.appendCode(` exports.default = ${name};`);
+    } else if (this.tokens.matches(['export', 'default', 'class', 'name'])) {
+      this.tokens.removeInitialToken();
+      this.tokens.removeToken();
+      const name = this.processNamedClass();
+      this.tokens.appendCode(` exports.default = ${name};`);
+    } else {
+      this.tokens.replaceToken('exports.');
+      this.tokens.copyToken();
+      this.tokens.appendCode(' =');
+    }
   }
 
   /**
@@ -166,6 +184,14 @@ export default class ImportTransformer implements Transformer {
    */
   processExportFunction() {
     this.tokens.replaceToken('');
+    const name = this.processNamedFunction();
+    this.tokens.appendCode(` exports.${name} = ${name};`);
+  }
+
+  /**
+   * Skip past a function with a name and return that name.
+   */
+  processNamedFunction(): string {
     if (this.tokens.matches(['function'])) {
       this.tokens.copyToken();
     } else if (this.tokens.matches(['name', 'function'])) {
@@ -186,7 +212,7 @@ export default class ImportTransformer implements Transformer {
     this.tokens.copyExpectedToken('{');
     this.rootTransformer.processBalancedCode();
     this.tokens.copyExpectedToken('}');
-    this.tokens.appendCode(` exports.${name} = ${name};`);
+    return name;
   }
 
   /**
@@ -197,9 +223,17 @@ export default class ImportTransformer implements Transformer {
    */
   processExportClass() {
     this.tokens.replaceToken('');
+    const name = this.processNamedClass();
+    this.tokens.appendCode(` exports.${name} = ${name};`);
+  }
+
+  /**
+   * Skip past a class with a name and return that name.
+   */
+  processNamedClass(): string {
     this.tokens.copyExpectedToken('class');
     if (!this.tokens.matches(['name'])) {
-      throw new Error('Expected identifier for exported function name.');
+      throw new Error('Expected identifier for exported class name.');
     }
     const name = this.tokens.currentToken().value;
     this.tokens.copyToken();
@@ -228,7 +262,7 @@ export default class ImportTransformer implements Transformer {
     this.tokens.copyExpectedToken('{');
     this.rootTransformer.processBalancedCode();
     this.tokens.copyExpectedToken('}');
-    this.tokens.appendCode(` exports.${name} = ${name};`);
+    return name;
   }
 
   /**

@@ -17,6 +17,46 @@ describe('transform imports', () => {
     `);
   });
 
+  it('keeps a top-level function declaration on export default function', () => {
+    assertResult(`
+      export default function foo() {
+        console.log('Hello');
+      }
+    `, `${PREFIX}${ESMODULE_PREFIX}
+       function foo() {
+        console.log('Hello');
+      } exports.default = foo;
+    `);
+  });
+
+  it('exports a function expression for anonymous functions', () => {
+    assertResult(`
+      export default function () {
+        console.log('Hello');
+      }
+    `, `${PREFIX}${ESMODULE_PREFIX}
+      exports. default = function () {
+        console.log('Hello');
+      }
+    `);
+  });
+
+  it('keeps a top-level class declaration on export default class', () => {
+    assertResult(`
+      export default class A {}
+    `, `${PREFIX}${ESMODULE_PREFIX}
+       class A {} exports.default = A;
+    `);
+  });
+
+  it('exports a class expression for anonymous class', () => {
+    assertResult(`
+      export default class {}
+    `, `${PREFIX}${ESMODULE_PREFIX}
+      exports. default = class {}
+    `);
+  });
+
   it('transforms export var/let/const', () => {
     assertResult(`
       export var x = 1;

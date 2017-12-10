@@ -3,6 +3,7 @@ import { RootTransformer } from './index';
 import TokenProcessor, { Token } from './tokens';
 import { ImportProcessor } from './ImportProcessor';
 import { NameManager } from './NameManager';
+import isMaybePropertyName from './util/isMaybePropertyName';
 
 export default class ImportTransformer implements Transformer {
   private hadExport: boolean = false;
@@ -55,11 +56,13 @@ export default class ImportTransformer implements Transformer {
   }
 
   process(): boolean {
-    if (this.tokens.matches(['import'])) {
+    if (this.tokens.matches(['import']) &&
+        !isMaybePropertyName(this.tokens, this.tokens.currentIndex())) {
       this.processImport();
       return true;
     }
-    if (this.tokens.matches(['export'])) {
+    if (this.tokens.matches(['export']) &&
+        !isMaybePropertyName(this.tokens, this.tokens.currentIndex())) {
       this.hadExport = true;
       this.processExport();
       return true;

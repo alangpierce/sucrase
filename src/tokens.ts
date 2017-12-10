@@ -22,6 +22,9 @@ export default class TokenProcessor {
   }
 
   matchesAtIndex(index: number, tagLabels: Array<string>): boolean {
+    if (index < 0) {
+      return false;
+    }
     for (let i = 0; i < tagLabels.length; i++) {
       if (index + i >= this.tokens.length) {
         return false;

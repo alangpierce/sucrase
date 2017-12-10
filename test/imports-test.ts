@@ -239,4 +239,30 @@ var _moduleName = require('moduleName');
       (0, wildcardName.default).methodName();
     `);
   });
+
+  it('allows import and export as property names', () => {
+    assertResult(`
+      const a = {
+        import: 1,
+        export: 2,
+      };
+      console.log(a.import);
+      console.log(a.export);
+      class Test {
+        import() {}
+        export() {}
+      }
+    `, `${PREFIX}
+      const a = {
+        import: 1,
+        export: 2,
+      };
+      console.log(a.import);
+      console.log(a.export);
+      class Test {
+        import() {}
+        export() {}
+      }
+    `);
+  });
 });

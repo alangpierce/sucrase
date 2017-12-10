@@ -1,5 +1,6 @@
 import { NameManager } from './NameManager';
 import TokenProcessor from './tokens';
+import isMaybePropertyName from './util/isMaybePropertyName';
 
 type NamedImport = {
   importedName: string;
@@ -22,7 +23,8 @@ export class ImportProcessor {
 
   preprocessTokens(interopRequireWildcardName: string, interopRequireDefaultName: string) {
     for (let i = 0; i < this.tokens.tokens.length; i++) {
-      if (this.tokens.tokens[i].type.label === 'import') {
+      if (this.tokens.matchesAtIndex(i, ['import']) &&
+          !isMaybePropertyName(this.tokens, i)) {
         this.preprocessImportAtIndex(i);
       }
     }

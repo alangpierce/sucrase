@@ -3,6 +3,7 @@ import JSXTransformer from './jsx';
 import TokenProcessor from './tokens';
 import { Transformer } from './transformer';
 import ImportTransformer from './imports';
+import augmentTokenContext from './augmentTokenContext';
 
 const DEFAULT_BABYLON_PLUGINS = ['jsx', 'objectRestSpread'];
 
@@ -24,6 +25,7 @@ export function transform(code: string, options: Options = {}): string {
   let tokens = ast.tokens;
   tokens = tokens.filter((token) =>
     token.type !== 'CommentLine' && token.type !== 'CommentBlock');
+  augmentTokenContext(tokens);
   const tokenProcessor = new TokenProcessor(code, tokens);
   return new RootTransformer(tokenProcessor, transforms).transform();
 }

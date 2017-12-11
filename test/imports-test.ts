@@ -381,4 +381,34 @@ var _moduleName = require('moduleName');
       }
     `);
   });
+
+  it('expands object shorthand syntax for imported names', () => {
+    assertResult(`
+      import foo from 'foo';
+      
+      const o = {
+        foo,
+        bar,
+        baz: foo,
+        for: 4,
+      };
+      
+      function f() {
+        foo
+      }
+    `, `${PREFIX}
+      var _foo = require('foo'); var _foo2 = _interopRequireDefault(_foo);
+      
+      const o = {
+        foo: _foo2.default,
+        bar,
+        baz: (0, _foo2.default),
+        for: 4,
+      };
+      
+      function f() {
+        (0, _foo2.default)
+      }
+    `);
+  });
 });

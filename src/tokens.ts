@@ -1,3 +1,5 @@
+export type TokenContext = 'block' | 'parens' | 'brackets' | 'object' | 'class';
+
 export type TokenType = {
   label: string;
 };
@@ -7,6 +9,7 @@ export type Token = {
   start: number;
   end: number;
   value: any;
+  contextName?: string;
 };
 
 export default class TokenProcessor {

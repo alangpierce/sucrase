@@ -104,11 +104,19 @@ export default class ImportTransformer implements Transformer {
     if (lastToken && lastToken.type.label === '.') {
       return false;
     }
-    // Skip identifiers that are in object keys. Object keys have a colon to the
-    // right and either a comma or open-brace to the left. Ternary expressions
-    // can't have a comma or open-brace in that position, so they won't be false
-    // positives. This doesn't yet handle shorthand object keys.
+
+    // For shorthand object keys, we need to expand them and replace only the value.
     if (
+      token.contextName === 'object' &&
+      lastToken && (lastToken.type.label === ',' || lastToken.type.label === '{') &&
+      nextToken && (nextToken.type.label === ',' || nextToken.type.label === '}')
+    ) {
+      return this.processObjectShorthand();
+    }
+
+    // For non-shorthand object keys, just ignore them.
+    if (
+      token.contextName === 'object' &&
       nextToken && nextToken.type.label === ':' && lastToken && (
         lastToken.type.label === ',' || lastToken.type.label === '{'
       )
@@ -122,6 +130,16 @@ export default class ImportTransformer implements Transformer {
     // For now, always use the (0, a) syntax so that non-expression replacements
     // are more likely to become syntax errors.
     this.tokens.replaceToken(`(0, ${replacement})`);
+    return true;
+  }
+
+  processObjectShorthand(): boolean {
+    const identifier = this.tokens.currentToken().value;
+    const replacement = this.importProcessor.getIdentifierReplacement(identifier);
+    if (!replacement) {
+      return false;
+    }
+    this.tokens.replaceToken(`${identifier}: ${replacement}`);
     return true;
   }
 

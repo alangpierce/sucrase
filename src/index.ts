@@ -4,6 +4,8 @@ import TokenProcessor from './tokens';
 import { Transformer } from './transformer';
 import ImportTransformer from './imports';
 import augmentTokenContext from './augmentTokenContext';
+import { ImportProcessor } from './ImportProcessor';
+import { NameManager } from './NameManager';
 
 const DEFAULT_BABYLON_PLUGINS = ['jsx', 'objectRestSpread'];
 
@@ -34,11 +36,21 @@ export class RootTransformer {
   private transformers: Array<Transformer> = [];
 
   constructor(readonly tokens: TokenProcessor, transforms: Array<Transform>) {
+    const nameManager = new NameManager(tokens);
+    const importProcessor = transforms.includes('imports')
+      ? new ImportProcessor(nameManager, tokens)
+      : null;
     if (transforms.includes('jsx')) {
-      this.transformers.push(new JSXTransformer(this, tokens));
+      if (importProcessor) {
+        this.transformers.push(new JSXTransformer(this, tokens, importProcessor));
+      } else {
+        this.transformers.push(
+          new JSXTransformer(this, tokens, {getIdentifierReplacement: () => null})
+        );
+      }
     }
     if (transforms.includes('imports')) {
-      this.transformers.push(new ImportTransformer(this, tokens));
+      this.transformers.push(new ImportTransformer(this, tokens, nameManager, importProcessor!));
     }
   }
 

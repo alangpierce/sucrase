@@ -8,47 +8,20 @@ import isMaybePropertyName from './util/isMaybePropertyName';
 export default class ImportTransformer implements Transformer {
   private hadExport: boolean = false;
 
-  private readonly nameManager: NameManager;
-  private readonly importProcessor: ImportProcessor;
-  private interopRequireWildcardName: string;
-  private interopRequireDefaultName: string;
-
-  constructor(readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor) {
-    this.nameManager = new NameManager(this.tokens);
-    this.importProcessor = new ImportProcessor(this.nameManager, tokens);
+  constructor(
+    readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor,
+    readonly nameManager: NameManager, readonly importProcessor: ImportProcessor
+  ) {
   }
 
   preprocess(): void {
     this.nameManager.preprocessNames(this.tokens.tokens);
-    this.interopRequireWildcardName = this.nameManager.claimFreeName('_interopRequireWildcard');
-    this.interopRequireDefaultName = this.nameManager.claimFreeName('_interopRequireDefault');
-    this.importProcessor.preprocessTokens(
-      this.interopRequireWildcardName, this.interopRequireDefaultName
-    );
+    this.importProcessor.preprocessTokens();
   }
 
   getPrefixCode(): string {
     let prefix = "'use strict';";
-    prefix += `
-      function ${this.interopRequireWildcardName}(obj) {
-        if (obj && obj.__esModule) {
-          return obj;
-        } else {
-          var newObj = {};
-          if (obj != null) {
-            for (var key in obj) {
-              if (Object.prototype.hasOwnProperty.call(obj, key))
-                newObj[key] = obj[key];
-              }
-            }
-          newObj.default = obj;
-          return newObj;
-        }
-      }`.replace(/\s+/g, ' ');
-    prefix += `
-      function ${this.interopRequireDefaultName}(obj) {
-        return obj && obj.__esModule ? obj : { default: obj };
-      }`.replace(/\s+/g, ' ');
+    prefix += this.importProcessor.getPrefixCode();
     if (this.hadExport) {
       prefix += 'Object.defineProperty(exports, "__esModule", {value: true});';
     }
@@ -67,7 +40,7 @@ export default class ImportTransformer implements Transformer {
       this.processExport();
       return true;
     }
-    if (this.tokens.matches(['name'])) {
+    if (this.tokens.matches(['name']) || this.tokens.matches(['jsxName'])) {
       return this.processIdentifier();
     }
     return false;

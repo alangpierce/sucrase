@@ -425,4 +425,18 @@ var _moduleName = require('moduleName');
       } exports.Subclass = Subclass;
     `);
   });
+
+  it('properly handles React.createElement created from JSX', () => {
+    assertResult(`
+      import React from 'react';
+      import Foo from './Foo';
+      
+      const elem = <Foo />;
+    `, `${PREFIX}
+      var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+      var _Foo = require('./Foo'); var _Foo2 = _interopRequireDefault(_Foo);
+      
+      const elem = _react2.default.createElement((0, _Foo2.default), null );
+    `);
+  });
 });

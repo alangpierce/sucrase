@@ -18,10 +18,41 @@ export class ImportProcessor {
   private importsToReplace: Map<string, string> = new Map();
   private identifierReplacements: Map<string, string> = new Map();
 
+  private interopRequireWildcardName: string;
+  private interopRequireDefaultName: string;
+
   constructor(readonly nameManager: NameManager, readonly tokens: TokenProcessor) {
   }
 
-  preprocessTokens(interopRequireWildcardName: string, interopRequireDefaultName: string) {
+  getPrefixCode() {
+    let prefix = '';
+    prefix += `
+      function ${this.interopRequireWildcardName}(obj) {
+        if (obj && obj.__esModule) {
+          return obj;
+        } else {
+          var newObj = {};
+          if (obj != null) {
+            for (var key in obj) {
+              if (Object.prototype.hasOwnProperty.call(obj, key))
+                newObj[key] = obj[key];
+              }
+            }
+          newObj.default = obj;
+          return newObj;
+        }
+      }`.replace(/\s+/g, ' ');
+    prefix += `
+      function ${this.interopRequireDefaultName}(obj) {
+        return obj && obj.__esModule ? obj : { default: obj };
+      }`.replace(/\s+/g, ' ');
+    return prefix;
+  }
+
+  preprocessTokens() {
+    this.interopRequireWildcardName = this.nameManager.claimFreeName('_interopRequireWildcard');
+    this.interopRequireDefaultName = this.nameManager.claimFreeName('_interopRequireDefault');
+
     for (let i = 0; i < this.tokens.tokens.length; i++) {
       if (this.tokens.matchesAtIndex(i, ['import']) &&
           !isMaybePropertyName(this.tokens, i)) {
@@ -40,10 +71,10 @@ export class ImportProcessor {
         let requireCode = `var ${primaryImportName} = require('${path}');`;
         if (wildcardNames.length > 0) {
           for (const wildcardName of wildcardNames) {
-            requireCode += ` var ${wildcardName} = ${interopRequireWildcardName}(${primaryImportName});`;
+            requireCode += ` var ${wildcardName} = ${this.interopRequireWildcardName}(${primaryImportName});`;
           }
         } else if (defaultNames.length > 0) {
-          requireCode += ` var ${secondaryImportName} = ${interopRequireDefaultName}(${primaryImportName});`;
+          requireCode += ` var ${secondaryImportName} = ${this.interopRequireDefaultName}(${primaryImportName});`;
         }
         this.importsToReplace.set(path, requireCode);
 

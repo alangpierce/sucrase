@@ -11,7 +11,7 @@ export type Token = {
   start: number;
   end: number;
   value: any;
-  contextName?: string;
+  contextName?: TokenContext;
 };
 
 export default class TokenProcessor {

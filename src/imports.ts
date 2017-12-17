@@ -106,6 +106,23 @@ export default class ImportTransformer implements Transformer {
     ) {
       return false;
     }
+
+    // Object methods identifiers can be identified similarly, and they also
+    // could have the async keyword before them.
+    if (
+      token.contextName === 'object' &&
+      nextToken && nextToken.type.label === '(' && lastToken && (
+        lastToken.type.label === ',' || lastToken.type.label === '{' ||
+        (lastToken.type.label === 'name' && lastToken.value === 'async')
+      )
+    ) {
+      return false;
+    }
+
+    // Identifiers within class bodies must be method names.
+    if (token.contextName === 'class') {
+      return false;
+    }
     const replacement = this.importProcessor.getIdentifierReplacement(token.value);
     if (!replacement) {
       return false;

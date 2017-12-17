@@ -501,4 +501,56 @@ module.exports = exports.default;
       exports. default = 4;
     `, ['imports', 'add-module-exports']);
   });
+
+  it('does not modify object keys matching import names', () => {
+    assertResult(`
+      import foo from './foo';
+      
+      const o1 = {
+        foo: 3,
+      };
+      const o2 = {
+        foo() {
+          return 4;
+        }
+      };
+      const o3 = {
+        async foo() {
+          return 5;
+        }
+      };
+      class C1 {
+        foo() {
+        }
+      }
+      class C2 {
+        async foo() {
+        }
+      }
+    `, `${PREFIX}
+      var _foo = require('./foo'); var _foo2 = _interopRequireDefault(_foo);
+      
+      const o1 = {
+        foo: 3,
+      };
+      const o2 = {
+        foo() {
+          return 4;
+        }
+      };
+      const o3 = {
+        async foo() {
+          return 5;
+        }
+      };
+      class C1 {
+        foo() {
+        }
+      }
+      class C2 {
+        async foo() {
+        }
+      }
+    `, ['imports', 'add-module-exports']);
+  });
 });

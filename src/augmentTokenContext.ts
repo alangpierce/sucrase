@@ -62,6 +62,7 @@ export default function augmentTokenContext(tokens: Array<Token>): void {
               advance();
               processToToken('}', 'block');
             }
+            continue;
           }
         } else if (
           token.type.label === '=>' ||
@@ -76,13 +77,36 @@ export default function augmentTokenContext(tokens: Array<Token>): void {
           if (tokens[index].type.label === '{') {
             advance();
             processToToken('}', 'block');
+            continue;
           }
         } else if (token.type.label === 'class') {
           pendingClass = true;
+          continue;
         }
       }
 
-      if (token.type.label === 'jsxTagStart') {
+      if (token.type.label === 'name') {
+        if (context === 'class' && tokens[index].type.label === '(') {
+          // Process class method.
+          advance();
+          processToToken(')', 'parens');
+          if (tokens[index].type.label === '{') {
+            advance();
+            processToToken('}', 'block');
+          }
+        } else if (
+          context === 'object' && tokens[index].type.label === '(' &&
+          (tokens[index - 2].type.label === ',' || tokens[index - 2].type.label === '{')
+        ) {
+          // Process object method.
+          advance();
+          processToToken(')', 'parens');
+          if (tokens[index].type.label === '{') {
+            advance();
+            processToToken('}', 'block');
+          }
+        }
+      } else if (token.type.label === 'jsxTagStart') {
         processToToken('jsxTagEnd', 'jsxTag');
         // Non-self-closing tag, so use jsxChild context for the body.
         if (tokens[index - 2].type.label !== '/') {

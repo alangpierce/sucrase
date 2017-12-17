@@ -551,6 +551,38 @@ module.exports = exports.default;
         async foo() {
         }
       }
-    `, ['imports', 'add-module-exports']);
+    `);
+  });
+
+  it('properly transforms function calls within object methods', () => {
+    assertResult(`
+      import {foo} from './foo';
+      
+      const o = {
+        f() {
+          foo(3);
+        }
+      }
+      
+      class C {
+        g() {
+          foo(4);
+        }
+      }
+    `, `${PREFIX}
+      var _foo = require('./foo');
+      
+      const o = {
+        f() {
+          (0, _foo.foo)(3);
+        }
+      }
+      
+      class C {
+        g() {
+          (0, _foo.foo)(4);
+        }
+      }
+    `);
   });
 });

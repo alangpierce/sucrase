@@ -279,7 +279,7 @@ export default class ImportTransformer implements Transformer {
         this.tokens.copyExpectedToken('}');
       } else {
         while (!this.tokens.matches(['{']) && !this.tokens.matches(['('])) {
-          this.tokens.copyToken();
+          this.rootTransformer.processToken();
         }
         if (this.tokens.matches(['('])) {
           this.tokens.copyExpectedToken('(');

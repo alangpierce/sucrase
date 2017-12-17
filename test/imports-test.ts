@@ -411,4 +411,18 @@ var _moduleName = require('moduleName');
       }
     `);
   });
+
+  it('allows importing a class used in an `extends` clause in an export', () => {
+    assertResult(`
+      import Superclass from './superclass';
+      
+      export class Subclass extends Superclass {
+      }
+    `, `${PREFIX}${ESMODULE_PREFIX}
+      var _superclass = require('./superclass'); var _superclass2 = _interopRequireDefault(_superclass);
+      
+       class Subclass extends (0, _superclass2.default) {
+      } exports.Subclass = Subclass;
+    `);
+  });
 });

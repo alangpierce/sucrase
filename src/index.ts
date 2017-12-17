@@ -87,4 +87,14 @@ export class RootTransformer {
       }
     }
   }
+
+  processToken() {
+    for (const transformer of this.transformers) {
+      const wasProcessed = transformer.process();
+      if (wasProcessed) {
+        return;
+      }
+    }
+    this.tokens.copyToken();
+  }
 }

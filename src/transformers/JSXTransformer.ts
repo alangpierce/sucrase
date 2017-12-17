@@ -1,7 +1,7 @@
-import { RootTransformer } from './index';
-import TokenProcessor from './tokens';
-import { Transformer } from './transformer';
-import { ImportProcessor } from './ImportProcessor';
+import { RootTransformer } from '../index';
+import TokenProcessor from '../TokenProcessor';
+import { Transformer } from './Transformer';
+import { ImportProcessor } from '../ImportProcessor';
 
 export interface IdentifierReplacer {
   getIdentifierReplacement(identifierName: string): string | null;

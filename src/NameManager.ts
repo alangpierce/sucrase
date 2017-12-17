@@ -1,4 +1,4 @@
-import { Token, default as TokenProcessor } from './tokens';
+import { Token, default as TokenProcessor } from './TokenProcessor';
 
 export class NameManager {
   private readonly usedNames: Set<string> = new Set();

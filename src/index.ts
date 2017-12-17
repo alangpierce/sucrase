@@ -1,8 +1,8 @@
 import {parse} from 'babylon';
-import JSXTransformer from './jsx';
-import TokenProcessor from './tokens';
-import { Transformer } from './transformer';
-import ImportTransformer from './imports';
+import JSXTransformer from './transformers/JSXTransformer';
+import TokenProcessor from './TokenProcessor';
+import { Transformer } from './transformers/Transformer';
+import ImportTransformer from './transformers/ImportTransformer';
 import augmentTokenContext from './augmentTokenContext';
 import { ImportProcessor } from './ImportProcessor';
 import { NameManager } from './NameManager';

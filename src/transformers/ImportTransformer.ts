@@ -1,9 +1,9 @@
-import { Transformer } from './transformer';
-import { RootTransformer } from './index';
-import TokenProcessor, { Token } from './tokens';
-import { ImportProcessor } from './ImportProcessor';
-import { NameManager } from './NameManager';
-import isMaybePropertyName from './util/isMaybePropertyName';
+import { Transformer } from './Transformer';
+import { RootTransformer } from '../index';
+import TokenProcessor, { Token } from '../TokenProcessor';
+import { ImportProcessor } from '../ImportProcessor';
+import { NameManager } from '../NameManager';
+import isMaybePropertyName from '../util/isMaybePropertyName';
 
 export default class ImportTransformer implements Transformer {
   private hadExport: boolean = false;

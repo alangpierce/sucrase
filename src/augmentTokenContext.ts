@@ -1,4 +1,4 @@
-import { Token, TokenContext } from './tokens';
+import { Token, TokenContext } from './TokenProcessor';
 
 /**
  * Scan the tokens and assign a "context" to each one. For example, we need to

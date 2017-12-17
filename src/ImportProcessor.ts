@@ -1,5 +1,5 @@
 import { NameManager } from './NameManager';
-import TokenProcessor from './tokens';
+import TokenProcessor from './TokenProcessor';
 import isMaybePropertyName from './util/isMaybePropertyName';
 
 type NamedImport = {

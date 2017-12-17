@@ -1,4 +1,4 @@
-import TokenProcessor from '../tokens';
+import TokenProcessor from '../TokenProcessor';
 
 /**
  * For an import or export statement, check if this might be actually a property

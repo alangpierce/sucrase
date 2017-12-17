@@ -127,6 +127,8 @@ export default function augmentTokenContext(tokens: Array<Token>): void {
         processToToken(']', 'brackets');
       } else if (token.type.label === '(') {
         processToToken(')', 'parens');
+      } else if (token.type.label === '${') {
+        processToToken('}', 'interpolatedExpression');
       }
     }
   }

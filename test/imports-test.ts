@@ -603,4 +603,30 @@ module.exports = exports.default;
       var _MyVars = require('./MyVars'); Object.keys(_MyVars).filter(key => key !== 'default' && key !== '__esModule').forEach(key => { Object.defineProperty(exports, key, {enumerable: true, get: () => _MyVars[key]}); });
     `);
   });
+
+  it('properly accounts for string interpolations when augmenting tokens', () => {
+    assertResult(`
+      import {foo} from 'things';
+
+      class C {
+        m1(id) {
+          return \`interpolated \${value}\`;
+        }
+        m2(id) {
+          foo();
+        }
+      }
+    `, `${PREFIX}
+      var _things = require('things');
+
+      class C {
+        m1(id) {
+          return \`interpolated \${value}\`;
+        }
+        m2(id) {
+          (0, _things.foo)();
+        }
+      }
+    `);
+  });
 });

@@ -1,6 +1,6 @@
 export type TokenContext =
   'block' | 'parens' | 'brackets' | 'object' | 'class' |
-  'jsxTag' | 'jsxChild' | 'jsxExpression';
+  'jsxTag' | 'jsxChild' | 'jsxExpression' | 'interpolatedExpression';
 
 export type TokenType = {
   label: string;

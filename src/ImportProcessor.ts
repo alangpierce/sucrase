@@ -11,6 +11,8 @@ type ImportInfo = {
   defaultNames: Array<string>;
   wildcardNames: Array<string>;
   namedImports: Array<NamedImport>;
+  namedExports: Array<NamedImport>;
+  hasStarExport: boolean;
 }
 
 export class ImportProcessor {
@@ -54,51 +56,76 @@ export class ImportProcessor {
     this.interopRequireDefaultName = this.nameManager.claimFreeName('_interopRequireDefault');
 
     for (let i = 0; i < this.tokens.tokens.length; i++) {
-      if (this.tokens.matchesAtIndex(i, ['import']) &&
-          !isMaybePropertyName(this.tokens, i)) {
+      if (isMaybePropertyName(this.tokens, i)) {
+        continue;
+      }
+
+      if (this.tokens.matchesAtIndex(i, ['import'])) {
         this.preprocessImportAtIndex(i);
       }
+      // export...from syntax is basically import syntax, so we handle it here as well.
+      if (this.tokens.matchesAtIndex(i, ['export', '{'])) {
+        this.preprocessNamedExportAtIndex(i);
+      }
+      if (this.tokens.matchesAtIndex(i, ['export', '*'])) {
+        this.preprocessStarExportAtIndex(i);
+      }
     }
+    this.generateImportReplacements();
+  }
 
-    for (const [path, {defaultNames, wildcardNames, namedImports}] of this.importInfoByPath.entries()) {
-      if (defaultNames.length === 0 && wildcardNames.length === 0 && namedImports.length === 0) {
+  private generateImportReplacements() {
+    for (const [path, importInfo] of this.importInfoByPath.entries()) {
+      const {defaultNames, wildcardNames, namedImports, namedExports, hasStarExport} = importInfo;
+
+      if (defaultNames.length === 0 && wildcardNames.length === 0 && namedImports.length === 0 && namedExports.length === 0 && !hasStarExport) {
+        // Import is never used, so don't even assign a name.
         this.importsToReplace.set(path, `require('${path}');`);
-      } else {
-        const primaryImportName = this.getFreeIdentifierForPath(path);
-        const secondaryImportName = wildcardNames.length > 0
-          ? wildcardNames[0]
-          : this.getFreeIdentifierForPath(path);
-        let requireCode = `var ${primaryImportName} = require('${path}');`;
-        if (wildcardNames.length > 0) {
-          for (const wildcardName of wildcardNames) {
-            requireCode += ` var ${wildcardName} = ${this.interopRequireWildcardName}(${primaryImportName});`;
-          }
-        } else if (defaultNames.length > 0) {
-          requireCode += ` var ${secondaryImportName} = ${this.interopRequireDefaultName}(${primaryImportName});`;
-        }
-        this.importsToReplace.set(path, requireCode);
+        continue;
+      }
 
-        for (const defaultName of defaultNames) {
-          this.identifierReplacements.set(defaultName, `${secondaryImportName}.default`);
+      const primaryImportName = this.getFreeIdentifierForPath(path);
+      const secondaryImportName = wildcardNames.length > 0
+        ? wildcardNames[0]
+        : this.getFreeIdentifierForPath(path);
+      let requireCode = `var ${primaryImportName} = require('${path}');`;
+      if (wildcardNames.length > 0) {
+        for (const wildcardName of wildcardNames) {
+          requireCode += ` var ${wildcardName} = ${this.interopRequireWildcardName}(${primaryImportName});`;
         }
-        for (const {importedName, localName} of namedImports) {
-          this.identifierReplacements.set(localName, `${primaryImportName}.${importedName}`);
-        }
+      } else if (defaultNames.length > 0) {
+        requireCode += ` var ${secondaryImportName} = ${this.interopRequireDefaultName}(${primaryImportName});`;
+      }
+
+      for (const {importedName, localName} of namedExports) {
+        requireCode += ` Object.defineProperty(exports, '${localName}', {enumerable: true, get: () => ${primaryImportName}.${importedName}});`;
+      }
+      if (hasStarExport) {
+        requireCode += ` Object.keys(${primaryImportName}).filter(key => key !== 'default' && key !== '__esModule').forEach(key => { Object.defineProperty(exports, key, {enumerable: true, get: () => ${primaryImportName}[key]}); });`;
+      }
+
+      this.importsToReplace.set(path, requireCode);
+
+      for (const defaultName of defaultNames) {
+        this.identifierReplacements.set(defaultName, `${secondaryImportName}.default`);
+      }
+      for (const {importedName, localName} of namedImports) {
+        this.identifierReplacements.set(localName, `${primaryImportName}.${importedName}`);
       }
     }
   }
 
-  getFreeIdentifierForPath(path: string): string {
+  private getFreeIdentifierForPath(path: string): string {
     const components = path.split('/');
     const lastComponent = components[components.length - 1];
     const baseName = lastComponent.replace(/\W/g, '');
     return this.nameManager.claimFreeName(`_${baseName}`);
   }
 
-  preprocessImportAtIndex(index: number) {
-    let defaultNames = [];
-    let wildcardNames = [];
-    let namedImports = [];
+  private preprocessImportAtIndex(index: number) {
+    let defaultNames: Array<string> = [];
+    let wildcardNames: Array<string> = [];
+    let namedImports: Array<NamedImport> = [];
 
     index++;
     if (this.tokens.matchesAtIndex(index, ['name'])) {
@@ -118,30 +145,7 @@ export class ImportProcessor {
 
     if (this.tokens.matchesAtIndex(index, ['{'])) {
       index++;
-      while (true) {
-        const importedName = this.tokens.tokens[index].value;
-        let localName;
-        index++;
-        if (this.tokens.matchesNameAtIndex(index, 'as')) {
-          index++;
-          localName = this.tokens.tokens[index].value;
-          index++;
-        } else {
-          localName = importedName;
-        }
-        namedImports.push({ importedName, localName });
-        if (this.tokens.matchesAtIndex(index, [',', '}'])) {
-          index += 2;
-          break;
-        } else if (this.tokens.matchesAtIndex(index, ['}'])) {
-          index++;
-          break;
-        } else if (this.tokens.matchesAtIndex(index, [','])) {
-          index++;
-        } else {
-          throw new Error('Unexpected token.');
-        }
-      }
+      ({newIndex: index, namedImports} = this.getNamedImports(index));
     }
 
     if (this.tokens.matchesNameAtIndex(index, 'from')) {
@@ -152,18 +156,97 @@ export class ImportProcessor {
       throw new Error('Expected string token at the end of import statement.');
     }
     const path = this.tokens.tokens[index].value;
-    let importInfo = this.importInfoByPath.get(path);
-    if (!importInfo) {
-      importInfo = {
-        defaultNames: [],
-        wildcardNames: [],
-        namedImports: [],
-      };
-      this.importInfoByPath.set(path, importInfo);
-    }
+    const importInfo = this.getImportInfo(path);
     importInfo.defaultNames.push(...defaultNames);
     importInfo.wildcardNames.push(...wildcardNames);
     importInfo.namedImports.push(...namedImports);
+  }
+
+  /**
+   * Walk this export statement just in case it's an export...from statement.
+   * If it is, combine it into the import info for that path. Otherwise, just
+   * bail out; it'll be handled later.
+   */
+  private preprocessNamedExportAtIndex(index: number) {
+    // export {
+    index += 2;
+    const {newIndex, namedImports} = this.getNamedImports(index);
+    index = newIndex;
+
+    if (this.tokens.matchesNameAtIndex(index, 'from')) {
+      index++;
+    } else {
+      // Not actually an export...from, so bail out.
+      return;
+    }
+
+    if (!this.tokens.matchesAtIndex(index, ['string'])) {
+      throw new Error('Expected string token at the end of import statement.');
+    }
+    const path = this.tokens.tokens[index].value;
+    const importInfo = this.getImportInfo(path);
+    importInfo.namedExports.push(...namedImports);
+  }
+
+  private preprocessStarExportAtIndex(index: number) {
+    // export * from
+    index += 3;
+    if (!this.tokens.matchesAtIndex(index, ['string'])) {
+      throw new Error('Expected string token at the end of star export statement.');
+    }
+    const path = this.tokens.tokens[index].value;
+    let importInfo = this.getImportInfo(path)
+    importInfo.hasStarExport = true;
+  }
+
+  private getNamedImports(index: number): {newIndex: number, namedImports: Array<NamedImport>} {
+    const namedImports = [];
+    while (true) {
+      const importedName = this.tokens.tokens[index].value;
+      let localName;
+      index++;
+      if (this.tokens.matchesNameAtIndex(index, 'as')) {
+        index++;
+        localName = this.tokens.tokens[index].value;
+        index++;
+      } else {
+        localName = importedName;
+      }
+      namedImports.push({ importedName, localName });
+      if (this.tokens.matchesAtIndex(index, [',', '}'])) {
+        index += 2;
+        break;
+      } else if (this.tokens.matchesAtIndex(index, ['}'])) {
+        index++;
+        break;
+      } else if (this.tokens.matchesAtIndex(index, [','])) {
+        index++;
+      } else {
+        throw new Error('Unexpected token.');
+      }
+    }
+    return {newIndex: index, namedImports};
+  }
+
+  /**
+   * Get a mutable import info object for this path, creating one if it doesn't
+   * exist yet.
+   */
+  private getImportInfo(path: string) {
+    const existingInfo = this.importInfoByPath.get(path);
+    if (existingInfo) {
+      return existingInfo;
+    } else {
+      const newInfo = {
+        defaultNames: [],
+        wildcardNames: [],
+        namedImports: [],
+        namedExports: [],
+        hasStarExport: false,
+      };
+      this.importInfoByPath.set(path, newInfo);
+      return newInfo;
+    }
   }
 
   /**

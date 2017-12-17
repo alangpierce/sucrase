@@ -165,6 +165,8 @@ export default class ImportTransformer implements Transformer {
       this.processExportClass();
     } else if (this.tokens.matches(['export', '{'])) {
       this.processExportBindings();
+    } else if (this.tokens.matches(['export', '*'])) {
+      this.processExportStar();
     } else {
       throw new Error('Unrecognized export syntax.');
     }
@@ -304,6 +306,12 @@ export default class ImportTransformer implements Transformer {
    * export {a, b as c};
    * into this:
    * exports.a = a; exports.c = b;
+   *
+   * OR
+   *
+   * Transform this:
+   * export {a, b as c} from './foo';
+   * into the pre-generated Object.defineProperty code from the ImportProcessor.
    */
   processExportBindings() {
     this.tokens.removeInitialToken();
@@ -337,8 +345,34 @@ export default class ImportTransformer implements Transformer {
       }
     }
 
-    this.tokens.appendCode(exportStatements.join(' '));
-    if (this.tokens.currentToken().type.label === ';') {
+    if (this.tokens.matchesName('from')) {
+      // This is an export...from, so throw away the normal named export code
+      // and use the Object.defineProperty code from ImportProcessor.
+      this.tokens.removeToken();
+      const path = this.tokens.currentToken().value;
+      this.tokens.replaceTokenTrimmingLeftWhitespace(
+        this.importProcessor.claimImportCode(path)
+      );
+    } else {
+      // This is a normal named export, so use that.
+      this.tokens.appendCode(exportStatements.join(' '));
+    }
+
+    if (this.tokens.matches([';'])) {
+      this.tokens.removeToken();
+    }
+  }
+
+  processExportStar() {
+    this.tokens.removeInitialToken();
+    while (!this.tokens.matches(['string'])) {
+      this.tokens.removeToken();
+    }
+    const path = this.tokens.currentToken().value;
+    this.tokens.replaceTokenTrimmingLeftWhitespace(
+      this.importProcessor.claimImportCode(path)
+    );
+    if (this.tokens.matches([';'])) {
       this.tokens.removeToken();
     }
   }

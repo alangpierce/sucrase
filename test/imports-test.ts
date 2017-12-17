@@ -585,4 +585,22 @@ module.exports = exports.default;
       }
     `);
   });
+
+  it('supports basic export...from syntax', () => {
+    assertResult(`
+      export {x} from './MyVars';
+      export {a as b, c as d} from './MyOtherVars';
+    `, `${PREFIX}${ESMODULE_PREFIX}
+      var _MyVars = require('./MyVars'); Object.defineProperty(exports, 'x', {enumerable: true, get: () => _MyVars.x});
+      var _MyOtherVars = require('./MyOtherVars'); Object.defineProperty(exports, 'b', {enumerable: true, get: () => _MyOtherVars.a}); Object.defineProperty(exports, 'd', {enumerable: true, get: () => _MyOtherVars.c});
+    `);
+  });
+
+  it('supports export * from syntax', () => {
+    assertResult(`
+      export * from './MyVars';
+    `, `${PREFIX}${ESMODULE_PREFIX}
+      var _MyVars = require('./MyVars'); Object.keys(_MyVars).filter(key => key !== 'default' && key !== '__esModule').forEach(key => { Object.defineProperty(exports, key, {enumerable: true, get: () => _MyVars[key]}); });
+    `);
+  });
 });

@@ -1,4 +1,6 @@
-export type TokenContext = 'block' | 'parens' | 'brackets' | 'object' | 'class';
+export type TokenContext =
+  'block' | 'parens' | 'brackets' | 'object' | 'class' |
+  'jsxTag' | 'jsxChild' | 'jsxExpression';
 
 export type TokenType = {
   label: string;

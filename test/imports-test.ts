@@ -439,4 +439,46 @@ var _moduleName = require('moduleName');
       const elem = _react2.default.createElement((0, _Foo2.default), null );
     `);
   });
+
+  it('properly transforms imported JSX props', () => {
+    assertResult(`
+      import React from 'react';
+      import value from './value';
+      
+      const elem = <div a={value} />;
+    `, `${PREFIX}
+      var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+      var _value = require('./value'); var _value2 = _interopRequireDefault(_value);
+      
+      const elem = _react2.default.createElement('div', { a: (0, _value2.default),} );
+    `);
+  });
+
+  it('properly transforms an imported JSX element', () => {
+    assertResult(`
+      import React from 'react';
+      import value from './value';
+      
+      const elem = (
+        <div>
+          <span>
+            <span />
+            {value}
+          </span>        
+        </div>
+      );
+    `, `${PREFIX}
+      var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+      var _value = require('./value'); var _value2 = _interopRequireDefault(_value);
+      
+      const elem = (
+        _react2.default.createElement('div', null
+          , _react2.default.createElement('span', null
+            , _react2.default.createElement('span', null )
+            , (0, _value2.default)
+          )
+        )
+      );
+    `);
+  });
 });

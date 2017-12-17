@@ -8,7 +8,21 @@ import { Token, TokenContext } from './tokens';
 export default function augmentTokenContext(tokens: Array<Token>): void {
   let index = 0;
 
-  function processRegion(closingTokenLabel: string, context: TokenContext) {
+  function processToToken(closingTokenLabel: string, context: TokenContext) {
+    processRegion([closingTokenLabel], context);
+  }
+
+  function matchesTokens(labels: Array<string>) {
+    for (let i = 0; i < labels.length; i++) {
+      let newIndex = index + i;
+      if (newIndex >= tokens.length || tokens[newIndex].type.label !== labels[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function processRegion(closingTokenLabels: Array<string>, context: TokenContext) {
     function advance() {
       if (index < tokens.length) {
         tokens[index].contextName = context;
@@ -17,7 +31,13 @@ export default function augmentTokenContext(tokens: Array<Token>): void {
     }
 
     let pendingClass = false;
-    while (index < tokens.length && tokens[index].type.label !== closingTokenLabel) {
+    while (index < tokens.length) {
+      if (matchesTokens(closingTokenLabels)) {
+        for (let i = 0; i < closingTokenLabels.length; i++) {
+          advance();
+        }
+        break;
+      }
       const lastToken = tokens[index - 1];
       const token = tokens[index];
       advance();
@@ -37,10 +57,10 @@ export default function augmentTokenContext(tokens: Array<Token>): void {
           }
           if (tokens[index].type.label === '(') {
             advance();
-            processRegion(')', 'parens');
+            processToToken(')', 'parens');
             if (tokens[index].type.label === '{') {
               advance();
-              processRegion('}', 'block');
+              processToToken('}', 'block');
             }
           }
         } else if (
@@ -55,27 +75,36 @@ export default function augmentTokenContext(tokens: Array<Token>): void {
         ) {
           if (tokens[index].type.label === '{') {
             advance();
-            processRegion('}', 'block');
+            processToToken('}', 'block');
           }
         } else if (token.type.label === 'class') {
           pendingClass = true;
         }
       }
 
-      if (token.type.label === '{') {
+      if (token.type.label === 'jsxTagStart') {
+        processToToken('jsxTagEnd', 'jsxTag');
+        // Non-self-closing tag, so use jsxChild context for the body.
+        if (tokens[index - 2].type.label !== '/') {
+          // All / tokens will be in JSX tags.
+          processRegion(['jsxTagStart', '/'], 'jsxChild');
+          processToToken('jsxTagEnd', 'jsxTag');
+        }
+      } else if (token.type.label === '{') {
         if (pendingClass && lastToken.type.label !== 'extends') {
-          processRegion('}', 'class');
+          processToToken('}', 'class');
           pendingClass = false;
+        } else if (context === 'jsxTag' || context === 'jsxChild') {
+          processToToken('}', 'jsxExpression');
         } else {
-          processRegion('}', 'object');
+          processToToken('}', 'object');
         }
       } else if (token.type.label === '[') {
-        processRegion(']', 'brackets');
+        processToToken(']', 'brackets');
       } else if (token.type.label === '(') {
-        processRegion(')', 'parens');
+        processToToken(')', 'parens');
       }
     }
-    advance();
   }
-  processRegion('NONE', 'block');
+  processToToken('NONE', 'block');
 }

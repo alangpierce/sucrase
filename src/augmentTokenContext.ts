@@ -23,9 +23,11 @@ export default function augmentTokenContext(tokens: Array<Token>): void {
   }
 
   function processRegion(closingTokenLabels: Array<string>, context: TokenContext) {
+    const contextStartIndex = index;
     function advance() {
       if (index < tokens.length) {
         tokens[index].contextName = context;
+        tokens[index].contextStartIndex = contextStartIndex;
       }
       index++;
     }

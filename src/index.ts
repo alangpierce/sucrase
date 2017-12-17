@@ -6,10 +6,11 @@ import ImportTransformer from './transformers/ImportTransformer';
 import augmentTokenContext from './augmentTokenContext';
 import { ImportProcessor } from './ImportProcessor';
 import { NameManager } from './NameManager';
+import ReactDisplayNameTransformer from './transformers/ReactDisplayNameTransformer';
 
 const DEFAULT_BABYLON_PLUGINS = ['jsx', 'objectRestSpread'];
 
-export type Transform = 'jsx' | 'imports' | 'add-module-exports';
+export type Transform = 'jsx' | 'imports' | 'add-module-exports' | 'react-display-name';
 
 export type Options = {
   transforms?: Array<Transform>,
@@ -40,15 +41,20 @@ export class RootTransformer {
     const importProcessor = transforms.includes('imports')
       ? new ImportProcessor(nameManager, tokens)
       : null;
+    const identifierReplacer = importProcessor
+      ? importProcessor
+      : {getIdentifierReplacement: () => null};
+
     if (transforms.includes('jsx')) {
-      if (importProcessor) {
-        this.transformers.push(new JSXTransformer(this, tokens, importProcessor));
-      } else {
-        this.transformers.push(
-          new JSXTransformer(this, tokens, {getIdentifierReplacement: () => null})
-        );
-      }
+      this.transformers.push(new JSXTransformer(this, tokens, identifierReplacer));
     }
+
+    // react-display-name must come before imports since otherwise imports will
+    // claim a normal `React` name token.
+    if (transforms.includes('react-display-name')) {
+      this.transformers.push(new ReactDisplayNameTransformer(this, tokens, identifierReplacer));
+    }
+
     if (transforms.includes('imports')) {
       const shouldAddModuleExports = transforms.includes('add-module-exports');
       this.transformers.push(

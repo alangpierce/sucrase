@@ -1,11 +1,7 @@
 import { RootTransformer } from '../index';
 import TokenProcessor from '../TokenProcessor';
 import { Transformer } from './Transformer';
-import { ImportProcessor } from '../ImportProcessor';
-
-export interface IdentifierReplacer {
-  getIdentifierReplacement(identifierName: string): string | null;
-}
+import IdentifierReplacer from './IdentifierReplacer';
 
 export default class JSXTransformer implements Transformer {
   constructor(readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor, readonly identifierReplacer: IdentifierReplacer) {

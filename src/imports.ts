@@ -7,10 +7,13 @@ import isMaybePropertyName from './util/isMaybePropertyName';
 
 export default class ImportTransformer implements Transformer {
   private hadExport: boolean = false;
+  private hadNamedExport: boolean = false;
+  private hadDefaultExport: boolean = false;
 
   constructor(
     readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor,
-    readonly nameManager: NameManager, readonly importProcessor: ImportProcessor
+    readonly nameManager: NameManager, readonly importProcessor: ImportProcessor,
+    readonly shouldAddModuleExports: boolean
   ) {
   }
 
@@ -26,6 +29,13 @@ export default class ImportTransformer implements Transformer {
       prefix += 'Object.defineProperty(exports, "__esModule", {value: true});';
     }
     return prefix;
+  }
+
+  getSuffixCode(): string {
+    if (this.shouldAddModuleExports && this.hadDefaultExport && !this.hadNamedExport) {
+      return '\nmodule.exports = exports.default;\n';
+    }
+    return '';
   }
 
   process(): boolean {
@@ -119,7 +129,11 @@ export default class ImportTransformer implements Transformer {
   processExport() {
     if (this.tokens.matches(['export', 'default'])) {
       this.processExportDefault();
-    } else if (
+      this.hadDefaultExport = true;
+      return;
+    }
+    this.hadNamedExport = true;
+    if (
       this.tokens.matches(['export', 'var']) ||
       this.tokens.matches(['export', 'let']) ||
       this.tokens.matches(['export', 'const'])

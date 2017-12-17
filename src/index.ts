@@ -9,7 +9,7 @@ import { NameManager } from './NameManager';
 
 const DEFAULT_BABYLON_PLUGINS = ['jsx', 'objectRestSpread'];
 
-export type Transform = 'jsx' | 'imports';
+export type Transform = 'jsx' | 'imports' | 'add-module-exports';
 
 export type Options = {
   transforms?: Array<Transform>,
@@ -50,7 +50,12 @@ export class RootTransformer {
       }
     }
     if (transforms.includes('imports')) {
-      this.transformers.push(new ImportTransformer(this, tokens, nameManager, importProcessor!));
+      const shouldAddModuleExports = transforms.includes('add-module-exports');
+      this.transformers.push(
+        new ImportTransformer(
+          this, tokens, nameManager, importProcessor!, shouldAddModuleExports
+        )
+      );
     }
   }
 
@@ -64,7 +69,11 @@ export class RootTransformer {
     for (const transformer of this.transformers) {
       prefix += transformer.getPrefixCode();
     }
-    return prefix + this.tokens.finish();
+    let suffix = '';
+    for (const transformer of this.transformers) {
+      suffix += transformer.getSuffixCode();
+    }
+    return prefix + this.tokens.finish() + suffix;
   }
 
   processBalancedCode() {

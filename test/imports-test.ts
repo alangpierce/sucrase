@@ -481,4 +481,24 @@ var _moduleName = require('moduleName');
       );
     `);
   });
+
+  it('adds module exports suffix when requested', () => {
+    assertResult(`
+      export default 3;
+    `, `${PREFIX}${ESMODULE_PREFIX}
+      exports. default = 3;
+    
+module.exports = exports.default;
+`, ['imports', 'add-module-exports']);
+  });
+
+  it('does not add module exports suffix when there is a named export', () => {
+    assertResult(`
+      export const x = 1;
+      export default 4;
+    `, `${PREFIX}${ESMODULE_PREFIX}
+       const x = exports.x = 1;
+      exports. default = 4;
+    `, ['imports', 'add-module-exports']);
+  });
 });

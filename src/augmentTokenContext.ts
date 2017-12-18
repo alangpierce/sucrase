@@ -84,6 +84,13 @@ export default function augmentTokenContext(tokens: Array<Token>): void {
         } else if (token.type.label === 'class') {
           pendingClass = true;
           continue;
+        } else if (token.type.label === 'default') {
+          if (tokens[index].type.label === ':' && tokens[index + 1].type.label === '{') {
+            advance();
+            advance();
+            processToToken('}', 'block');
+            continue;
+          }
         }
       }
 
@@ -107,6 +114,12 @@ export default function augmentTokenContext(tokens: Array<Token>): void {
             advance();
             processToToken('}', 'block');
           }
+        }
+      } else if (token.type.label === 'case') {
+        processToToken(':', 'switchCaseCondition');
+        if (tokens[index].type.label === '{') {
+          advance();
+          processToToken('}', 'block');
         }
       } else if (token.type.label === 'jsxTagStart') {
         processToToken('jsxTagEnd', 'jsxTag');

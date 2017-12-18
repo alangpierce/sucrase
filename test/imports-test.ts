@@ -634,4 +634,60 @@ module.exports = exports.default;
       foo = exports.bar = 4;
     `);
   });
+
+  it('handles a top-level block with an imported value in it', () => {
+    assertResult(`
+      import {a} from 'a';
+      
+      {
+        a();
+      }
+    `, `${PREFIX}
+      var _a = require('a');
+      
+      {
+        (0, _a.a)();
+      }
+    `);
+  });
+
+  it('handles a switch case block with an imported value in it', () => {
+    assertResult(`
+      import {a} from 'a';
+      
+      switch (foo) {
+        case 1: {
+          a();
+        }
+      }
+    `, `${PREFIX}
+      var _a = require('a');
+      
+      switch (foo) {
+        case 1: {
+          (0, _a.a)();
+        }
+      }
+    `);
+  });
+
+  it('handles a switch default block with an imported value in it', () => {
+    assertResult(`
+      import {a} from 'a';
+      
+      switch (foo) {
+        default: {
+          a();
+        }
+      }
+    `, `${PREFIX}
+      var _a = require('a');
+      
+      switch (foo) {
+        default: {
+          (0, _a.a)();
+        }
+      }
+    `);
+  });
 });

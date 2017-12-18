@@ -34,6 +34,7 @@
     "@types/babel-core": "^6.25.2",
     "@types/mocha": "^2.2.43",
     "babel-core": "^6.26.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.0",
     "babel-preset-react": "^6.24.1",
     "buble": "^0.16.0",
     "mocha": "^3.5.3",

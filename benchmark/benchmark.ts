@@ -10,19 +10,26 @@ import * as TypeScript from 'typescript';
 function main(): void {
   console.log('Simulating transpilation of 100,000 lines of code:');
   const code = fs.readFileSync('./benchmark/sample.js').toString();
-  runBenchmark('Sucrase', () => sucrase.transform(code));
-  runBenchmark('Buble', () =>
+  runBenchmark('Sucrase', () => sucrase.transform(
+    code,
+    {transforms: ['jsx', 'imports', 'add-module-exports', 'react-display-name']})
+  );
+  runBenchmark('Buble (JSX, no import transform)', () =>
     buble.transform(code, {transforms: {modules: false}})
   );
   runBenchmark('TypeScript', () =>
     TypeScript.transpileModule(code, {
       compilerOptions: {
+        module: TypeScript.ModuleKind.CommonJS,
         jsx: TypeScript.JsxEmit.React,
         target: TypeScript.ScriptTarget.ESNext
       }
     })
   );
-  runBenchmark('Babel', () => babel.transform(code, {presets: ['react']}));
+  runBenchmark('Babel', () => babel.transform(
+    code,
+    {presets: ['react'], plugins: ['transform-es2015-modules-commonjs']})
+  );
 }
 
 function runBenchmark(name: string, runTrial: () => void): void {

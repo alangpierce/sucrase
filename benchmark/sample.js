@@ -10,7 +10,7 @@ import C from './C';
 import D from './D';
 import E from './E';
 
-const Sample = React.createApp({
+const Sample = React.createClass({
   render0() {
     return (
       <A>
@@ -1000,7 +1000,6 @@ const Sample = React.createApp({
       </A>
     );
   },
-
 
   render() {
     return this.render0();

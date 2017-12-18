@@ -139,7 +139,7 @@ describe('transform imports', () => {
       let a = 1, b = 2;
       export {a, b as c};
     `, `${PREFIX}${ESMODULE_PREFIX}
-      let a = 1, b = 2;
+      let a = 1, b = exports.c = 2;
       exports.a = a; exports.c = b;
     `);
   });
@@ -152,7 +152,7 @@ describe('transform imports', () => {
         b,
       };
     `, `${PREFIX}${ESMODULE_PREFIX}
-      let a = 1, b = 2;
+      let a = 1, b = exports.b = 2;
       
 
 
@@ -620,6 +620,18 @@ module.exports = exports.default;
           (0, _things.foo)();
         }
       }
+    `);
+  });
+
+  it('updates exported bindings for simple identifier assignments', () => {
+    assertResult(`
+      let foo = 3;
+      export {foo as bar};
+      foo = 4;
+    `, `${PREFIX}${ESMODULE_PREFIX}
+      let foo = 3;
+      exports.bar = foo;
+      foo = exports.bar = 4;
     `);
   });
 });

@@ -53,6 +53,9 @@ export default class ImportTransformer implements Transformer {
     if (this.tokens.matches(['name']) || this.tokens.matches(['jsxName'])) {
       return this.processIdentifier();
     }
+    if (this.tokens.matches(['='])) {
+      return this.processAssignment();
+    }
     return false;
   }
 
@@ -65,7 +68,7 @@ export default class ImportTransformer implements Transformer {
    * The import code was already generated in the import preprocessing step, so
    * we just need to look it up.
    */
-  processImport() {
+  private processImport() {
     this.tokens.removeInitialToken();
     while (!this.tokens.matches(['string'])) {
       this.tokens.removeToken();
@@ -79,7 +82,7 @@ export default class ImportTransformer implements Transformer {
     }
   }
 
-  processIdentifier(): boolean {
+  private processIdentifier(): boolean {
     const token = this.tokens.currentToken();
     const lastToken = this.tokens.tokens[this.tokens.currentIndex() - 1];
     const nextToken = this.tokens.tokens[this.tokens.currentIndex() + 1];
@@ -172,7 +175,36 @@ export default class ImportTransformer implements Transformer {
     }
   }
 
-  processExportDefault() {
+  private processAssignment(): boolean {
+    const index = this.tokens.currentIndex();
+    const identifierToken = this.tokens.tokens[index - 1];
+    if (identifierToken.type.label !== 'name') {
+      return false;
+    }
+    if (this.tokens.matchesAtIndex(index - 2, ['.'])) {
+      return false;
+    }
+    if (
+      index - 2 >= 0 &&
+      ['var', 'let', 'const'].includes(
+        this.tokens.tokens[index - 2].type.label
+      )
+    ) {
+      // Declarations don't need an extra assignment. This doesn't avoid the
+      // assignment for comma-separated declarations, but it's still correct
+      // since the assignment is just redundant.
+      return false;
+    }
+    const exportedName = this.importProcessor.resolveExportBinding(identifierToken.value);
+    if (!exportedName) {
+      return false;
+    }
+    this.tokens.copyToken();
+    this.tokens.appendCode(` exports.${exportedName} =`);
+    return true;
+  }
+
+  private processExportDefault() {
     if (
       this.tokens.matches(['export', 'default', 'function', 'name']) ||
       this.tokens.matches(['export', 'default', 'name', 'function', 'name'])
@@ -201,7 +233,7 @@ export default class ImportTransformer implements Transformer {
    * into this:
    * const x = exports.x = 1;
    */
-  processExportVar() {
+  private processExportVar() {
     this.tokens.replaceToken('');
     this.tokens.copyToken();
     if (!this.tokens.matches(['name'])) {
@@ -218,7 +250,7 @@ export default class ImportTransformer implements Transformer {
    * into this:
    * function foo() {} exports.foo = foo;
    */
-  processExportFunction() {
+  private processExportFunction() {
     this.tokens.replaceToken('');
     const name = this.processNamedFunction();
     this.tokens.appendCode(` exports.${name} = ${name};`);
@@ -227,7 +259,7 @@ export default class ImportTransformer implements Transformer {
   /**
    * Skip past a function with a name and return that name.
    */
-  processNamedFunction(): string {
+  private processNamedFunction(): string {
     if (this.tokens.matches(['function'])) {
       this.tokens.copyToken();
     } else if (this.tokens.matches(['name', 'function'])) {
@@ -257,7 +289,7 @@ export default class ImportTransformer implements Transformer {
    * into this:
    * class A {} exports.A = A;
    */
-  processExportClass() {
+  private processExportClass() {
     this.tokens.replaceToken('');
     const name = this.processNamedClass();
     this.tokens.appendCode(` exports.${name} = ${name};`);
@@ -266,7 +298,7 @@ export default class ImportTransformer implements Transformer {
   /**
    * Skip past a class with a name and return that name.
    */
-  processNamedClass(): string {
+  private processNamedClass(): string {
     this.tokens.copyExpectedToken('class');
     if (!this.tokens.matches(['name'])) {
       throw new Error('Expected identifier for exported class name.');
@@ -313,7 +345,7 @@ export default class ImportTransformer implements Transformer {
    * export {a, b as c} from './foo';
    * into the pre-generated Object.defineProperty code from the ImportProcessor.
    */
-  processExportBindings() {
+  private processExportBindings() {
     this.tokens.removeInitialToken();
     this.tokens.removeToken();
 
@@ -363,7 +395,7 @@ export default class ImportTransformer implements Transformer {
     }
   }
 
-  processExportStar() {
+  private processExportStar() {
     this.tokens.removeInitialToken();
     while (!this.tokens.matches(['string'])) {
       this.tokens.removeToken();

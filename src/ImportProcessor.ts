@@ -15,10 +15,15 @@ type ImportInfo = {
   hasStarExport: boolean;
 }
 
+/**
+ * Class responsible for preprocessing and bookkeeping import and export
+ * declarations within the file.
+ */
 export class ImportProcessor {
   private importInfoByPath: Map<string, ImportInfo> = new Map();
   private importsToReplace: Map<string, string> = new Map();
   private identifierReplacements: Map<string, string> = new Map();
+  private exportBindingsByLocalName: Map<string, string> = new Map();
 
   private interopRequireWildcardName: string;
   private interopRequireDefaultName: string;
@@ -63,12 +68,8 @@ export class ImportProcessor {
       if (this.tokens.matchesAtIndex(i, ['import'])) {
         this.preprocessImportAtIndex(i);
       }
-      // export...from syntax is basically import syntax, so we handle it here as well.
-      if (this.tokens.matchesAtIndex(i, ['export', '{'])) {
-        this.preprocessNamedExportAtIndex(i);
-      }
-      if (this.tokens.matchesAtIndex(i, ['export', '*'])) {
-        this.preprocessStarExportAtIndex(i);
+      if (this.tokens.matchesAtIndex(i, ['export'])) {
+        this.preprocessExportAtIndex(i);
       }
     }
     this.generateImportReplacements();
@@ -162,6 +163,28 @@ export class ImportProcessor {
     importInfo.namedImports.push(...namedImports);
   }
 
+  private preprocessExportAtIndex(index: number) {
+    if (
+      this.tokens.matchesAtIndex(index, ['export', 'var']) ||
+      this.tokens.matchesAtIndex(index, ['export', 'let']) ||
+      this.tokens.matchesAtIndex(index, ['export', 'const']) ||
+      this.tokens.matchesAtIndex(index, ['export', 'function']) ||
+      this.tokens.matchesAtIndex(index, ['export', 'class'])
+    ) {
+      const exportName = this.tokens.tokens[index + 2].value;
+      this.exportBindingsByLocalName.set(exportName, exportName);
+    } else if (
+      this.tokens.matchesAtIndex(index, ['export', 'name', 'function'])
+    ) {
+      const exportName = this.tokens.tokens[index + 3].value;
+      this.exportBindingsByLocalName.set(exportName, exportName);
+    } else if (this.tokens.matchesAtIndex(index, ['export', '{'])) {
+      this.preprocessNamedExportAtIndex(index);
+    } else if (this.tokens.matchesAtIndex(index, ['export', '*'])) {
+      this.preprocessExportStarAtIndex(index);
+    }
+  }
+
   /**
    * Walk this export statement just in case it's an export...from statement.
    * If it is, combine it into the import info for that path. Otherwise, just
@@ -176,7 +199,10 @@ export class ImportProcessor {
     if (this.tokens.matchesNameAtIndex(index, 'from')) {
       index++;
     } else {
-      // Not actually an export...from, so bail out.
+      // Reinterpret "a as b" to be local/exported rather than imported/local.
+      for (const {importedName: localName, localName: exportedName} of namedImports) {
+        this.exportBindingsByLocalName.set(localName, exportedName);
+      }
       return;
     }
 
@@ -188,7 +214,7 @@ export class ImportProcessor {
     importInfo.namedExports.push(...namedImports);
   }
 
-  private preprocessStarExportAtIndex(index: number) {
+  private preprocessExportStarAtIndex(index: number) {
     // export * from
     index += 3;
     if (!this.tokens.matchesAtIndex(index, ['string'])) {
@@ -261,5 +287,9 @@ export class ImportProcessor {
 
   getIdentifierReplacement(identifierName: string): string | null {
     return this.identifierReplacements.get(identifierName) || null;
+  }
+
+  resolveExportBinding(assignedName: string): string | null {
+    return this.exportBindingsByLocalName.get(assignedName) || null;
   }
 }

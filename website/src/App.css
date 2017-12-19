@@ -1,5 +1,5 @@
 /* Make fullscreen. */
-html, body, #root, .App {
+html, body, #root {
   height: 100%;
 }
 
@@ -8,27 +8,65 @@ body {
 }
 
 .App {
+  /* Hack to avoid a horizontal scroll bar. */
+  height: calc(100% - 8px);
   display: flex;
   flex-direction: column;
-}
-
-.App-header {
-  background-color: #222;
-  height: 60px;
-  padding: 20px;
-  color: white;
+  align-items: center;
 }
 
 .App-title {
-  font-size: 1.5em;
+  font-size: 2em;
+  color: white;
+  font-weight: bold;
+  padding: 8px;
+}
+
+.App-subtitle {
+  font-size: 1.2em;
+  color: white;
+}
+
+.App-link {
+  color: #CCCCCC;
+}
+
+.App-options {
+  display:flex;
+  flex-wrap: wrap;
+  align-items: center;
+  color: white;
 }
 
 .App-intro {
   font-size: large;
 }
 
-.App-optionBox {
-  margin-right: 20px;
+.OptionBox {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  border: 1px solid white;
+  border-radius: 6px;
+  margin: 10px;
+  padding: 4px;
+  background-color: #333333;
+}
+
+.OptionBox-title {
+  font-size: 1.2em;
+  padding: 6px;
+}
+
+.OptionBox-label {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+.OptionBox-checkbox {
+  margin-right: 4px;
 }
 
 .Editors {
@@ -49,8 +87,7 @@ body {
    * the Monaco layout code will adjust to the container size.
    */
   overflow-x: hidden;
-  margin-left: 12px;
-  margin-right: 12px;
+  margin: 8px;
 }
 
 .Editor-label {
@@ -60,5 +97,5 @@ body {
 }
 
 .Editor-container {
-  flex: 1;
+  height: 100%;
 }

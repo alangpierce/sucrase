@@ -1,54 +1,57 @@
 import React, { Component } from 'react';
 import './App.css';
-import * as Sucrase from 'sucrase';
 import * as babylon from 'babylon';
 
+import {TRANSFORMS, INITIAL_CODE} from './Constants';
 import Editor from './Editor';
 import formatTokens from './formatTokens';
 import OptionBox from './OptionBox';
-
-const INITIAL_CODE = `\
-// Try typing or pasting some code into the left editor!
-import React, { Component } from 'react';
-
-class App extends Component {
-  render() {
-    return <span>Hello, world!</span>;
-  }
-}
-
-const OtherComponent = React.createClass({
-  render() {
-    return null;
-  }
-});
-
-export default App;
-`;
-
-const TRANSFORMS = [
-  {name: 'jsx', babelName: 'transform-react-jsx'},
-  {name: 'imports', babelName: 'transform-es2015-modules-commonjs'},
-  {name: 'react-display-name', babelName: 'transform-react-display-name'},
-  {name: 'add-module-exports', babelName: 'add-module-exports'},
-];
+import * as WorkerClient from './WorkerClient';
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       code: INITIAL_CODE,
-      compareWithBabel: false,
+      compareWithBabel: true,
       showTokens: false,
       // Object with a true value for any selected transform keys.
       selectedTransforms: {
         jsx: true,
         imports: true,
       },
+      sucraseCode: '',
+      sucraseTimeMs: null,
+      babelCode: '',
+      babelTimeMs: null,
     };
     this.editors = {};
     this._handleCodeChange = this._handleCodeChange.bind(this);
     this._toggleCompareWithBabel = this._toggleCompareWithBabel.bind(this);
+  }
+
+  componentDidMount() {
+    WorkerClient.subscribe(stateUpdate => this.setState(stateUpdate));
+    this.postConfigToWorker();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      this.state.compareWithBabel !== prevState.compareWithBabel ||
+      this.state.code !== prevState.code ||
+      this.state.selectedTransforms !== prevState.selectedTransforms
+    ) {
+      this.postConfigToWorker();
+    }
+  }
+
+  postConfigToWorker() {
+    this.setState({sucraseTimeMs: 'LOADING', babelTimeMs: 'LOADING'});
+    WorkerClient.updateConfig({
+      compareWithBabel: this.state.compareWithBabel,
+      code: this.state.code,
+      selectedTransforms: this.state.selectedTransforms,
+    });
   }
 
   _handleCodeChange(newCode) {
@@ -65,44 +68,6 @@ class App extends Component {
     this.setState({showTokens: !this.state.showTokens});
   };
 
-  _getCodeAndTimings() {
-    let sucraseCode = '';
-    let sucraseTimeMs = null;
-    let babelCode = '';
-    let babelTimeMs = null;
-    try {
-      const sucraseTransforms = TRANSFORMS
-        .map(({name}) => name)
-        .filter(name => this.state.selectedTransforms[name]);
-      const start = performance.now();
-      sucraseCode = Sucrase.transform(this.state.code, {transforms: sucraseTransforms});
-      sucraseTimeMs = performance.now() - start;
-    } catch (e) {
-      sucraseCode = e.message;
-    }
-    if (this.state.compareWithBabel) {
-      try {
-        let babelPlugins = TRANSFORMS
-          .filter(({name}) => this.state.selectedTransforms[name])
-          .map(({babelName}) => babelName);
-        if (babelPlugins.includes('add-module-exports')) {
-          babelPlugins = [
-            'add-module-exports',
-            ...babelPlugins.filter(p => p !== 'add-module-exports')
-          ];
-        }
-        const start = performance.now();
-        babelCode = window.Babel.transform(this.state.code, {
-          plugins: babelPlugins,
-        }).code;
-        babelTimeMs = performance.now() - start;
-      } catch (e) {
-        babelCode = e.message;
-      }
-    }
-    return {sucraseCode, sucraseTimeMs, babelCode, babelTimeMs};
-  }
-
   _getTokens() {
     try {
       const ast = babylon.parse(
@@ -116,7 +81,7 @@ class App extends Component {
   }
 
   render() {
-    const {sucraseCode, sucraseTimeMs, babelCode, babelTimeMs} = this._getCodeAndTimings();
+    const {sucraseCode, sucraseTimeMs, babelCode, babelTimeMs} = this.state;
     return (
       <div className="App">
         <span className="App-title">Sucrase</span>

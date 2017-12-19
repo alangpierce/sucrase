@@ -32,9 +32,7 @@ body {
 }
 
 .App-options {
-  display:flex;
-  flex-wrap: wrap;
-  align-items: center;
+  text-align: center;
   color: white;
 }
 
@@ -80,6 +78,7 @@ body {
 .Editor {
   display: flex;
   flex-direction: column;
+  min-width: 300px;
   height: 100%;
   flex: 1;
   /*

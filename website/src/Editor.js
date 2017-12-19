@@ -7,7 +7,7 @@ export default class Editor extends Component {
   static propTypes = {
     label: PropTypes.string.isRequired,
     code: PropTypes.string.isRequired,
-    timeMs: PropTypes.number,
+    timeMs: PropTypes.oneOfType([PropTypes.number, PropTypes.oneOf(['LOADING'])]),
     onChange: PropTypes.func,
     isReadOnly: PropTypes.bool,
     options: PropTypes.object,
@@ -23,13 +23,24 @@ export default class Editor extends Component {
     }
   };
 
+  _formatTime() {
+    const {timeMs} = this.props;
+    if (timeMs == null) {
+      return '';
+    } else if (timeMs === 'LOADING') {
+      return ' (...)'
+    } else {
+      return ` (${Math.round(timeMs * 100) / 100}ms)`;
+    }
+  }
+
   render() {
-    const {label, code, timeMs, onChange, isReadOnly, options} = this.props;
+    const {label, code, onChange, isReadOnly, options} = this.props;
     return (
       <div className='Editor'>
         <span className='Editor-label'>
           {label}
-          {timeMs != null && ` (${Math.round(timeMs * 100) / 100}ms)`}
+          {this._formatTime()}
         </span>
         <span className='Editor-container'>
           <AutoSizer

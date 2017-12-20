@@ -31,19 +31,22 @@
   },
   "homepage": "https://github.com/decaffeinate/bulk-decaffeinate#readme",
   "devDependencies": {
-    "@babel/core": "^7.0.0-beta.35",
-    "@babel/plugin-transform-modules-commonjs": "^7.0.0-beta.35",
-    "@babel/preset-react": "^7.0.0-beta.35",
+    "@babel/cli": "7.0.0-beta.35",
+    "@babel/core": "7.0.0-beta.35",
+    "@babel/preset-env": "7.0.0-beta.35",
+    "@babel/preset-flow": "7.0.0-beta.35",
+    "@babel/preset-react": "7.0.0-beta.35",
     "@types/babel-core": "^6.25.3",
     "@types/mocha": "^2.2.43",
     "@types/node": "^8.0.31",
+    "babel-plugin-transform-charcodes": "0.0.10",
     "buble": "^0.16.0",
     "mocha": "^3.5.3",
     "ts-node": "^4.0.2",
     "typescript": "^2.6.2"
   },
   "dependencies": {
-    "babylon": "^7.0.0-beta.27",
+    "charcodes": "0.0.10",
     "tslib": "^1.7.1"
   }
 }

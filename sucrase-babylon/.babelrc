@@ -1,0 +1,15 @@
+{
+  "presets": [
+    "@babel/env",
+    "@babel/flow"
+  ],
+  "plugins": [
+    "transform-charcodes",
+    [
+      "@babel/transform-for-of",
+      {
+        "assumeArray": true
+      }
+    ]
+  ]
+}

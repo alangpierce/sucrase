@@ -2,6 +2,10 @@
 
 set -e
 
+rm -rf ./sucrase-babylon-build
+./node_modules/.bin/babel sucrase-babylon -d sucrase-babylon-build
+cp sucrase-babylon/index.d.ts sucrase-babylon-build
+
 DIST="${DIST:-dist}"
 TSC="${TSC:-node_modules/.bin/tsc}"
 

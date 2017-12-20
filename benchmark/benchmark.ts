@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
 
-import * as babel from 'babel-core';
+// @ts-ignore: new babel-core package missing types.
+import * as babel from '@babel/core';
 // Use require rather than import to hack around missing type info.
 const buble = require('buble');
 import * as sucrase from '../src/index';
@@ -28,8 +29,10 @@ function main(): void {
   );
   runBenchmark('Babel', () => babel.transform(
     code,
-    {presets: ['react'], plugins: ['transform-es2015-modules-commonjs']})
-  );
+    {
+      presets: ['@babel/preset-react'],
+      plugins: ['@babel/plugin-transform-modules-commonjs']
+    }));
 }
 
 function runBenchmark(name: string, runTrial: () => void): void {

@@ -1,23 +1,9 @@
 {
   "presets": [
-    [
-      "@babel/env",
-      {
-        "loose": true,
-        "targets": {
-          "node": "4.2"
-        }
-      }
-    ],
     "@babel/flow"
   ],
   "plugins": [
-    "transform-charcodes",
-    [
-      "@babel/transform-for-of",
-      {
-        "assumeArray": true
-      }
-    ]
+    "@babel/transform-modules-commonjs",
+    "transform-charcodes"
   ]
 }

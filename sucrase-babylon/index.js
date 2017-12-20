@@ -12,10 +12,21 @@ import estreePlugin from "./plugins/estree";
 import flowPlugin from "./plugins/flow";
 import jsxPlugin from "./plugins/jsx";
 import typescriptPlugin from "./plugins/typescript";
+import type { Token } from './tokenizer';
 plugins.estree = estreePlugin;
 plugins.flow = flowPlugin;
 plugins.jsx = jsxPlugin;
 plugins.typescript = typescriptPlugin;
+
+export function getTokens(input: string, options?: Options): $ReadOnlyArray<Token | Comment> {
+  const parser = getParser(options, input);
+  parser.next();
+  while (parser.state.type.label !== 'eof') {
+    parser.next();
+  }
+  parser.next();
+  return parser.state.tokens;
+}
 
 export function parse(input: string, options?: Options): File {
   if (options && options.sourceType === "unambiguous") {

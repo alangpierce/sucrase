@@ -7,6 +7,8 @@
 
 import { File, Expression } from 'babel-types';
 
+export function getTokens(code: string, opts?: BabylonOptions): Array<any>;
+
 export function parse(code: string, opts?: BabylonOptions): File;
 
 export function parseExpression(input: string, options?: BabylonOptions): Expression;

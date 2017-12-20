@@ -1,4 +1,4 @@
-import {parse} from '../sucrase-babylon';
+import {getTokens} from '../sucrase-babylon';
 import JSXTransformer from './transformers/JSXTransformer';
 import TokenProcessor from './TokenProcessor';
 import { Transformer } from './transformers/Transformer';
@@ -21,11 +21,10 @@ export function transform(code: string, options: Options = {}): string {
   const babylonPlugins = options.babylonPlugins || DEFAULT_BABYLON_PLUGINS;
   const transforms = options.transforms || ['jsx'];
 
-  const ast = parse(
+  let tokens = getTokens(
     code,
     {tokens: true, sourceType: 'module', plugins: babylonPlugins} as any
   );
-  let tokens = ast.tokens;
   tokens = tokens.filter((token) =>
     token.type !== 'CommentLine' && token.type !== 'CommentBlock');
   augmentTokenContext(tokens);

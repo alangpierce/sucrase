@@ -2,6 +2,7 @@ import { RootTransformer } from '../index';
 import TokenProcessor from '../TokenProcessor';
 import { Transformer } from './Transformer';
 import IdentifierReplacer from './IdentifierReplacer';
+import { numberTypeAnnotation } from 'babel-types';
 
 export default class JSXTransformer implements Transformer {
   constructor(readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor, readonly identifierReplacer: IdentifierReplacer) {
@@ -196,13 +197,17 @@ function formatJSXTextLiteral(text: string): string {
  * end preserved.
  */
 function formatJSXTextReplacement(text: string): string {
-  let lines = text.split('\n');
-  lines = lines.map((line: string, i: number) =>
-    i < lines.length - 1
-      ? ''
-      : Array.from(line).filter((char) => char === ' ').join('')
-  );
-  return lines.join('\n');
+  let numNewlines = 0;
+  let numSpaces = 0;
+  for (const c of text) {
+    if (c === '\n') {
+      numNewlines++;
+      numSpaces = 0;
+    } else if (c === ' ') {
+      numSpaces++;
+    }
+  }
+  return '\n'.repeat(numNewlines) + ' '.repeat(numSpaces);
 }
 
 /**

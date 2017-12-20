@@ -4,15 +4,15 @@
   "description": "Super-fast alternative to Babel for when you can target modern JS runtimes",
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "module": "dist/src/index.mjs",
+  "types": "dist/src/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "script/build",
-    "benchmark": "ts-node ./benchmark/benchmark.ts",
+    "benchmark": "node ./build/benchmark/benchmark.js",
     "prepublish": "yarn run build",
     "test": "mocha test"
   },
@@ -36,6 +36,7 @@
     "@babel/preset-env": "7.0.0-beta.35",
     "@babel/preset-flow": "7.0.0-beta.35",
     "@babel/preset-react": "7.0.0-beta.35",
+    "@babel/register": "^7.0.0-beta.35",
     "@types/babel-core": "^6.25.3",
     "@types/mocha": "^2.2.43",
     "@types/node": "^8.0.31",

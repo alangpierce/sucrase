@@ -2,34 +2,35 @@
 
 set -e
 
-rm -rf ./sucrase-babylon-build
-./node_modules/.bin/babel sucrase-babylon -d sucrase-babylon-build
-cp sucrase-babylon/index.d.ts sucrase-babylon-build
-
-DIST="${DIST:-dist}"
 TSC="${TSC:-node_modules/.bin/tsc}"
 
-rm -rf "${DIST}"
+# The build dir has all build artifacts, including the benchmark. The dist dir
+# is the subset that's shipped as part of the package.
+rm -rf ./build
+mkdir -p ./build
+rm -rf ./dist
+mkdir -p ./dist
 
 echo 'Building ES module version.'
 "${TSC}" \
   --project . \
-  --outDir "${DIST}" \
+  --outDir build \
   --module ES2015 \
   --moduleResolution node
 
-for js in $(find "${DIST}" -name '*.js'); do
+for js in $(find build -name '*.js'); do
   mv "${js}" "$(dirname "${js}")/$(basename "${js}" .js).mjs"
 done
 
 echo 'Building CommonJS version.'
 "${TSC}" \
   --project . \
-  --outDir "${DIST}" \
+  --outDir build \
   --module commonjs \
   --moduleResolution node
 
-# Restructure.
-rm -rf dist/test
-mv dist/src/* dist/
-rmdir dist/src
+echo 'Building Babylon fork.'
+./node_modules/.bin/babel sucrase-babylon -d build/sucrase-babylon
+
+cp -r build/src dist
+cp -r build/sucrase-babylon dist

@@ -1,4 +1,4 @@
-import {parse} from '../sucrase-babylon-build';
+import {parse} from '../sucrase-babylon';
 import JSXTransformer from './transformers/JSXTransformer';
 import TokenProcessor from './TokenProcessor';
 import { Transformer } from './transformers/Transformer';

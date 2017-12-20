@@ -13,6 +13,7 @@
   "scripts": {
     "build": "script/build",
     "benchmark": "node ./build/benchmark/benchmark.js",
+    "profile": "node --inspect-brk ./build/benchmark/profile.js",
     "prepublish": "yarn run build",
     "test": "mocha test"
   },

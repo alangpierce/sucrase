@@ -1,6 +1,14 @@
 {
   "presets": [
-    "@babel/env",
+    [
+      "@babel/env",
+      {
+        "loose": true,
+        "targets": {
+          "node": "4.2"
+        }
+      }
+    ],
     "@babel/flow"
   ],
   "plugins": [

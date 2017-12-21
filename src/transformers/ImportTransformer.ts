@@ -1,9 +1,9 @@
-import { Transformer } from './Transformer';
-import { RootTransformer } from '../index';
-import TokenProcessor, { Token } from '../TokenProcessor';
-import { ImportProcessor } from '../ImportProcessor';
-import { NameManager } from '../NameManager';
-import isMaybePropertyName from '../util/isMaybePropertyName';
+import ImportProcessor from "../ImportProcessor";
+import {RootTransformer} from "../index";
+import NameManager from "../NameManager";
+import TokenProcessor, {Token} from "../TokenProcessor";
+import isMaybePropertyName from "../util/isMaybePropertyName";
+import Transformer from "./Transformer";
 
 export default class ImportTransformer implements Transformer {
   private hadExport: boolean = false;
@@ -11,11 +11,12 @@ export default class ImportTransformer implements Transformer {
   private hadDefaultExport: boolean = false;
 
   constructor(
-    readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor,
-    readonly nameManager: NameManager, readonly importProcessor: ImportProcessor,
-    readonly shouldAddModuleExports: boolean
-  ) {
-  }
+    readonly rootTransformer: RootTransformer,
+    readonly tokens: TokenProcessor,
+    readonly nameManager: NameManager,
+    readonly importProcessor: ImportProcessor,
+    readonly shouldAddModuleExports: boolean,
+  ) {}
 
   preprocess(): void {
     this.nameManager.preprocessNames(this.tokens.tokens);
@@ -33,27 +34,31 @@ export default class ImportTransformer implements Transformer {
 
   getSuffixCode(): string {
     if (this.shouldAddModuleExports && this.hadDefaultExport && !this.hadNamedExport) {
-      return '\nmodule.exports = exports.default;\n';
+      return "\nmodule.exports = exports.default;\n";
     }
-    return '';
+    return "";
   }
 
   process(): boolean {
-    if (this.tokens.matches(['import']) &&
-        !isMaybePropertyName(this.tokens, this.tokens.currentIndex())) {
+    if (
+      this.tokens.matches(["import"]) &&
+      !isMaybePropertyName(this.tokens, this.tokens.currentIndex())
+    ) {
       this.processImport();
       return true;
     }
-    if (this.tokens.matches(['export']) &&
-        !isMaybePropertyName(this.tokens, this.tokens.currentIndex())) {
+    if (
+      this.tokens.matches(["export"]) &&
+      !isMaybePropertyName(this.tokens, this.tokens.currentIndex())
+    ) {
       this.hadExport = true;
       this.processExport();
       return true;
     }
-    if (this.tokens.matches(['name']) || this.tokens.matches(['jsxName'])) {
+    if (this.tokens.matches(["name"]) || this.tokens.matches(["jsxName"])) {
       return this.processIdentifier();
     }
-    if (this.tokens.matches(['='])) {
+    if (this.tokens.matches(["="])) {
       return this.processAssignment();
     }
     return false;
@@ -68,16 +73,14 @@ export default class ImportTransformer implements Transformer {
    * The import code was already generated in the import preprocessing step, so
    * we just need to look it up.
    */
-  private processImport() {
+  private processImport(): void {
     this.tokens.removeInitialToken();
-    while (!this.tokens.matches(['string'])) {
+    while (!this.tokens.matches(["string"])) {
       this.tokens.removeToken();
     }
     const path = this.tokens.currentToken().value;
-    this.tokens.replaceTokenTrimmingLeftWhitespace(
-      this.importProcessor.claimImportCode(path)
-    );
-    if (this.tokens.matches([';'])) {
+    this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
+    if (this.tokens.matches([";"])) {
       this.tokens.removeToken();
     }
   }
@@ -87,25 +90,28 @@ export default class ImportTransformer implements Transformer {
     const lastToken = this.tokens.tokens[this.tokens.currentIndex() - 1];
     const nextToken = this.tokens.tokens[this.tokens.currentIndex() + 1];
     // Skip identifiers that are part of property accesses.
-    if (lastToken && lastToken.type.label === '.') {
+    if (lastToken && lastToken.type.label === ".") {
       return false;
     }
 
     // For shorthand object keys, we need to expand them and replace only the value.
     if (
-      token.contextName === 'object' &&
-      lastToken && (lastToken.type.label === ',' || lastToken.type.label === '{') &&
-      nextToken && (nextToken.type.label === ',' || nextToken.type.label === '}')
+      token.contextName === "object" &&
+      lastToken &&
+      (lastToken.type.label === "," || lastToken.type.label === "{") &&
+      nextToken &&
+      (nextToken.type.label === "," || nextToken.type.label === "}")
     ) {
       return this.processObjectShorthand();
     }
 
     // For non-shorthand object keys, just ignore them.
     if (
-      token.contextName === 'object' &&
-      nextToken && nextToken.type.label === ':' && lastToken && (
-        lastToken.type.label === ',' || lastToken.type.label === '{'
-      )
+      token.contextName === "object" &&
+      nextToken &&
+      nextToken.type.label === ":" &&
+      lastToken &&
+      (lastToken.type.label === "," || lastToken.type.label === "{")
     ) {
       return false;
     }
@@ -113,17 +119,19 @@ export default class ImportTransformer implements Transformer {
     // Object methods identifiers can be identified similarly, and they also
     // could have the async keyword before them.
     if (
-      token.contextName === 'object' &&
-      nextToken && nextToken.type.label === '(' && lastToken && (
-        lastToken.type.label === ',' || lastToken.type.label === '{' ||
-        (lastToken.type.label === 'name' && lastToken.value === 'async')
-      )
+      token.contextName === "object" &&
+      nextToken &&
+      nextToken.type.label === "(" &&
+      lastToken &&
+      (lastToken.type.label === "," ||
+        lastToken.type.label === "{" ||
+        (lastToken.type.label === "name" && lastToken.value === "async"))
     ) {
       return false;
     }
 
     // Identifiers within class bodies must be method names.
-    if (token.contextName === 'class') {
+    if (token.contextName === "class") {
       return false;
     }
     const replacement = this.importProcessor.getIdentifierReplacement(token.value);
@@ -146,49 +154,47 @@ export default class ImportTransformer implements Transformer {
     return true;
   }
 
-  processExport() {
-    if (this.tokens.matches(['export', 'default'])) {
+  processExport(): void {
+    if (this.tokens.matches(["export", "default"])) {
       this.processExportDefault();
       this.hadDefaultExport = true;
       return;
     }
     this.hadNamedExport = true;
     if (
-      this.tokens.matches(['export', 'var']) ||
-      this.tokens.matches(['export', 'let']) ||
-      this.tokens.matches(['export', 'const'])
+      this.tokens.matches(["export", "var"]) ||
+      this.tokens.matches(["export", "let"]) ||
+      this.tokens.matches(["export", "const"])
     ) {
       this.processExportVar();
     } else if (
-      this.tokens.matches(['export', 'function']) ||
-      this.tokens.matches(['export', 'name', 'function'])
+      this.tokens.matches(["export", "function"]) ||
+      this.tokens.matches(["export", "name", "function"])
     ) {
       this.processExportFunction();
-    } else if (this.tokens.matches(['export', 'class'])) {
+    } else if (this.tokens.matches(["export", "class"])) {
       this.processExportClass();
-    } else if (this.tokens.matches(['export', '{'])) {
+    } else if (this.tokens.matches(["export", "{"])) {
       this.processExportBindings();
-    } else if (this.tokens.matches(['export', '*'])) {
+    } else if (this.tokens.matches(["export", "*"])) {
       this.processExportStar();
     } else {
-      throw new Error('Unrecognized export syntax.');
+      throw new Error("Unrecognized export syntax.");
     }
   }
 
   private processAssignment(): boolean {
     const index = this.tokens.currentIndex();
     const identifierToken = this.tokens.tokens[index - 1];
-    if (identifierToken.type.label !== 'name') {
+    if (identifierToken.type.label !== "name") {
       return false;
     }
-    if (this.tokens.matchesAtIndex(index - 2, ['.'])) {
+    if (this.tokens.matchesAtIndex(index - 2, ["."])) {
       return false;
     }
     if (
       index - 2 >= 0 &&
-      ['var', 'let', 'const'].includes(
-        this.tokens.tokens[index - 2].type.label
-      )
+      ["var", "let", "const"].includes(this.tokens.tokens[index - 2].type.label)
     ) {
       // Declarations don't need an extra assignment. This doesn't avoid the
       // assignment for comma-separated declarations, but it's still correct
@@ -204,10 +210,10 @@ export default class ImportTransformer implements Transformer {
     return true;
   }
 
-  private processExportDefault() {
+  private processExportDefault(): void {
     if (
-      this.tokens.matches(['export', 'default', 'function', 'name']) ||
-      this.tokens.matches(['export', 'default', 'name', 'function', 'name'])
+      this.tokens.matches(["export", "default", "function", "name"]) ||
+      this.tokens.matches(["export", "default", "name", "function", "name"])
     ) {
       this.tokens.removeInitialToken();
       this.tokens.removeToken();
@@ -215,15 +221,15 @@ export default class ImportTransformer implements Transformer {
       // declaration followed by exports statement.
       const name = this.processNamedFunction();
       this.tokens.appendCode(` exports.default = ${name};`);
-    } else if (this.tokens.matches(['export', 'default', 'class', 'name'])) {
+    } else if (this.tokens.matches(["export", "default", "class", "name"])) {
       this.tokens.removeInitialToken();
       this.tokens.removeToken();
       const name = this.processNamedClass();
       this.tokens.appendCode(` exports.default = ${name};`);
     } else {
-      this.tokens.replaceToken('exports.');
+      this.tokens.replaceToken("exports.");
       this.tokens.copyToken();
-      this.tokens.appendCode(' =');
+      this.tokens.appendCode(" =");
     }
   }
 
@@ -233,11 +239,11 @@ export default class ImportTransformer implements Transformer {
    * into this:
    * const x = exports.x = 1;
    */
-  private processExportVar() {
-    this.tokens.replaceToken('');
+  private processExportVar(): void {
+    this.tokens.replaceToken("");
     this.tokens.copyToken();
-    if (!this.tokens.matches(['name'])) {
-      throw new Error('Expected a regular identifier after export var/let/const.');
+    if (!this.tokens.matches(["name"])) {
+      throw new Error("Expected a regular identifier after export var/let/const.");
     }
     const name = this.tokens.currentToken().value;
     this.tokens.copyToken();
@@ -250,8 +256,8 @@ export default class ImportTransformer implements Transformer {
    * into this:
    * function foo() {} exports.foo = foo;
    */
-  private processExportFunction() {
-    this.tokens.replaceToken('');
+  private processExportFunction(): void {
+    this.tokens.replaceToken("");
     const name = this.processNamedFunction();
     this.tokens.appendCode(` exports.${name} = ${name};`);
   }
@@ -260,26 +266,26 @@ export default class ImportTransformer implements Transformer {
    * Skip past a function with a name and return that name.
    */
   private processNamedFunction(): string {
-    if (this.tokens.matches(['function'])) {
+    if (this.tokens.matches(["function"])) {
       this.tokens.copyToken();
-    } else if (this.tokens.matches(['name', 'function'])) {
-      if (this.tokens.currentToken().value !== 'async') {
-        throw new Error('Expected async keyword in function export.');
+    } else if (this.tokens.matches(["name", "function"])) {
+      if (this.tokens.currentToken().value !== "async") {
+        throw new Error("Expected async keyword in function export.");
       }
       this.tokens.copyToken();
       this.tokens.copyToken();
     }
-    if (!this.tokens.matches(['name'])) {
-      throw new Error('Expected identifier for exported function name.');
+    if (!this.tokens.matches(["name"])) {
+      throw new Error("Expected identifier for exported function name.");
     }
     const name = this.tokens.currentToken().value;
     this.tokens.copyToken();
-    this.tokens.copyExpectedToken('(');
+    this.tokens.copyExpectedToken("(");
     this.rootTransformer.processBalancedCode();
-    this.tokens.copyExpectedToken(')');
-    this.tokens.copyExpectedToken('{');
+    this.tokens.copyExpectedToken(")");
+    this.tokens.copyExpectedToken("{");
     this.rootTransformer.processBalancedCode();
-    this.tokens.copyExpectedToken('}');
+    this.tokens.copyExpectedToken("}");
     return name;
   }
 
@@ -289,8 +295,8 @@ export default class ImportTransformer implements Transformer {
    * into this:
    * class A {} exports.A = A;
    */
-  private processExportClass() {
-    this.tokens.replaceToken('');
+  private processExportClass(): void {
+    this.tokens.replaceToken("");
     const name = this.processNamedClass();
     this.tokens.appendCode(` exports.${name} = ${name};`);
   }
@@ -299,37 +305,37 @@ export default class ImportTransformer implements Transformer {
    * Skip past a class with a name and return that name.
    */
   private processNamedClass(): string {
-    this.tokens.copyExpectedToken('class');
-    if (!this.tokens.matches(['name'])) {
-      throw new Error('Expected identifier for exported class name.');
+    this.tokens.copyExpectedToken("class");
+    if (!this.tokens.matches(["name"])) {
+      throw new Error("Expected identifier for exported class name.");
     }
     const name = this.tokens.currentToken().value;
     this.tokens.copyToken();
-    if (this.tokens.matches(['extends'])) {
+    if (this.tokens.matches(["extends"])) {
       // There are only some limited expressions that are allowed within the
       // `extends` expression, e.g. no top-level binary operators, so we can
       // skip past even fairly complex expressions by being a bit careful.
       this.tokens.copyToken();
-      if (this.tokens.matches(['{'])) {
+      if (this.tokens.matches(["{"])) {
         // Extending an object literal.
-        this.tokens.copyExpectedToken('{');
+        this.tokens.copyExpectedToken("{");
         this.rootTransformer.processBalancedCode();
-        this.tokens.copyExpectedToken('}');
+        this.tokens.copyExpectedToken("}");
       } else {
-        while (!this.tokens.matches(['{']) && !this.tokens.matches(['('])) {
+        while (!this.tokens.matches(["{"]) && !this.tokens.matches(["("])) {
           this.rootTransformer.processToken();
         }
-        if (this.tokens.matches(['('])) {
-          this.tokens.copyExpectedToken('(');
+        if (this.tokens.matches(["("])) {
+          this.tokens.copyExpectedToken("(");
           this.rootTransformer.processBalancedCode();
-          this.tokens.copyExpectedToken(')');
+          this.tokens.copyExpectedToken(")");
         }
       }
     }
 
-    this.tokens.copyExpectedToken('{');
+    this.tokens.copyExpectedToken("{");
     this.rootTransformer.processBalancedCode();
-    this.tokens.copyExpectedToken('}');
+    this.tokens.copyExpectedToken("}");
     return name;
   }
 
@@ -345,7 +351,7 @@ export default class ImportTransformer implements Transformer {
    * export {a, b as c} from './foo';
    * into the pre-generated Object.defineProperty code from the ImportProcessor.
    */
-  private processExportBindings() {
+  private processExportBindings(): void {
     this.tokens.removeInitialToken();
     this.tokens.removeToken();
 
@@ -354,7 +360,7 @@ export default class ImportTransformer implements Transformer {
       const localName = this.tokens.currentToken().value;
       let exportedName;
       this.tokens.removeToken();
-      if (this.tokens.matchesName('as')) {
+      if (this.tokens.matchesName("as")) {
         this.tokens.removeToken();
         exportedName = this.tokens.currentToken().value;
         this.tokens.removeToken();
@@ -363,48 +369,45 @@ export default class ImportTransformer implements Transformer {
       }
       exportStatements.push(`exports.${exportedName} = ${localName};`);
 
-      if (this.tokens.matches(['}'])) {
+      if (this.tokens.matches(["}"])) {
         this.tokens.removeToken();
         break;
-      } if (this.tokens.matches([',', '}'])) {
+      }
+      if (this.tokens.matches([",", "}"])) {
         this.tokens.removeToken();
         this.tokens.removeToken();
         break;
-      } else if (this.tokens.matches([','])) {
+      } else if (this.tokens.matches([","])) {
         this.tokens.removeToken();
       } else {
-        throw new Error('Unexpected token');
+        throw new Error("Unexpected token");
       }
     }
 
-    if (this.tokens.matchesName('from')) {
+    if (this.tokens.matchesName("from")) {
       // This is an export...from, so throw away the normal named export code
       // and use the Object.defineProperty code from ImportProcessor.
       this.tokens.removeToken();
       const path = this.tokens.currentToken().value;
-      this.tokens.replaceTokenTrimmingLeftWhitespace(
-        this.importProcessor.claimImportCode(path)
-      );
+      this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
     } else {
       // This is a normal named export, so use that.
-      this.tokens.appendCode(exportStatements.join(' '));
+      this.tokens.appendCode(exportStatements.join(" "));
     }
 
-    if (this.tokens.matches([';'])) {
+    if (this.tokens.matches([";"])) {
       this.tokens.removeToken();
     }
   }
 
-  private processExportStar() {
+  private processExportStar(): void {
     this.tokens.removeInitialToken();
-    while (!this.tokens.matches(['string'])) {
+    while (!this.tokens.matches(["string"])) {
       this.tokens.removeToken();
     }
     const path = this.tokens.currentToken().value;
-    this.tokens.replaceTokenTrimmingLeftWhitespace(
-      this.importProcessor.claimImportCode(path)
-    );
-    if (this.tokens.matches([';'])) {
+    this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
+    if (this.tokens.matches([";"])) {
       this.tokens.removeToken();
     }
   }

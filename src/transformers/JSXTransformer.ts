@@ -1,19 +1,21 @@
-import { RootTransformer } from '../index';
-import TokenProcessor from '../TokenProcessor';
-import { Transformer } from './Transformer';
-import IdentifierReplacer from './IdentifierReplacer';
-import { numberTypeAnnotation } from 'babel-types';
+import {RootTransformer} from "../index";
+import TokenProcessor from "../TokenProcessor";
+import IdentifierReplacer from "./IdentifierReplacer";
+import Transformer from "./Transformer";
 
 export default class JSXTransformer implements Transformer {
-  constructor(readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor, readonly identifierReplacer: IdentifierReplacer) {
-  }
+  constructor(
+    readonly rootTransformer: RootTransformer,
+    readonly tokens: TokenProcessor,
+    readonly identifierReplacer: IdentifierReplacer,
+  ) {}
 
-  preprocess() {
+  preprocess(): void {
     // Do nothing.
   }
 
   process(): boolean {
-    if (this.tokens.matches(['jsxTagStart'])) {
+    if (this.tokens.matches(["jsxTagStart"])) {
       this.processJSXTag();
       return true;
     }
@@ -21,54 +23,54 @@ export default class JSXTransformer implements Transformer {
   }
 
   getPrefixCode(): string {
-    return '';
+    return "";
   }
 
   getSuffixCode(): string {
-    return '';
+    return "";
   }
 
   /**
    * Produce the props arg to createElement, starting at the first token of the
    * props, if any.
    */
-  processProps() {
-    if (!this.tokens.matches(['jsxName']) && !this.tokens.matches(['{'])) {
-      this.tokens.appendCode(', null');
+  processProps(): void {
+    if (!this.tokens.matches(["jsxName"]) && !this.tokens.matches(["{"])) {
+      this.tokens.appendCode(", null");
       return;
     }
-    this.tokens.appendCode(', {');
+    this.tokens.appendCode(", {");
     while (true) {
-      if (this.tokens.matches(['jsxName', '='])) {
-        if (this.tokens.currentToken().value.includes('-')) {
+      if (this.tokens.matches(["jsxName", "="])) {
+        if (this.tokens.currentToken().value.includes("-")) {
           this.tokens.replaceToken(`'${this.tokens.currentToken().value}'`);
         } else {
           this.tokens.copyToken();
         }
-        this.tokens.replaceToken(': ');
-        if (this.tokens.matches(['{'])) {
-          this.tokens.replaceToken('');
+        this.tokens.replaceToken(": ");
+        if (this.tokens.matches(["{"])) {
+          this.tokens.replaceToken("");
           this.rootTransformer.processBalancedCode();
-          this.tokens.replaceToken('');
+          this.tokens.replaceToken("");
         } else {
           this.processStringPropValue();
         }
-      } else if (this.tokens.matches(['jsxName'])) {
+      } else if (this.tokens.matches(["jsxName"])) {
         this.tokens.copyToken();
-        this.tokens.appendCode(': true');
-      } else if (this.tokens.matches(['{'])) {
-        this.tokens.replaceToken('');
+        this.tokens.appendCode(": true");
+      } else if (this.tokens.matches(["{"])) {
+        this.tokens.replaceToken("");
         this.rootTransformer.processBalancedCode();
-        this.tokens.replaceToken('');
+        this.tokens.replaceToken("");
       } else {
         break;
       }
-      this.tokens.appendCode(',');
+      this.tokens.appendCode(",");
     }
-    this.tokens.appendCode('}');
+    this.tokens.appendCode("}");
   }
 
-  processStringPropValue() {
+  processStringPropValue(): void {
     const value = this.tokens.currentToken().value;
     const replacementCode = formatJSXTextReplacement(value);
     const literalCode = formatJSXStringValueLiteral(value);
@@ -78,7 +80,7 @@ export default class JSXTransformer implements Transformer {
   /**
    * Process the first part of a tag, before any props.
    */
-  processTagIntro() {
+  processTagIntro(): void {
     // Walk forward until we see one of these patterns:
     // [jsxIdentifer, equals] to start the first prop.
     // [open brace] to start the first prop.
@@ -86,15 +88,17 @@ export default class JSXTransformer implements Transformer {
     // [slash, jsxTagEnd] to end the self-closing tag.
     let introEnd = this.tokens.currentIndex() + 1;
     while (
-      !this.tokens.matchesAtIndex(introEnd, ['jsxName', '=']) &&
-      !this.tokens.matchesAtIndex(introEnd, ['{']) &&
-      !this.tokens.matchesAtIndex(introEnd, ['jsxTagEnd']) &&
-      !this.tokens.matchesAtIndex(introEnd, ['/', 'jsxTagEnd'])
-      ) {
+      !this.tokens.matchesAtIndex(introEnd, ["jsxName", "="]) &&
+      !this.tokens.matchesAtIndex(introEnd, ["{"]) &&
+      !this.tokens.matchesAtIndex(introEnd, ["jsxTagEnd"]) &&
+      !this.tokens.matchesAtIndex(introEnd, ["/", "jsxTagEnd"])
+    ) {
       introEnd++;
     }
-    if (introEnd === this.tokens.currentIndex() + 1 &&
-        startsWithLowerCase(this.tokens.currentToken().value)) {
+    if (
+      introEnd === this.tokens.currentIndex() + 1 &&
+      startsWithLowerCase(this.tokens.currentToken().value)
+    ) {
       this.tokens.replaceToken(`'${this.tokens.currentToken().value}'`);
     }
     while (this.tokens.currentIndex() < introEnd) {
@@ -102,75 +106,74 @@ export default class JSXTransformer implements Transformer {
     }
   }
 
-  processChildren() {
+  processChildren(): void {
     while (true) {
-      if (this.tokens.matches(['jsxTagStart', '/'])) {
+      if (this.tokens.matches(["jsxTagStart", "/"])) {
         // Closing tag, so no more children.
         return;
       }
-      if (this.tokens.matches(['{'])) {
-        if (this.tokens.matches(['{', '}'])) {
+      if (this.tokens.matches(["{"])) {
+        if (this.tokens.matches(["{", "}"])) {
           // Empty interpolations and comment-only interpolations are allowed
           // and don't create an extra child arg.
-          this.tokens.replaceToken('');
-          this.tokens.replaceToken('');
+          this.tokens.replaceToken("");
+          this.tokens.replaceToken("");
         } else {
           // Interpolated expression.
-          this.tokens.replaceToken(', ');
+          this.tokens.replaceToken(", ");
           this.rootTransformer.processBalancedCode();
-          this.tokens.replaceToken('');
+          this.tokens.replaceToken("");
         }
-      } else if (this.tokens.matches(['jsxTagStart'])) {
+      } else if (this.tokens.matches(["jsxTagStart"])) {
         // Child JSX element
-        this.tokens.appendCode(', ');
+        this.tokens.appendCode(", ");
         this.processJSXTag();
-      } else if (this.tokens.matches(['jsxText'])) {
+      } else if (this.tokens.matches(["jsxText"])) {
         this.processChildTextElement();
       } else {
-        throw new Error('Unexpected token when processing JSX children.');
+        throw new Error("Unexpected token when processing JSX children.");
       }
     }
   }
 
-  processChildTextElement() {
+  processChildTextElement(): void {
     const value = this.tokens.currentToken().value;
     const replacementCode = formatJSXTextReplacement(value);
     const literalCode = formatJSXTextLiteral(value);
     if (literalCode === '""') {
       this.tokens.replaceToken(replacementCode);
     } else {
-      this.tokens.replaceToken(', ' + literalCode + replacementCode);
+      this.tokens.replaceToken(`, ${literalCode}${replacementCode}`);
     }
   }
 
-  processJSXTag() {
-    const resolvedReactName =
-      this.identifierReplacer.getIdentifierReplacement('React') || 'React';
+  processJSXTag(): void {
+    const resolvedReactName = this.identifierReplacer.getIdentifierReplacement("React") || "React";
     // First tag is always jsxTagStart.
     this.tokens.replaceToken(`${resolvedReactName}.createElement(`);
     this.processTagIntro();
     this.processProps();
 
-    if (this.tokens.matches(['/', 'jsxTagEnd'])) {
+    if (this.tokens.matches(["/", "jsxTagEnd"])) {
       // Self-closing tag.
-      this.tokens.replaceToken('');
-      this.tokens.replaceToken(')')
-    } else if (this.tokens.matches(['jsxTagEnd'])) {
-      this.tokens.replaceToken('');
+      this.tokens.replaceToken("");
+      this.tokens.replaceToken(")");
+    } else if (this.tokens.matches(["jsxTagEnd"])) {
+      this.tokens.replaceToken("");
       // Tag with children.
       this.processChildren();
-      while (!this.tokens.matches(['jsxTagEnd'])) {
-        this.tokens.replaceToken('');
+      while (!this.tokens.matches(["jsxTagEnd"])) {
+        this.tokens.replaceToken("");
       }
-      this.tokens.replaceToken(')');
+      this.tokens.replaceToken(")");
     } else {
-      throw new Error('Expected either /> or > at the end of the tag.');
+      throw new Error("Expected either /> or > at the end of the tag.");
     }
   }
 }
 
 function startsWithLowerCase(s: string): boolean {
-  return s[0] == s[0].toLowerCase();
+  return s[0] === s[0].toLowerCase();
 }
 
 /**
@@ -183,25 +186,25 @@ function startsWithLowerCase(s: string): boolean {
  * the start and end of each line and remove blank lines.
  */
 function formatJSXTextLiteral(text: string): string {
-  let result = '';
-  let whitespace = '';
+  let result = "";
+  let whitespace = "";
 
   let isInInitialLineWhitespace = false;
   let seenNonWhitespace = false;
   for (const c of text) {
-    if (c === ' ' || c === '\t') {
+    if (c === " " || c === "\t") {
       if (!isInInitialLineWhitespace) {
         whitespace += c;
       }
-    } else if (c === '\n') {
-      whitespace = '';
+    } else if (c === "\n") {
+      whitespace = "";
       isInInitialLineWhitespace = true;
     } else {
       if (seenNonWhitespace && isInInitialLineWhitespace) {
-        result += ' ';
+        result += " ";
       }
       result += whitespace;
-      whitespace = '';
+      whitespace = "";
       result += c;
       seenNonWhitespace = true;
       isInInitialLineWhitespace = false;
@@ -222,14 +225,14 @@ function formatJSXTextReplacement(text: string): string {
   let numNewlines = 0;
   let numSpaces = 0;
   for (const c of text) {
-    if (c === '\n') {
+    if (c === "\n") {
       numNewlines++;
       numSpaces = 0;
-    } else if (c === ' ') {
+    } else if (c === " ") {
       numSpaces++;
     }
   }
-  return '\n'.repeat(numNewlines) + ' '.repeat(numSpaces);
+  return "\n".repeat(numNewlines) + " ".repeat(numSpaces);
 }
 
 /**

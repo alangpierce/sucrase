@@ -1,4 +1,4 @@
-import TokenProcessor from '../TokenProcessor';
+import TokenProcessor from "../TokenProcessor";
 
 /**
  * For an import or export statement, check if this might be actually a property
@@ -6,7 +6,9 @@ import TokenProcessor from '../TokenProcessor';
  * or export.
  */
 export default function isMaybePropertyName(tokens: TokenProcessor, index: number): boolean {
-  return tokens.matchesAtIndex(index - 1, ['.']) ||
-    tokens.matchesAtIndex(index + 1, [':']) ||
-    tokens.matchesAtIndex(index + 1, ['(']);
+  return (
+    tokens.matchesAtIndex(index - 1, ["."]) ||
+    tokens.matchesAtIndex(index + 1, [":"]) ||
+    tokens.matchesAtIndex(index + 1, ["("])
+  );
 }

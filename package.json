@@ -13,9 +13,10 @@
   "scripts": {
     "build": "script/build",
     "benchmark": "node ./build/benchmark/benchmark.js",
+    "lint": "eslint './src/**/*.ts' && tslint -p .",
     "profile": "node --inspect-brk ./build/benchmark/profile.js",
     "prepublish": "yarn run build",
-    "test": "mocha test"
+    "test": "yarn lint && mocha test"
   },
   "repository": {
     "type": "git",
@@ -43,9 +44,19 @@
     "@types/node": "^8.0.31",
     "babel-plugin-transform-charcodes": "0.0.10",
     "buble": "^0.16.0",
+    "eslint": "^4.13.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-prettier": "^2.4.0",
+    "eslint-plugin-tslint": "^2.1.0",
+    "eslint-plugin-typescript": "^0.8.1",
     "mocha": "^3.5.3",
+    "prettier": "^1.9.2",
     "ts-node": "^4.0.2",
-    "typescript": "^2.6.2"
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.2",
+    "typescript-eslint-parser": "^11.0.0"
   },
   "dependencies": {
     "charcodes": "0.0.10",

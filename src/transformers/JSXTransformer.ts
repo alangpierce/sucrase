@@ -174,21 +174,43 @@ function startsWithLowerCase(s: string): boolean {
 }
 
 /**
- * Turn the given jsxText string into a JS string literal.
+ * Turn the given jsxText string into a JS string literal. Leading and trailing
+ * whitespace on lines is removed, except immediately after the open-tag and
+ * before the close-tag. Empty lines are completely removed, and spaces are
+ * added between lines after that.
  *
  * We use JSON.stringify to introduce escape characters as necessary, and trim
  * the start and end of each line and remove blank lines.
  */
 function formatJSXTextLiteral(text: string): string {
-  // Introduce fake characters at the start and end to avoid trimming the start
-  // of the first line or the end of the last line.
-  let lines = `!${text}!`.split('\n');
-  // Trim spaces and tabs, but NOT non-breaking spaces.
-  lines = lines.map((line) => line.replace(/^[ \t]*/, '').replace(/[ \t]*$/, ''));
-  lines[0] = lines[0].slice(1);
-  lines[lines.length - 1] = lines[lines.length - 1].slice(0, -1);
-  lines = lines.filter((line) => line);
-  return JSON.stringify(lines.join(' '));
+  let result = '';
+  let whitespace = '';
+
+  let isInInitialLineWhitespace = false;
+  let seenNonWhitespace = false;
+  for (const c of text) {
+    if (c === ' ' || c === '\t') {
+      if (!isInInitialLineWhitespace) {
+        whitespace += c;
+      }
+    } else if (c === '\n') {
+      whitespace = '';
+      isInInitialLineWhitespace = true;
+    } else {
+      if (seenNonWhitespace && isInInitialLineWhitespace) {
+        result += ' ';
+      }
+      result += whitespace;
+      whitespace = '';
+      result += c;
+      seenNonWhitespace = true;
+      isInInitialLineWhitespace = false;
+    }
+  }
+  if (!isInInitialLineWhitespace) {
+    result += whitespace;
+  }
+  return JSON.stringify(result);
 }
 
 /**

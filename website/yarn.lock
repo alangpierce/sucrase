@@ -2,10 +2,6 @@
 # yarn lockfile v1
 
 
-"@types/node@^8.0.31":
-  version "8.5.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.5.1.tgz#4ec3020bcdfe2abffeef9ba3fbf26fca097514b5"
-
 abab@^1.0.3:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/abab/-/abab-1.0.4.tgz#5faad9c2c07f60dd76770f71cf025b62a63cfd4e"
@@ -1010,10 +1006,6 @@ babylon@^6.17.0, babylon@^6.17.2, babylon@^6.18.0:
   version "6.18.0"
   resolved "https://registry.yarnpkg.com/babylon/-/babylon-6.18.0.tgz#af2f3b88fa6f5c1e4c634d1a0f8eac4f55b395e3"
 
-babylon@^7.0.0-beta.27:
-  version "7.0.0-beta.35"
-  resolved "https://registry.yarnpkg.com/babylon/-/babylon-7.0.0-beta.35.tgz#9f9e609ed50c28d4333f545b373a381b47e9e6ed"
-
 balanced-match@^0.4.2:
   version "0.4.2"
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-0.4.2.tgz#cb3f3e3c732dc0f01ee70b403f302e61d7709838"
@@ -1352,6 +1344,10 @@ chalk@^2.0.0, chalk@^2.1.0:
     ansi-styles "^3.1.0"
     escape-string-regexp "^1.0.5"
     supports-color "^4.0.0"
+
+charcodes@0.0.10:
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/charcodes/-/charcodes-0.0.10.tgz#98d67a7a1e17ce154d1faafd01e72e9a6cff54f5"
 
 chokidar@^1.6.0, chokidar@^1.7.0:
   version "1.7.0"
@@ -5996,12 +5992,11 @@ style-loader@0.18.2:
     loader-utils "^1.0.2"
     schema-utils "^0.3.0"
 
-sucrase@^1.0.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.3.0.tgz#183a2c01c58ce407ba81fa8e6ddb583bc0859529"
+sucrase@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.4.0.tgz#c381e7fcd348859de52b6e8b7ba1d57af5b48461"
   dependencies:
-    "@types/node" "^8.0.31"
-    babylon "^7.0.0-beta.27"
+    charcodes "0.0.10"
     tslib "^1.7.1"
 
 supports-color@^2.0.0:

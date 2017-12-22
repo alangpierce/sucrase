@@ -29,9 +29,9 @@
     "flow"
   ],
   "bugs": {
-    "url": "https://github.com/decaffeinate/bulk-decaffeinate/issues"
+    "url": "https://github.com/alangpierce/sucrase/issues"
   },
-  "homepage": "https://github.com/decaffeinate/bulk-decaffeinate#readme",
+  "homepage": "https://github.com/alangpierce/sucrase#readme",
   "devDependencies": {
     "@babel/cli": "7.0.0-beta.35",
     "@babel/core": "7.0.0-beta.35",

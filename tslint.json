@@ -1,35 +1,18 @@
 {
   "rules": {
+    "adjacent-overload-signatures": true,
     "array-type": [true, "generic"],
-    "no-unused-expression": true,
-    "curly": true,
-    "class-name": true,
-    "semicolon": [true, "always"],
-    "triple-equals": true,
-    "new-parens": true,
-    "ordered-imports": [true, {"import-sources-order": "case-insensitive", "named-imports-order": "lowercase-first"}],
+    "await-promise": true,
+    "ordered-imports": true,
     "no-any": true,
+    "no-empty-interface": true,
+    "no-floating-promises": true,
+    "no-misused-new": true,
+    "no-unused-variable": true,
+    "no-void-expression": true,
     "no-namespace": true,
     "no-internal-module": true,
-    "no-var-keyword": true,
-    "prefer-for-of": true,
-    "typedef": [true, "call-signature", "parameter", "property-declaration"],
-    "typedef-whitespace": [
-      true,
-      {
-        "call-signature": "nospace",
-        "index-signature": "nospace",
-        "parameter": "nospace",
-        "property-declaration": "nospace",
-        "variable-declaration": "nospace"
-      },
-      {
-        "call-signature": "space",
-        "index-signature": "space",
-        "parameter": "space",
-        "property-declaration": "space",
-        "variable-declaration": "space"
-      }
-    ]
+    "no-unnecessary-type-assertion": true,
+    "typedef": [true, "call-signature", "parameter", "property-declaration"]
   }
 }

@@ -1,9 +1,10 @@
-import {assertResult} from './util';
-import {PREFIX, ESMODULE_PREFIX} from './prefixes';
+import {ESMODULE_PREFIX, PREFIX} from "./prefixes";
+import {assertResult} from "./util";
 
-describe('transform react-display-name', () => {
-  it('adds displayName to a React.createClass usage', () => {
-    assertResult(`
+describe("transform react-display-name", () => {
+  it("adds displayName to a React.createClass usage", () => {
+    assertResult(
+      `
       import React from 'react';
 
       const C = React.createClass({
@@ -11,7 +12,8 @@ describe('transform react-display-name', () => {
           return <div />;
         }
       });
-    `, `${PREFIX}
+    `,
+      `${PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
 
       const C = _react2.default.createClass({displayName: 'C',
@@ -19,11 +21,13 @@ describe('transform react-display-name', () => {
           return _react2.default.createElement('div', null );
         }
       });
-    `);
+    `,
+    );
   });
 
-  it('adds displayName to a createReactClass usage', () => {
-    assertResult(`
+  it("adds displayName to a createReactClass usage", () => {
+    assertResult(
+      `
       import React from 'react';
       import createReactClass from 'create-react-class';
 
@@ -32,7 +36,8 @@ describe('transform react-display-name', () => {
           return <div />;
         }
       });
-    `, `${PREFIX}
+    `,
+      `${PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
       var _createreactclass = require('create-react-class'); var _createreactclass2 = _interopRequireDefault(_createreactclass);
 
@@ -41,11 +46,13 @@ describe('transform react-display-name', () => {
           return _react2.default.createElement('div', null );
         }
       });
-    `);
+    `,
+    );
   });
 
-  it('does not add displayName if it is already present', () => {
-    assertResult(`
+  it("does not add displayName if it is already present", () => {
+    assertResult(
+      `
       import React from 'react';
 
       const C = React.createClass({
@@ -55,7 +62,8 @@ describe('transform react-display-name', () => {
           return <div />;
         }
       });
-    `, `${PREFIX}
+    `,
+      `${PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
 
       const C = _react2.default.createClass({
@@ -65,11 +73,13 @@ describe('transform react-display-name', () => {
           return _react2.default.createElement('div', null );
         }
       });
-    `);
+    `,
+    );
   });
 
-  it('does not add displayName if there is no identifier to find', () => {
-    assertResult(`
+  it("does not add displayName if there is no identifier to find", () => {
+    assertResult(
+      `
       import React from 'react';
 
       export default React.createClass({
@@ -77,7 +87,8 @@ describe('transform react-display-name', () => {
           return <div />;
         }
       });
-    `, `${PREFIX}${ESMODULE_PREFIX}
+    `,
+      `${PREFIX}${ESMODULE_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
 
       exports. default = _react2.default.createClass({
@@ -85,11 +96,13 @@ describe('transform react-display-name', () => {
           return _react2.default.createElement('div', null );
         }
       });
-    `);
+    `,
+    );
   });
 
-  it('adds a displayName for a class in an object key position', () => {
-    assertResult(`
+  it("adds a displayName for a class in an object key position", () => {
+    assertResult(
+      `
       import React from 'react';
 
       const o = {
@@ -99,7 +112,8 @@ describe('transform react-display-name', () => {
           },
         })
       };
-    `, `${PREFIX}
+    `,
+      `${PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
 
       const o = {
@@ -109,11 +123,13 @@ describe('transform react-display-name', () => {
           },
         })
       };
-    `);
+    `,
+    );
   });
 
-  it('does not count a nested displayName key as an existing display name', () => {
-    assertResult(`
+  it("does not count a nested displayName key as an existing display name", () => {
+    assertResult(
+      `
       import React from 'react';
 
       const C = React.createClass({
@@ -122,7 +138,8 @@ describe('transform react-display-name', () => {
           return null;
         }
       });
-    `, `${PREFIX}
+    `,
+      `${PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
 
       const C = _react2.default.createClass({displayName: 'C',
@@ -131,6 +148,7 @@ describe('transform react-display-name', () => {
           return null;
         }
       });
-    `);
+    `,
+    );
   });
 });

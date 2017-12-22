@@ -1,7 +1,7 @@
-import { Transformer } from './Transformer';
-import { RootTransformer } from '../index';
-import TokenProcessor from '../TokenProcessor';
-import IdentifierReplacer from './IdentifierReplacer';
+import {RootTransformer} from "../index";
+import TokenProcessor from "../TokenProcessor";
+import IdentifierReplacer from "./IdentifierReplacer";
+import Transformer from "./Transformer";
 
 /**
  * Implementation of babel-plugin-transform-react-display-name, which adds a
@@ -15,17 +15,15 @@ export default class ReactDisplayNameTransformer implements Transformer {
   constructor(
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
-    readonly identifierReplacer: IdentifierReplacer
-  ) {
-  }
+    readonly identifierReplacer: IdentifierReplacer,
+  ) {}
 
-  preprocess(): void {
-  }
+  preprocess(): void {}
 
   process(): boolean {
     const startIndex = this.tokens.currentIndex();
-    if (this.tokens.matchesName('createReactClass')) {
-      const newName = this.identifierReplacer.getIdentifierReplacement('createReactClass');
+    if (this.tokens.matchesName("createReactClass")) {
+      const newName = this.identifierReplacer.getIdentifierReplacement("createReactClass");
       if (newName) {
         this.tokens.replaceToken(`(0, ${newName})`);
       } else {
@@ -35,11 +33,11 @@ export default class ReactDisplayNameTransformer implements Transformer {
       return true;
     }
     if (
-      this.tokens.matches(['name', '.', 'name']) &&
-      this.tokens.matchesName('React') &&
-      this.tokens.matchesNameAtIndex(this.tokens.currentIndex() + 2, 'createClass')
+      this.tokens.matches(["name", ".", "name"]) &&
+      this.tokens.matchesName("React") &&
+      this.tokens.matchesNameAtIndex(this.tokens.currentIndex() + 2, "createClass")
     ) {
-      const newName = this.identifierReplacer.getIdentifierReplacement('React');
+      const newName = this.identifierReplacer.getIdentifierReplacement("React");
       if (newName) {
         this.tokens.replaceToken(newName);
         this.tokens.copyToken();
@@ -58,38 +56,36 @@ export default class ReactDisplayNameTransformer implements Transformer {
   /**
    * This is called with the token position at the open-paren.
    */
-  private tryProcessCreateClassCall(startIndex: number) {
+  private tryProcessCreateClassCall(startIndex: number): void {
     const displayName = this.findDisplayName(startIndex);
     if (!displayName) {
       return;
     }
 
     if (this.classNeedsDisplayName()) {
-      this.tokens.copyExpectedToken('(');
-      this.tokens.copyExpectedToken('{');
+      this.tokens.copyExpectedToken("(");
+      this.tokens.copyExpectedToken("{");
       this.tokens.appendCode(`displayName: '${displayName}',`);
       this.rootTransformer.processBalancedCode();
-      this.tokens.copyExpectedToken('}');
-      this.tokens.copyExpectedToken(')');
+      this.tokens.copyExpectedToken("}");
+      this.tokens.copyExpectedToken(")");
     }
   }
 
   private findDisplayName(startIndex: number): string | null {
     if (
-      this.tokens.matchesAtIndex(startIndex - 2, ['name', '=']) &&
-      !this.tokens.matchesAtIndex(startIndex - 3, ['.'])
+      this.tokens.matchesAtIndex(startIndex - 2, ["name", "="]) &&
+      !this.tokens.matchesAtIndex(startIndex - 3, ["."])
     ) {
       // This is an assignment (or declaration) with an identifier LHS, so use
       // that identifier name.
       return this.tokens.tokens[startIndex - 2].value;
     }
     if (
-      this.tokens.matchesAtIndex(startIndex - 2, ['name', ':']) &&
-      this.tokens.tokens[startIndex - 2].contextName === 'object' &&
-      (
-        this.tokens.tokens[startIndex - 3].type.label === ',' ||
-        this.tokens.tokens[startIndex - 3].type.label === '{'
-      )
+      this.tokens.matchesAtIndex(startIndex - 2, ["name", ":"]) &&
+      this.tokens.tokens[startIndex - 2].contextName === "object" &&
+      (this.tokens.tokens[startIndex - 3].type.label === "," ||
+        this.tokens.tokens[startIndex - 3].type.label === "{")
     ) {
       // This is an object literal value.
       return this.tokens.tokens[startIndex - 2].value;
@@ -104,7 +100,7 @@ export default class ReactDisplayNameTransformer implements Transformer {
    */
   private classNeedsDisplayName(): boolean {
     let index = this.tokens.currentIndex();
-    if (!this.tokens.matches(['(', '{'])) {
+    if (!this.tokens.matches(["(", "{"])) {
       return false;
     }
     // Currently augmentTokenContext starts the block at one after the {, so we
@@ -115,8 +111,8 @@ export default class ReactDisplayNameTransformer implements Transformer {
     for (; index < this.tokens.tokens.length; index++) {
       const token = this.tokens.tokens[index];
       if (
-        token.type.label === '}' &&
-        token.contextName === 'object' &&
+        token.type.label === "}" &&
+        token.contextName === "object" &&
         token.contextStartIndex === objectStartIndex
       ) {
         index++;
@@ -124,10 +120,11 @@ export default class ReactDisplayNameTransformer implements Transformer {
       }
 
       if (
-        this.tokens.matchesNameAtIndex(index, 'displayName') &&
-        this.tokens.matchesAtIndex(index + 1, [':']) &&
-        (this.tokens.matchesAtIndex(index - 1, [',']) || this.tokens.matchesAtIndex(index - 1, ['{'])) &&
-        token.contextName === 'object' &&
+        this.tokens.matchesNameAtIndex(index, "displayName") &&
+        this.tokens.matchesAtIndex(index + 1, [":"]) &&
+        (this.tokens.matchesAtIndex(index - 1, [","]) ||
+          this.tokens.matchesAtIndex(index - 1, ["{"])) &&
+        token.contextName === "object" &&
         token.contextStartIndex === objectStartIndex
       ) {
         // We found a displayName key, so bail out.
@@ -137,15 +134,16 @@ export default class ReactDisplayNameTransformer implements Transformer {
 
     // If we got this far, we know we have createClass with an object with no
     // display name, so we want to proceed as long as that was the only argument.
-    return this.tokens.matchesAtIndex(index, [')']) ||
-      this.tokens.matchesAtIndex(index, [',', ')']);
+    return (
+      this.tokens.matchesAtIndex(index, [")"]) || this.tokens.matchesAtIndex(index, [",", ")"])
+    );
   }
 
   getPrefixCode(): string {
-    return '';
+    return "";
   }
 
   getSuffixCode(): string {
-    return '';
+    return "";
   }
 }

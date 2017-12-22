@@ -1,14 +1,13 @@
-import { Token, default as TokenProcessor } from './TokenProcessor';
+import TokenProcessor, {Token} from "./TokenProcessor";
 
-export class NameManager {
+export default class NameManager {
   private readonly usedNames: Set<string> = new Set();
 
-  constructor(readonly tokens: TokenProcessor) {
-  }
+  constructor(readonly tokens: TokenProcessor) {}
 
   preprocessNames(tokens: Array<Token>): void {
     for (const token of this.tokens.tokens) {
-      if (token.type.label === 'name') {
+      if (token.type.label === "name") {
         this.usedNames.add(token.value);
       }
     }

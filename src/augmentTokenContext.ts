@@ -1,4 +1,4 @@
-import { Token, TokenContext } from './TokenProcessor';
+import {Token, TokenContext} from "./TokenProcessor";
 
 /**
  * Scan the tokens and assign a "context" to each one. For example, we need to
@@ -8,13 +8,13 @@ import { Token, TokenContext } from './TokenProcessor';
 export default function augmentTokenContext(tokens: Array<Token>): void {
   let index = 0;
 
-  function processToToken(closingTokenLabel: string, context: TokenContext) {
+  function processToToken(closingTokenLabel: string, context: TokenContext): void {
     processRegion([closingTokenLabel], context);
   }
 
-  function matchesTokens(labels: Array<string>) {
+  function matchesTokens(labels: Array<string>): boolean {
     for (let i = 0; i < labels.length; i++) {
-      let newIndex = index + i;
+      const newIndex = index + i;
       if (newIndex >= tokens.length || tokens[newIndex].type.label !== labels[i]) {
         return false;
       }
@@ -22,9 +22,9 @@ export default function augmentTokenContext(tokens: Array<Token>): void {
     return true;
   }
 
-  function processRegion(closingTokenLabels: Array<string>, context: TokenContext) {
+  function processRegion(closingTokenLabels: Array<string>, context: TokenContext): void {
     const contextStartIndex = index;
-    function advance() {
+    function advance(): void {
       if (index < tokens.length) {
         tokens[index].contextName = context;
         tokens[index].contextStartIndex = contextStartIndex;
@@ -45,107 +45,108 @@ export default function augmentTokenContext(tokens: Array<Token>): void {
       advance();
 
       // Keywords can be property values, so bail out if we're after a dot.
-      if (!lastToken || lastToken.type.label !== '.') {
+      if (!lastToken || lastToken.type.label !== ".") {
         if (
-          token.type.label === 'if' ||
-          token.type.label === 'for' ||
-          token.type.label === 'while' ||
-          token.type.label === 'catch' ||
-          token.type.label === 'function'
+          token.type.label === "if" ||
+          token.type.label === "for" ||
+          token.type.label === "while" ||
+          token.type.label === "catch" ||
+          token.type.label === "function"
         ) {
           // Code of the form TOKEN (...) BLOCK
-          if (token.type.label === 'function' && tokens[index].type.label === 'name') {
+          if (token.type.label === "function" && tokens[index].type.label === "name") {
             advance();
           }
-          if (tokens[index].type.label === '(') {
+          if (tokens[index].type.label === "(") {
             advance();
-            processToToken(')', 'parens');
-            if (tokens[index].type.label === '{') {
+            processToToken(")", "parens");
+            if (tokens[index].type.label === "{") {
               advance();
-              processToToken('}', 'block');
+              processToToken("}", "block");
             }
             continue;
           }
         } else if (
-          token.type.label === '=>' ||
-          token.type.label === 'else' ||
-          token.type.label === 'try' ||
-          token.type.label === 'finally' ||
-          token.type.label === 'do' ||
-          token.type.label === '}' ||
-          token.type.label === ')' ||
-          (token.type.label === ';' && context === 'block')
+          token.type.label === "=>" ||
+          token.type.label === "else" ||
+          token.type.label === "try" ||
+          token.type.label === "finally" ||
+          token.type.label === "do" ||
+          token.type.label === "}" ||
+          token.type.label === ")" ||
+          (token.type.label === ";" && context === "block")
         ) {
-          if (tokens[index].type.label === '{') {
+          if (tokens[index].type.label === "{") {
             advance();
-            processToToken('}', 'block');
+            processToToken("}", "block");
             continue;
           }
-        } else if (token.type.label === 'class') {
+        } else if (token.type.label === "class") {
           pendingClass = true;
           continue;
-        } else if (token.type.label === 'default') {
-          if (tokens[index].type.label === ':' && tokens[index + 1].type.label === '{') {
+        } else if (token.type.label === "default") {
+          if (tokens[index].type.label === ":" && tokens[index + 1].type.label === "{") {
             advance();
             advance();
-            processToToken('}', 'block');
+            processToToken("}", "block");
             continue;
           }
         }
       }
 
-      if (token.type.label === 'name') {
-        if (context === 'class' && tokens[index].type.label === '(') {
+      if (token.type.label === "name") {
+        if (context === "class" && tokens[index].type.label === "(") {
           // Process class method.
           advance();
-          processToToken(')', 'parens');
-          if (tokens[index].type.label === '{') {
+          processToToken(")", "parens");
+          if (tokens[index].type.label === "{") {
             advance();
-            processToToken('}', 'block');
+            processToToken("}", "block");
           }
         } else if (
-          context === 'object' && tokens[index].type.label === '(' &&
-          (tokens[index - 2].type.label === ',' || tokens[index - 2].type.label === '{')
+          context === "object" &&
+          tokens[index].type.label === "(" &&
+          (tokens[index - 2].type.label === "," || tokens[index - 2].type.label === "{")
         ) {
           // Process object method.
           advance();
-          processToToken(')', 'parens');
-          if (tokens[index].type.label === '{') {
+          processToToken(")", "parens");
+          if (tokens[index].type.label === "{") {
             advance();
-            processToToken('}', 'block');
+            processToToken("}", "block");
           }
         }
-      } else if (token.type.label === 'case') {
-        processToToken(':', 'switchCaseCondition');
-        if (tokens[index].type.label === '{') {
+      } else if (token.type.label === "case") {
+        processToToken(":", "switchCaseCondition");
+        if (tokens[index].type.label === "{") {
           advance();
-          processToToken('}', 'block');
+          processToToken("}", "block");
         }
-      } else if (token.type.label === 'jsxTagStart') {
-        processToToken('jsxTagEnd', 'jsxTag');
+      } else if (token.type.label === "jsxTagStart") {
+        processToToken("jsxTagEnd", "jsxTag");
         // Non-self-closing tag, so use jsxChild context for the body.
-        if (tokens[index - 2].type.label !== '/') {
+        if (tokens[index - 2].type.label !== "/") {
           // All / tokens will be in JSX tags.
-          processRegion(['jsxTagStart', '/'], 'jsxChild');
-          processToToken('jsxTagEnd', 'jsxTag');
+          processRegion(["jsxTagStart", "/"], "jsxChild");
+          processToToken("jsxTagEnd", "jsxTag");
         }
-      } else if (token.type.label === '{') {
-        if (pendingClass && lastToken.type.label !== 'extends') {
-          processToToken('}', 'class');
+      } else if (token.type.label === "{") {
+        if (pendingClass && lastToken.type.label !== "extends") {
+          processToToken("}", "class");
           pendingClass = false;
-        } else if (context === 'jsxTag' || context === 'jsxChild') {
-          processToToken('}', 'jsxExpression');
+        } else if (context === "jsxTag" || context === "jsxChild") {
+          processToToken("}", "jsxExpression");
         } else {
-          processToToken('}', 'object');
+          processToToken("}", "object");
         }
-      } else if (token.type.label === '[') {
-        processToToken(']', 'brackets');
-      } else if (token.type.label === '(') {
-        processToToken(')', 'parens');
-      } else if (token.type.label === '${') {
-        processToToken('}', 'interpolatedExpression');
+      } else if (token.type.label === "[") {
+        processToToken("]", "brackets");
+      } else if (token.type.label === "(") {
+        processToToken(")", "parens");
+      } else if (token.type.label === "${") {
+        processToToken("}", "interpolatedExpression");
       }
     }
   }
-  processToToken('NONE', 'block');
+  processToToken("NONE", "block");
 }

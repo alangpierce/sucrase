@@ -3,6 +3,8 @@ import * as Babel from 'babel-standalone';
 import * as Sucrase from 'sucrase';
 
 import {TRANSFORMS} from './Constants';
+import {compressCode} from './URLHashState';
+import getTokens from './getTokens';
 Babel.registerPlugin('add-module-exports', require('babel-plugin-add-module-exports'));
 
 
@@ -24,6 +26,10 @@ function processEvent(data) {
     return runSucrase().code;
   } else if (data.type === 'RUN_BABEL') {
     return runBabel().code;
+  } else if (data.type === 'COMPRESS_CODE') {
+    return compressCode(config.code);
+  } else if (data.type === 'GET_TOKENS') {
+    return getTokens(config.code);
   } else if (data.type === 'PROFILE_SUCRASE') {
     return runSucrase().time;
   } else if (data.type === 'PROFILE_BABEL') {

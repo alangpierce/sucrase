@@ -16,7 +16,10 @@ let notifyConfig = null;
 
 // Callback function to update the main app state. Just forwards the object to
 // setState in the App component.
-let sendResultsFn = null;
+let updateStateFn = null;
+// Callback function to persist the compressed code to the URL. Compression is
+// slow enough that it's useful to do in a web worker.
+let handleCompressedCodeFn = null;
 
 worker.addEventListener('message', ({data}) => {
   nextResolve(data);
@@ -46,6 +49,14 @@ async function runSucrase() {
 
 async function runBabel() {
   return await sendMessage({type: 'RUN_BABEL'});
+}
+
+async function compressCode() {
+  return await sendMessage({type: 'COMPRESS_CODE'});
+}
+
+async function getTokens() {
+  return await sendMessage({type: 'GET_TOKENS'});
 }
 
 async function profileSucrase() {
@@ -107,11 +118,15 @@ async function workerLoop() {
       await setConfig(config);
       const sucraseCode = await runSucrase();
       const babelCode = config.compareWithBabel ? await runBabel() : '';
-      sendResultsFn({sucraseCode, babelCode});
+      const tokensStr = config.showTokens ? await getTokens() : '';
+      updateStateFn({sucraseCode, babelCode, tokensStr});
+
+      const compressedCode = await compressCode();
+      handleCompressedCodeFn(compressedCode);
 
       const sucraseTimeMs = await profile(profileSucrase);
       const babelTimeMs = config.compareWithBabel ? await profile(profileBabel) : null;
-      sendResultsFn({sucraseTimeMs, babelTimeMs});
+      updateStateFn({sucraseTimeMs, babelTimeMs});
     } catch (e) {
       if (e.message !== CANCELLED_MESSAGE) {
         throw e;
@@ -128,8 +143,9 @@ export function updateConfig(config) {
   }
 }
 
-export function subscribe(sendResults) {
-  sendResultsFn = sendResults;
+export function subscribe({updateState, handleCompressedCode}) {
+  updateStateFn = updateState;
+  handleCompressedCodeFn = handleCompressedCode;
 }
 
 workerLoop();

@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import './App.css';
-import * as babylon from 'babylon';
+
 import {getVersion} from 'sucrase';
 
 import {TRANSFORMS, INITIAL_CODE} from './Constants';
 import Editor from './Editor';
-import formatTokens from './formatTokens';
 import OptionBox from './OptionBox';
+import {loadHashState, saveHashState} from './URLHashState';
 import * as WorkerClient from './WorkerClient';
 
 class App extends Component {
@@ -25,22 +25,42 @@ class App extends Component {
       sucraseTimeMs: null,
       babelCode: '',
       babelTimeMs: null,
+      tokensStr: '',
     };
+    const hashState = loadHashState();
+    if (hashState) {
+      this.state = {...this.state, ...hashState};
+    }
+
     this.editors = {};
     this._handleCodeChange = this._handleCodeChange.bind(this);
     this._toggleCompareWithBabel = this._toggleCompareWithBabel.bind(this);
   }
 
   componentDidMount() {
-    WorkerClient.subscribe(stateUpdate => this.setState(stateUpdate));
+    WorkerClient.subscribe({
+      updateState: (stateUpdate) => {
+        this.setState(stateUpdate)
+      },
+      handleCompressedCode: (compressedCode) => {
+        saveHashState({
+          code: this.state.code,
+          compressedCode,
+          selectedTransforms: this.state.selectedTransforms,
+          compareWithBabel: this.state.compareWithBabel,
+          showTokens: this.state.showTokens,
+        });
+      }
+    });
     this.postConfigToWorker();
   }
 
   componentDidUpdate(prevProps, prevState) {
     if (
-      this.state.compareWithBabel !== prevState.compareWithBabel ||
       this.state.code !== prevState.code ||
-      this.state.selectedTransforms !== prevState.selectedTransforms
+      this.state.selectedTransforms !== prevState.selectedTransforms ||
+      this.state.compareWithBabel !== prevState.compareWithBabel ||
+      this.state.showTokens !== prevState.showTokens
     ) {
       this.postConfigToWorker();
     }
@@ -52,6 +72,7 @@ class App extends Component {
       compareWithBabel: this.state.compareWithBabel,
       code: this.state.code,
       selectedTransforms: this.state.selectedTransforms,
+      showTokens: this.state.showTokens,
     });
   }
 
@@ -69,20 +90,8 @@ class App extends Component {
     this.setState({showTokens: !this.state.showTokens});
   };
 
-  _getTokens() {
-    try {
-      const ast = babylon.parse(
-        this.state.code,
-        {tokens: true, sourceType: 'module', plugins: ['jsx', 'objectRestSpread']}
-      );
-      return formatTokens(ast.tokens);
-    } catch (e) {
-      return e.message;
-    }
-  }
-
   render() {
-    const {sucraseCode, sucraseTimeMs, babelCode, babelTimeMs} = this.state;
+    const {sucraseCode, sucraseTimeMs, babelCode, babelTimeMs, tokensStr} = this.state;
     return (
       <div className="App">
         <span className="App-title">Sucrase</span>
@@ -151,7 +160,7 @@ class App extends Component {
             <Editor
               ref={e => this.editors['tokens'] = e}
               label='Babylon tokens'
-              code={this._getTokens()}
+              code={tokensStr}
               isReadOnly={true}
               options={{
                 lineNumbers: (n) => String(n - 1)

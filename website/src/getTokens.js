@@ -1,4 +1,18 @@
-export default function formatTokens(tokens) {
+import * as babylon from 'babylon';
+
+export default function getTokens(code) {
+  try {
+    const ast = babylon.parse(
+      code,
+      {tokens: true, sourceType: 'module', plugins: ['jsx', 'objectRestSpread']}
+    );
+    return formatTokens(ast.tokens);
+  } catch (e) {
+    return e.message;
+  }
+}
+
+function formatTokens(tokens) {
   return tokens.map(token => {
     let type = token.type;
     if (type.label) {

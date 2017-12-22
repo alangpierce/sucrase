@@ -40,6 +40,11 @@ body {
   font-size: large;
 }
 
+.App-footer {
+  font-size: large;
+  color: white;
+}
+
 .OptionBox {
   display: inline-flex;
   flex-wrap: wrap;

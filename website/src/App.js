@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
 import * as babylon from 'babylon';
+import {getVersion} from 'sucrase';
 
 import {TRANSFORMS, INITIAL_CODE} from './Constants';
 import Editor from './Editor';
@@ -158,6 +159,11 @@ class App extends Component {
             />
           )}
         </div>
+        <span className="App-footer">
+          <a className="App-link" href="https://www.npmjs.com/package/sucrase">
+            sucrase
+          </a> {getVersion()}
+        </span>
       </div>
     );
   }

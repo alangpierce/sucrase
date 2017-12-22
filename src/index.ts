@@ -17,6 +17,11 @@ export type Options = {
   babylonPlugins?: Array<string>;
 };
 
+export function getVersion(): string {
+  // eslint-disable-next-line
+  return require('../../package.json').version;
+}
+
 export function transform(code: string, options: Options = {}): string {
   const babylonPlugins = options.babylonPlugins || DEFAULT_BABYLON_PLUGINS;
   const transforms = options.transforms || ["jsx"];

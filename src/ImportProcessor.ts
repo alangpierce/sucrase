@@ -107,10 +107,14 @@ export default class ImportProcessor {
       }
 
       for (const {importedName, localName} of namedExports) {
-        requireCode += ` Object.defineProperty(exports, '${localName}', {enumerable: true, get: () => ${primaryImportName}.${importedName}});`;
+        requireCode += ` Object.defineProperty(exports, '${localName}', \
+{enumerable: true, get: () => ${primaryImportName}.${importedName}});`;
       }
       if (hasStarExport) {
-        requireCode += ` Object.keys(${primaryImportName}).filter(key => key !== 'default' && key !== '__esModule').forEach(key => { Object.defineProperty(exports, key, {enumerable: true, get: () => ${primaryImportName}[key]}); });`;
+        requireCode += ` Object.keys(${primaryImportName}).filter(key => \
+key !== 'default' && key !== '__esModule').forEach(key => { \
+Object.defineProperty(exports, key, {enumerable: true, \
+get: () => ${primaryImportName}[key]}); });`;
       }
 
       this.importsToReplace.set(path, requireCode);
@@ -137,6 +141,15 @@ export default class ImportProcessor {
     let namedImports: Array<NamedImport> = [];
 
     index++;
+    if (
+      this.tokens.matchesNameAtIndex(index, "type") &&
+      !this.tokens.matchesAtIndex(index + 1, [","]) &&
+      !this.tokens.matchesNameAtIndex(index + 1, "from")
+    ) {
+      // import type declaration, so no need to process anything.
+      return;
+    }
+
     if (this.tokens.matchesAtIndex(index, ["name"])) {
       defaultNames.push(this.tokens.tokens[index].value);
       index++;
@@ -234,6 +247,17 @@ export default class ImportProcessor {
   private getNamedImports(index: number): {newIndex: number; namedImports: Array<NamedImport>} {
     const namedImports = [];
     while (true) {
+      // Flow type imports should just be ignored.
+      let isTypeImport = false;
+      if (
+        this.tokens.matchesNameAtIndex(index, "type") &&
+        this.tokens.matchesAtIndex(index + 1, ["name"]) &&
+        !this.tokens.matchesNameAtIndex(index + 1, "as")
+      ) {
+        isTypeImport = true;
+        index++;
+      }
+
       const importedName = this.tokens.tokens[index].value;
       let localName;
       index++;
@@ -244,7 +268,9 @@ export default class ImportProcessor {
       } else {
         localName = importedName;
       }
-      namedImports.push({importedName, localName});
+      if (!isTypeImport) {
+        namedImports.push({importedName, localName});
+      }
       if (this.tokens.matchesAtIndex(index, [",", "}"])) {
         index += 2;
         break;
@@ -254,7 +280,7 @@ export default class ImportProcessor {
       } else if (this.tokens.matchesAtIndex(index, [","])) {
         index++;
       } else {
-        throw new Error("Unexpected token.");
+        throw new Error(`Unexpected token: ${JSON.stringify(this.tokens.currentToken())}`);
       }
     }
     return {newIndex: index, namedImports};

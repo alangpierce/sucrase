@@ -58,7 +58,7 @@ function runBabel() {
     ];
   }
   return runAndProfile(() =>
-    Babel.transform(config.code, {plugins: babelPlugins,}).code
+    Babel.transform(config.code, {plugins: babelPlugins, parserOpts: {plugins: ['jsx', 'flow']}}).code
   );
 }
 
@@ -69,6 +69,7 @@ function runAndProfile(runOperation) {
     const time = performance.now() - start;
     return {code, time};
   } catch (e) {
+    console.error(e);
     return {code: e.message, time: null};
   }
 }

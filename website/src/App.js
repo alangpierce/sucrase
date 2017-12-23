@@ -4,8 +4,11 @@ import './App.css';
 import {getVersion} from 'sucrase';
 
 import {
-  TRANSFORMS, INITIAL_CODE,
-  DEFAULT_COMPARE_WITH_BABEL, DEFAULT_SHOW_TOKENS, DEFAULT_TRANSFORMS
+  TRANSFORMS,
+  INITIAL_CODE,
+  DEFAULT_COMPARE_WITH_BABEL,
+  DEFAULT_SHOW_TOKENS,
+  DEFAULT_TRANSFORMS,
 } from './Constants';
 import Editor from './Editor';
 import OptionBox from './OptionBox';
@@ -106,8 +109,8 @@ class App extends Component {
         <div className="App-options">
           <OptionBox
             title="Transforms"
-            options={TRANSFORMS.map(({name}) => ({
-              text: name,
+            options={TRANSFORMS.map(({name, isExperimental}) => ({
+              text: name + (isExperimental ? ' (experimental)' : ''),
               checked: Boolean(this.state.selectedTransforms[name]),
               onToggle: () => {
                 this.setState({

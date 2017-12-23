@@ -10,33 +10,34 @@ import {
 } from './Constants';
 
 export function saveHashState({code, compressedCode, selectedTransforms, compareWithBabel, showTokens}) {
-  let hashState = '';
+  const components = [];
 
   const transformsValue = TRANSFORMS
     .filter(({name}) => selectedTransforms[name])
     .map(({name}) => name)
     .join(',');
 
+
   if (transformsValue !== DEFAULT_TRANSFORMS.join(',')) {
-    hashState += `selectedTransforms=${transformsValue}`;
+    components.push(`selectedTransforms=${transformsValue}`);
   }
   if (compareWithBabel !== DEFAULT_COMPARE_WITH_BABEL) {
-    hashState += `&compareWithBabel=${compareWithBabel}`;
+    components.push(`compareWithBabel=${compareWithBabel}`);
   }
   if (showTokens !== DEFAULT_SHOW_TOKENS) {
-    hashState += `&showTokens=${showTokens}`;
+    components.push(`showTokens=${showTokens}`);
   }
 
   if (code !== INITIAL_CODE) {
     if (code.length > 150) {
-      hashState += `&compressedCode=${window.encodeURIComponent(compressedCode)}`;
+      components.push(`compressedCode=${window.encodeURIComponent(compressedCode)}`);
     } else {
-      hashState += `&code=${window.encodeURIComponent(code)}`;
+      components.push(`code=${window.encodeURIComponent(code)}`);
     }
   }
 
-  if (hashState) {
-    window.location.hash = hashState;
+  if (components.length > 0) {
+    window.location.hash = components.join('&');
   } else {
     window.history.replaceState("", document.title, window.location.pathname + window.location.search);
   }

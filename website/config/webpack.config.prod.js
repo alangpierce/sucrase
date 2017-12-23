@@ -265,6 +265,7 @@ module.exports = {
     new webpack.DefinePlugin(env.stringified),
     new UglifyJsPlugin({
       uglifyOptions: {
+        mangle: false,
         compress: {
           warnings: false,
           // Disabled because of an issue with Uglify breaking seemingly valid code:

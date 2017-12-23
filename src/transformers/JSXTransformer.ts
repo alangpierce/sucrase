@@ -3,15 +3,13 @@ import TokenProcessor from "../TokenProcessor";
 import IdentifierReplacer from "./IdentifierReplacer";
 import Transformer from "./Transformer";
 
-export default class JSXTransformer implements Transformer {
+export default class JSXTransformer extends Transformer {
   constructor(
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
     readonly identifierReplacer: IdentifierReplacer,
-  ) {}
-
-  preprocess(): void {
-    // Do nothing.
+  ) {
+    super();
   }
 
   process(): boolean {
@@ -20,14 +18,6 @@ export default class JSXTransformer implements Transformer {
       return true;
     }
     return false;
-  }
-
-  getPrefixCode(): string {
-    return "";
-  }
-
-  getSuffixCode(): string {
-    return "";
   }
 
   /**

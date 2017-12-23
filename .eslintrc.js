@@ -9,6 +9,7 @@ module.exports = {
   rules: {
     "class-methods-use-this": "off",
     "import/extensions": "off",
+    "import/prefer-default-export": "off",
     "no-constant-condition": ["error", {"checkLoops": false}],
     "no-continue": "off",
     "no-empty-function": "off",

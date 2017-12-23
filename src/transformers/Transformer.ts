@@ -1,7 +1,14 @@
-export default interface Transformer {
-  preprocess(): void;
+export default abstract class Transformer {
+  preprocess(): void {}
+
   // Return true if anything was processed, false otherwise.
-  process(): boolean;
-  getPrefixCode(): string;
-  getSuffixCode(): string;
-};
+  abstract process(): boolean;
+
+  getPrefixCode(): string {
+    return "";
+  }
+
+  getSuffixCode(): string {
+    return "";
+  }
+}

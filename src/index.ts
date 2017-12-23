@@ -8,9 +8,9 @@ import JSXTransformer from "./transformers/JSXTransformer";
 import ReactDisplayNameTransformer from "./transformers/ReactDisplayNameTransformer";
 import Transformer from "./transformers/Transformer";
 
-const DEFAULT_BABYLON_PLUGINS = ["jsx", "objectRestSpread"];
+const DEFAULT_BABYLON_PLUGINS = ["jsx", "flow", "objectRestSpread"];
 
-export type Transform = "jsx" | "imports" | "add-module-exports" | "react-display-name";
+export type Transform = "jsx" | "imports" | "flow" | "add-module-exports" | "react-display-name";
 
 export type Options = {
   transforms?: Array<Transform>;

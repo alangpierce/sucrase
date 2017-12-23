@@ -4,7 +4,7 @@ export default function getTokens(code) {
   try {
     const ast = babylon.parse(
       code,
-      {tokens: true, sourceType: 'module', plugins: ['jsx', 'objectRestSpread']}
+      {tokens: true, sourceType: 'module', plugins: ['jsx', 'objectRestSpread', 'flow']}
     );
     return formatTokens(ast.tokens);
   } catch (e) {

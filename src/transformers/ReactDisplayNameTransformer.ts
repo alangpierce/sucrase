@@ -11,14 +11,14 @@ import Transformer from "./Transformer";
  * - It does not handle `export default React.createClass`, using the filename,
  *   since Sucrase currently does not know the name of the current file.
  */
-export default class ReactDisplayNameTransformer implements Transformer {
+export default class ReactDisplayNameTransformer extends Transformer {
   constructor(
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
     readonly identifierReplacer: IdentifierReplacer,
-  ) {}
-
-  preprocess(): void {}
+  ) {
+    super();
+  }
 
   process(): boolean {
     const startIndex = this.tokens.currentIndex();
@@ -137,13 +137,5 @@ export default class ReactDisplayNameTransformer implements Transformer {
     return (
       this.tokens.matchesAtIndex(index, [")"]) || this.tokens.matchesAtIndex(index, [",", ")"])
     );
-  }
-
-  getPrefixCode(): string {
-    return "";
-  }
-
-  getSuffixCode(): string {
-    return "";
   }
 }

@@ -5,7 +5,7 @@ import TokenProcessor, {Token} from "../TokenProcessor";
 import isMaybePropertyName from "../util/isMaybePropertyName";
 import Transformer from "./Transformer";
 
-export default class ImportTransformer implements Transformer {
+export default class ImportTransformer extends Transformer {
   private hadExport: boolean = false;
   private hadNamedExport: boolean = false;
   private hadDefaultExport: boolean = false;
@@ -16,7 +16,9 @@ export default class ImportTransformer implements Transformer {
     readonly nameManager: NameManager,
     readonly importProcessor: ImportProcessor,
     readonly shouldAddModuleExports: boolean,
-  ) {}
+  ) {
+    super();
+  }
 
   preprocess(): void {
     this.nameManager.preprocessNames(this.tokens.tokens);
@@ -74,13 +76,73 @@ export default class ImportTransformer implements Transformer {
    * we just need to look it up.
    */
   private processImport(): void {
-    this.tokens.removeInitialToken();
-    while (!this.tokens.matches(["string"])) {
+    const wasOnlyTypes = this.removeImportAndDetectIfType();
+
+    if (wasOnlyTypes) {
+      this.tokens.removeToken();
+    } else {
+      const path = this.tokens.currentToken().value;
+      this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
+      this.tokens.appendCode(this.importProcessor.claimImportCode(path));
+    }
+    if (this.tokens.matches([";"])) {
       this.tokens.removeToken();
     }
-    const path = this.tokens.currentToken().value;
-    this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
-    if (this.tokens.matches([";"])) {
+  }
+
+  /**
+   * Erase this import, and if it was either of the form "import type" or
+   * contained only "type". Such imports should not even do a side-effect
+   * import.
+   *
+   * The position should end at the import string.
+   */
+  private removeImportAndDetectIfType(): boolean {
+    this.tokens.removeInitialToken();
+    if (
+      this.tokens.matchesName("type") &&
+      !this.tokens.matchesAtIndex(this.tokens.currentIndex() + 1, [","]) &&
+      !this.tokens.matchesNameAtIndex(this.tokens.currentIndex() + 1, "from")
+    ) {
+      // This is an "import type" statement, so exit early.
+      this.removeRemainingImport();
+      return true;
+    }
+
+    if (this.tokens.matches(["name"]) || this.tokens.matches(["*"])) {
+      // We have a default import or namespace import, so there must be some
+      // non-type import.
+      this.removeRemainingImport();
+      return false;
+    }
+
+    if (this.tokens.matches(["string"])) {
+      // This is a bare import, so we should proceed with the import.
+      return false;
+    }
+
+    let foundNonType = false;
+    while (!this.tokens.matches(["string"])) {
+      // Check if any named imports are of the form "foo" or "foo as bar", with
+      // no leading "type".
+      if ((!foundNonType && this.tokens.matches(["{"])) || this.tokens.matches([","])) {
+        this.tokens.removeToken();
+        if (
+          this.tokens.matches(["name", ","]) ||
+          this.tokens.matches(["name", "}"]) ||
+          this.tokens.matches(["name", "name", "name", ","]) ||
+          this.tokens.matches(["name", "name", "name", "}"])
+        ) {
+          foundNonType = true;
+        }
+      }
+      this.tokens.removeToken();
+    }
+    return !foundNonType;
+  }
+
+  private removeRemainingImport(): void {
+    while (!this.tokens.matches(["string"])) {
       this.tokens.removeToken();
     }
   }
@@ -380,7 +442,7 @@ export default class ImportTransformer implements Transformer {
       } else if (this.tokens.matches([","])) {
         this.tokens.removeToken();
       } else {
-        throw new Error("Unexpected token");
+        throw new Error(`Unexpected token: ${JSON.stringify(this.tokens.currentToken())}`);
       }
     }
 

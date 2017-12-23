@@ -2,7 +2,7 @@
   "name": "sucrase-website",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://www.alangpierce.com/sucrase",
+  "homepage": "https://sucrase.io",
   "dependencies": {
     "autoprefixer": "7.1.2",
     "babel-core": "6.25.0",

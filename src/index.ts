@@ -3,6 +3,7 @@ import augmentTokenContext from "./augmentTokenContext";
 import ImportProcessor from "./ImportProcessor";
 import NameManager from "./NameManager";
 import TokenProcessor from "./TokenProcessor";
+import FlowTransformer from "./transformers/FlowTransformer";
 import ImportTransformer from "./transformers/ImportTransformer";
 import JSXTransformer from "./transformers/JSXTransformer";
 import ReactDisplayNameTransformer from "./transformers/ReactDisplayNameTransformer";
@@ -19,7 +20,7 @@ export type Options = {
 
 export function getVersion(): string {
   // eslint-disable-next-line
-  return require('../../package.json').version;
+  return require("../../package.json").version;
 }
 
 export function transform(code: string, options: Options = {}): string {
@@ -65,6 +66,10 @@ export class RootTransformer {
       this.transformers.push(
         new ImportTransformer(this, tokens, nameManager, importProcessor!, shouldAddModuleExports),
       );
+    }
+
+    if (transforms.includes("flow")) {
+      this.transformers.push(new FlowTransformer(this, tokens));
     }
   }
 
@@ -126,5 +131,56 @@ export class RootTransformer {
       }
     }
     this.tokens.copyToken();
+  }
+
+  /**
+   * Skip past a class with a name and return that name.
+   */
+  processNamedClass(): string {
+    if (!this.tokens.matches(["class", "name"])) {
+      throw new Error("Expected identifier for exported class name.");
+    }
+    const name = this.tokens.tokens[this.tokens.currentIndex() + 1].value;
+    this.processClass();
+    return name;
+  }
+
+  processClass(): void {
+    const classToken = this.tokens.currentToken();
+    this.tokens.copyExpectedToken("class");
+    if (this.tokens.matches(["name"]) && !this.tokens.matchesName("implements")) {
+      this.tokens.copyToken();
+    }
+    if (this.tokens.matches(["extends"])) {
+      // There are only some limited expressions that are allowed within the
+      // `extends` expression, e.g. no top-level binary operators, so we can
+      // skip past even fairly complex expressions by being a bit careful.
+      this.tokens.copyToken();
+      if (this.tokens.matches(["{"])) {
+        // Extending an object literal.
+        this.tokens.copyExpectedToken("{");
+        this.processBalancedCode();
+        this.tokens.copyExpectedToken("}");
+      }
+      while (
+        !this.tokens.matchesName("implements") &&
+        !(
+          this.tokens.matches(["{"]) &&
+          this.tokens.currentToken().contextStartIndex === classToken.contextStartIndex
+        )
+      ) {
+        this.processToken();
+      }
+    }
+
+    if (this.tokens.matchesName("implements")) {
+      while (!this.tokens.matches(["{"])) {
+        this.tokens.removeToken();
+      }
+    }
+
+    this.tokens.copyExpectedToken("{");
+    this.processBalancedCode();
+    this.tokens.copyExpectedToken("}");
   }
 }

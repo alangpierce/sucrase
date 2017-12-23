@@ -1,6 +1,6 @@
-import {RootTransformer} from "../index";
 import TokenProcessor from "../TokenProcessor";
 import IdentifierReplacer from "./IdentifierReplacer";
+import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
 /**

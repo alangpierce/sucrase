@@ -3,7 +3,7 @@
 [![npm version](https://badge.fury.io/js/sucrase.svg)](https://www.npmjs.com/package/sucrase)
 [![MIT License](https://img.shields.io/npm/l/express.svg?maxAge=2592000)](LICENSE)
 
-### [Try it out](http://www.alangpierce.com/sucrase/)
+### [Try it out](https://sucrase.io)
 
 Sucrase is an alternative to Babel that allows super-fast development builds.
 Instead of compiling a large range of JS features down to ES5, Sucrase assumes

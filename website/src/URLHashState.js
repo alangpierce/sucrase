@@ -1,7 +1,13 @@
 import GZip from 'gzip-js';
 import * as Base64 from 'base64-js';
 
-import {TRANSFORMS} from './Constants';
+import {
+  DEFAULT_COMPARE_WITH_BABEL,
+  DEFAULT_SHOW_TOKENS,
+  DEFAULT_TRANSFORMS,
+  INITIAL_CODE,
+  TRANSFORMS,
+} from './Constants';
 
 export function saveHashState({code, compressedCode, selectedTransforms, compareWithBabel, showTokens}) {
   let hashState = '';
@@ -11,17 +17,29 @@ export function saveHashState({code, compressedCode, selectedTransforms, compare
     .map(({name}) => name)
     .join(',');
 
-  hashState += `selectedTransforms=${transformsValue}`;
-  hashState += `&compareWithBabel=${compareWithBabel}`;
-  hashState += `&showTokens=${showTokens}`;
-
-  if (code.length > 150) {
-    hashState += `&compressedCode=${window.encodeURIComponent(compressedCode)}`;
-  } else {
-    hashState += `&code=${window.encodeURIComponent(code)}`;
+  if (transformsValue !== DEFAULT_TRANSFORMS.join(',')) {
+    hashState += `selectedTransforms=${transformsValue}`;
+  }
+  if (compareWithBabel !== DEFAULT_COMPARE_WITH_BABEL) {
+    hashState += `&compareWithBabel=${compareWithBabel}`;
+  }
+  if (showTokens !== DEFAULT_SHOW_TOKENS) {
+    hashState += `&showTokens=${showTokens}`;
   }
 
-  window.location.hash = hashState;
+  if (code !== INITIAL_CODE) {
+    if (code.length > 150) {
+      hashState += `&compressedCode=${window.encodeURIComponent(compressedCode)}`;
+    } else {
+      hashState += `&code=${window.encodeURIComponent(code)}`;
+    }
+  }
+
+  if (hashState) {
+    window.location.hash = hashState;
+  } else {
+    window.history.replaceState("", document.title, window.location.pathname + window.location.search);
+  }
 }
 
 export function loadHashState() {

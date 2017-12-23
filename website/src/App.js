@@ -3,7 +3,10 @@ import './App.css';
 
 import {getVersion} from 'sucrase';
 
-import {TRANSFORMS, INITIAL_CODE} from './Constants';
+import {
+  TRANSFORMS, INITIAL_CODE,
+  DEFAULT_COMPARE_WITH_BABEL, DEFAULT_SHOW_TOKENS, DEFAULT_TRANSFORMS
+} from './Constants';
 import Editor from './Editor';
 import OptionBox from './OptionBox';
 import {loadHashState, saveHashState} from './URLHashState';
@@ -14,13 +17,13 @@ class App extends Component {
     super(props);
     this.state = {
       code: INITIAL_CODE,
-      compareWithBabel: true,
-      showTokens: false,
+      compareWithBabel: DEFAULT_COMPARE_WITH_BABEL,
+      showTokens: DEFAULT_SHOW_TOKENS,
       // Object with a true value for any selected transform keys.
-      selectedTransforms: {
-        jsx: true,
-        imports: true,
-      },
+      selectedTransforms: DEFAULT_TRANSFORMS.reduce(
+        (o, name) => ({...o, [name]: true}),
+        {}
+      ),
       sucraseCode: '',
       sucraseTimeMs: null,
       babelCode: '',

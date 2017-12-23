@@ -22,4 +22,17 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("removes `implements` from a class declaration", () => {
+    assertResult(
+      `
+      class A implements B {}
+      class C extends D implements E {}
+    `,
+      `${PREFIX}
+      class A {}
+      class C extends D {}
+    `,
+    );
+  });
 });

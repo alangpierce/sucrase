@@ -286,7 +286,7 @@ export default class ImportTransformer extends Transformer {
     } else if (this.tokens.matches(["export", "default", "class", "name"])) {
       this.tokens.removeInitialToken();
       this.tokens.removeToken();
-      const name = this.processNamedClass();
+      const name = this.rootTransformer.processNamedClass();
       this.tokens.appendCode(` exports.default = ${name};`);
     } else {
       this.tokens.replaceToken("exports.");
@@ -359,46 +359,8 @@ export default class ImportTransformer extends Transformer {
    */
   private processExportClass(): void {
     this.tokens.replaceToken("");
-    const name = this.processNamedClass();
+    const name = this.rootTransformer.processNamedClass();
     this.tokens.appendCode(` exports.${name} = ${name};`);
-  }
-
-  /**
-   * Skip past a class with a name and return that name.
-   */
-  private processNamedClass(): string {
-    this.tokens.copyExpectedToken("class");
-    if (!this.tokens.matches(["name"])) {
-      throw new Error("Expected identifier for exported class name.");
-    }
-    const name = this.tokens.currentToken().value;
-    this.tokens.copyToken();
-    if (this.tokens.matches(["extends"])) {
-      // There are only some limited expressions that are allowed within the
-      // `extends` expression, e.g. no top-level binary operators, so we can
-      // skip past even fairly complex expressions by being a bit careful.
-      this.tokens.copyToken();
-      if (this.tokens.matches(["{"])) {
-        // Extending an object literal.
-        this.tokens.copyExpectedToken("{");
-        this.rootTransformer.processBalancedCode();
-        this.tokens.copyExpectedToken("}");
-      } else {
-        while (!this.tokens.matches(["{"]) && !this.tokens.matches(["("])) {
-          this.rootTransformer.processToken();
-        }
-        if (this.tokens.matches(["("])) {
-          this.tokens.copyExpectedToken("(");
-          this.rootTransformer.processBalancedCode();
-          this.tokens.copyExpectedToken(")");
-        }
-      }
-    }
-
-    this.tokens.copyExpectedToken("{");
-    this.rootTransformer.processBalancedCode();
-    this.tokens.copyExpectedToken("}");
-    return name;
   }
 
   /**

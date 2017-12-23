@@ -1,8 +1,8 @@
 import ImportProcessor from "../ImportProcessor";
-import {RootTransformer} from "../index";
 import NameManager from "../NameManager";
-import TokenProcessor, {Token} from "../TokenProcessor";
+import TokenProcessor from "../TokenProcessor";
 import isMaybePropertyName from "../util/isMaybePropertyName";
+import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
 export default class ImportTransformer extends Transformer {

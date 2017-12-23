@@ -16,7 +16,7 @@
     "lint": "eslint './src/**/*.ts' && tslint -p .",
     "profile": "node --inspect-brk ./build/benchmark/profile.js",
     "prepublish": "yarn run build",
-    "test": "yarn lint && mocha test"
+    "test": "yarn lint && tsc --noEmit && mocha test"
   },
   "repository": {
     "type": "git",
@@ -60,6 +60,7 @@
   },
   "dependencies": {
     "charcodes": "0.0.10",
+    "lines-and-columns": "^1.1.6",
     "tslib": "^1.7.1"
   },
   "engines": {

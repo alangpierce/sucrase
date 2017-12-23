@@ -20,7 +20,7 @@ plugins.typescript = typescriptPlugin;
 
 export function getTokens(input: string, options?: Options): $ReadOnlyArray<Token | Comment> {
   const parser = getParser(options, input);
-  parser.next();
+  parser.nextToken();
   while (parser.state.type.label !== 'eof') {
     parser.next();
   }

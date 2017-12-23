@@ -12,6 +12,7 @@ module.exports = {
     "import/prefer-default-export": "off",
     "no-constant-condition": ["error", {"checkLoops": false}],
     "no-continue": "off",
+    "no-else-return": "off",
     "no-empty-function": "off",
     "no-param-reassign": "off",
     "no-plusplus": "off",

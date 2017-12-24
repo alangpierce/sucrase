@@ -144,7 +144,7 @@ export default function augmentTokenContext(tokens: Array<Token>): void {
       } else if (token.type.label === "(") {
         processToToken(")", "parens");
       } else if (token.type.label === "${") {
-        processToToken("}", "interpolatedExpression");
+        processToToken("}", "templateExpr");
       }
     }
   }

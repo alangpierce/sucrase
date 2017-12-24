@@ -7,7 +7,7 @@ export type TokenContext =
   | "jsxTag"
   | "jsxChild"
   | "jsxExpression"
-  | "interpolatedExpression"
+  | "templateExpr"
   | "switchCaseCondition";
 
 export type TokenType = {

@@ -170,7 +170,7 @@ class App extends Component {
               isReadOnly={true}
               isPlaintext={true}
               options={{
-                lineNumbers: (n) => String(n - 1)
+                lineNumbers: (n) => n > 1 ? String(n - 2) : null
               }}
             />
           )}

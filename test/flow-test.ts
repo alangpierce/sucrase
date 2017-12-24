@@ -35,4 +35,43 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("removes function return type annotations", () => {
+    assertResult(
+      `
+      function f(): number {
+        return 3;
+      }
+      const g = (): number => 4;
+      function h():{}|{}{}{}
+      const o = {
+        foo(): string | number {
+          return 'hi';
+        }
+      }
+      class C {
+        bar(): void {
+          console.log('Hello');
+        }
+      }
+    `,
+      `${PREFIX}
+      function f() {
+        return 3;
+      }
+      const g = () => 4;
+      function h(){}{}
+      const o = {
+        foo() {
+          return 'hi';
+        }
+      }
+      class C {
+        bar() {
+          console.log('Hello');
+        }
+      }
+    `,
+    );
+  });
 });

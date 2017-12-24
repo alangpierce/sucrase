@@ -165,9 +165,10 @@ class App extends Component {
           {this.state.showTokens && (
             <Editor
               ref={e => this.editors['tokens'] = e}
-              label='Babylon tokens'
+              label='Tokens'
               code={tokensStr}
               isReadOnly={true}
+              isPlaintext={true}
               options={{
                 lineNumbers: (n) => String(n - 1)
               }}

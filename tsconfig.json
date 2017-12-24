@@ -5,7 +5,7 @@
     "module": "commonjs",
     "typeRoots": ["node_modules/@types"],
     "declaration": true,
-    "lib": ["es2016"],
+    "lib": ["es2017"],
     "experimentalDecorators": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,

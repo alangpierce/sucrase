@@ -1,9 +1,10 @@
-import {getFormatedTokens} from 'sucrase';
+import {getFormattedTokens} from 'sucrase';
 
 export default function getTokens(code) {
   try {
-    return getFormatedTokens(code)
+    return getFormattedTokens(code)
   } catch (e) {
+    console.error(e);
     return e.message;
   }
 }

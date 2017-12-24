@@ -10,6 +10,7 @@ export default class Editor extends Component {
     timeMs: PropTypes.oneOfType([PropTypes.number, PropTypes.oneOf(['LOADING'])]),
     onChange: PropTypes.func,
     isReadOnly: PropTypes.bool,
+    isPlaintext: PropTypes.bool,
     options: PropTypes.object,
   };
 
@@ -17,9 +18,18 @@ export default class Editor extends Component {
     setTimeout(this.invalidate, 0);
   }
 
+  _editorDidMount = (editor, monaco) => {
+    this.editor = editor;
+    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+      noSemanticValidation: true,
+      noSyntaxValidation: true,
+    });
+    this.invalidate();
+  };
+
   invalidate = () => {
-    if (this.monacoEditor && this.monacoEditor.editor) {
-      this.monacoEditor.editor.layout();
+    if (this.editor) {
+      this.editor.layout();
     }
   };
 
@@ -35,7 +45,7 @@ export default class Editor extends Component {
   }
 
   render() {
-    const {label, code, onChange, isReadOnly, options} = this.props;
+    const {label, code, onChange, isReadOnly, isPlaintext, options} = this.props;
     return (
       <div className='Editor'>
         <span className='Editor-label'>
@@ -50,10 +60,10 @@ export default class Editor extends Component {
           >
             {({width, height}) =>
               <MonacoEditor
-                ref={e => this.monacoEditor = e}
+                editorDidMount={this._editorDidMount}
                 width={width}
                 height={height - 30}
-                language="javascript"
+                language={isPlaintext ? null : "typescript"}
                 theme="vs-dark"
                 value={code}
                 onChange={onChange}

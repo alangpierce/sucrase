@@ -2,6 +2,7 @@ import ImportProcessor from "../ImportProcessor";
 import {Transform} from "../index";
 import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
+import {isTypeBinop, isTypeExpressionAtom, isTypeExpressionPrefix} from "../util/TokenUtil";
 import FlowTransformer from "./FlowTransformer";
 import ImportTransformer from "./ImportTransformer";
 import JSXTransformer from "./JSXTransformer";
@@ -149,5 +150,115 @@ export default class RootTransformer {
     this.tokens.copyExpectedToken("{");
     this.processBalancedCode();
     this.tokens.copyExpectedToken("}");
+  }
+
+  removeTypeExpression(): void {
+    const expressionEnd = this.skipTypeExpression(this.tokens.currentIndex());
+    if (expressionEnd === null) {
+      throw new Error("Expected to find a type expression.");
+    }
+    this.removeToTokenIndex(expressionEnd);
+  }
+
+  removeToTokenIndex(index: number): void {
+    while (this.tokens.currentIndex() < index) {
+      this.tokens.removeToken();
+    }
+  }
+
+  /**
+   * disallowError says that we should NOT traverse arrow types. This is
+   * specifically when trying to parse a return type on an arrow function, which
+   * can lead to an ambiguity like this:
+   *
+   * f = (): number => number => 4;
+   *
+   * The proper parsing here is just `number` for the return type.
+   */
+  skipTypeExpression(index: number, disallowArrow: boolean = false): number | null {
+    const tokens = this.tokens.tokens;
+    while (isTypeExpressionPrefix(tokens[index].type)) {
+      index++;
+    }
+
+    const firstToken = tokens[index];
+    if (isTypeExpressionAtom(firstToken.type)) {
+      // Identifier, number, etc, or function type with that as the param.
+      index++;
+      if (!disallowArrow && this.tokens.matchesAtIndex(index, ["=>"])) {
+        index++;
+        const nextIndex = this.skipTypeExpression(index);
+        if (nextIndex === null) {
+          return null;
+        }
+        index = nextIndex;
+      }
+    } else if (firstToken.type.label === "{") {
+      index++;
+      index = this.skipBalancedCode(index, "{", "}");
+      index++;
+    } else if (firstToken.type.label === "[") {
+      index++;
+      index = this.skipBalancedCode(index, "[", "]");
+      index++;
+    } else if (firstToken.type.label === "(") {
+      // Either a parenthesized expression or an arrow function.
+      index++;
+      index = this.skipBalancedCode(index, "(", ")");
+      index++;
+      if (!disallowArrow && this.tokens.matchesAtIndex(index, ["=>"])) {
+        index++;
+        const nextIndex = this.skipTypeExpression(index);
+        if (nextIndex === null) {
+          return null;
+        }
+        index = nextIndex;
+      }
+    } else if (firstToken.type.label === "typeof") {
+      index += 2;
+    } else {
+      // Unrecognized token, so bail out.
+      return null;
+    }
+
+    // We're already one past the end of a valid expression, so see if it's
+    // possible to expand to the right.
+    while (true) {
+      const token = tokens[index];
+
+      // Check if there's any indication that we can expand forward, and do so.
+      if (isTypeBinop(token.type)) {
+        index++;
+        const nextIndex = this.skipTypeExpression(index);
+        if (nextIndex === null) {
+          return null;
+        }
+        index = nextIndex;
+      } else if (token.type.label === ".") {
+        // Normal member access, so process the dot and the identifier.
+        index += 2;
+      } else if (this.tokens.matches(["[", "]"])) {
+        index += 2;
+      } else {
+        break;
+      }
+    }
+    return index;
+  }
+
+  skipBalancedCode(index: number, openTokenLabel: string, closeTokenLabel: string): number {
+    let depth = 0;
+    while (!this.tokens.isAtEnd()) {
+      if (this.tokens.matchesAtIndex(index, [openTokenLabel])) {
+        depth++;
+      } else if (this.tokens.matchesAtIndex(index, [closeTokenLabel])) {
+        if (depth === 0) {
+          break;
+        }
+        depth--;
+      }
+      index++;
+    }
+    return index;
   }
 }

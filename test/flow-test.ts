@@ -91,4 +91,34 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("removes array types", () => {
+    assertResult(
+      `
+      function foo(): string[] {
+        return [];
+      }
+    `,
+      `${PREFIX}
+      function foo() {
+        return [];
+      }
+    `,
+    );
+  });
+
+  it("removes parameterized types", () => {
+    assertResult(
+      `
+      function foo(): Array<string> {
+        return [];
+      }
+    `,
+      `${PREFIX}
+      function foo() {
+        return [];
+      }
+    `,
+    );
+  });
 });

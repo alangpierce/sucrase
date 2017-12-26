@@ -16,6 +16,10 @@ export default class FlowTransformer extends Transformer {
     if (this.tokens.matches([":"])) {
       return this.processColon();
     }
+    if (this.tokens.currentToken().contextName === "type") {
+      this.tokens.removeInitialToken();
+      return true;
+    }
     return false;
   }
 

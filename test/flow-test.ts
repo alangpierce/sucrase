@@ -138,4 +138,19 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("removes bare object type definitions", () => {
+    assertResult(
+      `
+      class A {
+        x: number;
+      }
+    `,
+      `${PREFIX}
+      class A {
+        ;
+      }
+    `,
+    );
+  });
 });

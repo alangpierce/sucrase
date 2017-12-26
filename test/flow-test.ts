@@ -74,4 +74,21 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("removes types in parameters and variable declarations", () => {
+    assertResult(
+      `
+      function foo(x: number, y: A | B): void {
+        const a: string = "Hello";
+        const b = (a: number);
+      }
+    `,
+      `${PREFIX}
+      function foo(x, y) {
+        const a = "Hello";
+        const b = (a);
+      }
+    `,
+    );
+  });
 });

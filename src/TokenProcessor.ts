@@ -8,7 +8,8 @@ export type TokenContext =
   | "jsxChild"
   | "jsxExpression"
   | "templateExpr"
-  | "switchCaseCondition";
+  | "switchCaseCondition"
+  | "type";
 
 export type TokenType = {
   label: string;
@@ -115,6 +116,10 @@ export default class TokenProcessor {
 
   currentToken(): Token {
     return this.tokens[this.tokenIndex];
+  }
+
+  tokenAtRelativeIndex(relativeIndex: number): Token {
+    return this.tokens[this.tokenIndex + relativeIndex];
   }
 
   currentIndex(): number {

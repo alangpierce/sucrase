@@ -142,6 +142,17 @@ class TokenPreprocessor {
           if (this.tokens.matches(["{"])) {
             this.processToToken("{", "}", "block");
           }
+        } else if (context === "class" && this.tokens.matches([":"]) && ternaryDepth === 0) {
+          // Process typed class field.
+          const identifierTokenIndex = this.tokens.currentIndex() - 1;
+          this.advance();
+          this.processTypeExpression();
+          if (!this.tokens.matches(["="])) {
+            const identifierToken = this.tokens.tokens[identifierTokenIndex];
+            identifierToken.contextName = "type";
+            identifierToken.contextStartIndex = identifierTokenIndex;
+            identifierToken.parentContextStartIndex = this.getContextInfo().startIndex;
+          }
         } else if (
           context === "object" &&
           this.tokens.matches(["("]) &&
@@ -237,7 +248,8 @@ class TokenPreprocessor {
   }
 
   /**
-   * Starting at a colon type,
+   * Starting at a colon type, walk forward a full type expression, marking all
+   * tokens as being type tokens.
    */
   private processTypeExpression({disallowArrow = false}: {disallowArrow?: boolean} = {}): void {
     this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});

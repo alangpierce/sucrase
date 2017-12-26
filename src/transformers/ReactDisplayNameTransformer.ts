@@ -103,10 +103,10 @@ export default class ReactDisplayNameTransformer extends Transformer {
     if (!this.tokens.matches(["(", "{"])) {
       return false;
     }
-    // Currently augmentTokenContext starts the block at one after the {, so we
-    // expect any displayName key to be in that context. We need to ignore other
-    // other contexts to avoid matching nested displayName keys.
-    const objectStartIndex = index + 2;
+    // The block starts on the {, and we expect any displayName key to be in
+    // that context. We need to ignore other other contexts to avoid matching
+    // nested displayName keys.
+    const objectStartIndex = index + 1;
 
     for (; index < this.tokens.tokens.length; index++) {
       const token = this.tokens.tokens[index];

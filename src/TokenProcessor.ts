@@ -22,6 +22,7 @@ export type Token = {
   value: any;
   contextName?: TokenContext;
   contextStartIndex?: number;
+  parentContextStartIndex?: number | null;
 };
 
 export default class TokenProcessor {
@@ -126,6 +127,12 @@ export default class TokenProcessor {
    */
   nextToken(): void {
     this.tokenIndex++;
+  }
+
+  expectToken(label: string): void {
+    if (this.tokens[this.tokenIndex].type.label !== label) {
+      throw new Error(`Expected token ${label}`);
+    }
   }
 
   finish(): string {

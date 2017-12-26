@@ -25,7 +25,7 @@ export default class FlowTransformer extends Transformer {
     const prevToken = this.tokens.tokens[colonIndex - 1];
     if (prevToken.type.label === ")") {
       // Possibly the end of an argument list.
-      const startParenIndex = prevToken.contextStartIndex! - 1;
+      const startParenIndex = prevToken.contextStartIndex!;
       if (
         this.tokens.matchesAtIndex(startParenIndex - 2, ["function"]) ||
         this.tokens.matchesAtIndex(startParenIndex - 1, ["function"])

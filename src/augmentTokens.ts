@@ -324,8 +324,12 @@ class TokenPreprocessor {
       } else if (token.type.label === ".") {
         // Normal member access, so process the dot and the identifier.
         index += 2;
-      } else if (this.tokens.matches(["[", "]"])) {
+      } else if (token.type.label === "[" && tokens[index + 1].type.label === "]") {
         index += 2;
+      } else if (token.type.label === "</>" && token.value === "<") {
+        index++;
+        index = this.skipBalancedCode(index, "</>", "</>", "<", ">");
+        index++;
       } else {
         break;
       }
@@ -333,18 +337,33 @@ class TokenPreprocessor {
     return index;
   }
 
-  skipBalancedCode(index: number, openTokenLabel: string, closeTokenLabel: string): number {
+  skipBalancedCode(
+    index: number,
+    openTokenLabel: string,
+    closeTokenLabel: string,
+    // tslint:disable-next-line no-any
+    openValue?: any,
+    // tslint:disable-next-line no-any
+    closeValue?: any,
+  ): number {
     let depth = 0;
-    while (!this.tokens.isAtEnd()) {
-      if (this.tokens.matchesAtIndex(index, [openTokenLabel])) {
+    while (index < this.tokens.tokens.length) {
+      const token = this.tokens.tokens[index];
+      if (token.type.label === openTokenLabel && (!openValue || token.value === openValue)) {
         depth++;
-      } else if (this.tokens.matchesAtIndex(index, [closeTokenLabel])) {
+      } else if (
+        token.type.label === closeTokenLabel &&
+        (!closeValue || token.value === closeValue)
+      ) {
         if (depth === 0) {
           break;
         }
         depth--;
       }
       index++;
+    }
+    if (index === this.tokens.tokens.length) {
+      throw new Error("Did not find end of balanced code.");
     }
     return index;
   }

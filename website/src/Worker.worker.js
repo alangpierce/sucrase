@@ -58,7 +58,10 @@ function runBabel() {
     ];
   }
   return runAndProfile(() =>
-    Babel.transform(config.code, {plugins: babelPlugins, parserOpts: {plugins: ['jsx', 'flow']}}).code
+    Babel.transform(config.code, {
+      plugins: babelPlugins,
+      parserOpts: {plugins: ['jsx', 'flow', 'classProperties']}
+    }).code
   );
 }
 

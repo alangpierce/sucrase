@@ -153,4 +153,35 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("removes function type parameters", () => {
+    assertResult(
+      `
+      function f<T>(t: T): void {
+        console.log(t);
+      }
+      const o = {
+        g<T>(t: T): void {
+        }
+      }
+      class C {
+        h<T>(t: T): void {
+        }
+      }
+    `,
+      `${PREFIX}
+      function f(t) {
+        console.log(t);
+      }
+      const o = {
+        g(t) {
+        }
+      }
+      class C {
+        h(t) {
+        }
+      }
+    `,
+    );
+  });
 });

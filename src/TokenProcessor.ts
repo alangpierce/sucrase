@@ -9,7 +9,8 @@ export type TokenContext =
   | "jsxExpression"
   | "templateExpr"
   | "switchCaseCondition"
-  | "type";
+  | "type"
+  | "typeParameter";
 
 export type TokenType = {
   label: string;

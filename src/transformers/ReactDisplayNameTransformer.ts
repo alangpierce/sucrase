@@ -132,6 +132,10 @@ export default class ReactDisplayNameTransformer extends Transformer {
       }
     }
 
+    if (index === this.tokens.tokens.length) {
+      throw new Error("Unexpected end of input when processing React class.");
+    }
+
     // If we got this far, we know we have createClass with an object with no
     // display name, so we want to proceed as long as that was the only argument.
     return (

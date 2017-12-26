@@ -54,6 +54,10 @@ export default class TokenProcessor {
     return this.matchesAtIndex(index, ["name"]) && this.tokens[index].value === name;
   }
 
+  matchesAtRelativeIndex(relativeIndex: number, tagLabels: Array<string>): boolean {
+    return this.matchesAtIndex(this.currentIndex() + relativeIndex, tagLabels);
+  }
+
   matches(tagLabels: Array<string>): boolean {
     return this.matchesAtIndex(this.tokenIndex, tagLabels);
   }
@@ -114,6 +118,14 @@ export default class TokenProcessor {
 
   currentIndex(): number {
     return this.tokenIndex;
+  }
+
+  /**
+   * Move to the next token. Only suitable in preprocessing steps. When
+   * generating new code, you should use copyToken or removeToken.
+   */
+  nextToken(): void {
+    this.tokenIndex++;
   }
 
   finish(): string {

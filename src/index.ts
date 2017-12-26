@@ -1,5 +1,5 @@
 import {getTokens} from "../sucrase-babylon";
-import augmentTokenContext from "./augmentTokenContext";
+import augmentTokens from "./augmentTokens";
 import TokenProcessor, {Token} from "./TokenProcessor";
 import RootTransformer from "./transformers/RootTransformer";
 import formatTokens from "./util/formatTokens";
@@ -46,6 +46,6 @@ function getSucraseTokens(code: string, options: Options = {}): Array<Token> {
     } as any /* tslint:disable-line no-any */,
   );
   tokens = tokens.filter((token) => token.type !== "CommentLine" && token.type !== "CommentBlock");
-  augmentTokenContext(tokens);
+  augmentTokens(code, tokens);
   return tokens;
 }

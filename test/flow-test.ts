@@ -121,4 +121,21 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("removes object types within classes", () => {
+    assertResult(
+      `
+      class A {
+        x: number = 2;
+        y: {} = {};
+      }
+    `,
+      `${PREFIX}
+      class A {
+        x = 2;
+        y = {};
+      }
+    `,
+    );
+  });
 });

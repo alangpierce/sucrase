@@ -228,8 +228,7 @@ class TokenPreprocessor {
         !this.tokens.matchesAtRelativeIndex(-2, ["."])) ||
       this.tokens.matchesAtRelativeIndex(1, ["for"]) ||
       this.tokens.matchesAtRelativeIndex(1, ["while"]) ||
-      this.tokens.matchesAtRelativeIndex(1, ["do"]) ||
-      this.tokens.matchesAtRelativeIndex(1, ["{"])
+      this.tokens.matchesAtRelativeIndex(1, ["do"])
     );
   }
 

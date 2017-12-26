@@ -105,6 +105,9 @@ class TokenPreprocessor {
         if (this.tokens.matches(["name"])) {
           this.advance();
         }
+        if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
+          this.processTypeParameter();
+        }
         this.processToToken("(", ")", "parens");
         if (this.tokens.matches([":"])) {
           this.advance();
@@ -132,8 +135,11 @@ class TokenPreprocessor {
         }
       } else if (this.tokens.matches(["name"])) {
         this.advance();
-        if (context === "class" && this.tokens.matches(["("])) {
+        if (context === "class" && (this.tokens.matches(["("]) || this.tokens.matches(["</>"]))) {
           // Process class method.
+          if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
+            this.processTypeParameter();
+          }
           this.processToToken("(", ")", "parens");
           if (this.tokens.matches([":"])) {
             this.advance();
@@ -155,11 +161,14 @@ class TokenPreprocessor {
           }
         } else if (
           context === "object" &&
-          this.tokens.matches(["("]) &&
+          (this.tokens.matches(["("]) || this.tokens.matches(["</>"])) &&
           (this.tokens.matchesAtRelativeIndex(-2, [","]) ||
             this.tokens.matchesAtRelativeIndex(-2, ["{"]))
         ) {
           // Process object method.
+          if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
+            this.processTypeParameter();
+          }
           this.processToToken("(", ")", "parens");
           if (this.tokens.matches([":"])) {
             this.advance();
@@ -377,6 +386,19 @@ class TokenPreprocessor {
       throw new Error("Did not find end of balanced code.");
     }
     return index;
+  }
+
+  private processTypeParameter(): void {
+    this.contextStack.push({context: "typeParameter", startIndex: this.tokens.currentIndex()});
+    if (!this.tokens.matches(["</>"]) || this.tokens.currentToken().value !== "<") {
+      throw new Error("Expected < at the start of type parameter.");
+    }
+    this.advance();
+    while (!this.tokens.matches(["</>"]) || this.tokens.currentToken().value !== ">") {
+      this.advance();
+    }
+    this.advance();
+    this.contextStack.pop();
   }
 
   private advance(): void {

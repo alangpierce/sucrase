@@ -20,6 +20,13 @@ export default class FlowTransformer extends Transformer {
       this.tokens.removeInitialToken();
       return true;
     }
+    if (this.tokens.currentToken().contextName === "typeParameter") {
+      this.tokens.removeInitialToken();
+      while (this.tokens.currentToken().contextName === "typeParameter") {
+        this.tokens.removeToken();
+      }
+      return true;
+    }
     return false;
   }
 

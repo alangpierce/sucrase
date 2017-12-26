@@ -167,6 +167,25 @@ describe("transform imports", () => {
     );
   });
 
+  it("transforms export class with complex superclass containing an open-brace", () => {
+    assertResult(
+      `
+      export class A extends b(C({})) {
+        d() {
+          return e;
+        }
+      }
+    `,
+      `${PREFIX}${ESMODULE_PREFIX}
+       class A extends b(C({})) {
+        d() {
+          return e;
+        }
+      } exports.A = A;
+    `,
+    );
+  });
+
   it("allows exporting names directly", () => {
     assertResult(
       `

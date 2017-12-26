@@ -134,7 +134,7 @@ export default class RootTransformer {
         !this.tokens.matchesName("implements") &&
         !(
           this.tokens.matches(["{"]) &&
-          this.tokens.currentToken().contextStartIndex === classToken.contextStartIndex
+          this.tokens.currentToken().parentContextStartIndex === classToken.contextStartIndex
         )
       ) {
         this.processToken();

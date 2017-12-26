@@ -20,42 +20,12 @@ export default class FlowTransformer extends Transformer {
   }
 
   processColon(): boolean {
-    const colonToken = this.tokens.currentToken();
-    const colonIndex = this.tokens.currentIndex();
-    const prevToken = this.tokens.tokens[colonIndex - 1];
-    if (prevToken.type.label === ")") {
-      // Possibly the end of an argument list.
-      const startParenIndex = prevToken.contextStartIndex!;
-      if (
-        this.tokens.matchesAtIndex(startParenIndex - 2, ["function"]) ||
-        this.tokens.matchesAtIndex(startParenIndex - 1, ["function"])
-      ) {
-        this.tokens.removeInitialToken();
-        this.rootTransformer.removeTypeExpression();
-        return true;
-      }
-      const endIndex = this.rootTransformer.skipTypeExpression(colonIndex + 1);
-      if (endIndex !== null) {
-        const nextToken = this.tokens.tokens[endIndex];
-        if (
-          nextToken.type.label === "{" &&
-          (colonToken.contextName === "object" || colonToken.contextName === "class")
-        ) {
-          this.rootTransformer.removeToTokenIndex(endIndex);
-          return true;
-        }
-      }
-
-      const eagerArrowEndIndex = this.rootTransformer.skipTypeExpression(colonIndex + 1, true);
-      if (eagerArrowEndIndex !== null) {
-        const eagerArrowNextToken = this.tokens.tokens[eagerArrowEndIndex];
-        if (eagerArrowNextToken.type.label === "=>") {
-          this.rootTransformer.removeToTokenIndex(eagerArrowEndIndex);
-          return true;
-        }
+    if (this.tokens.tokenAtRelativeIndex(1).contextName === "type") {
+      this.tokens.removeInitialToken();
+      while (this.tokens.currentToken().contextName === "type") {
+        this.tokens.removeToken();
       }
     }
-
     return false;
   }
 }

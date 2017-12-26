@@ -1,4 +1,5 @@
 import TokenProcessor, {Token, TokenContext} from "./TokenProcessor";
+import {isTypeBinop, isTypeExpressionAtom, isTypeExpressionPrefix} from "./util/TokenUtil";
 
 export default function augmentTokens(code: string, tokens: Array<Token>): void {
   new TokenPreprocessor(new TokenProcessor(code, tokens)).preprocess();
@@ -40,26 +41,18 @@ class TokenPreprocessor {
   ): void {
     this.contextStack.push({context, startIndex: this.tokens.currentIndex()});
 
-    const advance = () => {
-      const token = this.tokens.currentToken();
-      const contextInfo = this.contextStack[this.contextStack.length - 1];
-      const parentContextInfo = this.contextStack[this.contextStack.length - 2];
-      token.contextName = contextInfo.context;
-      token.contextStartIndex = contextInfo.startIndex;
-      token.parentContextStartIndex = parentContextInfo ? parentContextInfo.startIndex : null;
-      this.tokens.nextToken();
-    };
-
     for (const label of openingTokenLabels) {
       this.tokens.expectToken(label);
-      advance();
+      this.advance();
     }
 
     let pendingClass = false;
+    let ternaryDepth = 0;
+
     while (true) {
       if (this.tokens.matches([...closingTokenLabels, ...followingLabels])) {
         for (let i = 0; i < closingTokenLabels.length; i++) {
-          advance();
+          this.advance();
         }
         break;
       }
@@ -68,52 +61,84 @@ class TokenPreprocessor {
         throw new Error("Unexpected end of program when preprocessing tokens.");
       }
 
-      if (this.startsWithKeyword(["if", "for", "while", "catch"])) {
+      // A question mark operator can be one of multiple things:
+      // - The first operator in a ternary.
+      // - The first part of the compound operator "?:" for an optional type
+      //   annotation.
+      // - An optional type, like "?number".
+      // We only want to count ternaries, so we ignore ?: and rely on skipping
+      // all types in order to know that it's not an optional type.
+      if (this.tokens.matches(["?"]) && !this.tokens.matches(["?", ":"])) {
+        ternaryDepth++;
+      }
+
+      // A colon can be one of multiple things:
+      // - The second operator in a ternary.
+      // - A type annotation.
+      // - A type cast.
+      // - An object key/value separator.
+      // - The end of a label.
+      // - The end of a case or default statement.
+      // We want to know if we're followed by a type, so we
+      if (this.tokens.matches([":"]) && !this.matchesObjectColon() && !this.matchesLabelColon()) {
+        if (ternaryDepth > 0) {
+          ternaryDepth--;
+          this.advance();
+        } else {
+          this.advance();
+          this.processTypeExpression({disallowArrow: true});
+        }
+      } else if (this.startsWithKeyword(["if", "for", "while", "catch"])) {
         // Code of the form TOKEN (...) BLOCK
         if (this.tokens.matches(["("])) {
           this.tokens.expectToken("(");
-          advance();
+          this.advance();
           this.processToToken("(", ")", "parens");
           if (this.tokens.matches(["{"])) {
             this.processToToken("{", "}", "block");
           }
         } else {
-          advance();
+          this.advance();
         }
       } else if (this.startsWithKeyword(["function"])) {
-        advance();
+        this.advance();
         if (this.tokens.matches(["name"])) {
-          advance();
+          this.advance();
         }
-        // TODO: Handle return type annotations.
+        this.processToToken("(", ")", "parens");
+        if (this.tokens.matches([":"])) {
+          this.advance();
+          this.processTypeExpression();
+        }
         if (this.tokens.matches(["{"])) {
-          this.processToToken("(", ")", "parens");
-          if (this.tokens.matches(["{"])) {
-            this.processToToken("{", "}", "block");
-          }
+          this.processToToken("{", "}", "block");
         }
       } else if (
         this.startsWithKeyword(["=>", "else", "try", "finally", "do"]) ||
         (this.tokens.matches([";"]) && context === "block")
       ) {
-        advance();
+        this.advance();
         if (this.tokens.matches(["{"])) {
           this.processToToken("{", "}", "block");
         }
       } else if (this.startsWithKeyword(["class"])) {
-        advance();
+        this.advance();
         pendingClass = true;
       } else if (this.startsWithKeyword(["default"])) {
-        advance();
+        this.advance();
         if (this.tokens.matches([":", "{"])) {
-          advance();
+          this.advance();
           this.processToToken("{", "}", "block");
         }
       } else if (this.tokens.matches(["name"])) {
-        advance();
+        this.advance();
         if (context === "class" && this.tokens.matches(["("])) {
           // Process class method.
           this.processToToken("(", ")", "parens");
+          if (this.tokens.matches([":"])) {
+            this.advance();
+            this.processTypeExpression();
+          }
           if (this.tokens.matches(["{"])) {
             this.processToToken("{", "}", "block");
           }
@@ -125,6 +150,10 @@ class TokenPreprocessor {
         ) {
           // Process object method.
           this.processToToken("(", ")", "parens");
+          if (this.tokens.matches([":"])) {
+            this.advance();
+            this.processTypeExpression();
+          }
           if (this.tokens.matches(["{"])) {
             this.processToToken("{", "}", "block");
           }
@@ -163,18 +192,178 @@ class TokenPreprocessor {
       } else if (this.tokens.matches(["${"])) {
         this.processToToken("${", "}", "templateExpr");
       } else {
-        advance();
+        this.advance();
       }
     }
 
     this.contextStack.pop();
   }
 
+  private matchesObjectColon(): boolean {
+    if (!this.tokens.matches([":"])) {
+      throw new Error("Expected to be called while on a colon token.");
+    }
+    if (this.getContextInfo().context !== "object") {
+      return false;
+    }
+    let keyStart;
+    if (this.tokens.matchesAtRelativeIndex(-1, ["]"])) {
+      keyStart = this.tokens.tokenAtRelativeIndex(-1).contextStartIndex!;
+    } else {
+      keyStart = this.tokens.currentIndex() - 1;
+    }
+    return (
+      this.tokens.matchesAtIndex(keyStart - 1, [","]) ||
+      this.tokens.matchesAtIndex(keyStart - 1, ["{"])
+    );
+  }
+
+  private matchesLabelColon(): boolean {
+    if (!this.tokens.matches([":"])) {
+      throw new Error("Expected to be called while on a colon token.");
+    }
+    return (
+      this.getContextInfo().context === "switchCaseCondition" ||
+      (this.tokens.matchesAtRelativeIndex(-1, ["default"]) &&
+        !this.tokens.matchesAtRelativeIndex(-2, ["."])) ||
+      this.tokens.matchesAtRelativeIndex(1, ["for"]) ||
+      this.tokens.matchesAtRelativeIndex(1, ["while"]) ||
+      this.tokens.matchesAtRelativeIndex(1, ["do"]) ||
+      this.tokens.matchesAtRelativeIndex(1, ["{"])
+    );
+  }
+
+  private getContextInfo(): ContextInfo {
+    return this.contextStack[this.contextStack.length - 1];
+  }
+
+  /**
+   * Starting at a colon type,
+   */
+  private processTypeExpression({disallowArrow = false}: {disallowArrow?: boolean} = {}): void {
+    this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
+
+    const expressionEnd = this.skipTypeExpression(this.tokens.currentIndex(), disallowArrow);
+    if (expressionEnd === null) {
+      throw new Error("Expected to find a type expression.");
+    }
+    while (this.tokens.currentIndex() < expressionEnd) {
+      this.advance();
+    }
+    this.contextStack.pop();
+  }
+
+  /**
+   * disallowError says that we should NOT traverse arrow types. This is
+   * specifically when trying to parse a return type on an arrow function, which
+   * can lead to an ambiguity like this:
+   *
+   * f = (): number => number => 4;
+   *
+   * The proper parsing here is just `number` for the return type.
+   */
+  skipTypeExpression(index: number, disallowArrow: boolean = false): number | null {
+    const tokens = this.tokens.tokens;
+    while (isTypeExpressionPrefix(tokens[index].type)) {
+      index++;
+    }
+
+    const firstToken = tokens[index];
+    if (isTypeExpressionAtom(firstToken.type)) {
+      // Identifier, number, etc, or function type with that as the param.
+      index++;
+      if (!disallowArrow && this.tokens.matchesAtIndex(index, ["=>"])) {
+        index++;
+        const nextIndex = this.skipTypeExpression(index);
+        if (nextIndex === null) {
+          return null;
+        }
+        index = nextIndex;
+      }
+    } else if (firstToken.type.label === "{") {
+      index++;
+      index = this.skipBalancedCode(index, "{", "}");
+      index++;
+    } else if (firstToken.type.label === "[") {
+      index++;
+      index = this.skipBalancedCode(index, "[", "]");
+      index++;
+    } else if (firstToken.type.label === "(") {
+      // Either a parenthesized expression or an arrow function.
+      index++;
+      index = this.skipBalancedCode(index, "(", ")");
+      index++;
+      if (!disallowArrow && this.tokens.matchesAtIndex(index, ["=>"])) {
+        index++;
+        const nextIndex = this.skipTypeExpression(index);
+        if (nextIndex === null) {
+          return null;
+        }
+        index = nextIndex;
+      }
+    } else if (firstToken.type.label === "typeof") {
+      index += 2;
+    } else {
+      // Unrecognized token, so bail out.
+      return null;
+    }
+
+    // We're already one past the end of a valid expression, so see if it's
+    // possible to expand to the right.
+    while (true) {
+      const token = tokens[index];
+
+      // Check if there's any indication that we can expand forward, and do so.
+      if (isTypeBinop(token.type)) {
+        index++;
+        const nextIndex = this.skipTypeExpression(index);
+        if (nextIndex === null) {
+          return null;
+        }
+        index = nextIndex;
+      } else if (token.type.label === ".") {
+        // Normal member access, so process the dot and the identifier.
+        index += 2;
+      } else if (this.tokens.matches(["[", "]"])) {
+        index += 2;
+      } else {
+        break;
+      }
+    }
+    return index;
+  }
+
+  skipBalancedCode(index: number, openTokenLabel: string, closeTokenLabel: string): number {
+    let depth = 0;
+    while (!this.tokens.isAtEnd()) {
+      if (this.tokens.matchesAtIndex(index, [openTokenLabel])) {
+        depth++;
+      } else if (this.tokens.matchesAtIndex(index, [closeTokenLabel])) {
+        if (depth === 0) {
+          break;
+        }
+        depth--;
+      }
+      index++;
+    }
+    return index;
+  }
+
+  private advance(): void {
+    const token = this.tokens.currentToken();
+    const contextInfo = this.contextStack[this.contextStack.length - 1];
+    const parentContextInfo = this.contextStack[this.contextStack.length - 2];
+    token.contextName = contextInfo.context;
+    token.contextStartIndex = contextInfo.startIndex;
+    token.parentContextStartIndex = parentContextInfo ? parentContextInfo.startIndex : null;
+    this.tokens.nextToken();
+  }
+
   /**
    * Keywords can be property values, so don't consider them if we're after a
    * dot.
    */
-  startsWithKeyword(keywords: Array<string>): boolean {
+  private startsWithKeyword(keywords: Array<string>): boolean {
     return (
       !this.tokens.matchesAtRelativeIndex(-1, ["."]) &&
       keywords.some((keyword) => this.tokens.matches([keyword]))

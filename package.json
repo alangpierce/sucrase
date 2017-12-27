@@ -49,7 +49,6 @@
     "@types/mocha": "^2.2.43",
     "@types/node": "^8.0.31",
     "babel-plugin-transform-charcodes": "0.0.10",
-    "buble": "^0.16.0",
     "eslint": "^4.13.1",
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-config-prettier": "^2.9.0",

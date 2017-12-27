@@ -20,7 +20,7 @@ export default App;
 export const TRANSFORMS = [
   {name: 'jsx', babelName: 'transform-react-jsx'},
   {name: 'imports', babelName: 'transform-es2015-modules-commonjs'},
-  {name: 'flow', babelName: 'transform-flow-strip-types', isExperimental: true},
+  {name: 'flow', babelName: 'transform-flow-strip-types'},
   {name: 'react-display-name', babelName: 'transform-react-display-name'},
   {name: 'add-module-exports', babelName: 'add-module-exports'},
 ];

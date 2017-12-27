@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable import/no-extraneous-dependencies */
-// @ts-ignore: buble missing types
-import * as babel from "@babel/core";
 // @ts-ignore: new babel-core package missing types.
-import * as buble from "buble";
+import * as babel from "@babel/core";
 import * as fs from "fs";
 import * as TypeScript from "typescript";
 
@@ -17,9 +15,6 @@ function main(): void {
       transforms: ["jsx", "imports", "add-module-exports", "react-display-name"],
     }),
   );
-  runBenchmark("Buble (JSX, no import transform)", () =>
-    buble.transform(code, {transforms: {modules: false}}),
-  );
   runBenchmark("TypeScript", () =>
     TypeScript.transpileModule(code, {
       compilerOptions: {
@@ -31,7 +26,7 @@ function main(): void {
   );
   runBenchmark("Babel", () =>
     babel.transform(code, {
-      presets: ["@babel/preset-react"],
+      presets: ["@babel/preset-react", "@babel/preset-flow"],
       plugins: ["@babel/plugin-transform-modules-commonjs"],
     }),
   );

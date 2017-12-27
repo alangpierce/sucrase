@@ -843,4 +843,17 @@ module.exports = exports.default;
     `,
     );
   });
+
+  it("properly exports imported bindings", () => {
+    assertResult(
+      `
+      import a from 'a';
+      export {a};
+    `,
+      `${PREFIX}${ESMODULE_PREFIX}
+      var _a = require('a'); var _a2 = _interopRequireDefault(_a);
+      exports.a = _a2.default;
+    `,
+    );
+  });
 });

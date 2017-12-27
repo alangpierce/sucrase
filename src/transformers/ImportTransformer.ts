@@ -393,7 +393,8 @@ export default class ImportTransformer extends Transformer {
       } else {
         exportedName = localName;
       }
-      exportStatements.push(`exports.${exportedName} = ${localName};`);
+      const newLocalName = this.importProcessor.getIdentifierReplacement(localName);
+      exportStatements.push(`exports.${exportedName} = ${newLocalName || localName};`);
 
       if (this.tokens.matches(["}"])) {
         this.tokens.removeToken();

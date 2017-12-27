@@ -74,6 +74,20 @@ export default class TokenProcessor {
     return this.matchesNameAtIndex(this.tokenIndex, name);
   }
 
+  /**
+   * Check if this is a "real" instance of the keyword rather than an object key or property access.
+   */
+  matchesKeyword(name: string): boolean {
+    const token = this.currentToken();
+    if (this.matchesAtRelativeIndex(-1, ["."])) {
+      return false;
+    }
+    if (token.contextName === "object" && this.matchesAtRelativeIndex(1, [":"])) {
+      return false;
+    }
+    return token.type.label === name || (token.type.label === "name" && token.value === name);
+  }
+
   previousWhitespace(): string {
     return this.code.slice(
       this.tokenIndex > 0 ? this.tokens[this.tokenIndex - 1].end : 0,

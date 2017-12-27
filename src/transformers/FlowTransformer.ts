@@ -9,7 +9,7 @@ export default class FlowTransformer extends Transformer {
 
   process(): boolean {
     // We need to handle all classes specially in order to remove `implements`.
-    if (this.tokens.matches(["class"])) {
+    if (this.tokens.matchesKeyword("class")) {
       this.rootTransformer.processClass();
       return true;
     }

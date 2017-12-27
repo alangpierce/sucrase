@@ -238,4 +238,19 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("handles string literal types", () => {
+    assertResult(
+      `
+      function foo(x: "a"): string {
+        return x;
+      }
+    `,
+      `${PREFIX}
+      function foo(x) {
+        return x;
+      }
+    `,
+    );
+  });
 });

@@ -1,5 +1,6 @@
 import NameManager from "./NameManager";
 import TokenProcessor from "./TokenProcessor";
+import IdentifierReplacer from "./transformers/IdentifierReplacer";
 import isMaybePropertyName from "./util/isMaybePropertyName";
 
 type NamedImport = {
@@ -19,7 +20,7 @@ type ImportInfo = {
  * Class responsible for preprocessing and bookkeeping import and export
  * declarations within the file.
  */
-export default class ImportProcessor {
+export default class ImportProcessor implements IdentifierReplacer {
   private importInfoByPath: Map<string, ImportInfo> = new Map();
   private importsToReplace: Map<string, string> = new Map();
   private identifierReplacements: Map<string, string> = new Map();

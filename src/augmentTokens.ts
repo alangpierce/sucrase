@@ -274,14 +274,7 @@ class TokenPreprocessor {
    */
   private processTypeExpression({disallowArrow = false}: {disallowArrow?: boolean} = {}): void {
     this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
-
-    const expressionEnd = this.skipTypeExpression(this.tokens.currentIndex(), disallowArrow);
-    if (expressionEnd === null) {
-      throw new Error("Expected to find a type expression.");
-    }
-    while (this.tokens.currentIndex() < expressionEnd) {
-      this.advance();
-    }
+    this.skipTypeExpression(disallowArrow);
     this.contextStack.pop();
   }
 
@@ -296,18 +289,12 @@ class TokenPreprocessor {
       this.skipBalancedAngleBrackets();
     }
     this.advance("=");
-    const expressionEnd = this.skipTypeExpression(this.tokens.currentIndex());
-    if (expressionEnd === null) {
-      throw new Error("Expected to find a type expression.");
-    }
-    while (this.tokens.currentIndex() < expressionEnd) {
-      this.advance();
-    }
+    this.skipTypeExpression();
     this.contextStack.pop();
   }
 
   /**
-   * disallowError says that we should NOT traverse arrow types. This is
+   * disallowArrow says that we should NOT traverse arrow types. This is
    * specifically when trying to parse a return type on an arrow function, which
    * can lead to an ambiguity like this:
    *
@@ -315,110 +302,76 @@ class TokenPreprocessor {
    *
    * The proper parsing here is just `number` for the return type.
    */
-  skipTypeExpression(index: number, disallowArrow: boolean = false): number | null {
-    const tokens = this.tokens.tokens;
-    while (isTypeExpressionPrefix(tokens[index].type)) {
-      index++;
+  skipTypeExpression(disallowArrow: boolean = false): void {
+    while (isTypeExpressionPrefix(this.tokens.currentToken().type)) {
+      this.advance();
     }
 
-    const firstToken = tokens[index];
-    if (isTypeExpressionAtom(firstToken.type)) {
+    if (isTypeExpressionAtom(this.tokens.currentToken().type)) {
       // Identifier, number, etc, or function type with that as the param.
-      index++;
-      if (!disallowArrow && this.tokens.matchesAtIndex(index, ["=>"])) {
-        index++;
-        const nextIndex = this.skipTypeExpression(index);
-        if (nextIndex === null) {
-          return null;
-        }
-        index = nextIndex;
+      this.advance();
+      if (!disallowArrow && this.tokens.matches(["=>"])) {
+        this.advance();
+        this.skipTypeExpression();
       }
-    } else if (firstToken.type.label === "{") {
-      index++;
-      index = this.skipBalancedCode(index, "{", "}");
-      index++;
-    } else if (firstToken.type.label === "[") {
-      index++;
-      index = this.skipBalancedCode(index, "[", "]");
-      index++;
-    } else if (firstToken.type.label === "(") {
+    } else if (this.tokens.matches(["{"])) {
+      this.skipBalancedCode("{", "}");
+    } else if (this.tokens.matches(["["])) {
+      this.skipBalancedCode("[", "]");
+    } else if (this.tokens.matches(["("])) {
       // Either a parenthesized expression or an arrow function.
-      index++;
-      index = this.skipBalancedCode(index, "(", ")");
-      index++;
-      if (!disallowArrow && this.tokens.matchesAtIndex(index, ["=>"])) {
-        index++;
-        const nextIndex = this.skipTypeExpression(index);
-        if (nextIndex === null) {
-          return null;
-        }
-        index = nextIndex;
+      this.skipBalancedCode("(", ")");
+      if (!disallowArrow && this.tokens.matches(["=>"])) {
+        this.advance();
+        this.skipTypeExpression();
       }
-    } else if (firstToken.type.label === "typeof") {
-      index += 2;
+    } else if (this.tokens.matches(["typeof"])) {
+      this.advance();
+      this.advance();
     } else {
-      // Unrecognized token, so bail out.
-      return null;
+      throw new Error(`Unrecognized token at the start of a type: ${this.tokens.currentToken()}`);
     }
 
     // We're already one past the end of a valid expression, so see if it's
     // possible to expand to the right.
     while (true) {
-      const token = tokens[index];
-
       // Check if there's any indication that we can expand forward, and do so.
-      if (isTypeBinop(token.type)) {
-        index++;
-        const nextIndex = this.skipTypeExpression(index);
-        if (nextIndex === null) {
-          return null;
-        }
-        index = nextIndex;
-      } else if (token.type.label === ".") {
+      if (isTypeBinop(this.tokens.currentToken().type)) {
+        this.advance();
+        this.skipTypeExpression();
+      } else if (this.tokens.matches(["."])) {
         // Normal member access, so process the dot and the identifier.
-        index += 2;
-      } else if (token.type.label === "[" && tokens[index + 1].type.label === "]") {
-        index += 2;
-      } else if (token.type.label === "</>" && token.value === "<") {
-        index++;
-        index = this.skipBalancedCode(index, "</>", "</>", "<", ">");
-        index++;
+        this.advance();
+        this.advance();
+      } else if (this.tokens.matches(["[", "]"])) {
+        this.advance();
+        this.advance();
+      } else if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
+        this.skipBalancedAngleBrackets();
       } else {
         break;
       }
     }
-    return index;
   }
 
-  skipBalancedCode(
-    index: number,
-    openTokenLabel: string,
-    closeTokenLabel: string,
-    // tslint:disable-next-line no-any
-    openValue?: any,
-    // tslint:disable-next-line no-any
-    closeValue?: any,
-  ): number {
+  skipBalancedCode(openTokenLabel: string, closeTokenLabel: string): void {
+    this.advance(openTokenLabel);
     let depth = 0;
-    while (index < this.tokens.tokens.length) {
-      const token = this.tokens.tokens[index];
-      if (token.type.label === openTokenLabel && (!openValue || token.value === openValue)) {
+    while (!this.tokens.isAtEnd()) {
+      if (this.tokens.matches([openTokenLabel])) {
         depth++;
-      } else if (
-        token.type.label === closeTokenLabel &&
-        (!closeValue || token.value === closeValue)
-      ) {
+      } else if (this.tokens.matches([closeTokenLabel])) {
         if (depth === 0) {
           break;
         }
         depth--;
       }
-      index++;
+      this.advance();
     }
-    if (index === this.tokens.tokens.length) {
+    if (this.tokens.isAtEnd()) {
       throw new Error("Did not find end of balanced code.");
     }
-    return index;
+    this.advance(closeTokenLabel);
   }
 
   private processTypeParameter(): void {
@@ -428,16 +381,38 @@ class TokenPreprocessor {
   }
 
   private skipBalancedAngleBrackets(): void {
-    this.advance("</>", "<");
-    while (!this.tokens.matches(["</>"]) || this.tokens.currentToken().value !== ">") {
+    let depth = 0;
+    while (true) {
+      if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
+        depth++;
+      }
+      if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === ">") {
+        depth--;
+      }
+      // Babylon normally uses parse information to inform the lexer to produce individual > tokens,
+      // but hopefully we won't need that and can just act on the more naive tokenization.
+      if (this.tokens.matches(["<</>>"]) && this.tokens.currentToken().value === ">>") {
+        depth -= 2;
+      }
+      if (this.tokens.matches(["<</>>"]) && this.tokens.currentToken().value === ">>>") {
+        depth -= 3;
+      }
       this.advance();
+      if (depth < 0) {
+        throw new Error("Unexpected negative depth when processing angle brackets.");
+      }
+      if (depth === 0) {
+        break;
+      }
     }
-    this.advance("</>", ">");
   }
 
   // tslint:disable-next-line no-any
   private advance(expectedLabel: string | null = null, expectedValue: any = null): void {
     const token = this.tokens.currentToken();
+    if (!token) {
+      throw new Error("Unexpectedly reached the end of the input.");
+    }
     if (expectedLabel && token.type.label !== expectedLabel) {
       throw new Error(`Expected token ${expectedLabel}.`);
     }

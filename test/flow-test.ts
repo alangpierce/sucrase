@@ -264,4 +264,19 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("allows nested generics with a fake right-shift token", () => {
+    assertResult(
+      `
+      const arr1: Array<Array<number> > = [[1]];
+      const arr2: Array<Array<number>> = [[2]];
+      const arr3: Array<Array<Array<number>>> = [[[3]]];
+    `,
+      `${PREFIX}
+      const arr1 = [[1]];
+      const arr2 = [[2]];
+      const arr3 = [[[3]]];
+    `,
+    );
+  });
 });

@@ -5,7 +5,9 @@ import {TokenType} from "../TokenProcessor";
  * like an identifier or a literal.
  */
 export function isTypeExpressionAtom(tokenType: TokenType): boolean {
-  return ["name", "num", "false", "true", "null", "void", "this"].includes(tokenType.label);
+  return ["name", "num", "string", "false", "true", "null", "void", "this"].includes(
+    tokenType.label,
+  );
 }
 
 export function isTypeExpressionPrefix(tokenType: TokenType): boolean {

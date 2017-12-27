@@ -491,514 +491,498 @@ const Sample = React.createClass({
     );
   },
 
-  render16() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value0(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render17() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value0(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render18() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value1(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render19() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value2(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render20() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value3(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render21() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value4(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render22() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value5(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render23() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value6(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render24() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value7(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render25() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value8(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render26() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value9(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render27() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value10(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render28() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value11(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render29() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value12(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render30() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value13(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render31() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value14(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
-  render32() {
-    return (
-      <A>
-        <B>
-          <C abc='def'>
-            <D ghi={jkl}>
-              <E>
-                This is some text.
-                This is some more text.
-              </E>
-            </D>
-            {1 + 1}
-          </C>
-          <div>
-            <a href='https://www.google.com'>Google</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.yahoo.com'>Yahoo</a>
-            <span />
-          </div>
-          <div>
-            <a href='https://www.bing.com'>Bing</a>
-            <span />
-          </div>
-        </B>
-      </A>
-    );
+  value15(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
+  },
+
+  value16(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
+  },
+
+  value17(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
+  },
+
+  value18(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
+  },
+
+  value19(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
+  },
+
+  value20(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
+  },
+
+  value21(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
+  },
+
+  value22(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
+  },
+
+  value23(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
+  },
+
+  value24(x: string | number): number {
+    const sum: (Array<number>) => number = () => 3;
+    const message: string = "Hello";
+
+    class Greeter<T> {
+      t: T;
+      constructor(t: T) {
+        this.t = t;
+      }
+      greet(): T {
+        return this.t;
+      }
+    }
+    const g1: Greeter<string> = new Greeter(message);
+    const g2: Greeter<number> = new Greeter(4);
+
+    return g1.greet() + g2.greet();
   },
 
   render() {

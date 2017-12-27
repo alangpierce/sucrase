@@ -8,26 +8,35 @@
 Sucrase is an alternative to Babel that allows super-fast development builds.
 Instead of compiling a large range of JS features down to ES5, Sucrase assumes
 that you're targeting a modern JS runtime and compiles non-standard language
-extensions (currently JSX, later Flow and TypeScript) down to standard
+extensions (currently JSX and Flow, with TypeScript planned) down to standard
 JavaScript. It also compiles `import` to `require` in the same style as Babel.
 Because of this smaller scope, Sucrase can get away with an architecture that is
 much more performant, but requires more work to implement and maintain each
 transform.
 
-**Current state:** Some known bugs, but currently passes all tests in the
-[Benchling](https://benchling.com/) frontend codebase (about 500,000 lines).
+**Current state:** The project is under development and you may see bugs if you
+run it on a large codebase. You probably shouldn't use it in production, but you
+may find it useful in development. Feel free to file issues!
+
+Sucrase can convert the following codebases with all tests passing:
+* The [Benchling](https://benchling.com/) frontend codebase
+  (500K lines of code, JSX, imports).
+* [Babylon](https://github.com/babel/babel/tree/master/packages/babylon)
+  (13K lines of code, flow, imports).
 
 ## Usage
 
-Currently Sucrase can only be used as a library. You can use it like this:
+Currently Sucrase ships with a simple CLI and can be called from JavaScript
+directly:
 
 ```
 yarn add sucrase  # Or npm install sucrase
+sucrase ./srcDir --transforms imports,flow -d ./outDir
 ```
 
 ```js
-import {transform} from 'sucrase';
-const compiledCode = transform(code, {transforms: ['jsx', 'imports']});
+import {transform} from "sucrase";
+const compiledCode = transform(code, {transforms: ["imports", "flow"]});
 ```
 
 ## Supported transforms
@@ -38,6 +47,18 @@ Analogous to [babel-plugin-transform-react-jsx](https://babeljs.io/docs/plugins/
 
 Converts JSX syntax to `React.createElement`, e.g. `<div a={b} />` becomes
 `React.createElement('div', {a: b})`.
+
+### flow
+
+Analogous to [babel-plugin-transform-flow-strip-types](https://babeljs.io/docs/plugins/transform-flow-strip-types/).
+
+Removes Flow types, e.g. `const f = (x: number): string => "hi";` to
+`const f = (x) => "hi";`.
+
+#### Limitations
+
+* Some syntax, such as `declare`, has not been implemented yet.
+* Only removes types; no type checking.
 
 ### react-display-name
 
@@ -109,25 +130,28 @@ Sucrase bypasses most of these steps, and works like this:
 
 ## Performance
 
-Currently, Sucrase runs about 10x faster than Babel (even when babel only runs
+Currently, Sucrase runs about 4-5x faster than Babel (even when Babel only runs
 the relevant transforms). Here's the output of one run of `npm run benchmark`:
 
 ```
 Simulating transpilation of 100,000 lines of code:
-Sucrase: 1181.323ms
-Buble (JSX, no import transform): 2206.367ms
-TypeScript: 2626.998ms
-Babel: 12955.703ms
+Sucrase: 2298.723ms
+TypeScript: 3420.195ms
+Babel: 9364.096ms
 ```
+
+Previous iterations have been 15-20x faster, and hopefully additional
+performance work will bring it back to that speed.
 
 ## Project vision and future work
 
 ### New features
 
 * Add TypeScript support.
-* Add Flow support.
 * Improve correctness issues in the import transform, e.g. implement proper
   variable shadowing detection and automatic semicolon insertion.
+* Test the Flow transform more thoroughly and implement any remaining missing
+  features.
 * Emit proper source maps. (The line numbers already match up, but this would
   help with debuggers and other tools.)
 * Explore the idea of extending this approach to other tools e.g. module
@@ -140,6 +164,8 @@ Babel: 12955.703ms
 * Rewrite the code to be valid [AssemblyScript](https://github.com/AssemblyScript/assemblyscript),
   which will allow it to be compiled to wasm and hopefully improve performance
   even more.
+* Explore the idea of a JIT to optimize the various token patterns that need to
+  be matched as part of code transformation.
 * Explore more optimizations, like reducing the number of passes.
 
 ### Correctness and stability

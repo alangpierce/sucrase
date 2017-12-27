@@ -173,6 +173,15 @@ class TokenPreprocessor {
         } else if (context === "class" && this.tokens.matches([":"]) && ternaryDepth === 0) {
           // Process typed class field.
           const identifierTokenIndex = this.tokens.currentIndex() - 1;
+          const previousTokenIndex = identifierTokenIndex - 1;
+
+          if (this.tokens.matchesAtIndex(previousTokenIndex, ["+/-"])) {
+            const varianceMarkerToken = this.tokens.tokens[previousTokenIndex];
+            varianceMarkerToken.contextName = "type";
+            varianceMarkerToken.contextStartIndex = previousTokenIndex;
+            varianceMarkerToken.parentContextStartIndex = this.getContextInfo().startIndex;
+          }
+
           this.advance();
           this.processTypeExpression();
           if (!this.tokens.matches(["="])) {

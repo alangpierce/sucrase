@@ -16,11 +16,13 @@
   ],
   "scripts": {
     "build": "script/build",
+    "self-build": "script/self-build",
     "benchmark": "node ./build/benchmark/benchmark.js",
     "lint": "eslint './src/**/*.ts' && tslint -p .",
     "profile": "node --inspect-brk ./build/benchmark/profile.js",
     "prepublish": "yarn run build",
-    "test": "yarn lint && tsc --noEmit && mocha test"
+    "test": "yarn lint && tsc --noEmit && mocha test",
+    "test-dist": "./node_modules/.bin/mocha build/test --opts test/mocha-self-test.opts"
   },
   "repository": {
     "type": "git",

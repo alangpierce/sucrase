@@ -307,4 +307,19 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("properly removes optional parameter types", () => {
+    assertResult(
+      `
+      function foo(x?: number): string {
+        return 'Hi!';
+      }
+    `,
+      `${PREFIX}
+      function foo(x) {
+        return 'Hi!';
+      }
+    `,
+    );
+  });
 });

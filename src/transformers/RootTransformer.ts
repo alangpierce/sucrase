@@ -152,6 +152,17 @@ export default class RootTransformer {
   }
 
   processPossibleTypeAnnotation(): boolean {
+    if (
+      this.tokens.matches(["?", ":"]) &&
+      this.tokens.tokenAtRelativeIndex(2).contextName === "type"
+    ) {
+      this.tokens.removeInitialToken();
+      this.tokens.removeInitialToken();
+      while (this.tokens.currentToken().contextName === "type") {
+        this.tokens.removeToken();
+      }
+      return true;
+    }
     if (this.tokens.matches([":"]) && this.tokens.tokenAtRelativeIndex(1).contextName === "type") {
       this.tokens.removeInitialToken();
       while (this.tokens.currentToken().contextName === "type") {

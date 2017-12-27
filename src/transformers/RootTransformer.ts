@@ -150,4 +150,15 @@ export default class RootTransformer {
     this.processBalancedCode();
     this.tokens.copyExpectedToken("}");
   }
+
+  processPossibleTypeAnnotation(): boolean {
+    if (this.tokens.matches([":"]) && this.tokens.tokenAtRelativeIndex(1).contextName === "type") {
+      this.tokens.removeInitialToken();
+      while (this.tokens.currentToken().contextName === "type") {
+        this.tokens.removeToken();
+      }
+      return true;
+    }
+    return false;
+  }
 }

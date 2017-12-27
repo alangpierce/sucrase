@@ -345,6 +345,7 @@ export default class ImportTransformer extends Transformer {
     this.tokens.copyExpectedToken("(");
     this.rootTransformer.processBalancedCode();
     this.tokens.copyExpectedToken(")");
+    this.rootTransformer.processPossibleTypeAnnotation();
     this.tokens.copyExpectedToken("{");
     this.rootTransformer.processBalancedCode();
     this.tokens.copyExpectedToken("}");

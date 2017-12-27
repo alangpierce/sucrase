@@ -51,7 +51,8 @@ export default class ImportTransformer extends Transformer {
     }
     if (
       this.tokens.matches(["export"]) &&
-      !isMaybePropertyName(this.tokens, this.tokens.currentIndex())
+      !isMaybePropertyName(this.tokens, this.tokens.currentIndex()) &&
+      this.tokens.currentToken().contextName !== "type"
     ) {
       this.hadExport = true;
       this.processExport();

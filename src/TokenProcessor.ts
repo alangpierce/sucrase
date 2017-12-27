@@ -57,6 +57,11 @@ export default class TokenProcessor {
     return this.matchesAtIndex(index, ["name"]) && this.tokens[index].value === name;
   }
 
+  matchesNameAtRelativeIndex(relativeIndex: number, name: string): boolean {
+    const index = this.currentIndex() + relativeIndex;
+    return this.matchesAtIndex(index, ["name"]) && this.tokens[index].value === name;
+  }
+
   matchesAtRelativeIndex(relativeIndex: number, tagLabels: Array<string>): boolean {
     return this.matchesAtIndex(this.currentIndex() + relativeIndex, tagLabels);
   }

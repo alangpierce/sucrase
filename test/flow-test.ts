@@ -279,4 +279,32 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("handles interface declarations and `export interface`", () => {
+    assertResult(
+      `
+      interface Cartesian { x: number; y: number; }
+      export interface Polar { r: number; theta: number; }
+    `,
+      `${PREFIX}
+      
+
+    `,
+    );
+  });
+
+  it("supports interface as an object key", () => {
+    assertResult(
+      `
+      const o = {
+        interface: true,
+      };
+    `,
+      `${PREFIX}
+      const o = {
+        interface: true,
+      };
+    `,
+    );
+  });
 });

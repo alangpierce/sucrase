@@ -100,6 +100,16 @@ class TokenPreprocessor {
           this.tokens.matchesAtRelativeIndex(2, ["</>"]))
       ) {
         this.processTypeAlias();
+      } else if (
+        this.tokens.matches(["export"]) &&
+        this.tokens.matchesNameAtRelativeIndex(1, "interface")
+      ) {
+        this.processInterfaceDeclaration();
+      } else if (
+        this.tokens.matchesName("interface") &&
+        this.tokens.matchesAtRelativeIndex(1, ["name"])
+      ) {
+        this.processInterfaceDeclaration();
       } else if (this.startsWithKeyword(["if", "for", "while", "catch"])) {
         // Code of the form TOKEN (...) BLOCK
         if (this.tokens.matches(["("])) {
@@ -290,6 +300,20 @@ class TokenPreprocessor {
     }
     this.advance("=");
     this.skipTypeExpression();
+    this.contextStack.pop();
+  }
+
+  private processInterfaceDeclaration(): void {
+    this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
+    if (this.tokens.matches(["export"])) {
+      this.advance("export");
+    }
+    this.advance("name", "interface");
+    this.advance("name");
+    if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
+      this.skipBalancedAngleBrackets();
+    }
+    this.skipBalancedCode("{", "}");
     this.contextStack.pop();
   }
 

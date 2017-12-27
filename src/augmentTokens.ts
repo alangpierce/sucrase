@@ -85,8 +85,9 @@ class TokenPreprocessor {
           ternaryDepth--;
           this.advance();
         } else {
+          const mayBeArrowReturnType = this.tokens.matchesAtRelativeIndex(-1, [")"]);
           this.advance();
-          this.processTypeExpression({disallowArrow: true});
+          this.processTypeExpression({disallowArrow: mayBeArrowReturnType});
         }
       } else if (
         this.tokens.matches(["export"]) &&

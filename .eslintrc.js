@@ -10,6 +10,7 @@ module.exports = {
     "class-methods-use-this": "off",
     "import/extensions": "off",
     "import/prefer-default-export": "off",
+    "no-await-in-loop": "off",
     "no-constant-condition": ["error", {"checkLoops": false}],
     "no-continue": "off",
     "no-else-return": "off",

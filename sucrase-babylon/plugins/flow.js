@@ -3,7 +3,7 @@
 // @flow
 
 import type Parser from "../parser";
-import { types as tt, type TokenType } from "../tokenizer/types";
+import { types as tt, TokenType } from "../tokenizer/types";
 import * as N from "../types";
 import type { Pos, Position } from "../util/location";
 import type State from "../tokenizer/state";
@@ -23,6 +23,8 @@ const primitiveTypes = [
   "typeof",
   "void",
 ];
+
+tt.typeParameterStart = new TokenType("typeParameterStart");
 
 function isEsModuleType(bodyElement: N.Node): boolean {
   return (
@@ -522,7 +524,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
       this.state.inType = true;
 
       // istanbul ignore else: this condition is already checked at all call sites
-      if (this.isRelational("<") || this.match(tt.jsxTagStart)) {
+      if (this.isRelational("<") || this.match(tt.typeParameterStart)) {
         this.next();
       } else {
         this.unexpected();
@@ -2096,6 +2098,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
             // by parsing `jsxTagStart` to stop the JSX plugin from
             // messing with the tokens
             this.state.context.length -= 2;
+            this.state.type = tt.typeParameterStart;
 
             jsxError = err;
           } else {

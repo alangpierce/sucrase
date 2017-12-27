@@ -19,13 +19,8 @@ plugins.jsx = jsxPlugin;
 plugins.typescript = typescriptPlugin;
 
 export function getTokens(input: string, options?: Options): $ReadOnlyArray<Token | Comment> {
-  const parser = getParser(options, input);
-  parser.nextToken();
-  while (parser.state.type.label !== 'eof') {
-    parser.next();
-  }
-  parser.next();
-  return parser.state.tokens;
+  options = Object.assign({}, options, {tokens: true});
+  return getParser(options, input).parse().tokens;
 }
 
 export function parse(input: string, options?: Options): File {

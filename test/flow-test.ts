@@ -371,4 +371,26 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("does not confuse type parameters with JSX", () => {
+    assertResult(
+      `
+      const f = <T>(t: T): number => 3;
+    `,
+      `${PREFIX}
+      const f = (t) => 3;
+    `,
+    );
+  });
+
+  it("does not confuse type parameters with JSX", () => {
+    assertResult(
+      `
+      const f: <T>(t: T) => number = () => 3;
+    `,
+      `${PREFIX}
+      const f = () => 3;
+    `,
+    );
+  });
 });

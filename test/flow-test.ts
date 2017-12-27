@@ -339,4 +339,36 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("recognizes arrow function types within parameters", () => {
+    assertResult(
+      `
+      function partition<T>(
+        list: T[],
+        test: (T, number, T[]) => ?boolean,
+      ): [T[], T[]] {
+        return [];
+      }
+    `,
+      `${PREFIX}
+      function partition(
+        list,
+        test,
+      ) {
+        return [];
+      }
+    `,
+    );
+  });
+
+  it("recognizes arrow function types in variable declarations", () => {
+    assertResult(
+      `
+      const x: a => b = 2;
+    `,
+      `${PREFIX}
+      const x = 2;
+    `,
+    );
+  });
 });

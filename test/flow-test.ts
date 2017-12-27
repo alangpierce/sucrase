@@ -322,4 +322,21 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("properly removes class property variance markers", () => {
+    assertResult(
+      `
+      class C {
+        +foo: number;
+        -bar: number;
+      }
+    `,
+      `${PREFIX}
+      class C {
+        ;
+        ;
+      }
+    `,
+    );
+  });
 });

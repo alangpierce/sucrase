@@ -88,6 +88,18 @@ class TokenPreprocessor {
           this.advance();
           this.processTypeExpression({disallowArrow: true});
         }
+      } else if (
+        this.tokens.matches(["export"]) &&
+        this.tokens.matchesNameAtRelativeIndex(1, "type")
+      ) {
+        this.processTypeAlias();
+      } else if (
+        this.tokens.matchesName("type") &&
+        this.tokens.matchesAtRelativeIndex(1, ["name"]) &&
+        (this.tokens.matchesAtRelativeIndex(2, ["="]) ||
+          this.tokens.matchesAtRelativeIndex(2, ["</>"]))
+      ) {
+        this.processTypeAlias();
       } else if (this.startsWithKeyword(["if", "for", "while", "catch"])) {
         // Code of the form TOKEN (...) BLOCK
         if (this.tokens.matches(["("])) {
@@ -273,6 +285,27 @@ class TokenPreprocessor {
     this.contextStack.pop();
   }
 
+  private processTypeAlias(): void {
+    this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
+    if (this.tokens.matches(["export"])) {
+      this.advance("export");
+    }
+    this.advance("name", "type");
+    this.advance("name");
+    if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
+      this.skipBalancedAngleBrackets();
+    }
+    this.advance("=");
+    const expressionEnd = this.skipTypeExpression(this.tokens.currentIndex());
+    if (expressionEnd === null) {
+      throw new Error("Expected to find a type expression.");
+    }
+    while (this.tokens.currentIndex() < expressionEnd) {
+      this.advance();
+    }
+    this.contextStack.pop();
+  }
+
   /**
    * disallowError says that we should NOT traverse arrow types. This is
    * specifically when trying to parse a return type on an arrow function, which
@@ -390,19 +423,27 @@ class TokenPreprocessor {
 
   private processTypeParameter(): void {
     this.contextStack.push({context: "typeParameter", startIndex: this.tokens.currentIndex()});
-    if (!this.tokens.matches(["</>"]) || this.tokens.currentToken().value !== "<") {
-      throw new Error("Expected < at the start of type parameter.");
-    }
-    this.advance();
-    while (!this.tokens.matches(["</>"]) || this.tokens.currentToken().value !== ">") {
-      this.advance();
-    }
-    this.advance();
+    this.skipBalancedAngleBrackets();
     this.contextStack.pop();
   }
 
-  private advance(): void {
+  private skipBalancedAngleBrackets(): void {
+    this.advance("</>", "<");
+    while (!this.tokens.matches(["</>"]) || this.tokens.currentToken().value !== ">") {
+      this.advance();
+    }
+    this.advance("</>", ">");
+  }
+
+  // tslint:disable-next-line no-any
+  private advance(expectedLabel: string | null = null, expectedValue: any = null): void {
     const token = this.tokens.currentToken();
+    if (expectedLabel && token.type.label !== expectedLabel) {
+      throw new Error(`Expected token ${expectedLabel}.`);
+    }
+    if (expectedValue && token.value !== expectedValue) {
+      throw new Error(`Expected value ${expectedValue}.`);
+    }
     const contextInfo = this.contextStack[this.contextStack.length - 1];
     const parentContextInfo = this.contextStack[this.contextStack.length - 2];
     token.contextName = contextInfo.context;

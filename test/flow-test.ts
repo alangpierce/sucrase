@@ -1,4 +1,4 @@
-import { ESMODULE_PREFIX, PREFIX } from './prefixes';
+import {ESMODULE_PREFIX, PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
 describe("transform flow", () => {
@@ -196,6 +196,45 @@ describe("transform flow", () => {
        function foo(x) {
         return x + 1;
       } exports.foo = foo;
+    `,
+    );
+  });
+
+  it("removes type assignments", () => {
+    assertResult(
+      `
+      type foo = number;
+      const x: foo = 3;
+    `,
+      `${PREFIX}
+      ;
+      const x = 3;
+    `,
+    );
+  });
+
+  it("handles exported types", () => {
+    assertResult(
+      `
+      export type foo = number | string;
+      export const x = 1;
+    `,
+      `${PREFIX}${ESMODULE_PREFIX}
+      ;
+       const x = exports.x = 1;
+    `,
+    );
+  });
+
+  it("does not mistake ? in types for a ternary operator", () => {
+    assertResult(
+      `
+      type A<T> = ?number;
+      const f = (): number => 3;
+    `,
+      `${PREFIX}
+      ;
+      const f = () => 3;
     `,
     );
   });

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import * as commander from "commander";
 import {exists, mkdir, readdir, readFile, stat, writeFile} from "mz/fs";
 import {join} from "path";

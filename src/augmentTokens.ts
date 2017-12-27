@@ -428,13 +428,19 @@ class TokenPreprocessor {
   }
 
   /**
-   * Keywords can be property values, so don't consider them if we're after a
-   * dot.
+   * Keywords can be property values, so don't consider them if we're after a dot or in an object
+   * key.
    */
   private startsWithKeyword(keywords: Array<string>): boolean {
-    return (
-      !this.tokens.matchesAtRelativeIndex(-1, ["."]) &&
-      keywords.some((keyword) => this.tokens.matches([keyword]))
-    );
+    if (this.tokens.matchesAtRelativeIndex(-1, ["."])) {
+      return false;
+    }
+    if (
+      this.getContextInfo().context === "object" &&
+      this.tokens.matchesAtRelativeIndex(1, [":"])
+    ) {
+      return false;
+    }
+    return keywords.some((keyword) => this.tokens.matches([keyword]));
   }
 }

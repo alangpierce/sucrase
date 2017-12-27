@@ -7,7 +7,11 @@
   "main": "dist/src/index.js",
   "module": "dist/src/index.mjs",
   "types": "dist/src/index.d.ts",
+  "bin": {
+    "bulk-decaffeinate": "./bin/bulk-decaffeinate"
+  },
   "files": [
+    "bin",
     "dist"
   ],
   "scripts": {
@@ -59,8 +63,11 @@
     "typescript-eslint-parser": "^11.0.0"
   },
   "dependencies": {
+    "@types/mz": "^0.0.32",
     "charcodes": "0.0.10",
+    "commander": "^2.12.2",
     "lines-and-columns": "^1.1.6",
+    "mz": "^2.7.0",
     "tslib": "^1.7.1"
   },
   "engines": {

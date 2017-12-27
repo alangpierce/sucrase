@@ -13,8 +13,9 @@ export default class FlowTransformer extends Transformer {
       this.rootTransformer.processClass();
       return true;
     }
-    if (this.tokens.matches([":"])) {
-      return this.processColon();
+    const processedTypeAnnotation = this.rootTransformer.processPossibleTypeAnnotation();
+    if (processedTypeAnnotation) {
+      return true;
     }
     if (this.tokens.currentToken().contextName === "type") {
       this.tokens.removeInitialToken();
@@ -26,16 +27,6 @@ export default class FlowTransformer extends Transformer {
         this.tokens.removeToken();
       }
       return true;
-    }
-    return false;
-  }
-
-  processColon(): boolean {
-    if (this.tokens.tokenAtRelativeIndex(1).contextName === "type") {
-      this.tokens.removeInitialToken();
-      while (this.tokens.currentToken().contextName === "type") {
-        this.tokens.removeToken();
-      }
     }
     return false;
   }

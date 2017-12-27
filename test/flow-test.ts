@@ -1,4 +1,4 @@
-import {PREFIX} from "./prefixes";
+import { ESMODULE_PREFIX, PREFIX } from './prefixes';
 import {assertResult} from "./util";
 
 describe("transform flow", () => {
@@ -181,6 +181,21 @@ describe("transform flow", () => {
         h(t) {
         }
       }
+    `,
+    );
+  });
+
+  it("handles an exported function with type parameters", () => {
+    assertResult(
+      `
+      export function foo(x: number): number {
+        return x + 1;
+      }
+    `,
+      `${PREFIX}${ESMODULE_PREFIX}
+       function foo(x) {
+        return x + 1;
+      } exports.foo = foo;
     `,
     );
   });

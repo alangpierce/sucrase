@@ -223,6 +223,8 @@ class TokenPreprocessor {
           this.processRegion([], [], "jsxChild", {followingLabels: ["jsxTagStart", "/"]});
           this.processToToken("jsxTagStart", "jsxTagEnd", "jsxTag");
         }
+      } else if (this.tokens.matches(["typeParameterStart"])) {
+        this.processTypeParameter();
       } else if (this.tokens.matches(["{"])) {
         if (
           this.tokens.matchesAtRelativeIndex(-1, [")"]) ||
@@ -352,6 +354,11 @@ class TokenPreprocessor {
       this.skipBalancedCode("{", "}");
     } else if (this.tokens.matches(["["])) {
       this.skipBalancedCode("[", "]");
+    } else if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
+      this.skipBalancedAngleBrackets();
+      this.skipBalancedCode("(", ")");
+      this.advance("=>");
+      this.skipTypeExpression();
     } else if (this.tokens.matches(["("])) {
       // Either a parenthesized expression or an arrow function.
       this.skipBalancedCode("(", ")");
@@ -363,7 +370,9 @@ class TokenPreprocessor {
       this.advance();
       this.advance();
     } else {
-      throw new Error(`Unrecognized token at the start of a type: ${this.tokens.currentToken()}`);
+      throw new Error(
+        `Unrecognized token at the start of a type: ${JSON.stringify(this.tokens.currentToken())}`,
+      );
     }
 
     // We're already one past the end of a valid expression, so see if it's
@@ -417,18 +426,17 @@ class TokenPreprocessor {
   private skipBalancedAngleBrackets(): void {
     let depth = 0;
     while (true) {
-      if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
+      if (this.tokens.matches(["typeParameterStart"])) {
         depth++;
-      }
-      if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === ">") {
+      } else if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
+        depth++;
+      } else if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === ">") {
         depth--;
-      }
-      // Babylon normally uses parse information to inform the lexer to produce individual > tokens,
-      // but hopefully we won't need that and can just act on the more naive tokenization.
-      if (this.tokens.matches(["<</>>"]) && this.tokens.currentToken().value === ">>") {
+      } else if (this.tokens.matches(["<</>>"]) && this.tokens.currentToken().value === ">>") {
+        // Babylon normally uses parse information to inform the lexer to produce individual > tokens,
+        // but hopefully we won't need that and can just act on the more naive tokenization.
         depth -= 2;
-      }
-      if (this.tokens.matches(["<</>>"]) && this.tokens.currentToken().value === ">>>") {
+      } else if (this.tokens.matches(["<</>>"]) && this.tokens.currentToken().value === ">>>") {
         depth -= 3;
       }
       this.advance();

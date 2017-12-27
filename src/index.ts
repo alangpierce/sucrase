@@ -4,7 +4,7 @@ import TokenProcessor, {Token} from "./TokenProcessor";
 import RootTransformer from "./transformers/RootTransformer";
 import formatTokens from "./util/formatTokens";
 
-const DEFAULT_BABYLON_PLUGINS = ["jsx", "flow", "objectRestSpread"];
+const DEFAULT_BABYLON_PLUGINS = ["jsx", "flow", "objectRestSpread", "classProperties"];
 
 export type Transform = "jsx" | "imports" | "flow" | "add-module-exports" | "react-display-name";
 

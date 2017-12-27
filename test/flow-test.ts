@@ -253,4 +253,15 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("allows leading pipe operators in types", () => {
+    assertResult(
+      `
+      const x: | number | string = "Hello";
+    `,
+      `${PREFIX}
+      const x = "Hello";
+    `,
+    );
+  });
 });

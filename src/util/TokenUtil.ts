@@ -11,9 +11,9 @@ export function isTypeExpressionAtom(tokenType: TokenType): boolean {
 }
 
 export function isTypeExpressionPrefix(tokenType: TokenType): boolean {
-  // typeof isn't considered a prefix operator because its operand is an
-  // identifier, not a type.
-  return ["?"].includes(tokenType.label);
+  // typeof isn't considered a prefix operator because its operand is an identifier, not a type.
+  // The union and intersection are also allowed in a leading position and have no effect.
+  return ["?", "|", "&"].includes(tokenType.label);
 }
 
 export function isTypeBinop(tokenType: TokenType): boolean {

@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "https://sucrase.io",
   "dependencies": {
+    "@babel/standalone": "^7.0.0-beta.36",
     "autoprefixer": "7.1.2",
     "babel-core": "6.25.0",
     "babel-eslint": "7.2.3",
@@ -12,7 +13,6 @@
     "babel-plugin-add-module-exports": "^0.2.1",
     "babel-preset-react-app": "^3.0.3",
     "babel-runtime": "6.26.0",
-    "babel-standalone": "^6.26.0",
     "base64-js": "^1.2.1",
     "case-sensitive-paths-webpack-plugin": "2.1.1",
     "chalk": "1.1.3",

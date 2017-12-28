@@ -2,33 +2,20 @@
 
 set -e
 
-TSC="${TSC:-node_modules/.bin/tsc}"
+OUT_DIR="${OUT_DIR:-./build}"
 
 # The build dir has all build artifacts, including the benchmark. The dist dir
 # is the subset that's shipped as part of the package.
-rm -rf ./build
-mkdir -p ./build
-
-echo 'Building ES module version.'
-"${TSC}" \
-  --project . \
-  --outDir build \
-  --module ES2015 \
-  --moduleResolution node
-
-for js in $(find build -name '*.js'); do
-  mv "${js}" "$(dirname "${js}")/$(basename "${js}" .js).mjs"
-done
+rm -rf "${OUT_DIR}"
+mkdir -p "${OUT_DIR}"
 
 echo 'Building CommonJS version.'
-"${TSC}" \
-  --project . \
-  --outDir build \
-  --module commonjs \
-  --moduleResolution node
+bin/sucrase ./src -d "${OUT_DIR}/src" --transforms imports,typescript
+bin/sucrase ./test -d "${OUT_DIR}/test" --transforms imports,typescript
+bin/sucrase ./benchmark -d build/benchmark --transforms imports,typescript
 
 echo 'Building Babylon fork.'
-bin/sucrase sucrase-babylon -d build/sucrase-babylon --transforms imports,flow
+bin/sucrase sucrase-babylon -d "${OUT_DIR}/sucrase-babylon" --transforms imports,flow
 
 rm -rf ./dist
 mkdir -p ./dist

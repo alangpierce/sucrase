@@ -1,6 +1,6 @@
 import NameManager from "./NameManager";
 import TokenProcessor from "./TokenProcessor";
-import IdentifierReplacer from "./transformers/IdentifierReplacer";
+import {IdentifierReplacer} from "./transformers/IdentifierReplacer";
 import isMaybePropertyName from "./util/isMaybePropertyName";
 
 type NamedImport = {

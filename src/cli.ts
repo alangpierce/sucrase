@@ -46,6 +46,7 @@ async function buildDirectory(
   outDirPath: string,
   transforms: Array<Transform>,
 ): Promise<void> {
+  const extension = transforms.includes("typescript") ? ".ts" : ".js";
   if (!await exists(outDirPath)) {
     await mkdir(outDirPath);
   }
@@ -57,8 +58,9 @@ async function buildDirectory(
     const outChildPath = join(outDirPath, child);
     if ((await stat(srcChildPath)).isDirectory()) {
       await buildDirectory(srcChildPath, outChildPath, transforms);
-    } else if (srcChildPath.endsWith(".js")) {
-      await buildFile(srcChildPath, outChildPath, transforms);
+    } else if (srcChildPath.endsWith(extension)) {
+      const outPath = `${outChildPath.substr(0, outChildPath.length - 3)}.js`;
+      await buildFile(srcChildPath, outPath, transforms);
     }
   }
 }

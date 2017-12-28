@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-globals */
-import * as Babel from 'babel-standalone';
+import * as Babel from '@babel/standalone';
 import * as Sucrase from 'sucrase';
 
 import {TRANSFORMS} from './Constants';
@@ -50,7 +50,12 @@ function runSucrase() {
 function runBabel() {
   let babelPlugins = TRANSFORMS
     .filter(({name}) => config.selectedTransforms[name])
-    .map(({babelName}) => babelName);
+    .map(({babelName}) => babelName)
+    .filter(name => name);
+  const babelPresets = TRANSFORMS
+    .filter(({name}) => config.selectedTransforms[name])
+    .map(({presetName}) => presetName)
+    .filter(name => name);
   if (babelPlugins.includes('add-module-exports')) {
     babelPlugins = [
       'add-module-exports',
@@ -59,8 +64,9 @@ function runBabel() {
   }
   return runAndProfile(() =>
     Babel.transform(config.code, {
+      presets: babelPresets,
       plugins: babelPlugins,
-      parserOpts: {plugins: ['jsx', 'flow', 'classProperties']}
+      parserOpts: {plugins: ['jsx', 'classProperties']}
     }).code
   );
 }

@@ -5,10 +5,13 @@ import {getFormattedTokens} from "../src";
 describe("getFormattedTokens", () => {
   it("formats a simple program", () => {
     assert.equal(
-      getFormattedTokens(`\
+      getFormattedTokens(
+        `\
 if (foo) {
   console.log('Hello world!');
-}`),
+}`,
+        {transforms: ["jsx", "imports"]},
+      ),
       `\
 Location  Label  Context   Value        beforeExpr startsExpr rightAssociative isLoop isAssign prefix postfix binop
 1:1-1:3   if     block(0)  if                                                                                      

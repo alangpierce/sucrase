@@ -29,7 +29,7 @@ function processEvent(data) {
   } else if (data.type === 'COMPRESS_CODE') {
     return compressCode(config.code);
   } else if (data.type === 'GET_TOKENS') {
-    return getTokens(config.code);
+    return getTokens(config.code, getSelectedTransforms());
   } else if (data.type === 'PROFILE_SUCRASE') {
     return runSucrase().time;
   } else if (data.type === 'PROFILE_BABEL') {
@@ -37,13 +37,15 @@ function processEvent(data) {
   }
 }
 
-function runSucrase() {
-  const transforms = TRANSFORMS
+function getSelectedTransforms() {
+  return TRANSFORMS
     .map(({name}) => name)
     .filter(name => config.selectedTransforms[name]);
+}
 
+function runSucrase() {
   return runAndProfile(() =>
-    Sucrase.transform(config.code, {transforms})
+    Sucrase.transform(config.code, {transforms: getSelectedTransforms()})
   );
 }
 

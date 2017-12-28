@@ -7,6 +7,7 @@ import ImportTransformer from "./ImportTransformer";
 import JSXTransformer from "./JSXTransformer";
 import ReactDisplayNameTransformer from "./ReactDisplayNameTransformer";
 import Transformer from "./Transformer";
+import TypeScriptTransformer from "./TypeScriptTransformer";
 
 export default class RootTransformer {
   private transformers: Array<Transformer> = [];
@@ -37,6 +38,9 @@ export default class RootTransformer {
 
     if (transforms.includes("flow")) {
       this.transformers.push(new FlowTransformer(this, tokens));
+    }
+    if (transforms.includes("typescript")) {
+      this.transformers.push(new TypeScriptTransformer(this, tokens));
     }
   }
 

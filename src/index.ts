@@ -40,12 +40,12 @@ export function getFormattedTokens(code: string, options: Options): string {
 }
 
 function getSucraseTokens(code: string, options: Options): Array<Token> {
-  const babylonPlugins = options.babylonPlugins || DEFAULT_BABYLON_PLUGINS;
+  let babylonPlugins = options.babylonPlugins || DEFAULT_BABYLON_PLUGINS;
   if (options.transforms.includes("flow")) {
-    babylonPlugins.push("flow");
+    babylonPlugins = [...babylonPlugins, "flow"];
   }
   if (options.transforms.includes("typescript")) {
-    babylonPlugins.push("typescript");
+    babylonPlugins = [...babylonPlugins, "typescript"];
   }
 
   let tokens = getTokens(

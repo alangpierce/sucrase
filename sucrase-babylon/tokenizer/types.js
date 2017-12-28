@@ -150,6 +150,8 @@ export const types: { [name: string]: TokenType } = {
     binop: 11,
     rightAssociative: true,
   }),
+
+  typeParameterStart: new TokenType("typeParameterStart"),
 };
 
 export const keywords = {

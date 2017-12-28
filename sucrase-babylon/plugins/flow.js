@@ -24,8 +24,6 @@ const primitiveTypes = [
   "void",
 ];
 
-tt.typeParameterStart = new TokenType("typeParameterStart");
-
 function isEsModuleType(bodyElement: N.Node): boolean {
   return (
     bodyElement.type === "DeclareExportAllDeclaration" ||

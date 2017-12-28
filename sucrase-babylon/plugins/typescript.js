@@ -279,7 +279,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
     tsParseTypeParameters() {
       const node: N.TsTypeParameterDeclaration = this.startNode();
 
-      if (this.isRelational("<") || this.match(tt.jsxTagStart)) {
+      if (this.isRelational("<") || this.match(tt.typeParameterStart)) {
         this.next();
       } else {
         this.unexpected();
@@ -1744,6 +1744,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
           }
 
           this.state = state;
+          this.state.type = tt.typeParameterStart;
           // Pop the context added by the jsxTagStart.
           assert(this.curContext() === ct.j_oTag);
           this.state.context.pop();
@@ -1757,7 +1758,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
         return super.parseMaybeAssign(...args);
       }
 
-      // Either way, we're looking at a '<': tt.jsxTagStart or relational.
+      // Either way, we're looking at a '<': tt.typeParameterStart or relational.
 
       let arrowExpression;
       let typeParameters: N.TsTypeParameterDeclaration;

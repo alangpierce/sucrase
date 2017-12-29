@@ -10,7 +10,9 @@ export type TokenContext =
   | "templateExpr"
   | "switchCaseCondition"
   | "type"
-  | "typeParameter";
+  | "typeParameter"
+  | "import"
+  | "namedExport";
 
 export type TokenType = {
   label: string;

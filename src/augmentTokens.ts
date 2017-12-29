@@ -94,6 +94,13 @@ class TokenPreprocessor {
         this.tokens.matchesNameAtRelativeIndex(1, "type")
       ) {
         this.processTypeAlias();
+      } else if (this.startsWithKeyword(["import"])) {
+        this.forceContextUntilToken("string", "import");
+      } else if (this.tokens.matches(["export", "{"])) {
+        this.forceContextUntilToken("}", "namedExport");
+      } else if (this.startsWithKeyword(["as"])) {
+        // Note that this does not yet properly handle actual variables named "as".
+        this.processTypeAssertion();
       } else if (
         this.tokens.matchesName("type") &&
         this.tokens.matchesAtRelativeIndex(1, ["name"]) &&
@@ -253,6 +260,15 @@ class TokenPreprocessor {
     this.contextStack.pop();
   }
 
+  private forceContextUntilToken(endToken: string, context: TokenContext): void {
+    this.contextStack.push({context, startIndex: this.tokens.currentIndex()});
+    while (!this.tokens.matches([endToken])) {
+      this.advance();
+    }
+    this.advance();
+    this.contextStack.pop();
+  }
+
   private matchesObjectColon(): boolean {
     if (!this.tokens.matches([":"])) {
       throw new Error("Expected to be called while on a colon token.");
@@ -297,6 +313,16 @@ class TokenPreprocessor {
   private processTypeExpression({disallowArrow = false}: {disallowArrow?: boolean} = {}): void {
     this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
     this.skipTypeExpression(disallowArrow);
+    this.contextStack.pop();
+  }
+
+  /**
+   * Process a TypeScript type assertion like "x as number", starting from the "as" token.
+   */
+  private processTypeAssertion(): void {
+    this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
+    this.advance();
+    this.skipTypeExpression();
     this.contextStack.pop();
   }
 
@@ -479,10 +505,15 @@ class TokenPreprocessor {
     }
     if (
       this.getContextInfo().context === "object" &&
-      this.tokens.matchesAtRelativeIndex(1, [":"])
+      (this.tokens.matchesAtRelativeIndex(1, [":"]) || this.tokens.matchesAtRelativeIndex(1, ["("]))
     ) {
       return false;
     }
-    return keywords.some((keyword) => this.tokens.matches([keyword]));
+    if (this.getContextInfo().context === "class" && this.tokens.matchesAtRelativeIndex(1, ["("])) {
+      return false;
+    }
+    return keywords.some(
+      (keyword) => this.tokens.matches([keyword]) || this.tokens.matchesName(keyword),
+    );
   }
 }

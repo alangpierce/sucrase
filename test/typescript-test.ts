@@ -5,10 +5,7 @@ function assertTypeScriptResult(code: string, expectedResult: string): void {
   assertResult(code, expectedResult, ["jsx", "imports", "typescript"]);
 }
 
-/**
- * Tests for syntax common between flow and typescript.
- */
-describe("type transforms", () => {
+describe("typescript transform", () => {
   it("removes type assertions using `as`", () => {
     assertTypeScriptResult(
       `
@@ -31,6 +28,27 @@ describe("type transforms", () => {
       `${PREFIX}
       const as = "Hello";
       console.log(as);
+    `,
+    );
+  });
+
+  it("removes access modifiers from class methods and fields", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        private b: number;
+        public c(): string {
+          return "hi";
+        }
+      }
+    `,
+      `${PREFIX}
+      class A {
+         ;
+         c() {
+          return "hi";
+        }
+      }
     `,
     );
   });

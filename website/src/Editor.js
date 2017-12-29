@@ -70,6 +70,7 @@ export default class Editor extends Component {
                 options={{
                   minimap: {enabled: false},
                   readOnly: isReadOnly,
+                  tabWidth: 2,
                   ...options,
                 }}
               />

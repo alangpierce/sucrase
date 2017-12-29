@@ -139,4 +139,21 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("handles readonly constructor initializers", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        constructor(readonly x: number) {
+        }
+      }
+    `,
+      `${PREFIX}
+      class A {
+        constructor( x) {;this.x = x;
+        }
+      }
+    `,
+    );
+  });
 });

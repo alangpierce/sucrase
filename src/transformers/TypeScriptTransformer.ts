@@ -34,7 +34,9 @@ export default class TypeScriptTransformer extends Transformer {
     if (
       this.tokens.matchesName("public") ||
       this.tokens.matchesName("protected") ||
-      this.tokens.matchesName("private")
+      this.tokens.matchesName("private") ||
+      this.tokens.matchesName("abstract") ||
+      this.tokens.matchesName("readonly")
     ) {
       this.tokens.removeInitialToken();
       return true;

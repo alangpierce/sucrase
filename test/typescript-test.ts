@@ -156,4 +156,23 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("removes non-null assertion operator but not negation operator", () => {
+    assertTypeScriptResult(
+      `
+      const x = 1!;
+      const y = x!;
+      const z = !x; 
+      const a = (x)!(y);
+      const b = x + !y;
+    `,
+      `${PREFIX}
+      const x = 1;
+      const y = x;
+      const z = !x; 
+      const a = (x)(y);
+      const b = x + !y;
+    `,
+    );
+  });
 });

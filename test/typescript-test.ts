@@ -44,10 +44,97 @@ describe("typescript transform", () => {
     `,
       `${PREFIX}
       class A {
-         ;
+        
          c() {
           return "hi";
         }
+      }
+    `,
+    );
+  });
+
+  it("handles class field assignment with an existing constructor", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        x = 1;
+        constructor() {
+          this.y = 2;
+        }
+      }
+    `,
+      `${PREFIX}
+      class A {
+        
+        constructor() {;this.x = 1;
+          this.y = 2;
+        }
+      }
+    `,
+    );
+  });
+
+  it("handles class field assignment after a constructor with super", () => {
+    assertTypeScriptResult(
+      `
+      class A extends B {
+        x = 1;
+        constructor(a) {
+          super(a);
+        }
+      }
+    `,
+      `${PREFIX}
+      class A extends B {
+        
+        constructor(a) {
+          super(a);this.x = 1;;
+        }
+      }
+    `,
+    );
+  });
+
+  it("handles class field assignment with no constructor", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        x = 1;
+      }
+    `,
+      `${PREFIX}
+      class A {constructor() { this.x = 1; }
+        
+      }
+    `,
+    );
+  });
+
+  it("handles class field assignment with no constructor in a subclass", () => {
+    assertTypeScriptResult(
+      `
+      class A extends B {
+        x = 1;
+      }
+    `,
+      `${PREFIX}
+      class A extends B {constructor(...args) { super(...args); this.x = 1; }
+        
+      }
+    `,
+    );
+  });
+
+  it("does not generate a conflicting name in a generated constructor", () => {
+    assertTypeScriptResult(
+      `
+      class A extends B {
+        args = 1;
+      }
+    `,
+      `${PREFIX}
+      class A extends B {constructor(...args2) { super(...args2); this.args = 1; }
+        
       }
     `,
     );

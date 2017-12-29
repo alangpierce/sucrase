@@ -2,6 +2,7 @@ import ImportProcessor from "../ImportProcessor";
 import {Transform} from "../index";
 import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
+import getClassInitializerInfo from "../util/getClassInitializerInfo";
 import FlowTransformer from "./FlowTransformer";
 import ImportTransformer from "./ImportTransformer";
 import JSXTransformer from "./JSXTransformer";
@@ -11,11 +12,12 @@ import TypeScriptTransformer from "./TypeScriptTransformer";
 
 export default class RootTransformer {
   private transformers: Array<Transformer> = [];
+  private nameManager: NameManager;
 
   constructor(readonly tokens: TokenProcessor, transforms: Array<Transform>) {
-    const nameManager = new NameManager(tokens);
+    this.nameManager = new NameManager(tokens);
     const importProcessor = transforms.includes("imports")
-      ? new ImportProcessor(nameManager, tokens)
+      ? new ImportProcessor(this.nameManager, tokens)
       : null;
     const identifierReplacer = importProcessor || {getIdentifierReplacement: () => null};
 
@@ -32,7 +34,13 @@ export default class RootTransformer {
     if (transforms.includes("imports")) {
       const shouldAddModuleExports = transforms.includes("add-module-exports");
       this.transformers.push(
-        new ImportTransformer(this, tokens, nameManager, importProcessor!, shouldAddModuleExports),
+        new ImportTransformer(
+          this,
+          tokens,
+          this.nameManager,
+          importProcessor!,
+          shouldAddModuleExports,
+        ),
       );
     }
 
@@ -122,7 +130,9 @@ export default class RootTransformer {
     if (this.tokens.matches(["name"]) && !this.tokens.matchesName("implements")) {
       this.tokens.copyToken();
     }
+    let hasSuperclass = false;
     if (this.tokens.matches(["extends"])) {
+      hasSuperclass = true;
       // There are only some limited expressions that are allowed within the
       // `extends` expression, e.g. no top-level binary operators, so we can
       // skip past even fairly complex expressions by being a bit careful.
@@ -150,8 +160,51 @@ export default class RootTransformer {
       }
     }
 
+    this.processClassBody(hasSuperclass);
+  }
+
+  /**
+   * We want to just handle class fields in all contexts, since TypeScript supports them. Later,
+   * when some JS implementations support class fields, this should be made optional.
+   */
+  processClassBody(hasSuperclass: boolean): void {
+    const {initializerStatements, constructorInsertPos, fieldRanges} = getClassInitializerInfo(
+      this.tokens,
+    );
+    let fieldIndex = 0;
+    const classBlockStartIndex = this.tokens.currentToken().contextStartIndex!;
     this.tokens.copyExpectedToken("{");
-    this.processBalancedCode();
+
+    if (constructorInsertPos === null && initializerStatements.length > 0) {
+      const initializersCode = initializerStatements.join(";");
+      if (hasSuperclass) {
+        const argsName = this.nameManager.claimFreeName("args");
+        this.tokens.appendCode(
+          `constructor(...${argsName}) { super(...${argsName}); ${initializersCode}; }`,
+        );
+      } else {
+        this.tokens.appendCode(`constructor() { ${initializersCode}; }`);
+      }
+    }
+
+    while (!this.tokens.matchesContextEnd("}", classBlockStartIndex)) {
+      if (
+        fieldIndex < fieldRanges.length &&
+        this.tokens.currentIndex() === fieldRanges[fieldIndex].start
+      ) {
+        this.tokens.removeInitialToken();
+        while (this.tokens.currentIndex() < fieldRanges[fieldIndex].end) {
+          this.tokens.removeToken();
+        }
+        fieldIndex++;
+      } else if (this.tokens.currentIndex() === constructorInsertPos) {
+        this.tokens.copyToken();
+        this.tokens.appendCode(`;${initializerStatements.join(";")};`);
+        this.processToken();
+      } else {
+        this.processToken();
+      }
+    }
     this.tokens.copyExpectedToken("}");
   }
 

@@ -35,6 +35,15 @@ export default class TokenProcessor {
 
   constructor(readonly code: string, readonly tokens: Array<Token>) {}
 
+  /**
+   * Make a new TokenProcessor for things like lookahead.
+   */
+  clone(): TokenProcessor {
+    const result = new TokenProcessor(this.code, this.tokens);
+    result.tokenIndex = this.tokenIndex;
+    return result;
+  }
+
   reset(): void {
     this.resultCode = "";
     this.tokenIndex = 0;
@@ -88,6 +97,10 @@ export default class TokenProcessor {
       return false;
     }
     return token.type.label === name || (token.type.label === "name" && token.value === name);
+  }
+
+  matchesContextEnd(label: string, contextStartIndex: number): boolean {
+    return this.matches([label]) && this.currentToken().contextStartIndex === contextStartIndex;
   }
 
   previousWhitespace(): string {

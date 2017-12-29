@@ -118,9 +118,9 @@ describe("type transforms", () => {
       }
     `,
       `${PREFIX}
-      class A {
-        x = 2;
-        y = {};
+      class A {constructor() { this.x = 2;this.y = {}; }
+        
+        
       }
     `,
     );
@@ -135,7 +135,7 @@ describe("type transforms", () => {
     `,
       `${PREFIX}
       class A {
-        ;
+        
       }
     `,
     );

@@ -50,8 +50,8 @@ describe("transform flow", () => {
     `,
       `${PREFIX}
       class C {
-        ;
-        ;
+        
+        
       }
     `,
     );

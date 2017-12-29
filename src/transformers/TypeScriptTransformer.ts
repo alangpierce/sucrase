@@ -31,6 +31,14 @@ export default class TypeScriptTransformer extends Transformer {
       }
       return true;
     }
+    if (
+      this.tokens.matchesName("public") ||
+      this.tokens.matchesName("protected") ||
+      this.tokens.matchesName("private")
+    ) {
+      this.tokens.removeInitialToken();
+      return true;
+    }
     return false;
   }
 }

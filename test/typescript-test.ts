@@ -315,4 +315,15 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("handles type predicates when processing arrow functions", () => {
+    assertTypeScriptResult(
+      `
+      values.filter((node): node is Node => node !== null);
+    `,
+      `${PREFIX}
+      values.filter((node) => node !== null);
+    `,
+    );
+  });
 });

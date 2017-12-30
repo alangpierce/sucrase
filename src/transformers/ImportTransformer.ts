@@ -343,6 +343,12 @@ export default class ImportTransformer extends Transformer {
     }
     const name = this.tokens.currentToken().value;
     this.tokens.copyToken();
+    if (this.tokens.currentToken().contextName === "typeParameter") {
+      this.tokens.removeInitialToken();
+      while (this.tokens.currentToken().contextName === "typeParameter") {
+        this.tokens.removeToken();
+      }
+    }
     this.tokens.copyExpectedToken("(");
     this.rootTransformer.processBalancedCode();
     this.tokens.copyExpectedToken(")");

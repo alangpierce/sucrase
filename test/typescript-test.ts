@@ -239,4 +239,17 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("handles interfaces using `extends`", () => {
+    assertTypeScriptResult(
+      `
+      export interface A extends B {
+      }
+    `,
+      `${PREFIX}
+      
+
+    `,
+    );
+  });
 });

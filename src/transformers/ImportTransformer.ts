@@ -235,7 +235,11 @@ export default class ImportTransformer extends Transformer {
       this.tokens.matches(["export", "name", "function"])
     ) {
       this.processExportFunction();
-    } else if (this.tokens.matches(["export", "class"])) {
+    } else if (
+      this.tokens.matches(["export", "class"]) ||
+      // export abstract class
+      this.tokens.matches(["export", "name", "class"])
+    ) {
       this.processExportClass();
     } else if (this.tokens.matches(["export", "{"])) {
       this.processExportBindings();
@@ -366,7 +370,10 @@ export default class ImportTransformer extends Transformer {
    * class A {} exports.A = A;
    */
   private processExportClass(): void {
-    this.tokens.replaceToken("");
+    this.tokens.removeInitialToken();
+    if (this.tokens.matchesName("abstract")) {
+      this.tokens.removeToken();
+    }
     const name = this.rootTransformer.processNamedClass();
     this.tokens.appendCode(` exports.${name} = ${name};`);
   }

@@ -224,4 +224,19 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("export default functions with type parameters", () => {
+    assertTypeScriptResult(
+      `
+      export default function flatMap<T, U>(list: Array<T>, map: (element: T) => Array<U>): Array<U> {
+        return list.reduce((memo, item) => memo.concat(map(item)), [] as Array<U>);
+      }
+    `,
+      `${PREFIX}${ESMODULE_PREFIX}
+       function flatMap(list, map) {
+        return list.reduce((memo, item) => memo.concat(map(item)), [] );
+      } exports.default = flatMap;
+    `,
+    );
+  });
 });

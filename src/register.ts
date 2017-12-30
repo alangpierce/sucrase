@@ -3,7 +3,18 @@ import * as pirates from "pirates";
 import {Transform, transform} from "./index";
 
 export function addHook(extension: string, transforms: Array<Transform>): void {
-  pirates.addHook((code: string): string => transform(code, {transforms}), {exts: [extension]});
+  pirates.addHook(
+    (code: string, filename: string): string => {
+      try {
+        return transform(code, {transforms});
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(`Error processing file ${filename}`);
+        throw e;
+      }
+    },
+    {exts: [extension]},
+  );
 }
 
 export function registerJS(): void {

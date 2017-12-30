@@ -405,7 +405,7 @@ class TokenPreprocessor {
     // possible to expand to the right.
     while (true) {
       // Check if there's any indication that we can expand forward, and do so.
-      if (isTypeBinop(this.tokens.currentToken().type)) {
+      if (isTypeBinop(this.tokens.currentToken())) {
         this.advance();
         this.skipTypeExpression();
       } else if (this.tokens.matches(["."])) {

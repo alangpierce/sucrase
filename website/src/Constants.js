@@ -37,6 +37,6 @@ export const TRANSFORMS = [
   {name: 'add-module-exports', babelName: 'add-module-exports'},
 ];
 
-export const DEFAULT_TRANSFORMS = ['jsx', 'imports', 'typescript'];
+export const DEFAULT_TRANSFORMS = ['jsx', 'typescript', 'imports'];
 export const DEFAULT_COMPARE_WITH_BABEL = true;
 export const DEFAULT_SHOW_TOKENS = false;

@@ -12,12 +12,13 @@
   },
   "files": [
     "bin",
-    "dist"
+    "dist",
+    "register"
   ],
   "scripts": {
     "build": "script/build",
     "self-build": "script/self-build",
-    "self-test": "OUT_DIR=self-build yarn self-build && mocha self-build/test --opts test/mocha-self-test.opts",
+    "self-test": "mocha test/**/*.ts --opts test/mocha-self-test.opts",
     "benchmark": "node ./build/benchmark/benchmark.js",
     "lint": "eslint './src/**/*.ts' && tslint -p .",
     "profile": "node --inspect-brk ./build/benchmark/profile.js",
@@ -70,6 +71,7 @@
     "commander": "^2.12.2",
     "lines-and-columns": "^1.1.6",
     "mz": "^2.7.0",
+    "pirates": "^3.0.2",
     "tslib": "^1.7.1"
   },
   "engines": {

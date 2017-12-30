@@ -26,13 +26,28 @@ Sucrase can convert the following codebases with all tests passing:
 
 ## Usage
 
-Currently Sucrase ships with a simple CLI and can be called from JavaScript
-directly:
+Installation:
 
 ```
 yarn add sucrase  # Or npm install sucrase
+```
+
+Run on a directory:
+
+```
 sucrase ./srcDir --transforms imports,flow -d ./outDir
 ```
+
+Register a require hook with some [reasonable defaults](src/register.ts):
+
+```js
+// Register just one extension.
+import "sucrase/register/ts";
+// Or register all at once.
+import "sucrase/register";
+```
+
+Call from JS directly:
 
 ```js
 import {transform} from "sucrase";

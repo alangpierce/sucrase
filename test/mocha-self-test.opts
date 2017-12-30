@@ -1,0 +1,2 @@
+--require ./register/ts
+--require ./register/js

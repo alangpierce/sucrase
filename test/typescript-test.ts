@@ -252,4 +252,39 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("removes non-bare import statements consisting of only types", () => {
+    assertTypeScriptResult(
+      `
+      import A from 'a';
+      import B from 'b';
+      import 'c';
+      import D from 'd';
+      import 'd';
+      import E from 'e';
+      
+      function f(a: A): boolean {
+        return a instanceof A;
+      }
+      function g(b: B): boolean {
+        return true;
+      }
+    `,
+      `${PREFIX}
+      var _a = require('a'); var _a2 = _interopRequireDefault(_a);
+      
+      require('c');
+      var _d = require('d'); var _d2 = _interopRequireDefault(_d);
+      
+      
+      
+      function f(a) {
+        return a instanceof (0, _a2.default);
+      }
+      function g(b) {
+        return true;
+      }
+    `,
+    );
+  });
 });

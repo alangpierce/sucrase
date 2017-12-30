@@ -13,6 +13,7 @@ type ImportInfo = {
   wildcardNames: Array<string>;
   namedImports: Array<NamedImport>;
   namedExports: Array<NamedImport>;
+  hasBareImport: boolean;
   hasStarExport: boolean;
 };
 
@@ -73,6 +74,36 @@ export default class ImportProcessor implements IdentifierReplacer {
       }
     }
     this.generateImportReplacements();
+  }
+
+  /**
+   * In TypeScript, import statements that only import types should be removed. This does not count
+   * bare imports.
+   */
+  pruneTypeOnlyImports(): void {
+    const nonTypeIdentifiers: Set<string> = new Set();
+    for (const token of this.tokens.tokens) {
+      if (
+        token.type.label === "name" &&
+        token.contextName !== "type" &&
+        token.contextName !== "import"
+      ) {
+        nonTypeIdentifiers.add(token.value);
+      }
+    }
+    for (const [path, importInfo] of this.importInfoByPath.entries()) {
+      if (importInfo.hasBareImport) {
+        continue;
+      }
+      const names = [
+        ...importInfo.defaultNames,
+        ...importInfo.wildcardNames,
+        ...importInfo.namedImports.map(({localName}) => localName),
+      ];
+      if (names.every((name) => !nonTypeIdentifiers.has(name))) {
+        this.importsToReplace.set(path, "");
+      }
+    }
   }
 
   private generateImportReplacements(): void {
@@ -183,6 +214,9 @@ get: () => ${primaryImportName}[key]}); });`;
     importInfo.defaultNames.push(...defaultNames);
     importInfo.wildcardNames.push(...wildcardNames);
     importInfo.namedImports.push(...namedImports);
+    if (defaultNames.length === 0 && wildcardNames.length === 0 && namedImports.length === 0) {
+      importInfo.hasBareImport = true;
+    }
   }
 
   private preprocessExportAtIndex(index: number): void {
@@ -301,6 +335,7 @@ get: () => ${primaryImportName}[key]}); });`;
       wildcardNames: [],
       namedImports: [],
       namedExports: [],
+      hasBareImport: false,
       hasStarExport: false,
     };
     this.importInfoByPath.set(path, newInfo);

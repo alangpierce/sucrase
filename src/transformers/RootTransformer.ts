@@ -48,7 +48,12 @@ export default class RootTransformer {
       this.transformers.push(new FlowTransformer(this, tokens));
     }
     if (transforms.includes("typescript")) {
-      this.transformers.push(new TypeScriptTransformer(this, tokens));
+      if (!transforms.includes("imports")) {
+        throw new Error(
+          "The TypeScript transform without the import transform is not yet supported.",
+        );
+      }
+      this.transformers.push(new TypeScriptTransformer(this, tokens, importProcessor!));
     }
   }
 

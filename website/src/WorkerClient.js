@@ -1,8 +1,8 @@
-import Worker from './Worker.worker.js';
+import Worker from "./Worker.worker.js";
 
 const worker = new Worker();
 
-const CANCELLED_MESSAGE = 'SUCRASE JOB CANCELLED';
+const CANCELLED_MESSAGE = "SUCRASE JOB CANCELLED";
 
 // Used to coordinate communication with the worker. This is non-null any time
 // there is an active call, and it is nulled out on completion. Only one request
@@ -21,7 +21,7 @@ let updateStateFn = null;
 // slow enough that it's useful to do in a web worker.
 let handleCompressedCodeFn = null;
 
-worker.addEventListener('message', ({data}) => {
+worker.addEventListener("message", ({data}) => {
   nextResolve(data);
   nextResolve = null;
 });
@@ -32,39 +32,39 @@ function sendMessage(message) {
   }
   worker.postMessage(message);
   if (nextResolve) {
-    throw new Error('Cannot send message when a message is already in progress!');
+    throw new Error("Cannot send message when a message is already in progress!");
   }
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     nextResolve = resolve;
-  })
+  });
 }
 
 async function setConfig(config) {
-  await sendMessage({type: 'SET_CONFIG', config});
+  await sendMessage({type: "SET_CONFIG", config});
 }
 
 async function runSucrase() {
-  return await sendMessage({type: 'RUN_SUCRASE'});
+  return await sendMessage({type: "RUN_SUCRASE"});
 }
 
 async function runBabel() {
-  return await sendMessage({type: 'RUN_BABEL'});
+  return await sendMessage({type: "RUN_BABEL"});
 }
 
 async function compressCode() {
-  return await sendMessage({type: 'COMPRESS_CODE'});
+  return await sendMessage({type: "COMPRESS_CODE"});
 }
 
 async function getTokens() {
-  return await sendMessage({type: 'GET_TOKENS'});
+  return await sendMessage({type: "GET_TOKENS"});
 }
 
 async function profileSucrase() {
-  return await sendMessage({type: 'PROFILE_SUCRASE'});
+  return await sendMessage({type: "PROFILE_SUCRASE"});
 }
 
 async function profileBabel() {
-  return await sendMessage({type: 'PROFILE_BABEL'});
+  return await sendMessage({type: "PROFILE_BABEL"});
 }
 
 /**
@@ -76,14 +76,14 @@ async function waitForConfig() {
     nextConfig = null;
     return config;
   } else {
-    const waitPromise = new Promise(resolve => {
+    const waitPromise = new Promise((resolve) => {
       notifyConfig = resolve;
     });
     await waitPromise;
     notifyConfig = null;
     const config = nextConfig;
     if (config == null) {
-      throw new Error('Unexpected missing config after notify.');
+      throw new Error("Unexpected missing config after notify.");
     }
     nextConfig = null;
     return config;
@@ -117,8 +117,8 @@ async function workerLoop() {
     try {
       await setConfig(config);
       const sucraseCode = await runSucrase();
-      const babelCode = config.compareWithBabel ? await runBabel() : '';
-      const tokensStr = config.showTokens ? await getTokens() : '';
+      const babelCode = config.compareWithBabel ? await runBabel() : "";
+      const tokensStr = config.showTokens ? await getTokens() : "";
       updateStateFn({sucraseCode, babelCode, tokensStr});
 
       const compressedCode = await compressCode();

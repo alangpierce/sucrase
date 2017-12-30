@@ -1,5 +1,5 @@
-import GZip from 'gzip-js';
-import * as Base64 from 'base64-js';
+import GZip from "gzip-js";
+import * as Base64 from "base64-js";
 
 import {
   DEFAULT_COMPARE_WITH_BABEL,
@@ -7,18 +7,22 @@ import {
   DEFAULT_TRANSFORMS,
   INITIAL_CODE,
   TRANSFORMS,
-} from './Constants';
+} from "./Constants";
 
-export function saveHashState({code, compressedCode, selectedTransforms, compareWithBabel, showTokens}) {
+export function saveHashState({
+  code,
+  compressedCode,
+  selectedTransforms,
+  compareWithBabel,
+  showTokens,
+}) {
   const components = [];
 
-  const transformsValue = TRANSFORMS
-    .filter(({name}) => selectedTransforms[name])
+  const transformsValue = TRANSFORMS.filter(({name}) => selectedTransforms[name])
     .map(({name}) => name)
-    .join(',');
+    .join(",");
 
-
-  if (transformsValue !== DEFAULT_TRANSFORMS.join(',')) {
+  if (transformsValue !== DEFAULT_TRANSFORMS.join(",")) {
     components.push(`selectedTransforms=${transformsValue}`);
   }
   if (compareWithBabel !== DEFAULT_COMPARE_WITH_BABEL) {
@@ -37,33 +41,37 @@ export function saveHashState({code, compressedCode, selectedTransforms, compare
   }
 
   if (components.length > 0) {
-    window.location.hash = components.join('&');
+    window.location.hash = components.join("&");
   } else {
-    window.history.replaceState("", document.title, window.location.pathname + window.location.search);
+    window.history.replaceState(
+      "",
+      document.title,
+      window.location.pathname + window.location.search,
+    );
   }
 }
 
 export function loadHashState() {
   try {
     let hashContents = window.location.hash;
-    if (!hashContents.startsWith('#')) {
+    if (!hashContents.startsWith("#")) {
       return null;
     }
-    const components = hashContents.substr(1).split('&');
+    const components = hashContents.substr(1).split("&");
     const result = {};
     for (const component of components) {
-      let [key, value] = component.split('=');
-      if (key === 'selectedTransforms') {
+      let [key, value] = component.split("=");
+      if (key === "selectedTransforms") {
         result.selectedTransforms = {};
-        for (const transformName of value.split(',')) {
+        for (const transformName of value.split(",")) {
           result.selectedTransforms[transformName] = true;
         }
-      } else if (key === 'code') {
+      } else if (key === "code") {
         result.code = window.decodeURIComponent(value);
-      } else if (key === 'compressedCode') {
+      } else if (key === "compressedCode") {
         result.code = decompressCode(window.decodeURIComponent(value));
-      } else if (['compareWithBabel', 'showTokens'].includes(key)) {
-        result[key] = value === 'true';
+      } else if (["compareWithBabel", "showTokens"].includes(key)) {
+        result[key] = value === "true";
       }
     }
     // Deleting code and refreshing should give the default state again.

@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
-import './App.css';
+import React, {Component} from "react";
+import "./App.css";
 
-import {getVersion} from 'sucrase';
+import {getVersion} from "sucrase";
 
 import {
   TRANSFORMS,
@@ -9,11 +9,11 @@ import {
   DEFAULT_COMPARE_WITH_BABEL,
   DEFAULT_SHOW_TOKENS,
   DEFAULT_TRANSFORMS,
-} from './Constants';
-import Editor from './Editor';
-import OptionBox from './OptionBox';
-import {loadHashState, saveHashState} from './URLHashState';
-import * as WorkerClient from './WorkerClient';
+} from "./Constants";
+import Editor from "./Editor";
+import OptionBox from "./OptionBox";
+import {loadHashState, saveHashState} from "./URLHashState";
+import * as WorkerClient from "./WorkerClient";
 
 class App extends Component {
   constructor(props) {
@@ -23,19 +23,30 @@ class App extends Component {
       compareWithBabel: DEFAULT_COMPARE_WITH_BABEL,
       showTokens: DEFAULT_SHOW_TOKENS,
       // Object with a true value for any selected transform keys.
-      selectedTransforms: DEFAULT_TRANSFORMS.reduce(
-        (o, name) => ({...o, [name]: true}),
-        {}
-      ),
-      sucraseCode: '',
+      selectedTransforms: DEFAULT_TRANSFORMS.reduce((o, name) => ({...o, [name]: true}), {}),
+      sucraseCode: "",
       sucraseTimeMs: null,
-      babelCode: '',
+      babelCode: "",
       babelTimeMs: null,
-      tokensStr: '',
+      tokensStr: "",
+      showMore: false,
     };
     const hashState = loadHashState();
     if (hashState) {
       this.state = {...this.state, ...hashState};
+    }
+    // Auto-expand if any of the hidden-by-default options are explicitly
+    // specified.
+    if (
+      hashState &&
+      (hashState.compareWithBabel != null ||
+        hashState.showTokens != null ||
+        (hashState.selectedTransforms &&
+          TRANSFORMS.some(
+            ({name, hideByDefault}) => hideByDefault && hashState.selectedTransforms[name],
+          )))
+    ) {
+      this.state.showMore = true;
     }
 
     this.editors = {};
@@ -46,7 +57,7 @@ class App extends Component {
   componentDidMount() {
     WorkerClient.subscribe({
       updateState: (stateUpdate) => {
-        this.setState(stateUpdate)
+        this.setState(stateUpdate);
       },
       handleCompressedCode: (compressedCode) => {
         saveHashState({
@@ -56,7 +67,7 @@ class App extends Component {
           compareWithBabel: this.state.compareWithBabel,
           showTokens: this.state.showTokens,
         });
-      }
+      },
     });
     this.postConfigToWorker();
   }
@@ -73,7 +84,7 @@ class App extends Component {
   }
 
   postConfigToWorker() {
-    this.setState({sucraseTimeMs: 'LOADING', babelTimeMs: 'LOADING'});
+    this.setState({sucraseTimeMs: "LOADING", babelTimeMs: "LOADING"});
     WorkerClient.updateConfig({
       compareWithBabel: this.state.compareWithBabel,
       code: this.state.code,
@@ -103,60 +114,83 @@ class App extends Component {
         <span className="App-title">Sucrase</span>
         <span className="App-subtitle">
           <span>Super-fast Babel alternative</span>
-          {' | '}
-          <a className="App-link" href='https://github.com/alangpierce/sucrase'>GitHub</a>
+          {" | "}
+          <a className="App-link" href="https://github.com/alangpierce/sucrase">
+            GitHub
+          </a>
         </span>
         <div className="App-options">
           <OptionBox
             title="Transforms"
-            options={TRANSFORMS.map(({name, isExperimental}) => ({
-              text: name + (isExperimental ? ' (experimental)' : ''),
+            options={TRANSFORMS.filter(
+              ({hideByDefault}) => !hideByDefault || this.state.showMore,
+            ).map(({name, isExperimental}) => ({
+              text: name + (isExperimental ? " (experimental)" : ""),
               checked: Boolean(this.state.selectedTransforms[name]),
               onToggle: () => {
-                this.setState({
-                  selectedTransforms: {
-                    ...this.state.selectedTransforms,
-                    [name]: !this.state.selectedTransforms[name],
+                let newTransforms = this.state.selectedTransforms;
+                newTransforms = {...newTransforms, [name]: !newTransforms[name]};
+                // Don't allow typescript and flow at the same time.
+                if (newTransforms.typescript && newTransforms.flow) {
+                  if (name === "typescript") {
+                    newTransforms = {...newTransforms, flow: false};
+                  } else if (name === "flow") {
+                    newTransforms = {...newTransforms, typescript: false};
                   }
-                })
-              }
+                }
+                this.setState({selectedTransforms: newTransforms});
+              },
             }))}
           />
-          <OptionBox
-            title="Settings"
-            options={[
-              {
-                text: 'Compare with babel',
-                checked: this.state.compareWithBabel,
-                onToggle: this._toggleCompareWithBabel
-              },
-              {
-                text: 'Show tokens',
-                checked: this.state.showTokens,
-                onToggle: this._toggleShowTokens
-              },
-            ]}
-          />
+          {this.state.showMore && (
+            <OptionBox
+              title="Settings"
+              options={[
+                {
+                  text: "Compare with babel",
+                  checked: this.state.compareWithBabel,
+                  onToggle: this._toggleCompareWithBabel,
+                },
+                {
+                  text: "Show tokens",
+                  checked: this.state.showTokens,
+                  onToggle: this._toggleShowTokens,
+                },
+              ]}
+            />
+          )}
+          {!this.state.showMore && (
+            <a
+              className="App-link"
+              onClick={(e) => {
+                this.setState({showMore: true});
+                e.preventDefault();
+              }}
+              href="#"
+            >
+              More...
+            </a>
+          )}
         </div>
 
-        <div className='Editors'>
+        <div className="Editors">
           <Editor
-            ref={e => this.editors['input'] = e}
-            label='Your code'
+            ref={(e) => (this.editors["input"] = e)}
+            label="Your code"
             code={this.state.code}
             onChange={this._handleCodeChange}
           />
           <Editor
-            ref={e => this.editors['sucrase'] = e}
-            label='Transformed with Sucrase'
+            ref={(e) => (this.editors["sucrase"] = e)}
+            label="Transformed with Sucrase"
             code={sucraseCode}
             timeMs={sucraseTimeMs}
             isReadOnly={true}
           />
           {this.state.compareWithBabel && (
             <Editor
-              ref={e => this.editors['babel'] = e}
-              label='Transformed with Babel'
+              ref={(e) => (this.editors["babel"] = e)}
+              label="Transformed with Babel"
               code={babelCode}
               timeMs={babelTimeMs}
               isReadOnly={true}
@@ -164,13 +198,13 @@ class App extends Component {
           )}
           {this.state.showTokens && (
             <Editor
-              ref={e => this.editors['tokens'] = e}
-              label='Tokens'
+              ref={(e) => (this.editors["tokens"] = e)}
+              label="Tokens"
               code={tokensStr}
               isReadOnly={true}
               isPlaintext={true}
               options={{
-                lineNumbers: (n) => n > 1 ? String(n - 2) : null
+                lineNumbers: (n) => (n > 1 ? String(n - 2) : null),
               }}
             />
           )}
@@ -178,7 +212,8 @@ class App extends Component {
         <span className="App-footer">
           <a className="App-link" href="https://www.npmjs.com/package/sucrase">
             sucrase
-          </a> {getVersion()}
+          </a>{" "}
+          {getVersion()}
         </span>
       </div>
     );

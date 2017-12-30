@@ -29,14 +29,14 @@ export default App;
 `;
 
 export const TRANSFORMS = [
-  {name: 'jsx', babelName: 'transform-react-jsx'},
-  {name: 'typescript', presetName: 'typescript'},
-  {name: 'flow', presetName: 'flow'},
-  {name: 'imports', babelName: 'transform-modules-commonjs'},
-  {name: 'react-display-name', babelName: 'transform-react-display-name'},
-  {name: 'add-module-exports', babelName: 'add-module-exports'},
+  {name: "jsx", babelName: "transform-react-jsx"},
+  {name: "typescript", presetName: "typescript"},
+  {name: "flow", presetName: "flow"},
+  {name: "imports", babelName: "transform-modules-commonjs"},
+  {name: "react-display-name", babelName: "transform-react-display-name", hideByDefault: true},
+  {name: "add-module-exports", babelName: "add-module-exports", hideByDefault: true},
 ];
 
-export const DEFAULT_TRANSFORMS = ['jsx', 'typescript', 'imports'];
+export const DEFAULT_TRANSFORMS = ["jsx", "typescript", "imports"];
 export const DEFAULT_COMPARE_WITH_BABEL = true;
 export const DEFAULT_SHOW_TOKENS = false;

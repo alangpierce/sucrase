@@ -209,4 +209,19 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("handles type predicates", () => {
+    assertTypeScriptResult(
+      `
+      function foo(x: any): x is number {
+        return x === 0;
+      }
+    `,
+      `${PREFIX}
+      function foo(x) {
+        return x === 0;
+      }
+    `,
+    );
+  });
 });

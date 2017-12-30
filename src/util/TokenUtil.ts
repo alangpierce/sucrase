@@ -1,4 +1,4 @@
-import {TokenType} from "../TokenProcessor";
+import {Token, TokenType} from "../TokenProcessor";
 
 /**
  * An "atom" in this context is a token that is an expression all by itself,
@@ -16,6 +16,8 @@ export function isTypeExpressionPrefix(tokenType: TokenType): boolean {
   return ["?", "|", "&"].includes(tokenType.label);
 }
 
-export function isTypeBinop(tokenType: TokenType): boolean {
-  return ["|", "&"].includes(tokenType.label);
+export function isTypeBinop(token: Token): boolean {
+  return (
+    ["|", "&"].includes(token.type.label) || (token.type.label === "name" && token.value === "is")
+  );
 }

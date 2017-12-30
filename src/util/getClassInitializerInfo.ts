@@ -34,10 +34,9 @@ export default function getClassInitializerInfo(tokens: TokenProcessor): ClassIn
       while (isAccessModifier(tokens)) {
         tokens.nextToken();
       }
+      // The name might be a keyword like "function", so for now don't make any assertions about it
+      // being a name token; the value will still be correct.
       const nameToken = tokens.currentToken();
-      if (nameToken.type.label !== "name") {
-        throw new Error("Expected name for class method/field.");
-      }
       tokens.nextToken();
       if (tokens.matches(["</>"]) || tokens.matches(["("])) {
         // This is a method, so just skip to the close-brace at the end.

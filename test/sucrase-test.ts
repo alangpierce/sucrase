@@ -91,4 +91,19 @@ describe("sucrase", () => {
     `,
     );
   });
+
+  it("allows keywords as object keys", () => {
+    assertResult(
+      `
+      const o = {
+        function: 3,
+      };
+    `,
+      `${PREFIX}
+      const o = {
+        function: 3,
+      };
+    `,
+    );
+  });
 });

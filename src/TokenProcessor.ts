@@ -4,6 +4,7 @@ export type TokenContext =
   | "brackets"
   | "object"
   | "class"
+  | "classFieldExpression"
   | "jsxTag"
   | "jsxChild"
   | "jsxExpression"

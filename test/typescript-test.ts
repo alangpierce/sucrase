@@ -304,4 +304,15 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows `export abstract class` syntax", () => {
+    assertTypeScriptResult(
+      `
+      export abstract class A {}
+    `,
+      `${PREFIX}${ESMODULE_PREFIX}
+       class A {} exports.A = A;
+    `,
+    );
+  });
 });

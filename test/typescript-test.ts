@@ -287,4 +287,21 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows class fields with keyword names", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        readonly function: number;
+        f: any = function() {};
+      }
+    `,
+      `${PREFIX}
+      class A {constructor() { this.f = function() {}; }
+        
+        
+      }
+    `,
+    );
+  });
 });

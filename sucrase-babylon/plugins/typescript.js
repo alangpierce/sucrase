@@ -803,6 +803,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
       return this.tsTryParseAndCatch(() => {
         const res: N.TsTypeParameterInstantiation = this.startNode();
         this.expectRelational("<");
+        this.state.tokens[this.state.tokens.length - 1].type = tt.typeParameterStart;
         const typeArguments = this.tsParseDelimitedList(
           "TypeParametersOrArguments",
           this.tsParseType.bind(this),
@@ -1327,6 +1328,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
         // tsTryParseAndCatch is expensive, so avoid if not necessary.
         // 99% certain this is `new C<T>();`. But may be `new C < T;`, which is also legal.
         const typeParameters = this.tsTryParseAndCatch(() => {
+          this.state.type = tt.typeParameterStart;
           const args = this.tsParseTypeArguments();
           if (!this.match(tt.parenL)) this.unexpected();
           return args;

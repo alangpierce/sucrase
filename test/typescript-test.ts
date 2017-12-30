@@ -326,4 +326,19 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows an explicit type parameter at function invocation time", () => {
+    assertTypeScriptResult(
+      `
+      const f = f<number>(y);
+      values.filter<Node>((node): node is Node => node !== null);
+      const c = new Cache<number>();
+    `,
+      `${PREFIX}
+      const f = f(y);
+      values.filter((node) => node !== null);
+      const c = new Cache();
+    `,
+    );
+  });
 });

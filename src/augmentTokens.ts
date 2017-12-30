@@ -411,7 +411,7 @@ class TokenPreprocessor {
       // Check if there's any indication that we can expand forward, and do so.
       if (isTypeBinop(this.tokens.currentToken())) {
         this.advance();
-        this.skipTypeExpression();
+        this.skipTypeExpression(disallowArrow);
       } else if (this.tokens.matches(["."])) {
         // Normal member access, so process the dot and the identifier.
         this.advance();

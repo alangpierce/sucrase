@@ -348,8 +348,9 @@ class TokenPreprocessor {
     }
     this.advance("name", "interface");
     this.advance("name");
-    if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
-      this.skipBalancedAngleBrackets();
+    // Skip past any type parameter name or extends declaration.
+    while (!this.tokens.matches(["{"])) {
+      this.advance();
     }
     this.skipBalancedCode("{", "}");
     this.contextStack.pop();

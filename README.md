@@ -8,17 +8,17 @@
 Sucrase is an alternative to Babel that allows super-fast development builds.
 Instead of compiling a large range of JS features down to ES5, Sucrase assumes
 that you're targeting a modern JS runtime and compiles non-standard language
-extensions (currently JSX and Flow, with TypeScript planned) down to standard
-JavaScript. It also compiles `import` to `require` in the same style as Babel.
-Because of this smaller scope, Sucrase can get away with an architecture that is
-much more performant, but requires more work to implement and maintain each
-transform.
+extensions (JSX, TypeScript, and Flow) down to standard JavaScript. It also
+compiles `import` to `require` in the same style as Babel. Because of this
+smaller scope, Sucrase can get away with an architecture that is much more
+performant, but requires more work to implement and maintain each transform.
 
 **Current state:** The project is under development and you may see bugs if you
 run it on a large codebase. You probably shouldn't use it in production, but you
 may find it useful in development. Feel free to file issues!
 
 Sucrase can convert the following codebases with all tests passing:
+* Sucrase itself (5K lines of code, typescript).
 * The [Benchling](https://benchling.com/) frontend codebase
   (500K lines of code, JSX, imports).
 * [Babylon](https://github.com/babel/babel/tree/master/packages/babylon)
@@ -47,6 +47,21 @@ Analogous to [babel-plugin-transform-react-jsx](https://babeljs.io/docs/plugins/
 
 Converts JSX syntax to `React.createElement`, e.g. `<div a={b} />` becomes
 `React.createElement('div', {a: b})`.
+
+### typescript
+
+Analogous to [babel-plugin-transform-typescript](https://github.com/babel/babel/tree/master/packages/babel-plugin-transform-typescript).
+
+Compiles TypeScript code to JavaScript, removing type annotations and handling
+features like class fields.
+
+#### Limitations
+
+* Does not handle enums yet.
+* Does not handle static class fields yet.
+* Does not remove type-only imports.
+* Some syntax, like `declare`, is not yet supported.
+* Only removes types; no type checking.
 
 ### flow
 
@@ -147,14 +162,13 @@ performance work will bring it back to that speed.
 
 ### New features
 
-* Add TypeScript support.
 * Improve correctness issues in the import transform, e.g. implement proper
   variable shadowing detection and automatic semicolon insertion.
-* Test the Flow transform more thoroughly and implement any remaining missing
-  features.
+* Test the Flow and TypeScript transforms more thoroughly and implement any
+  remaining missing features.
 * Emit proper source maps. (The line numbers already match up, but this would
   help with debuggers and other tools.)
-* Explore the idea of extending this approach to other tools e.g. module
+* Explore the idea of extending this approach to other tools, e.g. module
   bundlers.
 
 ### Performance improvements

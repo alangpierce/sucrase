@@ -132,10 +132,15 @@ function processConstructor(
   return {constructorInitializers, constructorInsertPos};
 }
 
+/**
+ * Determine if this is any token that can go before the name in a method/field.
+ */
 function isAccessModifier(tokens: TokenProcessor): boolean {
   return (
     (tokens.matches(["name"]) &&
-      ["public", "protected", "private", "readonly"].includes(tokens.currentToken().value)) ||
+      ["public", "protected", "private", "readonly", "static", "async"].includes(
+        tokens.currentToken().value,
+      )) ||
     tokens.matches(["+/-"])
   );
 }

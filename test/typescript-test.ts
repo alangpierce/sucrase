@@ -1,4 +1,4 @@
-import {PREFIX} from "./prefixes";
+import {ESMODULE_PREFIX, PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
 function assertTypeScriptResult(code: string, expectedResult: string): void {
@@ -172,6 +172,40 @@ describe("typescript transform", () => {
       const z = !x; 
       const a = (x)(y);
       const b = x + !y;
+    `,
+    );
+  });
+
+  it("handles static class methods", () => {
+    assertTypeScriptResult(
+      `
+      export default class Foo {
+        static run(): Result {
+        }
+      }
+    `,
+      `${PREFIX}${ESMODULE_PREFIX}
+       class Foo {
+        static run() {
+        }
+      } exports.default = Foo;
+    `,
+    );
+  });
+
+  it("handles async class methods", () => {
+    assertTypeScriptResult(
+      `
+      export default class Foo {
+        async run(): Promise<Result> {
+        }
+      }
+    `,
+      `${PREFIX}${ESMODULE_PREFIX}
+       class Foo {
+        async run() {
+        }
+      } exports.default = Foo;
     `,
     );
   });

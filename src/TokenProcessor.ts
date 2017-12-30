@@ -166,6 +166,9 @@ export default class TokenProcessor {
    * generating new code, you should use copyToken or removeToken.
    */
   nextToken(): void {
+    if (this.tokenIndex === this.tokens.length) {
+      throw new Error("Unexpectedly reached end of input.");
+    }
     this.tokenIndex++;
   }
 

@@ -341,4 +341,23 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows computed field names", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        [a + b] = 3;
+        0 = 1;
+        "Hello, world" = 2;
+      }
+    `,
+      `${PREFIX}
+      class A {constructor() { this[a + b] = 3;this[0] = 1;this["Hello, world"] = 2; }
+        
+        
+        
+      }
+    `,
+    );
+  });
 });

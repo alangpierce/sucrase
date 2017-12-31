@@ -360,4 +360,73 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows simple enums", () => {
+    assertTypeScriptResult(
+      `
+      enum Foo {
+        A,
+        B,
+        C
+      }
+    `,
+      `${PREFIX}
+      var Foo; (function (Foo) {
+        const A = 0; Foo[Foo["A"] = A] = "A";
+        const B = A + 1; Foo[Foo["B"] = B] = "B";
+        const C = B + 1; Foo[Foo["C"] = C] = "C";
+      })(Foo || (Foo = {}));
+    `,
+    );
+  });
+
+  it("allows simple string enums", () => {
+    assertTypeScriptResult(
+      `
+      enum Foo {
+        A = "eh",
+        B = "bee",
+        C = "sea",
+      }
+    `,
+      `${PREFIX}
+      var Foo; (function (Foo) {
+        const A = "eh"; Foo["A"] = A;
+        const B = "bee"; Foo["B"] = B;
+        const C = "sea"; Foo["C"] = C;
+      })(Foo || (Foo = {}));
+    `,
+    );
+  });
+
+  it("handles complex enum cases", () => {
+    assertTypeScriptResult(
+      `
+      enum Foo {
+        A = 15.5,
+        "Hello world" = A / 2,
+        "",
+        "D" = "foo".length,
+        E = D / D,
+        "!" = E << E,
+        "\\n",
+        ",",
+        "'",
+      }
+    `,
+      `${PREFIX}
+      var Foo; (function (Foo) {
+        const A = 15.5; Foo[Foo["A"] = A] = "A";
+        Foo[Foo["Hello world"] = A / 2] = "Hello world";
+        Foo[Foo[""] = (A / 2) + 1] = "";
+        const D = "foo".length; Foo[Foo["D"] = D] = "D";
+        const E = D / D; Foo[Foo["E"] = E] = "E";
+        Foo[Foo["!"] = E << E] = "!";
+        Foo[Foo["\\n"] = (E << E) + 1] = "\\n";
+        Foo[Foo[","] = ((E << E) + 1) + 1] = ",";
+        Foo[Foo["'"] = (((E << E) + 1) + 1) + 1] = "'";
+      })(Foo || (Foo = {}));
+    `,
+    );
+  });
 });

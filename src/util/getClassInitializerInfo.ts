@@ -134,7 +134,7 @@ function processConstructor(
 function isAccessModifier(tokens: TokenProcessor): boolean {
   return (
     (tokens.matches(["name"]) &&
-      ["public", "protected", "private", "readonly", "static", "async"].includes(
+      ["public", "protected", "private", "readonly", "static", "async", "get", "set"].includes(
         tokens.currentToken().value,
       )) ||
     tokens.matches(["+/-"])

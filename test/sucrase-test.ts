@@ -124,4 +124,28 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("supports getters and setters within classes", () => {
+    assertResult(
+      `
+      class A {
+        get foo(): number {
+          return 3;
+        }
+        set bar(b: number) {
+        }
+      }
+    `,
+      `${PREFIX}
+      class A {
+        get foo() {
+          return 3;
+        }
+        set bar(b) {
+        }
+      }
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

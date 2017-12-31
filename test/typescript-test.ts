@@ -429,4 +429,23 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("removes functions without bodies", () => {
+    assertTypeScriptResult(
+      `
+      function foo(x: number);
+      export function bar(s: string);
+      function foo(x: any) {
+        console.log(x);
+      }
+    `,
+      `${PREFIX}
+      
+
+      function foo(x) {
+        console.log(x);
+      }
+    `,
+    );
+  });
 });

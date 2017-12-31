@@ -134,6 +134,7 @@ class TokenPreprocessor {
           this.advance();
         }
       } else if (this.startsWithKeyword(["function"]) && context !== "class") {
+        let startIndex = this.tokens.currentIndex();
         this.advance();
         if (this.tokens.matches(["name"])) {
           this.advance();
@@ -148,6 +149,21 @@ class TokenPreprocessor {
         }
         if (this.tokens.matches(["{"])) {
           this.processToToken("{", "}", "block");
+        } else if (this.tokens.matches([";"])) {
+          this.tokens.nextToken();
+          // This is a function overload, so mark the whole function as a type.
+          while (
+            this.tokens.matchesAtIndex(startIndex - 1, ["export"]) ||
+            this.tokens.matchesAtIndex(startIndex - 1, ["default"])
+          ) {
+            startIndex--;
+          }
+          for (let i = startIndex; i <= this.tokens.currentIndex(); i++) {
+            const token = this.tokens.tokens[i];
+            token.contextName = "type";
+            token.contextStartIndex = startIndex;
+            token.parentContextStartIndex = this.getContextInfo().startIndex;
+          }
         }
       } else if (
         this.startsWithKeyword(["=>", "else", "try", "finally", "do"]) ||

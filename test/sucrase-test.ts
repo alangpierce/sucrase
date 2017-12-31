@@ -162,4 +162,26 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("handles labeled switch statements", () => {
+    assertResult(
+      `
+      function foo() {
+        outer: switch (a) {
+          default:
+            return 3;
+        }
+      }
+    `,
+      `${PREFIX}
+      function foo() {
+        outer: switch (a) {
+          default:
+            return 3;
+        }
+      }
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

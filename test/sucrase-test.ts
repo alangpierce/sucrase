@@ -106,4 +106,22 @@ describe("sucrase", () => {
     `,
     );
   });
+
+  it("allows computed class method names", () => {
+    assertResult(
+      `
+      class A {
+        [b]() {
+        }
+      }
+    `,
+      `${PREFIX}
+      class A {
+        [b]() {
+        }
+      }
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

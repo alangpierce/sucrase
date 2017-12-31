@@ -34,10 +34,7 @@ export default function getClassInitializerInfo(tokens: TokenProcessor): ClassIn
       while (isAccessModifier(tokens)) {
         tokens.nextToken();
       }
-      // The name might be a keyword like "function", so for now don't make any assertions about it
-      // being a name token; the value will still be correct.
-      const nameToken = tokens.currentToken();
-      tokens.nextToken();
+      const nameCode = getNameCode(tokens);
       if (tokens.matches(["</>"]) || tokens.matches(["("])) {
         // This is a method, so just skip to the close-brace at the end.
         while (
@@ -70,7 +67,7 @@ export default function getClassInitializerInfo(tokens: TokenProcessor): ClassIn
           assignExpressionStart,
           tokens.currentToken().start,
         );
-        classInitializers.push(`this.${nameToken.value} = ${expressionCode}`);
+        classInitializers.push(`this${nameCode} = ${expressionCode}`);
       }
       tokens.nextToken();
       fieldRanges.push({start: statementStartIndex, end: tokens.currentIndex()});
@@ -142,4 +139,30 @@ function isAccessModifier(tokens: TokenProcessor): boolean {
       )) ||
     tokens.matches(["+/-"])
   );
+}
+
+/**
+ * The next token or set of tokens is either an identifier or an expression in square brackets, for
+ * a method or field name. Get the code that would follow `this` to access this value. Note that a
+ * more correct implementation would precompute computed field and method names, but that's harder,
+ * and TypeScript doesn't do it, so we won't either.
+ */
+function getNameCode(tokens: TokenProcessor): string {
+  if (tokens.matches(["["])) {
+    const startToken = tokens.currentToken();
+    while (!tokens.matchesContextEnd("]", startToken.contextStartIndex!)) {
+      tokens.nextToken();
+    }
+    const endToken = tokens.currentToken();
+    tokens.nextToken();
+    return tokens.code.slice(startToken.start, endToken.end);
+  } else {
+    const nameToken = tokens.currentToken();
+    tokens.nextToken();
+    if (nameToken.type.label === "string" || nameToken.type.label === "num") {
+      return `[${tokens.code.slice(nameToken.start, nameToken.end)}]`;
+    } else {
+      return `.${nameToken.value}`;
+    }
+  }
 }

@@ -148,4 +148,18 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("handles properties named `case`", () => {
+    assertResult(
+      `
+      if (foo.case === 3) {
+      }
+    `,
+      `${PREFIX}
+      if (foo.case === 3) {
+      }
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

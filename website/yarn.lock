@@ -4500,6 +4500,10 @@ node-libs-browser@^2.0.0:
     util "^0.10.3"
     vm-browserify "0.0.4"
 
+node-modules-regexp@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/node-modules-regexp/-/node-modules-regexp-1.0.0.tgz#8d9dbe28964a4ac5712e9131642107c71e90ec40"
+
 node-notifier@^5.0.2:
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/node-notifier/-/node-notifier-5.1.2.tgz#2fa9e12605fa10009d44549d6fcd8a63dde0e4ff"
@@ -4879,6 +4883,12 @@ pinkie-promise@^2.0.0:
 pinkie@^2.0.0:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/pinkie/-/pinkie-2.0.4.tgz#72556b80cfa0d48a974e80e77248e80ed4f7f870"
+
+pirates@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/pirates/-/pirates-3.0.2.tgz#7e6f85413fd9161ab4e12b539b06010d85954bb9"
+  dependencies:
+    node-modules-regexp "^1.0.0"
 
 pkg-dir@^1.0.0:
   version "1.0.0"
@@ -6196,15 +6206,16 @@ style-loader@0.18.2:
     loader-utils "^1.0.2"
     schema-utils "^0.3.0"
 
-sucrase@^1.7.0:
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.7.0.tgz#c4e824cbd4123122d5613fa4935feacb8a903e2e"
+sucrase@^1.8.0:
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.8.0.tgz#b657cdc924068d20a26a2eae7ae73ba1d8b69022"
   dependencies:
     "@types/mz" "^0.0.32"
     charcodes "0.0.10"
     commander "^2.12.2"
     lines-and-columns "^1.1.6"
     mz "^2.7.0"
+    pirates "^3.0.2"
     tslib "^1.7.1"
 
 supports-color@^2.0.0:

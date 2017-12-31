@@ -43,7 +43,7 @@
     "react-monaco-editor": "^0.10.1",
     "react-virtualized": "^9.14.1",
     "style-loader": "0.18.2",
-    "sucrase": "^1.7.0",
+    "sucrase": "^1.8.0",
     "sw-precache-webpack-plugin": "0.11.4",
     "uglifyjs-webpack-plugin": "^1.1.4",
     "url-loader": "0.5.9",

@@ -8,7 +8,7 @@
   "module": "dist/src/index.mjs",
   "types": "dist/src/index.d.ts",
   "bin": {
-    "bulk-decaffeinate": "./bin/bulk-decaffeinate"
+    "sucrase": "./bin/sucrase"
   },
   "files": [
     "bin",

@@ -182,6 +182,11 @@ class TokenPreprocessor {
           this.advance();
           this.processToToken("{", "}", "block");
         }
+      } else if (
+        this.startsWithKeyword(["declare"]) ||
+        (this.tokens.matches(["export"]) && this.tokens.matchesNameAtRelativeIndex(1, "declare"))
+      ) {
+        this.processDeclare();
       } else if (this.tokens.matches(["name"])) {
         this.advance();
         if (context === "class" && (this.tokens.matches(["("]) || this.tokens.matches(["</>"]))) {
@@ -535,5 +540,32 @@ class TokenPreprocessor {
     return keywords.some(
       (keyword) => this.tokens.matches([keyword]) || this.tokens.matchesName(keyword),
     );
+  }
+
+  private processDeclare(): void {
+    this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
+    if (this.tokens.matches(["export"])) {
+      this.advance();
+    }
+    this.advance();
+    if (this.tokens.matchesName("module")) {
+      this.advance();
+      this.advance();
+      if (this.tokens.matches([";"])) {
+        this.advance();
+      } else if (this.tokens.matches(["{"])) {
+        this.skipBalancedCode("{", "}");
+      } else {
+        throw new Error("Unexpected end of `declare module`.");
+      }
+    } else if (this.tokens.matches(["class"])) {
+      while (!this.tokens.matches(["{"])) {
+        this.advance();
+      }
+      this.skipBalancedCode("{", "}");
+    } else {
+      throw new Error("Unrecognized declare syntax");
+    }
+    this.contextStack.pop();
   }
 }

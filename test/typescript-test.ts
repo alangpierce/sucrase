@@ -448,4 +448,34 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("handles and removes `declare module` syntax", () => {
+    assertTypeScriptResult(
+      `
+      declare module "builtin-modules" {
+        let result: string[];
+        export = result;
+      }
+    `,
+      `${PREFIX}
+      
+
+
+
+    `,
+    );
+  });
+
+  it("handles and removes `export declare class` syntax", () => {
+    assertTypeScriptResult(
+      `
+      export declare class Foo {
+      }
+    `,
+      `${PREFIX}
+      
+
+    `,
+    );
+  });
 });

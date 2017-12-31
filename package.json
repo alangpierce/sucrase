@@ -20,7 +20,7 @@
     "self-build": "script/self-build",
     "self-test": "mocha test/**/*.ts --opts test/mocha-self-test.opts",
     "benchmark": "node ./build/benchmark/benchmark.js",
-    "lint": "eslint './src/**/*.ts' && tslint -p .",
+    "lint": "eslint './src/**/*.ts' './test/**/*.ts' './sucrase-babylon/**/*.ts'",
     "profile": "node --inspect-brk ./build/benchmark/profile.js",
     "prepublish": "yarn run build",
     "test": "yarn lint && tsc --noEmit && mocha test",
@@ -62,6 +62,7 @@
     "prettier": "^1.9.2",
     "ts-node": "^4.0.2",
     "tslint": "^5.8.0",
+    "tslint-language-service": "^0.9.7",
     "typescript": "^2.6.2",
     "typescript-eslint-parser": "^11.0.0"
   },

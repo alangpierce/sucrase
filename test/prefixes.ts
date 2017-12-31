@@ -1,4 +1,3 @@
-
 export const PREFIX = `'use strict'; function _interopRequireWildcard(obj) { \
 if (obj && obj.__esModule) { return obj; } else { var newObj = {}; \
 if (obj != null) { for (var key in obj) { \

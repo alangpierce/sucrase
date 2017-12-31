@@ -1,7 +1,5 @@
 /* eslint max-len: 0 */
 
-// @flow
-
 /**
  * Based on the comment attachment algorithm used in espree and estraverse.
  *
@@ -26,10 +24,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import {Comment, Node} from "../types";
 import BaseParser from "./base";
-import type { Comment, Node } from "../types";
 
-function last<T>(stack: $ReadOnlyArray<T>): T {
+function last<T>(stack: ReadonlyArray<T>): T {
   return stack[stack.length - 1];
 }
 
@@ -45,7 +43,11 @@ export default class CommentsParser extends BaseParser {
 
     const stack = this.state.commentStack;
 
-    let firstChild, lastChild, trailingComments, i, j;
+    let firstChild;
+    let lastChild;
+    let trailingComments;
+    let i;
+    let j;
 
     if (this.state.trailingComments.length > 0) {
       // If the first comment in trailingComments comes after the
@@ -64,16 +66,11 @@ export default class CommentsParser extends BaseParser {
         // later.
         this.state.trailingComments.length = 0;
       }
-    } else {
-      if (stack.length > 0) {
-        const lastInStack = last(stack);
-        if (
-          lastInStack.trailingComments &&
-          lastInStack.trailingComments[0].start >= node.end
-        ) {
-          trailingComments = lastInStack.trailingComments;
-          lastInStack.trailingComments = null;
-        }
+    } else if (stack.length > 0) {
+      const lastInStack = last(stack);
+      if (lastInStack.trailingComments && lastInStack.trailingComments[0].start >= node.end) {
+        trailingComments = lastInStack.trailingComments;
+        lastInStack.trailingComments = null;
       }
     }
 
@@ -98,10 +95,7 @@ export default class CommentsParser extends BaseParser {
         if (lastComment.start >= node.start) {
           if (this.state.commentPreviousNode) {
             for (j = 0; j < this.state.leadingComments.length; j++) {
-              if (
-                this.state.leadingComments[j].end <
-                this.state.commentPreviousNode.end
-              ) {
+              if (this.state.leadingComments[j].end < this.state.commentPreviousNode.end) {
                 this.state.leadingComments.splice(j, 1);
                 j--;
               }
@@ -113,18 +107,10 @@ export default class CommentsParser extends BaseParser {
             }
           }
         }
-      } else if (
-        node.type === "CallExpression" &&
-        node.arguments &&
-        node.arguments.length
-      ) {
-        const lastArg = last(node.arguments);
+      } else if (node.type === "CallExpression" && node.arguments && node.arguments.length) {
+        const lastArg = last<Node>(node.arguments);
 
-        if (
-          lastArg &&
-          lastComment.start >= lastArg.start &&
-          lastComment.end <= node.end
-        ) {
+        if (lastArg && lastComment.start >= lastArg.start && lastComment.end <= node.end) {
           if (this.state.commentPreviousNode) {
             if (this.state.leadingComments.length > 0) {
               lastArg.trailingComments = this.state.leadingComments;
@@ -160,10 +146,7 @@ export default class CommentsParser extends BaseParser {
       if (last(this.state.leadingComments).end <= node.start) {
         if (this.state.commentPreviousNode) {
           for (j = 0; j < this.state.leadingComments.length; j++) {
-            if (
-              this.state.leadingComments[j].end <
-              this.state.commentPreviousNode.end
-            ) {
+            if (this.state.leadingComments[j].end < this.state.commentPreviousNode.end) {
               this.state.leadingComments.splice(j, 1);
               j--;
             }
@@ -196,8 +179,7 @@ export default class CommentsParser extends BaseParser {
         // result in an empty array, and if so, the array must be
         // deleted.
         const leadingComments = this.state.leadingComments.slice(0, i);
-        node.leadingComments =
-          leadingComments.length === 0 ? null : leadingComments;
+        node.leadingComments = leadingComments.length === 0 ? null : leadingComments;
 
         // Similarly, trailing comments are attached later. The variable
         // must be reset to null if there are no trailing comments.

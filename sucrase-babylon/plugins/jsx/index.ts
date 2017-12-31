@@ -1,15 +1,14 @@
-// @flow
-
+// @ts-ignore
 import * as charCodes from "charcodes";
 
-import XHTMLEntities from "./xhtml";
-import type Parser from "../../parser";
-import { TokenType, types as tt } from "../../tokenizer/types";
-import { TokContext, types as tc } from "../../tokenizer/context";
+import Parser, {ParserClass} from "../../parser";
+import {TokContext, types as tc} from "../../tokenizer/context";
+import {TokenType, types as tt} from "../../tokenizer/types";
 import * as N from "../../types";
-import { isIdentifierChar, isIdentifierStart } from "../../util/identifier";
-import type { Pos, Position } from "../../util/location";
-import { isNewLine } from "../../util/whitespace";
+import {isIdentifierChar, isIdentifierStart} from "../../util/identifier";
+import {Pos, Position} from "../../util/location";
+import {isNewLine} from "../../util/whitespace";
+import XHTMLEntities from "./xhtml";
 
 const HEX_NUMBER = /^[\da-fA-F]+$/;
 const DECIMAL_NUMBER = /^\d+$/;
@@ -19,17 +18,17 @@ tc.j_cTag = new TokContext("</tag", false);
 tc.j_expr = new TokContext("<tag>...</tag>", true, true);
 
 tt.jsxName = new TokenType("jsxName");
-tt.jsxText = new TokenType("jsxText", { beforeExpr: true });
-tt.jsxTagStart = new TokenType("jsxTagStart", { startsExpr: true });
+tt.jsxText = new TokenType("jsxText", {beforeExpr: true});
+tt.jsxTagStart = new TokenType("jsxTagStart", {startsExpr: true});
 tt.jsxTagEnd = new TokenType("jsxTagEnd");
 
-tt.jsxTagStart.updateContext = function() {
+tt.jsxTagStart.updateContext = function(): void {
   this.state.context.push(tc.j_expr); // treat as beginning of JSX expression
   this.state.context.push(tc.j_oTag); // start opening tag context
   this.state.exprAllowed = false;
 };
 
-tt.jsxTagEnd.updateContext = function(prevType) {
+tt.jsxTagEnd.updateContext = function(prevType: TokenType): void {
   const out = this.state.context.pop();
   if ((out === tc.j_oTag && prevType === tt.slash) || out === tc.j_cTag) {
     this.state.context.pop();
@@ -39,10 +38,9 @@ tt.jsxTagEnd.updateContext = function(prevType) {
   }
 };
 
-function isFragment(object: ?N.JSXElement): boolean {
+function isFragment(object: N.JSXElement | null): boolean {
   return object
-    ? object.type === "JSXOpeningFragment" ||
-        object.type === "JSXClosingFragment"
+    ? object.type === "JSXOpeningFragment" || object.type === "JSXClosingFragment"
     : false;
 }
 
@@ -56,22 +54,18 @@ function getQualifiedJSXName(
   }
 
   if (object.type === "JSXNamespacedName") {
-    return object.namespace.name + ":" + object.name.name;
+    return `${object.namespace.name}:${object.name.name}`;
   }
 
   if (object.type === "JSXMemberExpression") {
-    return (
-      getQualifiedJSXName(object.object) +
-      "." +
-      getQualifiedJSXName(object.property)
-    );
+    return `${getQualifiedJSXName(object.object)}.${getQualifiedJSXName(object.property)}`;
   }
 
   // istanbul ignore next
-  throw new Error("Node had unexpected type: " + object.type);
+  throw new Error(`Node had unexpected type: ${object.type}`);
 }
 
-export default (superClass: Class<Parser>): Class<Parser> =>
+export default (superClass: ParserClass): ParserClass =>
   class extends superClass {
     // Reads inline JSX contents token.
 
@@ -91,12 +85,15 @@ export default (superClass: Class<Parser>): Class<Parser> =>
             if (this.state.pos === this.state.start) {
               if (ch === charCodes.lessThan && this.state.exprAllowed) {
                 ++this.state.pos;
-                return this.finishToken(tt.jsxTagStart);
+                this.finishToken(tt.jsxTagStart);
+                return;
               }
-              return this.getTokenFromCode(ch);
+              this.getTokenFromCode(ch);
+              return;
             }
             out += this.input.slice(chunkStart, this.state.pos);
-            return this.finishToken(tt.jsxText, out);
+            this.finishToken(tt.jsxText, out);
+            return;
 
           case charCodes.ampersand:
             out += this.input.slice(chunkStart, this.state.pos);
@@ -158,7 +155,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
         }
       }
       out += this.input.slice(chunkStart, this.state.pos++);
-      return this.finishToken(tt.string, out);
+      this.finishToken(tt.string, out);
     }
 
     jsxReadEntity(): string {
@@ -210,10 +207,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
       do {
         ch = this.input.charCodeAt(++this.state.pos);
       } while (isIdentifierChar(ch) || ch === charCodes.dash);
-      return this.finishToken(
-        tt.jsxName,
-        this.input.slice(start, this.state.pos),
-      );
+      this.finishToken(tt.jsxName, this.input.slice(start, this.state.pos));
     }
 
     // Parse next token as JSX identifier
@@ -294,16 +288,8 @@ export default (superClass: Class<Parser>): Class<Parser> =>
     // at the beginning of the next one (right brace).
 
     jsxParseEmptyExpression(): N.JSXEmptyExpression {
-      const node = this.startNodeAt(
-        this.state.lastTokEnd,
-        this.state.lastTokEndLoc,
-      );
-      return this.finishNodeAt(
-        node,
-        "JSXEmptyExpression",
-        this.state.start,
-        this.state.startLoc,
-      );
+      const node = this.startNodeAt(this.state.lastTokEnd, this.state.lastTokEndLoc);
+      return this.finishNodeAt(node, "JSXEmptyExpression", this.state.start, this.state.startLoc);
     }
 
     // Parse JSX spread child
@@ -349,10 +335,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
 
     // Parses JSX opening tag starting after "<".
 
-    jsxParseOpeningElementAt(
-      startPos: number,
-      startLoc: Position,
-    ): N.JSXOpeningElement {
+    jsxParseOpeningElementAt(startPos: number, startLoc: Position): N.JSXOpeningElement {
       const node = this.startNodeAt(startPos, startLoc);
       if (this.match(tt.jsxTagEnd)) {
         this.expect(tt.jsxTagEnd);
@@ -370,10 +353,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
 
     // Parses JSX closing tag starting after "</".
 
-    jsxParseClosingElementAt(
-      startPos: number,
-      startLoc: Position,
-    ): N.JSXClosingElement {
+    jsxParseClosingElementAt(startPos: number, startLoc: Position): N.JSXClosingElement {
       const node = this.startNodeAt(startPos, startLoc);
       if (this.match(tt.jsxTagEnd)) {
         this.expect(tt.jsxTagEnd);
@@ -401,10 +381,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
               startLoc = this.state.startLoc;
               this.next();
               if (this.eat(tt.slash)) {
-                closingElement = this.jsxParseClosingElementAt(
-                  startPos,
-                  startLoc,
-                );
+                closingElement = this.jsxParseClosingElementAt(startPos, startLoc);
                 break contents;
               }
               children.push(this.jsxParseElementAt(startPos, startLoc));
@@ -439,22 +416,21 @@ export default (superClass: Class<Parser>): Class<Parser> =>
           this.raise(
             // $FlowIgnore
             closingElement.start,
-            "Expected corresponding JSX closing tag for <" +
-              getQualifiedJSXName(openingElement.name) +
-              ">",
+            `Expected corresponding JSX closing tag for <${getQualifiedJSXName(
+              openingElement.name,
+            )}>`,
           );
         } else if (!isFragment(openingElement) && !isFragment(closingElement)) {
           if (
             // $FlowIgnore
-            getQualifiedJSXName(closingElement.name) !==
-            getQualifiedJSXName(openingElement.name)
+            getQualifiedJSXName(closingElement.name) !== getQualifiedJSXName(openingElement.name)
           ) {
             this.raise(
               // $FlowIgnore
               closingElement.start,
-              "Expected corresponding JSX closing tag for <" +
-                getQualifiedJSXName(openingElement.name) +
-                ">",
+              `Expected corresponding JSX closing tag for <${getQualifiedJSXName(
+                openingElement.name,
+              )}>`,
             );
           }
         }
@@ -469,10 +445,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
       }
       node.children = children;
       if (this.match(tt.relational) && this.state.value === "<") {
-        this.raise(
-          this.state.start,
-          "Adjacent JSX elements must be wrapped in an enclosing tag",
-        );
+        this.raise(this.state.start, "Adjacent JSX elements must be wrapped in an enclosing tag");
       }
 
       return isFragment(openingElement)
@@ -493,7 +466,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
     // Overrides
     // ==================================
 
-    parseExprAtom(refShortHandDefaultPos: ?Pos): N.Expression {
+    parseExprAtom(refShortHandDefaultPos: Pos | null = null): N.Expression {
       if (this.match(tt.jsxText)) {
         return this.parseLiteral(this.state.value, "JSXText");
       } else if (this.match(tt.jsxTagStart)) {
@@ -504,38 +477,46 @@ export default (superClass: Class<Parser>): Class<Parser> =>
     }
 
     readToken(code: number): void {
-      if (this.state.inPropertyName) return super.readToken(code);
+      if (this.state.inPropertyName) {
+        super.readToken(code);
+        return;
+      }
 
       const context = this.curContext();
 
       if (context === tc.j_expr) {
-        return this.jsxReadToken();
+        this.jsxReadToken();
+        return;
       }
 
       if (context === tc.j_oTag || context === tc.j_cTag) {
         if (isIdentifierStart(code)) {
-          return this.jsxReadWord();
+          this.jsxReadWord();
+          return;
         }
 
         if (code === charCodes.greaterThan) {
           ++this.state.pos;
-          return this.finishToken(tt.jsxTagEnd);
+          this.finishToken(tt.jsxTagEnd);
+          return;
         }
 
         if (
           (code === charCodes.quotationMark || code === charCodes.apostrophe) &&
           context === tc.j_oTag
         ) {
-          return this.jsxReadString(code);
+          this.jsxReadString(code);
+          return;
         }
       }
 
       if (code === charCodes.lessThan && this.state.exprAllowed) {
         ++this.state.pos;
-        return this.finishToken(tt.jsxTagStart);
+        this.finishToken(tt.jsxTagStart);
+        return;
       }
 
-      return super.readToken(code);
+      super.readToken(code);
     }
 
     updateContext(prevType: TokenType): void {
@@ -554,7 +535,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
         this.state.context.push(tc.j_cTag); // reconsider as closing tag context
         this.state.exprAllowed = false;
       } else {
-        return super.updateContext(prevType);
+        super.updateContext(prevType);
       }
     }
   };

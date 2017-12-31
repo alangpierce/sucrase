@@ -9,11 +9,16 @@
     "experimentalDecorators": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
     "suppressImplicitAnyIndexErrors": true,
     "downlevelIteration": true,
     "noEmitHelpers": true,
-    "importHelpers": true
+    "importHelpers": true,
+    "plugins": [
+      {
+        "name": "tslint-language-service",
+        "ignoreDefinitionFiles": true
+      }
+    ]
   },
   "exclude": [
     "node_modules",

@@ -1,6 +1,4 @@
-// @flow
-
-const entities: { [name: string]: string } = {
+const entities: {[name: string]: string} = {
   quot: "\u0022",
   amp: "&",
   apos: "\u0027",

@@ -1,9 +1,7 @@
-// @flow
-
-import { lineBreakG } from "./whitespace";
+import {lineBreakG} from "./whitespace";
 
 export type Pos = {
-  start: number,
+  start: number;
 };
 
 // These are used when `options.locations` is on, for the
@@ -23,11 +21,11 @@ export class SourceLocation {
   start: Position;
   end: Position;
   filename: string;
-  identifierName: ?string;
+  identifierName: string | null;
 
   constructor(start: Position, end?: Position) {
     this.start = start;
-    // $FlowIgnore (may start as null, but initialized later)
+    // @ts-ignore: (may start as null, but initialized later)
     this.end = end;
   }
 }
@@ -49,6 +47,4 @@ export function getLineInfo(input: string, offset: number): Position {
       return new Position(line, offset - cur);
     }
   }
-  // istanbul ignore next
-  throw new Error("Unreachable");
 }

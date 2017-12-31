@@ -1,19 +1,17 @@
-// @flow
-
 // A second optional argument can be given to further configure
 // the parser process. These options are recognized:
 
 export type Options = {
-  sourceType: "script" | "module",
-  sourceFilename?: string,
-  startLine: number,
-  allowReturnOutsideFunction: boolean,
-  allowImportExportEverywhere: boolean,
-  allowSuperOutsideMethod: boolean,
-  plugins: $ReadOnlyArray<string>,
-  strictMode: ?boolean,
-  ranges: boolean,
-  tokens: boolean,
+  sourceType: "script" | "module";
+  sourceFilename?: string;
+  startLine: number;
+  allowReturnOutsideFunction: boolean;
+  allowImportExportEverywhere: boolean;
+  allowSuperOutsideMethod: boolean;
+  plugins: ReadonlyArray<string>;
+  strictMode: boolean | null;
+  ranges: boolean;
+  tokens: boolean;
 };
 
 export const defaultOptions: Options = {
@@ -51,9 +49,10 @@ export const defaultOptions: Options = {
 
 // Interpret and default an options object
 
-export function getOptions(opts: ?Options): Options {
+export function getOptions(opts: Options | null): Options {
+  // tslint:disable-next-line no-any
   const options: any = {};
-  for (const key in defaultOptions) {
+  for (const key of Object.keys(defaultOptions)) {
     options[key] = opts && opts[key] != null ? opts[key] : defaultOptions[key];
   }
   return options;

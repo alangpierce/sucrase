@@ -1,18 +1,17 @@
-// @flow
-
 // The algorithm used to determine whether a regexp can appear at a
 // given point in the program is loosely based on sweet.js' approach.
 // See https://github.com/mozilla/sweet.js/wiki/design
 
-import { types as tt } from "./types";
-import { lineBreak } from "../util/whitespace";
+import Parser from "../parser";
+import {lineBreak} from "../util/whitespace";
+import {TokenType, types as tt} from "./types";
 
 export class TokContext {
   constructor(
     token: string,
     isExpr?: boolean,
     preserveSpace?: boolean,
-    override?: Function, // Takes a Tokenizer as a this-parameter, and returns void.
+    override: Function | null = null, // Takes a Tokenizer as a this-parameter, and returns void.
   ) {
     this.token = token;
     this.isExpr = !!isExpr;
@@ -23,34 +22,33 @@ export class TokContext {
   token: string;
   isExpr: boolean;
   preserveSpace: boolean;
-  override: ?Function;
+  override: Function | null;
 }
 
 export const types: {
-  [key: string]: TokContext,
+  [key: string]: TokContext;
 } = {
   braceStatement: new TokContext("{", false),
   braceExpression: new TokContext("{", true),
   templateQuasi: new TokContext("${", true),
   parenStatement: new TokContext("(", false),
   parenExpression: new TokContext("(", true),
-  template: new TokContext("`", true, true, p => p.readTmplToken()),
+  template: new TokContext("`", true, true, (p: Parser) => {
+    p.readTmplToken();
+  }),
   functionExpression: new TokContext("function", true),
 };
 
 // Token-specific context update code
 
-tt.parenR.updateContext = tt.braceR.updateContext = function() {
+const updateEnd = function(): void {
   if (this.state.context.length === 1) {
     this.state.exprAllowed = true;
     return;
   }
 
   const out = this.state.context.pop();
-  if (
-    out === types.braceStatement &&
-    this.curContext() === types.functionExpression
-  ) {
+  if (out === types.braceStatement && this.curContext() === types.functionExpression) {
     this.state.context.pop();
     this.state.exprAllowed = false;
   } else if (out === types.templateQuasi) {
@@ -59,8 +57,10 @@ tt.parenR.updateContext = tt.braceR.updateContext = function() {
     this.state.exprAllowed = !out.isExpr;
   }
 };
+tt.parenR.updateContext = updateEnd;
+tt.braceR.updateContext = updateEnd;
 
-tt.name.updateContext = function(prevType) {
+tt.name.updateContext = function(prevType: TokenType): void {
   if (this.state.value === "of" && this.curContext() === types.parenStatement) {
     this.state.exprAllowed = !prevType.beforeExpr;
     return;
@@ -75,35 +75,30 @@ tt.name.updateContext = function(prevType) {
   }
 };
 
-tt.braceL.updateContext = function(prevType) {
+tt.braceL.updateContext = function(prevType: TokenType): void {
   this.state.context.push(
     this.braceIsBlock(prevType) ? types.braceStatement : types.braceExpression,
   );
   this.state.exprAllowed = true;
 };
 
-tt.dollarBraceL.updateContext = function() {
+tt.dollarBraceL.updateContext = function(): void {
   this.state.context.push(types.templateQuasi);
   this.state.exprAllowed = true;
 };
 
-tt.parenL.updateContext = function(prevType) {
+tt.parenL.updateContext = function(prevType: TokenType): void {
   const statementParens =
-    prevType === tt._if ||
-    prevType === tt._for ||
-    prevType === tt._with ||
-    prevType === tt._while;
-  this.state.context.push(
-    statementParens ? types.parenStatement : types.parenExpression,
-  );
+    prevType === tt._if || prevType === tt._for || prevType === tt._with || prevType === tt._while;
+  this.state.context.push(statementParens ? types.parenStatement : types.parenExpression);
   this.state.exprAllowed = true;
 };
 
-tt.incDec.updateContext = function() {
+tt.incDec.updateContext = function(): void {
   // tokExprAllowed stays unchanged
 };
 
-tt._function.updateContext = function() {
+tt._function.updateContext = function(): void {
   if (this.curContext() !== types.braceStatement) {
     this.state.context.push(types.functionExpression);
   }
@@ -111,7 +106,7 @@ tt._function.updateContext = function() {
   this.state.exprAllowed = false;
 };
 
-tt.backQuote.updateContext = function() {
+tt.backQuote.updateContext = function(): void {
   if (this.curContext() === types.template) {
     this.state.context.pop();
   } else {

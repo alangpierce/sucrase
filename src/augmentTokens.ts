@@ -401,6 +401,14 @@ class TokenPreprocessor {
         this.advance();
         this.skipTypeExpression();
       }
+    } else if (this.tokens.matches(["+/-", "num"]) && this.tokens.currentToken().value === "-") {
+      // Negative number literals are their own special atom, so handle them as well.
+      this.advance();
+      this.advance();
+      if (!disallowArrow && this.tokens.matches(["=>"])) {
+        this.advance();
+        this.skipTypeExpression();
+      }
     } else if (this.tokens.matches(["{"])) {
       this.skipBalancedCode("{", "}");
     } else if (this.tokens.matches(["["])) {

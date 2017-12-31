@@ -329,4 +329,19 @@ describe("type transforms", () => {
     `,
     );
   });
+
+  it("allows negative number literals within types", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      function foo(): -1 {
+        return -1;
+      }
+    `,
+      `${PREFIX}
+      function foo() {
+        return -1;
+      }
+    `,
+    );
+  });
 });

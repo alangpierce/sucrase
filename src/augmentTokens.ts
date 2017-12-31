@@ -241,7 +241,7 @@ class TokenPreprocessor {
             this.processToToken("{", "}", "block");
           }
         }
-      } else if (this.tokens.matches(["case"])) {
+      } else if (this.startsWithKeyword(["case"])) {
         this.processToToken("case", ":", "switchCaseCondition");
         if (this.tokens.matches(["{"])) {
           this.processToToken("{", "}", "block");

@@ -318,4 +318,15 @@ describe("type transforms", () => {
     `,
     );
   });
+
+  it("supports class declarations with type parameters", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      class Foo<T> {}
+    `,
+      `${PREFIX}
+      class Foo {}
+    `,
+    );
+  });
 });

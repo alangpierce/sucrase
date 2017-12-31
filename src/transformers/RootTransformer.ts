@@ -135,6 +135,14 @@ export default class RootTransformer {
     if (this.tokens.matches(["name"]) && !this.tokens.matchesName("implements")) {
       this.tokens.copyToken();
     }
+    if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
+      this.tokens.removeInitialToken();
+      while (!(this.tokens.matches(["</>"]) && this.tokens.currentToken().value === ">")) {
+        this.tokens.removeToken();
+      }
+      this.tokens.removeToken();
+    }
+
     let hasSuperclass = false;
     if (this.tokens.matches(["extends"])) {
       hasSuperclass = true;

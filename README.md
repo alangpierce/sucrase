@@ -23,6 +23,10 @@ Sucrase can convert the following codebases with all tests passing:
   (500K lines of code, JSX, imports).
 * [Babylon](https://github.com/babel/babel/tree/master/packages/babylon)
   (13K lines of code, flow, imports).
+* [decaffeinate](https://github.com/decaffeinate/decaffeinate) and its
+  sub-projects [decaffeinate-parser](https://github.com/decaffeinate/decaffeinate-parser)
+  and [coffee-lex](https://github.com/decaffeinate/coffee-lex)
+  (38K lines of code, typescript).
 
 ## Usage
 
@@ -54,6 +58,21 @@ import {transform} from "sucrase";
 const compiledCode = transform(code, {transforms: ["imports", "flow"]});
 ```
 
+## Current assumptions
+
+Sucrase currently makes some simplifying assumptions about your code, which are
+often seen as good practice anyway:
+* It assumes that imported names are never shadowed by variable names. If you
+  use ESLint, [no-shadow](https://eslint.org/docs/rules/no-shadow) and TSLint
+  [no-shadowed-variable](https://palantir.github.io/tslint/rules/no-shadowed-variable/)
+  can enforce this rule.
+* It assumes your code uses semicolons rather than relying on automatic
+  semicolon insertion. ESLint [semi](https://eslint.org/docs/rules/semi) and
+  TSLint [semicolon](https://palantir.github.io/tslint/rules/semicolon/) can
+  enforce and autofix this rule.
+* It assumes you don't have variables with the same name as non-reserved
+  keywords, like `as`. Some steps may run into trouble if you do.
+
 ## Supported transforms
 
 ### jsx
@@ -72,10 +91,11 @@ features like class fields.
 
 #### Limitations
 
-* Does not handle enums yet.
 * Does not handle static class fields yet.
-* Does not remove type-only imports.
 * Some syntax, like `declare`, is not yet supported.
+* There are minor differences in import semantics. For example, TypeScript
+  allows you to import a function `f` from a CommonJS module using
+  `import * as f from "f";`, but Babel and Sucrase do not.
 * Only removes types; no type checking.
 
 ### flow
@@ -112,15 +132,9 @@ using the same approach as Babel.
 
 #### Limitations
 
-* Assumes that there are no variables shadowing imported names. Any such
-  variables will be incorrectly transformed. If you use ESLint, the
-  [no-shadow](https://eslint.org/docs/rules/no-shadow) rule should avoid this
-  issue.
 * Complex assignments to exported names do not update the live bindings
   properly. For example, after `export let a = 1;`, `a = 2;` works, but
   `[a] = [3];` will not cause imported usages of `a` to update.
-* The code for handling object shorthand does not take ASI into account, so
-  there may be rare bugs if you omit semicolons.
 * Imports are not hoisted to the top of the file.
 
 ### add-module-exports
@@ -151,7 +165,8 @@ Only step 4 gets faster when disabling plugins, so there's always a fixed cost
 to running Babel regardless of how many transforms are enabled.
 
 Sucrase bypasses most of these steps, and works like this:
-1. Tokenize the input source code into a token stream using Babel's tokenizer.
+1. Tokenize the input source code into a token stream using a fork of Babel's
+   parser.
 2. Scan through the tokens, computing preliminary information like all
    imported/exported names and additional info on the role of each token.
 3. Run the transform by doing a pass through the tokens and performing a number
@@ -188,14 +203,15 @@ performance work will bring it back to that speed.
 
 ### Performance improvements
 
-* Fork the Babylon lexer and simplify it to the essentials of what's needed
-  for this project, with a focus on performance.
+* Simplify the Babylon fork to the essentials of what's needed for this project,
+  with a focus on performance.
 * Rewrite the code to be valid [AssemblyScript](https://github.com/AssemblyScript/assemblyscript),
   which will allow it to be compiled to wasm and hopefully improve performance
   even more.
 * Explore the idea of a JIT to optimize the various token patterns that need to
   be matched as part of code transformation.
-* Explore more optimizations, like reducing the number of passes.
+* Explore more ad-hoc optimizations, like reducing the number of passes,
+  avoiding any unneeded work, and rewriting slow spots.
 
 ### Correctness and stability
 

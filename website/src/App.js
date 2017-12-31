@@ -46,7 +46,7 @@ class App extends Component {
             ({name, hideByDefault}) => hideByDefault && hashState.selectedTransforms[name],
           )))
     ) {
-      this.state.showMore = true;
+      this.state = {...this.state, showMore: true};
     }
 
     this.editors = {};
@@ -166,7 +166,7 @@ class App extends Component {
                 this.setState({showMore: true});
                 e.preventDefault();
               }}
-              href="#"
+              href="#more"
             >
               More...
             </a>

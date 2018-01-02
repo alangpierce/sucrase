@@ -108,19 +108,13 @@
     "@babel/traverse" "7.0.0-beta.35"
     "@babel/types" "7.0.0-beta.35"
 
-"@babel/plugin-syntax-flow@7.0.0-beta.35":
-  version "7.0.0-beta.35"
-  resolved "https://registry.yarnpkg.com/@babel/plugin-syntax-flow/-/plugin-syntax-flow-7.0.0-beta.35.tgz#424f2c99c24cc0432def3afb898c8b80bfcc269e"
-
 "@babel/plugin-syntax-jsx@7.0.0-beta.35":
   version "7.0.0-beta.35"
   resolved "https://registry.yarnpkg.com/@babel/plugin-syntax-jsx/-/plugin-syntax-jsx-7.0.0-beta.35.tgz#fd802ab4d7aabdfdb8467d9541987afc051e6f99"
 
-"@babel/plugin-transform-flow-strip-types@7.0.0-beta.35":
-  version "7.0.0-beta.35"
-  resolved "https://registry.yarnpkg.com/@babel/plugin-transform-flow-strip-types/-/plugin-transform-flow-strip-types-7.0.0-beta.35.tgz#c7811c6be36a9829c01e12d37e7efbc76a5c14c6"
-  dependencies:
-    "@babel/plugin-syntax-flow" "7.0.0-beta.35"
+"@babel/plugin-syntax-typescript@7.0.0-beta.36":
+  version "7.0.0-beta.36"
+  resolved "https://registry.yarnpkg.com/@babel/plugin-syntax-typescript/-/plugin-syntax-typescript-7.0.0-beta.36.tgz#0b29c1cfa090922b3d05e0c985d2102950da15ab"
 
 "@babel/plugin-transform-modules-commonjs@^7.0.0-beta.35":
   version "7.0.0-beta.35"
@@ -152,11 +146,11 @@
     "@babel/helper-builder-react-jsx" "7.0.0-beta.35"
     "@babel/plugin-syntax-jsx" "7.0.0-beta.35"
 
-"@babel/preset-flow@7.0.0-beta.35":
-  version "7.0.0-beta.35"
-  resolved "https://registry.yarnpkg.com/@babel/preset-flow/-/preset-flow-7.0.0-beta.35.tgz#3f67f6160bc14418f1dc3535416c3f7ce3fd395b"
+"@babel/plugin-transform-typescript@7.0.0-beta.36":
+  version "7.0.0-beta.36"
+  resolved "https://registry.yarnpkg.com/@babel/plugin-transform-typescript/-/plugin-transform-typescript-7.0.0-beta.36.tgz#ba35f7ef924a2adcb66c8e7a2c22f3d696363977"
   dependencies:
-    "@babel/plugin-transform-flow-strip-types" "7.0.0-beta.35"
+    "@babel/plugin-syntax-typescript" "7.0.0-beta.36"
 
 "@babel/preset-react@7.0.0-beta.35":
   version "7.0.0-beta.35"
@@ -167,6 +161,12 @@
     "@babel/plugin-transform-react-jsx" "7.0.0-beta.35"
     "@babel/plugin-transform-react-jsx-self" "7.0.0-beta.35"
     "@babel/plugin-transform-react-jsx-source" "7.0.0-beta.35"
+
+"@babel/preset-typescript@^7.0.0-beta.36":
+  version "7.0.0-beta.36"
+  resolved "https://registry.yarnpkg.com/@babel/preset-typescript/-/preset-typescript-7.0.0-beta.36.tgz#ae7df38f6ae889220ccb98afa8617a81e8f7f69d"
+  dependencies:
+    "@babel/plugin-transform-typescript" "7.0.0-beta.36"
 
 "@babel/register@^7.0.0-beta.35":
   version "7.0.0-beta.35"

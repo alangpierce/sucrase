@@ -9,10 +9,10 @@ import * as sucrase from "../src/index";
 
 function main(): void {
   console.log("Simulating transpilation of 100,000 lines of code:");
-  const code = fs.readFileSync("./benchmark/sample.js").toString();
+  const code = fs.readFileSync("./benchmark/sample/sample.tsx").toString();
   runBenchmark("Sucrase", () =>
     sucrase.transform(code, {
-      transforms: ["jsx", "imports", "add-module-exports", "react-display-name"],
+      transforms: ["jsx", "imports", "typescript"],
     }),
   );
   runBenchmark("TypeScript", () =>
@@ -26,7 +26,7 @@ function main(): void {
   );
   runBenchmark("Babel", () =>
     babel.transform(code, {
-      presets: ["@babel/preset-react", "@babel/preset-flow"],
+      presets: ["@babel/preset-react", "@babel/preset-typescript"],
       plugins: ["@babel/plugin-transform-modules-commonjs"],
     }),
   );

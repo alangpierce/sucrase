@@ -492,7 +492,7 @@ const Sample = React.createClass({
   },
 
   value0(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -511,7 +511,7 @@ const Sample = React.createClass({
   },
 
   value0(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -530,7 +530,7 @@ const Sample = React.createClass({
   },
 
   value1(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -549,7 +549,7 @@ const Sample = React.createClass({
   },
 
   value2(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -568,7 +568,7 @@ const Sample = React.createClass({
   },
 
   value3(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -587,7 +587,7 @@ const Sample = React.createClass({
   },
 
   value4(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -606,7 +606,7 @@ const Sample = React.createClass({
   },
 
   value5(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -625,7 +625,7 @@ const Sample = React.createClass({
   },
 
   value6(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -644,7 +644,7 @@ const Sample = React.createClass({
   },
 
   value7(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -663,7 +663,7 @@ const Sample = React.createClass({
   },
 
   value8(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -682,7 +682,7 @@ const Sample = React.createClass({
   },
 
   value9(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -701,7 +701,7 @@ const Sample = React.createClass({
   },
 
   value10(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -720,7 +720,7 @@ const Sample = React.createClass({
   },
 
   value11(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -739,7 +739,7 @@ const Sample = React.createClass({
   },
 
   value12(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -758,7 +758,7 @@ const Sample = React.createClass({
   },
 
   value13(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -777,7 +777,7 @@ const Sample = React.createClass({
   },
 
   value14(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -796,7 +796,7 @@ const Sample = React.createClass({
   },
 
   value15(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -815,7 +815,7 @@ const Sample = React.createClass({
   },
 
   value16(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -834,7 +834,7 @@ const Sample = React.createClass({
   },
 
   value17(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -853,7 +853,7 @@ const Sample = React.createClass({
   },
 
   value18(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -872,7 +872,7 @@ const Sample = React.createClass({
   },
 
   value19(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -891,7 +891,7 @@ const Sample = React.createClass({
   },
 
   value20(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -910,7 +910,7 @@ const Sample = React.createClass({
   },
 
   value21(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -929,7 +929,7 @@ const Sample = React.createClass({
   },
 
   value22(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -948,7 +948,7 @@ const Sample = React.createClass({
   },
 
   value23(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {
@@ -967,7 +967,7 @@ const Sample = React.createClass({
   },
 
   value24(x: string | number): number {
-    const sum: (Array<number>) => number = () => 3;
+    const sum: (arr: Array<number>) => number = () => 3;
     const message: string = "Hello";
 
     class Greeter<T> {

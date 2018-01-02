@@ -29,8 +29,5 @@ echo 'Building CommonJS version.'
   --module commonjs \
   --moduleResolution node
 
-echo 'Building Babylon fork.'
-./node_modules/.bin/babel sucrase-babylon -d build/sucrase-babylon
-
 cp -r build/src dist
 cp -r build/sucrase-babylon dist

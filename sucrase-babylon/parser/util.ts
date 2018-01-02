@@ -1,19 +1,18 @@
-// @flow
-
-import { types as tt, type TokenType } from "../tokenizer/types";
 import Tokenizer from "../tokenizer";
-import type { Node } from "../types";
-import { lineBreak } from "../util/whitespace";
+import {TokenType, types as tt} from "../tokenizer/types";
+import {Node} from "../types";
+import {lineBreak} from "../util/whitespace";
 
 // ## Parser utilities
 
 export default class UtilParser extends Tokenizer {
   // TODO
 
-  addExtra(node: Node, key: string, val: any): void {
+  addExtra(node: Node, key: string, val: {}): void {
     if (!node) return;
 
-    const extra = (node.extra = node.extra || {});
+    const extra = {};
+    node.extra = extra;
     extra[key] = val;
   }
 
@@ -69,17 +68,11 @@ export default class UtilParser extends Tokenizer {
   // Test whether a semicolon can be inserted at the current position.
 
   canInsertSemicolon(): boolean {
-    return (
-      this.match(tt.eof) ||
-      this.match(tt.braceR) ||
-      this.hasPrecedingLineBreak()
-    );
+    return this.match(tt.eof) || this.match(tt.braceR) || this.hasPrecedingLineBreak();
   }
 
   hasPrecedingLineBreak(): boolean {
-    return lineBreak.test(
-      this.input.slice(this.state.lastTokEnd, this.state.start),
-    );
+    return lineBreak.test(this.input.slice(this.state.lastTokEnd, this.state.start));
   }
 
   // TODO
@@ -98,24 +91,27 @@ export default class UtilParser extends Tokenizer {
   // Expect a token of a given type. If found, consume it, otherwise,
   // raise an unexpected token error at given pos.
 
-  expect(type: TokenType, pos?: ?number): void {
-    this.eat(type) || this.unexpected(pos, type);
+  expect(type: TokenType, pos?: number | null): void {
+    const matched = this.eat(type);
+    if (!matched) {
+      this.unexpected(pos, type);
+    }
   }
 
   // Raise an unexpected token error. Can take the expected token type
   // instead of a message string.
 
   unexpected(
-    pos: ?number,
+    pos: number | null = null,
     messageOrType: string | TokenType = "Unexpected token",
-  ): empty {
+  ): never {
     if (typeof messageOrType !== "string") {
       messageOrType = `Unexpected token, expected "${messageOrType.label}"`;
     }
     throw this.raise(pos != null ? pos : this.state.start, messageOrType);
   }
 
-  expectPlugin(name: string, pos?: ?number): true {
+  expectPlugin(name: string, pos?: number | null): true {
     if (!this.hasPlugin(name)) {
       throw this.raise(
         pos != null ? pos : this.state.start,
@@ -127,8 +123,8 @@ export default class UtilParser extends Tokenizer {
     return true;
   }
 
-  expectOnePlugin(names: Array<string>, pos?: ?number): void {
-    if (!names.some(n => this.hasPlugin(n))) {
+  expectOnePlugin(names: Array<string>, pos?: number | null): void {
+    if (!names.some((n) => this.hasPlugin(n))) {
       throw this.raise(
         pos != null ? pos : this.state.start,
         `This experimental syntax requires enabling one of the following parser plugin(s): '${names.join(

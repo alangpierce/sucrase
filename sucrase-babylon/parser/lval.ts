@@ -1,8 +1,9 @@
 // @flow
 
-import { types as tt, type TokenType } from "../tokenizer/types";
-import type {
-  TSParameterProperty,
+import {TokenType, types as tt} from "../tokenizer/types";
+import {
+  ArrayPattern,
+  AssignmentPattern,
   Decorator,
   Expression,
   Identifier,
@@ -12,40 +13,37 @@ import type {
   Pattern,
   RestElement,
   SpreadElement,
+  TSParameterProperty,
 } from "../types";
-import type { Pos, Position } from "../util/location";
-import { NodeUtils } from "./node";
+import {Pos, Position} from "../util/location";
+import {NodeUtils} from "./node";
 
-export default class LValParser extends NodeUtils {
+export default abstract class LValParser extends NodeUtils {
   // Forward-declaration: defined in expression.js
-  +checkReservedWord: (
+  abstract checkReservedWord(
     word: string,
     startLoc: number,
     checkKeywords: boolean,
     isBinding: boolean,
-  ) => void;
-  +parseIdentifier: (liberal?: boolean) => Identifier;
-  +parseMaybeAssign: (
-    noIn?: ?boolean,
-    refShorthandDefaultPos?: ?Pos,
+  ): void;
+  abstract parseIdentifier(liberal?: boolean): Identifier;
+  abstract parseMaybeAssign(
+    noIn?: boolean | null,
+    refShorthandDefaultPos?: Pos | null,
     afterLeftParse?: Function,
-    refNeedsArrowPos?: ?Pos,
-  ) => Expression;
-  +parseObj: <T: ObjectPattern | ObjectExpression>(
+    refNeedsArrowPos?: Pos | null,
+  ): Expression;
+  abstract parseObj<T extends ObjectPattern | ObjectExpression>(
     isPattern: boolean,
-    refShorthandDefaultPos?: ?Pos,
-  ) => T;
+    refShorthandDefaultPos?: Pos | null,
+  ): T;
   // Forward-declaration: defined in statement.js
-  +parseDecorator: () => Decorator;
+  abstract parseDecorator(): Decorator;
 
   // Convert existing expression atom to assignable pattern
   // if possible.
 
-  toAssignable(
-    node: Node,
-    isBinding: ?boolean,
-    contextDescription: string,
-  ): Node {
+  toAssignable(node: Node, isBinding: boolean | null, contextDescription: string): Node {
     if (node) {
       switch (node.type) {
         case "Identifier":
@@ -68,7 +66,7 @@ export default class LValParser extends NodeUtils {
           break;
 
         case "SpreadElement": {
-          this.checkToRestConversion(node);
+          this.checkToRestConversion(node as SpreadElement);
 
           node.type = "RestElement";
           const arg = node.argument;
@@ -97,11 +95,11 @@ export default class LValParser extends NodeUtils {
           if (!isBinding) break;
 
         default: {
-          const message =
-            "Invalid left-hand side" +
-            (contextDescription
-              ? " in " + contextDescription
-              : /* istanbul ignore next */ "expression");
+          const message = `Invalid left-hand side${
+            contextDescription
+              ? ` in ${contextDescription}`
+              : /* istanbul ignore next */ "expression"
+          }`;
           this.raise(node.start, message);
         }
       }
@@ -109,11 +107,7 @@ export default class LValParser extends NodeUtils {
     return node;
   }
 
-  toAssignableObjectExpressionProp(
-    prop: Node,
-    isBinding: ?boolean,
-    isLast: boolean,
-  ) {
+  toAssignableObjectExpressionProp(prop: Node, isBinding: boolean | null, isLast: boolean): void {
     if (prop.type === "ObjectMethod") {
       const error =
         prop.kind === "get" || prop.kind === "set"
@@ -122,10 +116,7 @@ export default class LValParser extends NodeUtils {
 
       this.raise(prop.key.start, error);
     } else if (prop.type === "SpreadElement" && !isLast) {
-      this.raise(
-        prop.start,
-        "The rest element has to be the last element when destructuring",
-      );
+      this.raise(prop.start, "The rest element has to be the last element when destructuring");
     } else {
       this.toAssignable(prop, isBinding, "object destructuring pattern");
     }
@@ -134,10 +125,10 @@ export default class LValParser extends NodeUtils {
   // Convert list of expression atoms to binding list.
 
   toAssignableList(
-    exprList: Expression[],
-    isBinding: ?boolean,
+    exprList: Array<Expression>,
+    isBinding: boolean | null,
     contextDescription: string,
-  ): $ReadOnlyArray<Pattern> {
+  ): ReadonlyArray<Pattern> {
     let end = exprList.length;
     if (end) {
       const last = exprList[end - 1];
@@ -148,12 +139,8 @@ export default class LValParser extends NodeUtils {
         const arg = last.argument;
         this.toAssignable(arg, isBinding, contextDescription);
         if (
-          [
-            "Identifier",
-            "MemberExpression",
-            "ArrayPattern",
-            "ObjectPattern",
-          ].indexOf(arg.type) === -1
+          ["Identifier", "MemberExpression", "ArrayPattern", "ObjectPattern"].indexOf(arg.type) ===
+          -1
         ) {
           this.unexpected(arg.start);
         }
@@ -163,44 +150,38 @@ export default class LValParser extends NodeUtils {
     for (let i = 0; i < end; i++) {
       const elt = exprList[i];
       if (elt && elt.type === "SpreadElement") {
-        this.raise(
-          elt.start,
-          "The rest element has to be the last element when destructuring",
-        );
+        this.raise(elt.start, "The rest element has to be the last element when destructuring");
       }
       if (elt) this.toAssignable(elt, isBinding, contextDescription);
     }
+    // @ts-ignore
     return exprList;
   }
 
   // Convert list of expression atoms to a list of
 
-  toReferencedList(
-    exprList: $ReadOnlyArray<?Expression>,
-  ): $ReadOnlyArray<?Expression> {
+  toReferencedList(exprList: ReadonlyArray<Expression | null>): ReadonlyArray<Expression | null> {
     return exprList;
   }
 
   // Parses spread element.
 
-  parseSpread<T: RestElement | SpreadElement>(refShorthandDefaultPos: ?Pos): T {
+  parseSpread<T extends RestElement | SpreadElement>(refShorthandDefaultPos: Pos | null): T {
     const node = this.startNode();
     this.next();
     node.argument = this.parseMaybeAssign(false, refShorthandDefaultPos);
-    return this.finishNode(node, "SpreadElement");
+    return this.finishNode(node as T, "SpreadElement");
   }
 
   parseRest(): RestElement {
     const node = this.startNode();
     this.next();
     node.argument = this.parseBindingAtom();
-    return this.finishNode(node, "RestElement");
+    return this.finishNode(node as RestElement, "RestElement");
   }
 
   shouldAllowYieldIdentifier(): boolean {
-    return (
-      this.match(tt._yield) && !this.state.strict && !this.state.inGenerator
-    );
+    return this.match(tt._yield) && !this.state.strict && !this.state.inGenerator;
   }
 
   parseBindingIdentifier(): Identifier {
@@ -218,11 +199,11 @@ export default class LValParser extends NodeUtils {
         const node = this.startNode();
         this.next();
         node.elements = this.parseBindingList(tt.bracketR, true);
-        return this.finishNode(node, "ArrayPattern");
+        return this.finishNode(node as ArrayPattern, "ArrayPattern");
       }
 
       case tt.braceL:
-        return this.parseObj(true);
+        return this.parseObj<ObjectPattern>(true);
 
       default:
         throw this.unexpected();
@@ -232,8 +213,8 @@ export default class LValParser extends NodeUtils {
   parseBindingList(
     close: TokenType,
     allowEmpty?: boolean,
-    allowModifiers?: boolean,
-  ): $ReadOnlyArray<Pattern | TSParameterProperty> {
+    allowModifiers: boolean | null = null,
+  ): ReadonlyArray<Pattern | TSParameterProperty> {
     const elts: Array<Pattern | TSParameterProperty> = [];
     let first = true;
     while (!this.eat(close)) {
@@ -243,7 +224,8 @@ export default class LValParser extends NodeUtils {
         this.expect(tt.comma);
       }
       if (allowEmpty && this.match(tt.comma)) {
-        // $FlowFixMe This method returns `$ReadOnlyArray<?Pattern>` if `allowEmpty` is set.
+        // $FlowFixMe This method returns `ReadonlyArray<?Pattern>` if `allowEmpty` is set.
+        // @ts-ignore
         elts.push(null);
       } else if (this.eat(close)) {
         break;
@@ -254,10 +236,7 @@ export default class LValParser extends NodeUtils {
       } else {
         const decorators = [];
         if (this.match(tt.at) && this.hasPlugin("decorators2")) {
-          this.raise(
-            this.state.start,
-            "Stage 2 decorators cannot be used to decorate parameters",
-          );
+          this.raise(this.state.start, "Stage 2 decorators cannot be used to decorate parameters");
         }
         while (this.match(tt.at)) {
           decorators.push(this.parseDecorator());
@@ -269,8 +248,8 @@ export default class LValParser extends NodeUtils {
   }
 
   parseAssignableListItem(
-    allowModifiers: ?boolean,
-    decorators: Decorator[],
+    allowModifiers: boolean | null,
+    decorators: Array<Decorator>,
   ): Pattern | TSParameterProperty {
     const left = this.parseMaybeDefault();
     this.parseAssignableListItemTypes(left);
@@ -288,9 +267,9 @@ export default class LValParser extends NodeUtils {
   // Parses assignment pattern around given atom if possible.
 
   parseMaybeDefault(
-    startPos?: ?number,
-    startLoc?: ?Position,
-    left?: ?Pattern,
+    startPos?: number | null,
+    startLoc?: Position | null,
+    left?: Pattern | null,
   ): Pattern {
     startLoc = startLoc || this.state.startLoc;
     startPos = startPos || this.state.start;
@@ -300,7 +279,7 @@ export default class LValParser extends NodeUtils {
     const node = this.startNodeAt(startPos, startLoc);
     node.left = left;
     node.right = this.parseMaybeAssign();
-    return this.finishNode(node, "AssignmentPattern");
+    return this.finishNode(node as AssignmentPattern, "AssignmentPattern");
   }
 
   // Verify that a node is an lval — something that can be assigned
@@ -308,8 +287,8 @@ export default class LValParser extends NodeUtils {
 
   checkLVal(
     expr: Expression,
-    isBinding: ?boolean,
-    checkClashes: ?{ [key: string]: boolean },
+    isBinding: boolean | null,
+    checkClashes: {[key: string]: boolean} | null,
     contextDescription: string,
   ): void {
     switch (expr.type) {
@@ -345,35 +324,20 @@ export default class LValParser extends NodeUtils {
       case "ObjectPattern":
         for (let prop of expr.properties) {
           if (prop.type === "ObjectProperty") prop = prop.value;
-          this.checkLVal(
-            prop,
-            isBinding,
-            checkClashes,
-            "object destructuring pattern",
-          );
+          this.checkLVal(prop, isBinding, checkClashes, "object destructuring pattern");
         }
         break;
 
       case "ArrayPattern":
         for (const elem of expr.elements) {
           if (elem) {
-            this.checkLVal(
-              elem,
-              isBinding,
-              checkClashes,
-              "array destructuring pattern",
-            );
+            this.checkLVal(elem, isBinding, checkClashes, "array destructuring pattern");
           }
         }
         break;
 
       case "AssignmentPattern":
-        this.checkLVal(
-          expr.left,
-          isBinding,
-          checkClashes,
-          "assignment pattern",
-        );
+        this.checkLVal(expr.left, isBinding, checkClashes, "assignment pattern");
         break;
 
       case "RestElement":
@@ -381,14 +345,11 @@ export default class LValParser extends NodeUtils {
         break;
 
       default: {
-        const message =
-          (isBinding
-            ? /* istanbul ignore next */ "Binding invalid"
-            : "Invalid") +
-          " left-hand side" +
-          (contextDescription
-            ? " in " + contextDescription
-            : /* istanbul ignore next */ "expression");
+        const message = `${
+          isBinding ? /* istanbul ignore next */ "Binding invalid" : "Invalid"
+        } left-hand side${
+          contextDescription ? ` in ${contextDescription}` : /* istanbul ignore next */ "expression"
+        }`;
         this.raise(expr.start, message);
       }
     }

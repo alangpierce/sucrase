@@ -1,6 +1,4 @@
-// @flow
-
-import { getLineInfo, type Position } from "../util/location";
+import {getLineInfo, Position} from "../util/location";
 import CommentsParser from "./comments";
 
 // This function is used to raise exceptions on parse errors. It
@@ -10,20 +8,15 @@ import CommentsParser from "./comments";
 // message.
 
 export default class LocationParser extends CommentsParser {
-  raise(
-    pos: number,
-    message: string,
-    missingPluginNames?: Array<string>,
-  ): empty {
+  raise(pos: number, message: string, missingPluginNames?: Array<string>): never {
     const loc = getLineInfo(this.input, pos);
     message += ` (${loc.line}:${loc.column})`;
-    // $FlowIgnore
-    const err: SyntaxError & { pos: number, loc: Position } = new SyntaxError(
-      message,
-    );
+    // @ts-ignore
+    const err: SyntaxError & {pos: number; loc: Position} = new SyntaxError(message);
     err.pos = pos;
     err.loc = loc;
     if (missingPluginNames) {
+      // @ts-ignore
       err.missingPlugin = missingPluginNames;
     }
     throw err;

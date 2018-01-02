@@ -1,17 +1,21 @@
-// @flow
-
-import type { Options } from "../options";
+import {Options} from "../options";
 import * as N from "../types";
-import { Position } from "../util/location";
+import {Position} from "../util/location";
 
-import { types as ct, type TokContext } from "./context";
-import type { Token } from "./index";
-import { types as tt, type TokenType } from "./types";
+import {TokContext, types as ct} from "./context";
+import {Token} from "./index";
+import {TokenType, types as tt} from "./types";
+
+export type Label = {
+  // eslint-disable-next-line no-restricted-globals
+  name?: string;
+  kind: "loop" | "switch" | null;
+  statementStart?: number;
+};
 
 export default class State {
   init(options: Options, input: string): void {
-    this.strict =
-      options.strictMode === false ? false : options.sourceType === "module";
+    this.strict = options.strictMode === false ? false : options.sourceType === "module";
 
     this.input = input;
 
@@ -20,8 +24,16 @@ export default class State {
     this.noArrowAt = [];
     this.noArrowParamsConversionAt = [];
 
-    // eslint-disable-next-line max-len
-    this.inMethod = this.inFunction = this.inParameters = this.maybeInArrowParameters = this.inGenerator = this.inAsync = this.inPropertyName = this.inType = this.inClassProperty = this.noAnonFunctionType = false;
+    this.inMethod = false;
+    this.inFunction = false;
+    this.inParameters = false;
+    this.maybeInArrowParameters = false;
+    this.inGenerator = false;
+    this.inAsync = false;
+    this.inPropertyName = false;
+    this.inType = false;
+    this.inClassProperty = false;
+    this.noAnonFunctionType = false;
 
     this.classLevel = 0;
 
@@ -38,25 +50,32 @@ export default class State {
     this.trailingComments = [];
     this.leadingComments = [];
     this.commentStack = [];
-    // $FlowIgnore
+    // @ts-ignore
     this.commentPreviousNode = null;
 
-    this.pos = this.lineStart = 0;
+    this.pos = 0;
+    this.lineStart = 0;
     this.curLine = options.startLine;
 
     this.type = tt.eof;
     this.value = null;
-    this.start = this.end = this.pos;
-    this.startLoc = this.endLoc = this.curPosition();
+    this.start = this.pos;
+    this.end = this.pos;
+    this.startLoc = this.curPosition();
+    this.endLoc = this.startLoc;
 
-    // $FlowIgnore
-    this.lastTokEndLoc = this.lastTokStartLoc = null;
-    this.lastTokStart = this.lastTokEnd = this.pos;
+    // @ts-ignore
+    this.lastTokEndLoc = null;
+    // @ts-ignore
+    this.lastTokStartLoc = null;
+    this.lastTokStart = this.pos;
+    this.lastTokEnd = this.pos;
 
     this.context = [ct.braceStatement];
     this.exprAllowed = true;
 
-    this.containsEsc = this.containsOctal = false;
+    this.containsEsc = false;
+    this.containsOctal = false;
     this.octalPosition = null;
 
     this.invalidTemplateEscapePosition = null;
@@ -77,7 +96,7 @@ export default class State {
   // typed arrow function, but it isn't
   // e.g. a ? (b) : c => d
   //          ^
-  noArrowAt: number[];
+  noArrowAt: Array<number>;
 
   // Used to signify the start of an expression whose params, if it looks like
   // an arrow function, shouldn't be converted to assignable nodes.
@@ -85,7 +104,7 @@ export default class State {
   // conditional expressions.
   // e.g. a ? (b) : c => d
   //          ^
-  noArrowParamsConversionAt: number[];
+  noArrowParamsConversionAt: Array<number>;
 
   // Flags to track whether we are in a function, a generator.
   inFunction: boolean;
@@ -103,7 +122,7 @@ export default class State {
   classLevel: number;
 
   // Labels in scope.
-  labels: Array<{ kind: ?("loop" | "switch"), statementStart?: number }>;
+  labels: Array<Label>;
 
   // Leading decorators. Last element of the stack represents the decorators in current context.
   // Supports nesting of decorators, e.g. @foo(@bar class inner {}) class outer {}
@@ -113,7 +132,7 @@ export default class State {
   // The first yield expression inside parenthesized expressions and arrow
   // function parameters. It is used to disallow yield in arrow function
   // parameters.
-  yieldInPossibleArrowParameters: ?N.YieldExpression;
+  yieldInPossibleArrowParameters: N.YieldExpression | null;
 
   // Token store.
   tokens: Array<Token | N.Comment>;
@@ -124,11 +143,7 @@ export default class State {
   // Comment attachment store
   trailingComments: Array<N.Comment>;
   leadingComments: Array<N.Comment>;
-  commentStack: Array<{
-    start: number,
-    leadingComments: ?Array<N.Comment>,
-    trailingComments: ?Array<N.Comment>,
-  }>;
+  commentStack: Array<N.Node>;
   commentPreviousNode: N.Node;
 
   // The current position of the tokenizer in the input.
@@ -141,6 +156,7 @@ export default class State {
   type: TokenType;
 
   // For tokens that include more information than their type, the value
+  // tslint:disable-next-line no-any
   value: any;
 
   // Its start and end offset
@@ -171,13 +187,13 @@ export default class State {
 
   // TODO
   containsOctal: boolean;
-  octalPosition: ?number;
+  octalPosition: number | null;
 
   // Names of exports store. `default` is stored as a name for both
   // `export default foo;` and `export { foo as default };`.
   exportedIdentifiers: Array<string>;
 
-  invalidTemplateEscapePosition: ?number;
+  invalidTemplateEscapePosition: number | null;
 
   curPosition(): Position {
     return new Position(this.curLine, this.pos - this.lineStart);
@@ -185,7 +201,7 @@ export default class State {
 
   clone(skipArrays?: boolean): State {
     const state = new State();
-    Object.keys(this).forEach(key => {
+    Object.keys(this).forEach((key) => {
       // $FlowIgnore
       let val = this[key];
 

@@ -182,10 +182,7 @@ class TokenPreprocessor {
           this.advance();
           this.processToToken("{", "}", "block");
         }
-      } else if (
-        this.startsWithKeyword(["declare"]) ||
-        (this.tokens.matches(["export"]) && this.tokens.matchesNameAtRelativeIndex(1, "declare"))
-      ) {
+      } else if (this.tokens.matches(["declare"]) || this.tokens.matches(["export", "declare"])) {
         this.processDeclare();
       } else if (this.tokens.matches(["name"])) {
         this.advance();

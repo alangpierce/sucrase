@@ -935,6 +935,7 @@ export default class StatementParser extends ExpressionParser {
         return;
       }
       // otherwise something static
+      this.state.tokens[this.state.tokens.length - 1].type = tt._static;
       isStatic = true;
     }
 

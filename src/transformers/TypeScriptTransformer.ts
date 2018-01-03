@@ -42,11 +42,11 @@ export default class TypeScriptTransformer extends Transformer {
       return true;
     }
     if (
-      this.tokens.matchesName("public") ||
-      this.tokens.matchesName("protected") ||
-      this.tokens.matchesName("private") ||
-      this.tokens.matchesName("abstract") ||
-      this.tokens.matchesName("readonly")
+      this.tokens.matches(["public"]) ||
+      this.tokens.matches(["protected"]) ||
+      this.tokens.matches(["private"]) ||
+      this.tokens.matches(["abstract"]) ||
+      this.tokens.matches(["readonly"])
     ) {
       this.tokens.removeInitialToken();
       return true;

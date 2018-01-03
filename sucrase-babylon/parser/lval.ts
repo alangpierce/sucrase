@@ -193,6 +193,7 @@ export default abstract class LValParser extends NodeUtils {
     switch (this.state.type) {
       case tt._yield:
       case tt.name:
+        this.state.type = tt.name;
         return this.parseBindingIdentifier();
 
       case tt.bracketL: {

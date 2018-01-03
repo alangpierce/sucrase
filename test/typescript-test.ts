@@ -478,4 +478,51 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows a parameter named declare", () => {
+    assertTypeScriptResult(
+      `
+      function foo(declare: boolean): string {
+        return "Hello!";
+      }
+    `,
+      `${PREFIX}
+      function foo(declare) {
+        return "Hello!";
+      }
+    `,
+    );
+  });
+
+  it("properly handles method parameters named readonly", () => {
+    assertTypeScriptResult(
+      `
+      class Foo {
+        bar(readonly: number) {
+          console.log(readonly);
+        }
+      }
+    `,
+      `${PREFIX}
+      class Foo {
+        bar(readonly) {
+          console.log(readonly);
+        }
+      }
+    `,
+    );
+  });
+
+  it("handles export default abstract class", () => {
+    assertTypeScriptResult(
+      `
+      export default abstract class Foo {
+      }
+    `,
+      `${PREFIX}${ESMODULE_PREFIX}
+       class Foo {
+      } exports.default = Foo;
+    `,
+    );
+  });
 });

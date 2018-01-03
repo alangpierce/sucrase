@@ -85,6 +85,28 @@ export default (superClass: ParserClass): ParserClass =>
         allowedModifiers.indexOf(modifier) !== -1 &&
         this.tsTryParse(this.tsNextTokenCanFollowModifier.bind(this))
       ) {
+        switch (modifier) {
+          case "readonly":
+            this.state.tokens[this.state.tokens.length - 1].type = tt._readonly;
+            break;
+          case "abstract":
+            this.state.tokens[this.state.tokens.length - 1].type = tt._abstract;
+            break;
+          case "static":
+            this.state.tokens[this.state.tokens.length - 1].type = tt._static;
+            break;
+          case "public":
+            this.state.tokens[this.state.tokens.length - 1].type = tt._public;
+            break;
+          case "private":
+            this.state.tokens[this.state.tokens.length - 1].type = tt._private;
+            break;
+          case "protected":
+            this.state.tokens[this.state.tokens.length - 1].type = tt._protected;
+            break;
+          default:
+            break;
+        }
         return modifier;
       }
       return null;
@@ -1013,8 +1035,10 @@ export default (superClass: ParserClass): ParserClass =>
     tsParseExpressionStatement(node: N.Node, expr: N.Identifier): N.Declaration | null {
       switch (expr.name) {
         case "declare": {
+          const declareTokenIndex = this.state.tokens.length - 1;
           const declaration = this.tsTryParseDeclare(node);
           if (declaration) {
+            this.state.tokens[declareTokenIndex].type = tt._declare;
             declaration.declare = true;
             return declaration;
           }
@@ -1043,6 +1067,7 @@ export default (superClass: ParserClass): ParserClass =>
       switch (value) {
         case "abstract":
           if (next || this.match(tt._class)) {
+            this.state.type = tt._abstract;
             const cls: N.ClassDeclaration = node as N.ClassDeclaration;
             cls.abstract = true;
             if (next) this.next();
@@ -1365,6 +1390,7 @@ export default (superClass: ParserClass): ParserClass =>
     parseExportDefaultExpression(): N.Expression | N.Declaration {
       if (this.isContextual("abstract") && this.lookahead().type === tt._class) {
         const cls = this.startNode();
+        this.state.type = tt._abstract;
         this.next(); // Skip "abstract"
         this.parseClass(cls as N.Class, true, true);
         cls.abstract = true;
@@ -1535,7 +1561,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     parseExportDeclaration(node: N.ExportNamedDeclaration): N.Declaration | null {
       // "export declare" is equivalent to just "export".
-      const isDeclare = this.eatContextual("declare");
+      const isDeclare = this.eat(tt._declare);
 
       let declaration: N.Declaration | null = null;
       if (this.match(tt.name)) {

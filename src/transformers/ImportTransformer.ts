@@ -237,8 +237,7 @@ export default class ImportTransformer extends Transformer {
       this.processExportFunction();
     } else if (
       this.tokens.matches(["export", "class"]) ||
-      // export abstract class
-      this.tokens.matches(["export", "name", "class"])
+      this.tokens.matches(["export", "abstract", "class"])
     ) {
       this.processExportClass();
     } else if (this.tokens.matches(["export", "{"])) {
@@ -280,6 +279,7 @@ export default class ImportTransformer extends Transformer {
   private processExportDefault(): void {
     if (
       this.tokens.matches(["export", "default", "function", "name"]) ||
+      // export default aysnc function
       this.tokens.matches(["export", "default", "name", "function", "name"])
     ) {
       this.tokens.removeInitialToken();
@@ -288,9 +288,15 @@ export default class ImportTransformer extends Transformer {
       // declaration followed by exports statement.
       const name = this.processNamedFunction();
       this.tokens.appendCode(` exports.default = ${name};`);
-    } else if (this.tokens.matches(["export", "default", "class", "name"])) {
+    } else if (
+      this.tokens.matches(["export", "default", "class", "name"]) ||
+      this.tokens.matches(["export", "default", "abstract", "class", "name"])
+    ) {
       this.tokens.removeInitialToken();
       this.tokens.removeToken();
+      if (this.tokens.matches(["abstract"])) {
+        this.tokens.removeToken();
+      }
       const name = this.rootTransformer.processNamedClass();
       this.tokens.appendCode(` exports.default = ${name};`);
     } else {
@@ -371,7 +377,7 @@ export default class ImportTransformer extends Transformer {
    */
   private processExportClass(): void {
     this.tokens.removeInitialToken();
-    if (this.tokens.matchesName("abstract")) {
+    if (this.tokens.matches(["abstract"])) {
       this.tokens.removeToken();
     }
     const name = this.rootTransformer.processNamedClass();

@@ -190,6 +190,13 @@ export const keywords = {
   typeof: new KeywordTokenType("typeof", {beforeExpr, prefix, startsExpr}),
   void: new KeywordTokenType("void", {beforeExpr, prefix, startsExpr}),
   delete: new KeywordTokenType("delete", {beforeExpr, prefix, startsExpr}),
+  declare: new KeywordTokenType("declare"),
+  readonly: new KeywordTokenType("readonly"),
+  abstract: new KeywordTokenType("abstract"),
+  static: new KeywordTokenType("static"),
+  public: new KeywordTokenType("public"),
+  private: new KeywordTokenType("private"),
+  protected: new KeywordTokenType("protected"),
 };
 
 // Map keyword names to token types.

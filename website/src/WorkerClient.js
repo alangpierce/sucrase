@@ -51,6 +51,10 @@ async function runBabel() {
   return await sendMessage({type: "RUN_BABEL"});
 }
 
+async function runTypeScript() {
+  return await sendMessage({type: "RUN_TYPESCRIPT"});
+}
+
 async function compressCode() {
   return await sendMessage({type: "COMPRESS_CODE"});
 }
@@ -65,6 +69,10 @@ async function profileSucrase() {
 
 async function profileBabel() {
   return await sendMessage({type: "PROFILE_BABEL"});
+}
+
+async function profileTypeScript() {
+  return await sendMessage({type: "PROFILE_TYPESCRIPT"});
 }
 
 /**
@@ -118,15 +126,17 @@ async function workerLoop() {
       await setConfig(config);
       const sucraseCode = await runSucrase();
       const babelCode = config.compareWithBabel ? await runBabel() : "";
+      const typeScriptCode = config.compareWithTypeScript ? await runTypeScript() : "";
       const tokensStr = config.showTokens ? await getTokens() : "";
-      updateStateFn({sucraseCode, babelCode, tokensStr});
+      updateStateFn({sucraseCode, babelCode, typeScriptCode, tokensStr});
 
       const compressedCode = await compressCode();
       handleCompressedCodeFn(compressedCode);
 
       const sucraseTimeMs = await profile(profileSucrase);
       const babelTimeMs = config.compareWithBabel ? await profile(profileBabel) : null;
-      updateStateFn({sucraseTimeMs, babelTimeMs});
+      const typeScriptTimeMs = config.compareWithTypeScript ? await profile(profileTypeScript) : null;
+      updateStateFn({sucraseTimeMs, babelTimeMs, typeScriptTimeMs});
     } catch (e) {
       if (e.message !== CANCELLED_MESSAGE) {
         throw e;

@@ -189,7 +189,7 @@
     babylon "7.0.0-beta.35"
     lodash "^4.2.0"
 
-"@babel/traverse@7.0.0-beta.35", "@babel/traverse@^7.0.0-beta.31":
+"@babel/traverse@7.0.0-beta.35":
   version "7.0.0-beta.35"
   resolved "https://registry.yarnpkg.com/@babel/traverse/-/traverse-7.0.0-beta.35.tgz#c91819807b7ac256d2f6dd5aaa94d4c66e06bbc5"
   dependencies:
@@ -427,14 +427,7 @@ babel-code-frame@^6.22.0:
     esutils "^2.0.2"
     js-tokens "^3.0.2"
 
-babel-plugin-transform-charcodes@0.0.10:
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/babel-plugin-transform-charcodes/-/babel-plugin-transform-charcodes-0.0.10.tgz#cdb76363e1e91ac105f3f94b168f41cf27983e80"
-  dependencies:
-    "@babel/traverse" "^7.0.0-beta.31"
-    babylon "^7.0.0-beta.31"
-
-babylon@7.0.0-beta.35, babylon@^7.0.0-beta.31:
+babylon@7.0.0-beta.35:
   version "7.0.0-beta.35"
   resolved "https://registry.yarnpkg.com/babylon/-/babylon-7.0.0-beta.35.tgz#9f9e609ed50c28d4333f545b373a381b47e9e6ed"
 
@@ -518,10 +511,6 @@ chalk@^2.0.0, chalk@^2.1.0, chalk@^2.3.0:
     ansi-styles "^3.1.0"
     escape-string-regexp "^1.0.5"
     supports-color "^4.0.0"
-
-charcodes@0.0.10:
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/charcodes/-/charcodes-0.0.10.tgz#98d67a7a1e17ce154d1faafd01e72e9a6cff54f5"
 
 chardet@^0.4.0:
   version "0.4.2"

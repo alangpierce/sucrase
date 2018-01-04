@@ -9,6 +9,7 @@ import {
   DEFAULT_COMPARE_WITH_BABEL,
   DEFAULT_SHOW_TOKENS,
   DEFAULT_TRANSFORMS,
+  DEFAULT_COMPARE_WITH_TYPESCRIPT,
 } from "./Constants";
 import Editor from "./Editor";
 import OptionBox from "./OptionBox";
@@ -21,6 +22,7 @@ class App extends Component {
     this.state = {
       code: INITIAL_CODE,
       compareWithBabel: DEFAULT_COMPARE_WITH_BABEL,
+      compareWithTypeScript: DEFAULT_COMPARE_WITH_TYPESCRIPT,
       showTokens: DEFAULT_SHOW_TOKENS,
       // Object with a true value for any selected transform keys.
       selectedTransforms: DEFAULT_TRANSFORMS.reduce((o, name) => ({...o, [name]: true}), {}),
@@ -28,6 +30,8 @@ class App extends Component {
       sucraseTimeMs: null,
       babelCode: "",
       babelTimeMs: null,
+      typeScriptCode: "",
+      typeScriptTimeMs: null,
       tokensStr: "",
       showMore: false,
     };
@@ -40,6 +44,7 @@ class App extends Component {
     if (
       hashState &&
       (hashState.compareWithBabel != null ||
+        hashState.compareWithTypeScript ||
         hashState.showTokens != null ||
         (hashState.selectedTransforms &&
           TRANSFORMS.some(
@@ -50,8 +55,6 @@ class App extends Component {
     }
 
     this.editors = {};
-    this._handleCodeChange = this._handleCodeChange.bind(this);
-    this._toggleCompareWithBabel = this._toggleCompareWithBabel.bind(this);
   }
 
   componentDidMount() {
@@ -65,6 +68,7 @@ class App extends Component {
           compressedCode,
           selectedTransforms: this.state.selectedTransforms,
           compareWithBabel: this.state.compareWithBabel,
+          compareWithTypeScript: this.state.compareWithTypeScript,
           showTokens: this.state.showTokens,
         });
       },
@@ -84,23 +88,28 @@ class App extends Component {
   }
 
   postConfigToWorker() {
-    this.setState({sucraseTimeMs: "LOADING", babelTimeMs: "LOADING"});
+    this.setState({sucraseTimeMs: "LOADING", babelTimeMs: "LOADING", typeScriptTimeMs: "LOADING"});
     WorkerClient.updateConfig({
       compareWithBabel: this.state.compareWithBabel,
+      compareWithTypeScript: this.state.compareWithTypeScript,
       code: this.state.code,
       selectedTransforms: this.state.selectedTransforms,
       showTokens: this.state.showTokens,
     });
   }
 
-  _handleCodeChange(newCode) {
+  _handleCodeChange = (newCode) => {
     this.setState({
       code: newCode,
     });
-  }
+  };
 
   _toggleCompareWithBabel = () => {
     this.setState({compareWithBabel: !this.state.compareWithBabel});
+  };
+
+  _toggleCompareWithTypeScript = () => {
+    this.setState({compareWithTypeScript: !this.state.compareWithTypeScript});
   };
 
   _toggleShowTokens = () => {
@@ -108,7 +117,15 @@ class App extends Component {
   };
 
   render() {
-    const {sucraseCode, sucraseTimeMs, babelCode, babelTimeMs, tokensStr} = this.state;
+    const {
+      sucraseCode,
+      sucraseTimeMs,
+      babelCode,
+      babelTimeMs,
+      typeScriptCode,
+      typeScriptTimeMs,
+      tokensStr,
+    } = this.state;
     return (
       <div className="App">
         <span className="App-title">Sucrase</span>
@@ -147,9 +164,14 @@ class App extends Component {
               title="Settings"
               options={[
                 {
-                  text: "Compare with babel",
+                  text: "Compare with Babel",
                   checked: this.state.compareWithBabel,
                   onToggle: this._toggleCompareWithBabel,
+                },
+                {
+                  text: "Compare with TypeScript",
+                  checked: this.state.compareWithTypeScript,
+                  onToggle: this._toggleCompareWithTypeScript,
                 },
                 {
                   text: "Show tokens",
@@ -193,6 +215,15 @@ class App extends Component {
               label="Transformed with Babel"
               code={babelCode}
               timeMs={babelTimeMs}
+              isReadOnly={true}
+            />
+          )}
+          {this.state.compareWithTypeScript && (
+            <Editor
+              ref={(e) => (this.editors["typescript"] = e)}
+              label="Transformed with TypeScript"
+              code={typeScriptCode}
+              timeMs={typeScriptTimeMs}
               isReadOnly={true}
             />
           )}

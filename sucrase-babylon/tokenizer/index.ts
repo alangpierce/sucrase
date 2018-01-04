@@ -1,10 +1,9 @@
 /* eslint max-len: 0 */
 
-// @ts-ignore
-import * as charCodes from "charcodes";
 import {Options} from "../options";
 import LocationParser from "../parser/location";
 import {Comment} from "../types";
+import * as charCodes from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart, isKeyword} from "../util/identifier";
 import {Position, SourceLocation} from "../util/location";
 import {isNewLine, lineBreak, lineBreakG, nonASCIIwhitespace} from "../util/whitespace";

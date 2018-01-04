@@ -3,6 +3,7 @@ import * as Base64 from "base64-js";
 
 import {
   DEFAULT_COMPARE_WITH_BABEL,
+  DEFAULT_COMPARE_WITH_TYPESCRIPT,
   DEFAULT_SHOW_TOKENS,
   DEFAULT_TRANSFORMS,
   INITIAL_CODE,
@@ -14,6 +15,7 @@ export function saveHashState({
   compressedCode,
   selectedTransforms,
   compareWithBabel,
+  compareWithTypeScript,
   showTokens,
 }) {
   const components = [];
@@ -27,6 +29,9 @@ export function saveHashState({
   }
   if (compareWithBabel !== DEFAULT_COMPARE_WITH_BABEL) {
     components.push(`compareWithBabel=${compareWithBabel}`);
+  }
+  if (compareWithTypeScript !== DEFAULT_COMPARE_WITH_TYPESCRIPT) {
+    components.push(`compareWithTypeScript=${compareWithTypeScript}`);
   }
   if (showTokens !== DEFAULT_SHOW_TOKENS) {
     components.push(`showTokens=${showTokens}`);
@@ -70,7 +75,7 @@ export function loadHashState() {
         result.code = window.decodeURIComponent(value);
       } else if (key === "compressedCode") {
         result.code = decompressCode(window.decodeURIComponent(value));
-      } else if (["compareWithBabel", "showTokens"].includes(key)) {
+      } else if (["compareWithBabel", "compareWithTypeScript", "showTokens"].includes(key)) {
         result[key] = value === "true";
       }
     }

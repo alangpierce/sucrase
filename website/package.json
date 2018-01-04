@@ -45,6 +45,7 @@
     "style-loader": "0.18.2",
     "sucrase": "^1.8.0",
     "sw-precache-webpack-plugin": "0.11.4",
+    "typescript": "^2.6.2",
     "uglifyjs-webpack-plugin": "^1.1.4",
     "url-loader": "0.5.9",
     "webpack": "3.5.1",

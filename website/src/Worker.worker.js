@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-globals */
 import * as Babel from "@babel/standalone";
 import * as Sucrase from "sucrase";
+import * as TypeScript from "typescript";
 
 import {TRANSFORMS} from "./Constants";
 import {compressCode} from "./URLHashState";
@@ -25,6 +26,8 @@ function processEvent(data) {
     return runSucrase().code;
   } else if (data.type === "RUN_BABEL") {
     return runBabel().code;
+  } else if (data.type === "RUN_TYPESCRIPT") {
+    return runTypeScript().code;
   } else if (data.type === "COMPRESS_CODE") {
     return compressCode(config.code);
   } else if (data.type === "GET_TOKENS") {
@@ -33,6 +36,8 @@ function processEvent(data) {
     return runSucrase().time;
   } else if (data.type === "PROFILE_BABEL") {
     return runBabel().time;
+  } else if (data.type === "PROFILE_TYPESCRIPT") {
+    return runTypeScript().time;
   }
 }
 
@@ -64,6 +69,31 @@ function runBabel() {
         plugins: babelPlugins,
         parserOpts: {plugins: ["jsx", "classProperties"]},
       }).code,
+  );
+}
+
+function runTypeScript() {
+  for (const {name} of TRANSFORMS) {
+    if (["typescript", "imports", "jsx"].includes(name)) {
+      continue;
+    }
+    if (config.selectedTransforms[name]) {
+      return {code: `Transform "${name}" is not valid in TypeScript.`};
+    }
+  }
+  return runAndProfile(
+    () =>
+      TypeScript.transpileModule(config.code, {
+        compilerOptions: {
+          module: config.selectedTransforms.imports
+            ? TypeScript.ModuleKind.CommonJS
+            : TypeScript.ModuleKind.ESNext,
+          jsx: config.selectedTransforms.jsx
+            ? TypeScript.JsxEmit.React
+            : TypeScript.JsxEmit.Preserve,
+          target: TypeScript.ScriptTarget.ESNext,
+        },
+      }).outputText,
   );
 }
 

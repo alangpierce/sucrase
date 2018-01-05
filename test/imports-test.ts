@@ -231,7 +231,7 @@ exports.a = a; exports.b = b;
         return 5;
       }
     `,
-      `'use strict'; function _interopRequireWildcard2(obj) { \
+      `"use strict"; function _interopRequireWildcard2(obj) { \
 if (obj && obj.__esModule) { return obj; } else { var newObj = {}; \
 if (obj != null) { for (var key in obj) { \
 if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } \

@@ -12,7 +12,7 @@ describe("typescript transform", () => {
       const x = 0;
       console.log(x as string);
     `,
-      `${PREFIX}
+      `"use strict";
       const x = 0;
       console.log(x );
     `,
@@ -25,7 +25,7 @@ describe("typescript transform", () => {
       const as = "Hello";
       console.log(as);
     `,
-      `${PREFIX}
+      `"use strict";
       const as = "Hello";
       console.log(as);
     `,
@@ -42,7 +42,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `${PREFIX}
+      `"use strict";
       class A {
         
          c() {
@@ -63,7 +63,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `${PREFIX}
+      `"use strict";
       class A {
         
         constructor() {;this.x = 1;
@@ -84,7 +84,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `${PREFIX}
+      `"use strict";
       class A extends B {
         
         constructor(a) {
@@ -102,7 +102,7 @@ describe("typescript transform", () => {
         x = 1;
       }
     `,
-      `${PREFIX}
+      `"use strict";
       class A {constructor() { this.x = 1; }
         
       }
@@ -117,7 +117,7 @@ describe("typescript transform", () => {
         x = 1;
       }
     `,
-      `${PREFIX}
+      `"use strict";
       class A extends B {constructor(...args) { super(...args); this.x = 1; }
         
       }
@@ -132,7 +132,7 @@ describe("typescript transform", () => {
         args = 1;
       }
     `,
-      `${PREFIX}
+      `"use strict";
       class A extends B {constructor(...args2) { super(...args2); this.args = 1; }
         
       }
@@ -148,7 +148,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `${PREFIX}
+      `"use strict";
       class A {
         constructor( x) {;this.x = x;
         }
@@ -166,7 +166,7 @@ describe("typescript transform", () => {
       const a = (x)!(y);
       const b = x + !y;
     `,
-      `${PREFIX}
+      `"use strict";
       const x = 1;
       const y = x;
       const z = !x; 
@@ -184,7 +184,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `${PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        class Foo {
         static run() {
         }
@@ -201,7 +201,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `${PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        class Foo {
         async run() {
         }
@@ -217,7 +217,7 @@ describe("typescript transform", () => {
         return x === 0;
       }
     `,
-      `${PREFIX}
+      `"use strict";
       function foo(x) {
         return x === 0;
       }
@@ -232,7 +232,7 @@ describe("typescript transform", () => {
         return list.reduce((memo, item) => memo.concat(map(item)), [] as Array<U>);
       }
     `,
-      `${PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        function flatMap(list, map) {
         return list.reduce((memo, item) => memo.concat(map(item)), [] );
       } exports.default = flatMap;
@@ -246,7 +246,7 @@ describe("typescript transform", () => {
       export interface A extends B {
       }
     `,
-      `${PREFIX}
+      `"use strict";
       
 
     `,
@@ -270,16 +270,16 @@ describe("typescript transform", () => {
         return true;
       }
     `,
-      `${PREFIX}
-      var _a = require('a'); var _a2 = _interopRequireDefault(_a);
+      `"use strict";
+      var _a = require('a');
       
       require('c');
-      var _d = require('d'); var _d2 = _interopRequireDefault(_d);
+      var _d = require('d');
       
       
       
       function f(a) {
-        return a instanceof (0, _a2.default);
+        return a instanceof (0, _a.default);
       }
       function g(b) {
         return true;
@@ -296,7 +296,7 @@ describe("typescript transform", () => {
         f: any = function() {};
       }
     `,
-      `${PREFIX}
+      `"use strict";
       class A {constructor() { this.f = function() {}; }
         
         
@@ -310,7 +310,7 @@ describe("typescript transform", () => {
       `
       export abstract class A {}
     `,
-      `${PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        class A {} exports.A = A;
     `,
     );
@@ -321,7 +321,7 @@ describe("typescript transform", () => {
       `
       values.filter((node): node is Node => node !== null);
     `,
-      `${PREFIX}
+      `"use strict";
       values.filter((node) => node !== null);
     `,
     );
@@ -334,7 +334,7 @@ describe("typescript transform", () => {
       values.filter<Node>((node): node is Node => node !== null);
       const c = new Cache<number>();
     `,
-      `${PREFIX}
+      `"use strict";
       const f = f(y);
       values.filter((node) => node !== null);
       const c = new Cache();
@@ -351,7 +351,7 @@ describe("typescript transform", () => {
         "Hello, world" = 2;
       }
     `,
-      `${PREFIX}
+      `"use strict";
       class A {constructor() { this[a + b] = 3;this[0] = 1;this["Hello, world"] = 2; }
         
         
@@ -370,7 +370,7 @@ describe("typescript transform", () => {
         C
       }
     `,
-      `${PREFIX}
+      `"use strict";
       var Foo; (function (Foo) {
         const A = 0; Foo[Foo["A"] = A] = "A";
         const B = A + 1; Foo[Foo["B"] = B] = "B";
@@ -389,7 +389,7 @@ describe("typescript transform", () => {
         C = "sea",
       }
     `,
-      `${PREFIX}
+      `"use strict";
       var Foo; (function (Foo) {
         const A = "eh"; Foo["A"] = A;
         const B = "bee"; Foo["B"] = B;
@@ -414,7 +414,7 @@ describe("typescript transform", () => {
         "'",
       }
     `,
-      `${PREFIX}
+      `"use strict";
       var Foo; (function (Foo) {
         const A = 15.5; Foo[Foo["A"] = A] = "A";
         Foo[Foo["Hello world"] = A / 2] = "Hello world";
@@ -439,7 +439,7 @@ describe("typescript transform", () => {
         console.log(x);
       }
     `,
-      `${PREFIX}
+      `"use strict";
       
 
       function foo(x) {
@@ -457,7 +457,7 @@ describe("typescript transform", () => {
         export = result;
       }
     `,
-      `${PREFIX}
+      `"use strict";
       
 
 
@@ -472,7 +472,7 @@ describe("typescript transform", () => {
       export declare class Foo {
       }
     `,
-      `${PREFIX}
+      `"use strict";
       
 
     `,
@@ -486,7 +486,7 @@ describe("typescript transform", () => {
         return "Hello!";
       }
     `,
-      `${PREFIX}
+      `"use strict";
       function foo(declare) {
         return "Hello!";
       }
@@ -503,7 +503,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `${PREFIX}
+      `"use strict";
       class Foo {
         bar(readonly) {
           console.log(readonly);
@@ -519,9 +519,22 @@ describe("typescript transform", () => {
       export default abstract class Foo {
       }
     `,
-      `${PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        class Foo {
       } exports.default = Foo;
+    `,
+    );
+  });
+
+  it("allows calling a function imported via `import *` with TypeScript enabled", () => {
+    assertTypeScriptResult(
+      `
+      import * as f from './myFunc';
+      console.log(f());
+    `,
+      `"use strict";
+      var _myFunc = require('./myFunc'); var f = _myFunc;
+      console.log(f());
     `,
     );
   });

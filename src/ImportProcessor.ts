@@ -18,8 +18,11 @@ type ImportInfo = {
 };
 
 /**
- * Class responsible for preprocessing and bookkeeping import and export
- * declarations within the file.
+ * Class responsible for preprocessing and bookkeeping import and export declarations within the
+ * file.
+ *
+ * TypeScript uses a simpler mechanism that does not use functions like interopRequireDefault and
+ * interopRequireWildcard, so we also allow that mode for compatibility.
  */
 export default class ImportProcessor implements IdentifierReplacer {
   private importInfoByPath: Map<string, ImportInfo> = new Map();
@@ -30,9 +33,16 @@ export default class ImportProcessor implements IdentifierReplacer {
   private interopRequireWildcardName: string;
   private interopRequireDefaultName: string;
 
-  constructor(readonly nameManager: NameManager, readonly tokens: TokenProcessor) {}
+  constructor(
+    readonly nameManager: NameManager,
+    readonly tokens: TokenProcessor,
+    readonly isTypeScript: boolean,
+  ) {}
 
   getPrefixCode(): string {
+    if (this.isTypeScript) {
+      return "";
+    }
     let prefix = "";
     prefix += `
       function ${this.interopRequireWildcardName}(obj) {
@@ -58,8 +68,10 @@ export default class ImportProcessor implements IdentifierReplacer {
   }
 
   preprocessTokens(): void {
-    this.interopRequireWildcardName = this.nameManager.claimFreeName("_interopRequireWildcard");
-    this.interopRequireDefaultName = this.nameManager.claimFreeName("_interopRequireDefault");
+    if (!this.isTypeScript) {
+      this.interopRequireWildcardName = this.nameManager.claimFreeName("_interopRequireWildcard");
+      this.interopRequireDefaultName = this.nameManager.claimFreeName("_interopRequireDefault");
+    }
 
     for (let i = 0; i < this.tokens.tokens.length; i++) {
       if (isMaybePropertyName(this.tokens, i)) {
@@ -123,16 +135,22 @@ export default class ImportProcessor implements IdentifierReplacer {
       }
 
       const primaryImportName = this.getFreeIdentifierForPath(path);
-      const secondaryImportName =
-        wildcardNames.length > 0 ? wildcardNames[0] : this.getFreeIdentifierForPath(path);
+      let secondaryImportName;
+      if (this.isTypeScript) {
+        secondaryImportName = primaryImportName;
+      } else {
+        secondaryImportName =
+          wildcardNames.length > 0 ? wildcardNames[0] : this.getFreeIdentifierForPath(path);
+      }
       let requireCode = `var ${primaryImportName} = require('${path}');`;
       if (wildcardNames.length > 0) {
         for (const wildcardName of wildcardNames) {
-          requireCode += ` var ${wildcardName} = ${
-            this.interopRequireWildcardName
-          }(${primaryImportName});`;
+          const moduleExpr = this.isTypeScript
+            ? primaryImportName
+            : `${this.interopRequireWildcardName}(${primaryImportName})`;
+          requireCode += ` var ${wildcardName} = ${moduleExpr};`;
         }
-      } else if (defaultNames.length > 0) {
+      } else if (defaultNames.length > 0 && secondaryImportName !== primaryImportName) {
         requireCode += ` var ${secondaryImportName} = ${
           this.interopRequireDefaultName
         }(${primaryImportName});`;

@@ -115,7 +115,7 @@ describe("sucrase", () => {
         }
       }
     `,
-      `${PREFIX}
+      `"use strict";
       class A {
         [b]() {
         }
@@ -136,7 +136,7 @@ describe("sucrase", () => {
         }
       }
     `,
-      `${PREFIX}
+      `"use strict";
       class A {
         get foo() {
           return 3;
@@ -155,7 +155,7 @@ describe("sucrase", () => {
       if (foo.case === 3) {
       }
     `,
-      `${PREFIX}
+      `"use strict";
       if (foo.case === 3) {
       }
     `,
@@ -173,7 +173,7 @@ describe("sucrase", () => {
         }
       }
     `,
-      `${PREFIX}
+      `"use strict";
       function foo() {
         outer: switch (a) {
           default:

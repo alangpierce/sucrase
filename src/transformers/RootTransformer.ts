@@ -17,7 +17,7 @@ export default class RootTransformer {
   constructor(readonly tokens: TokenProcessor, transforms: Array<Transform>) {
     this.nameManager = new NameManager(tokens);
     const importProcessor = transforms.includes("imports")
-      ? new ImportProcessor(this.nameManager, tokens)
+      ? new ImportProcessor(this.nameManager, tokens, transforms.includes("typescript"))
       : null;
     const identifierReplacer = importProcessor || {getIdentifierReplacement: () => null};
 

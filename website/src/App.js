@@ -81,6 +81,7 @@ class App extends Component {
       this.state.code !== prevState.code ||
       this.state.selectedTransforms !== prevState.selectedTransforms ||
       this.state.compareWithBabel !== prevState.compareWithBabel ||
+      this.state.compareWithTypeScript !== prevState.compareWithTypeScript ||
       this.state.showTokens !== prevState.showTokens
     ) {
       this.postConfigToWorker();

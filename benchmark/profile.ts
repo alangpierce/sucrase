@@ -7,12 +7,12 @@ function main(): void {
   console.log(
     "Profiling Sucrase on about 100,000 LOC. Make sure you have Chrome DevTools for Node open.",
   );
-  const code = fs.readFileSync("./benchmark/sample.js").toString();
+  const code = fs.readFileSync("./benchmark/sample/sample.tsx").toString();
   // tslint:disable-next-line no-any
   (console as any).profile("Sucrase");
   for (let i = 0; i < 1000; i++) {
     sucrase.transform(code, {
-      transforms: ["jsx", "imports", "add-module-exports", "react-display-name"],
+      transforms: ["jsx", "imports", "typescript"],
     });
   }
   // tslint:disable-next-line no-any

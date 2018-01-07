@@ -19,7 +19,7 @@ describe("typescript transform", () => {
     );
   });
 
-  it.skip("properly handles variables named 'as'", () => {
+  it("properly handles variables named 'as'", () => {
     assertTypeScriptResult(
       `
       const as = "Hello";

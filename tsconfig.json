@@ -24,6 +24,7 @@
     "node_modules",
     "dist/**/*",
     "build/**/*",
-    "benchmark/sample"
+    "benchmark/sample",
+    "example-runner/example-repos"
   ]
 }

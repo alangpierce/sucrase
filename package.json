@@ -23,6 +23,7 @@
     "lint": "eslint './src/**/*.ts' './test/**/*.ts' './sucrase-babylon/**/*.ts'",
     "profile": "node --inspect-brk ./build/benchmark/profile.js",
     "prepublish": "yarn run build",
+    "run-examples": "ts-node ./example-runner/example-runner.ts",
     "test": "yarn lint && tsc --noEmit && mocha test",
     "test-dist": "./node_modules/.bin/mocha build/test --opts test/mocha-self-test.opts"
   },

@@ -1,0 +1,25 @@
+diff --git a/package.json b/package.json
+index aa29f9f..f246d6e 100644
+--- a/package.json
++++ b/package.json
+@@ -11,11 +11,9 @@
+   "scripts": {
+     "lint": "tslint --config tslint.json --project tsconfig.json --type-check",
+     "lint-fix": "tslint --config tslint.json --project tsconfig.json --type-check --fix",
+-    "pretest": "yarn run build",
+     "test": "mocha 'test/**/*.ts'",
+     "prebuild": "rimraf dist && mkdirp dist && npm run lint",
+     "build": "script/build",
+-    "prepublish": "yarn run build",
+     "update-website": "ts-node ./script/update-website.ts"
+   },
+   "repository": {
+diff --git a/test/mocha.opts b/test/mocha.opts
+index 8ee2787..d433cdb 100644
+--- a/test/mocha.opts
++++ b/test/mocha.opts
+@@ -1,3 +1,3 @@
+---require ts-node/register
++--require sucrase/register/ts
+ --recursive
+ --timeout 10000

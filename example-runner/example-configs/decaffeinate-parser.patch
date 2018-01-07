@@ -1,0 +1,20 @@
+diff --git a/package.json b/package.json
+index e2e9927..548a42f 100644
+--- a/package.json
++++ b/package.json
+@@ -9,7 +9,6 @@
+     "build": "./script/build",
+     "lint": "eslint src test && tslint --config tslint.json --project tsconfig.json --type-check",
+     "lint-fix": "eslint src test --fix && tslint --config tslint.json --project tsconfig.json --type-check --fix",
+-    "pretest": "npm run lint",
+     "test": "mocha"
+   },
+   "keywords": [
+diff --git a/test/mocha.opts b/test/mocha.opts
+index 1aee96b..d084985 100644
+--- a/test/mocha.opts
++++ b/test/mocha.opts
+@@ -1,2 +1,2 @@
+---compilers ts:ts-node/register,js:babel-register
++--compilers ts:sucrase/register/ts
+ --recursive

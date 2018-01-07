@@ -98,7 +98,7 @@ class TokenPreprocessor {
         this.forceContextUntilToken("string", "import");
       } else if (this.tokens.matches(["export", "{"])) {
         this.forceContextUntilToken("}", "namedExport");
-      } else if (this.startsWithKeyword(["as"])) {
+      } else if (this.tokens.matches(["as"])) {
         // Note that this does not yet properly handle actual variables named "as".
         this.processTypeAssertion();
       } else if (

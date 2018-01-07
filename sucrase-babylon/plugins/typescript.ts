@@ -1320,6 +1320,7 @@ export default (superClass: ParserClass): ParserClass =>
         !this.hasPrecedingLineBreak() &&
         this.eatContextual("as")
       ) {
+        this.state.tokens[this.state.tokens.length - 1].type = tt._as;
         const node: N.TsAsExpression = this.startNodeAt(leftStartPos, leftStartLoc);
         node.expression = left;
         node.typeAnnotation = this.tsParseType();

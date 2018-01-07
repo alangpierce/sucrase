@@ -197,6 +197,7 @@ export const keywords = {
   public: new KeywordTokenType("public"),
   private: new KeywordTokenType("private"),
   protected: new KeywordTokenType("protected"),
+  as: new KeywordTokenType("as"),
 };
 
 // Map keyword names to token types.

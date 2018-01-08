@@ -1,5 +1,4 @@
-// @flow
-
+import {IdentifierRole} from "../tokenizer";
 import {TokenType, types as tt} from "../tokenizer/types";
 import {
   ArrayPattern,
@@ -192,9 +191,12 @@ export default abstract class LValParser extends NodeUtils {
   parseBindingAtom(): Pattern {
     switch (this.state.type) {
       case tt._yield:
-      case tt.name:
+      case tt.name: {
         this.state.type = tt.name;
-        return this.parseBindingIdentifier();
+        const result = this.parseBindingIdentifier();
+        this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.Declaration;
+        return result;
+      }
 
       case tt.bracketL: {
         const node = this.startNode();

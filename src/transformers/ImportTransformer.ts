@@ -1,3 +1,4 @@
+import {IdentifierRole} from "../../sucrase-babylon/tokenizer";
 import ImportProcessor from "../ImportProcessor";
 import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
@@ -149,51 +150,13 @@ export default class ImportTransformer extends Transformer {
 
   private processIdentifier(): boolean {
     const token = this.tokens.currentToken();
-    const lastToken = this.tokens.tokens[this.tokens.currentIndex() - 1];
-    const nextToken = this.tokens.tokens[this.tokens.currentIndex() + 1];
-    // Skip identifiers that are part of property accesses.
-    if (lastToken && lastToken.type.label === ".") {
-      return false;
-    }
 
-    // For shorthand object keys, we need to expand them and replace only the value.
-    if (
-      token.contextName === "object" &&
-      lastToken &&
-      (lastToken.type.label === "," || lastToken.type.label === "{") &&
-      nextToken &&
-      (nextToken.type.label === "," || nextToken.type.label === "}")
-    ) {
+    if (token.identifierRole === IdentifierRole.ObjectShorthand) {
       return this.processObjectShorthand();
     }
 
-    // For non-shorthand object keys, just ignore them.
-    if (
-      token.contextName === "object" &&
-      nextToken &&
-      nextToken.type.label === ":" &&
-      lastToken &&
-      (lastToken.type.label === "," || lastToken.type.label === "{")
-    ) {
-      return false;
-    }
-
-    // Object methods identifiers can be identified similarly, and they also
-    // could have the async keyword before them.
-    if (
-      token.contextName === "object" &&
-      nextToken &&
-      nextToken.type.label === "(" &&
-      lastToken &&
-      (lastToken.type.label === "," ||
-        lastToken.type.label === "{" ||
-        (lastToken.type.label === "name" && lastToken.value === "async"))
-    ) {
-      return false;
-    }
-
-    // Identifiers within class bodies must be method names.
-    if (token.contextName === "class") {
+    // JSX names should always be transformed.
+    if (token.type.label === "name" && token.identifierRole !== IdentifierRole.Access) {
       return false;
     }
     const replacement = this.importProcessor.getIdentifierReplacement(token.value);

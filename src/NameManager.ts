@@ -1,4 +1,5 @@
-import TokenProcessor, {Token} from "./TokenProcessor";
+import {Token} from "../sucrase-babylon/tokenizer";
+import TokenProcessor from "./TokenProcessor";
 
 export default class NameManager {
   private readonly usedNames: Set<string> = new Set();

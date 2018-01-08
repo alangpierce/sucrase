@@ -17,6 +17,7 @@ import {
 } from "../types";
 import {Pos, Position} from "../util/location";
 import {NodeUtils} from "./node";
+import { IdentifierRole } from '../tokenizer';
 
 export default abstract class LValParser extends NodeUtils {
   // Forward-declaration: defined in expression.js
@@ -192,9 +193,12 @@ export default abstract class LValParser extends NodeUtils {
   parseBindingAtom(): Pattern {
     switch (this.state.type) {
       case tt._yield:
-      case tt.name:
+      case tt.name: {
         this.state.type = tt.name;
-        return this.parseBindingIdentifier();
+        const result = this.parseBindingIdentifier();
+        this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.Declaration;
+        return result;
+      }
 
       case tt.bracketL: {
         const node = this.startNode();

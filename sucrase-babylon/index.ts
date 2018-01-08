@@ -6,13 +6,11 @@ import {types as tokTypes} from "./tokenizer/types";
 
 import {Expression, File} from "./types";
 
-import estreePlugin from "./plugins/estree";
 import flowPlugin from "./plugins/flow";
 import jsxPlugin from "./plugins/jsx";
 import typescriptPlugin from "./plugins/typescript";
 import {Token} from "./tokenizer";
 
-plugins.estree = estreePlugin;
 plugins.flow = flowPlugin;
 plugins.jsx = jsxPlugin;
 plugins.typescript = typescriptPlugin;
@@ -54,7 +52,7 @@ function getParserClass(pluginsFromOptions: ReadonlyArray<string>): ParserClass 
 
   // Filter out just the plugins that have an actual mixin associated with them.
   let pluginList = pluginsFromOptions.filter(
-    (p) => p === "estree" || p === "flow" || p === "jsx" || p === "typescript",
+    (p) => p === "flow" || p === "jsx" || p === "typescript",
   );
 
   if (pluginList.indexOf("flow") >= 0) {
@@ -71,12 +69,6 @@ function getParserClass(pluginsFromOptions: ReadonlyArray<string>): ParserClass 
     // ensure typescript plugin loads last
     pluginList = pluginList.filter((plugin) => plugin !== "typescript");
     pluginList.push("typescript");
-  }
-
-  if (pluginList.indexOf("estree") >= 0) {
-    // ensure estree plugin loads first
-    pluginList = pluginList.filter((plugin) => plugin !== "estree");
-    pluginList.unshift("estree");
   }
 
   const key = pluginList.join("/");

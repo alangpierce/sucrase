@@ -861,20 +861,6 @@ export type FlowTypeAnnotation = Node;
 export type FlowVariance = Node;
 export type FlowClassImplements = Node;
 
-// estree
-
-export type EstreeProperty = NodeBase & {
-  type: "Property";
-  shorthand: boolean;
-  key: Expression;
-  computed: boolean;
-  value: Expression;
-  decorators: ReadonlyArray<Decorator>;
-  kind?: "get" | "set" | "init" | "method";
-
-  variance?: FlowVariance | null;
-};
-
 // === === === ===
 // TypeScript
 // === === === ===

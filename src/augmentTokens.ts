@@ -1,4 +1,5 @@
-import TokenProcessor, {Token, TokenContext} from "./TokenProcessor";
+import {Token, TokenContext} from "../sucrase-babylon/tokenizer";
+import TokenProcessor from "./TokenProcessor";
 import {isTypeBinop, isTypeExpressionAtom, isTypeExpressionPrefix} from "./util/TokenUtil";
 
 export default function augmentTokens(code: string, tokens: Array<Token>): void {

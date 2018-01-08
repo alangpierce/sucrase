@@ -1,34 +1,4 @@
-export type TokenContext =
-  | "block"
-  | "parens"
-  | "brackets"
-  | "object"
-  | "class"
-  | "classFieldExpression"
-  | "jsxTag"
-  | "jsxChild"
-  | "jsxExpression"
-  | "templateExpr"
-  | "switchCaseCondition"
-  | "type"
-  | "typeParameter"
-  | "import"
-  | "namedExport";
-
-export type TokenType = {
-  label: string;
-};
-
-export type Token = {
-  type: TokenType;
-  start: number;
-  end: number;
-  // tslint:disable-next-line no-any
-  value: any;
-  contextName?: TokenContext;
-  contextStartIndex?: number;
-  parentContextStartIndex?: number | null;
-};
+import {Token} from "../sucrase-babylon/tokenizer";
 
 export default class TokenProcessor {
   private resultCode: string = "";

@@ -1,4 +1,5 @@
-import {Token, TokenType} from "../TokenProcessor";
+import {Token} from "../../sucrase-babylon/tokenizer";
+import {TokenType} from "../../sucrase-babylon/tokenizer/types";
 
 /**
  * An "atom" in this context is a token that is an expression all by itself,

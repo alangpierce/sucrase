@@ -78,6 +78,23 @@ allowedNumericSeparatorSiblings.hex = [
   charCodes.lowercaseF,
 ];
 
+export type TokenContext =
+  | "block"
+  | "parens"
+  | "brackets"
+  | "object"
+  | "class"
+  | "classFieldExpression"
+  | "jsxTag"
+  | "jsxChild"
+  | "jsxExpression"
+  | "templateExpr"
+  | "switchCaseCondition"
+  | "type"
+  | "typeParameter"
+  | "import"
+  | "namedExport";
+
 // Object type used to represent tokens. Note that normally, tokens
 // simply exist as properties on the parser object. This is only
 // used for the onToken callback and the external tokenizer.
@@ -92,10 +109,14 @@ export class Token {
   }
 
   type: TokenType;
-  value: {};
+  // tslint:disable-next-line no-any
+  value: any;
   start: number;
   end: number;
   loc: SourceLocation;
+  contextName?: TokenContext;
+  contextStartIndex?: number;
+  parentContextStartIndex?: number | null;
 }
 
 // ## Tokenizer

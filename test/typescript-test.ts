@@ -538,4 +538,55 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("treats const enums as regular enums", () => {
+    assertTypeScriptResult(
+      `
+      const enum A {
+        Foo,
+        Bar,
+      }
+    `,
+      `"use strict";
+      var A; (function (A) {
+        const Foo = 0; A[A["Foo"] = Foo] = "Foo";
+        const Bar = Foo + 1; A[A["Bar"] = Bar] = "Bar";
+      })(A || (A = {}));
+    `,
+    );
+  });
+
+  it("allows `export enum`", () => {
+    assertTypeScriptResult(
+      `
+      export enum A {
+        Foo,
+        Bar,
+      }
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      var A; (function (A) {
+        const Foo = 0; A[A["Foo"] = Foo] = "Foo";
+        const Bar = Foo + 1; A[A["Bar"] = Bar] = "Bar";
+      })(A || (exports.A = A = {}));
+    `,
+    );
+  });
+
+  it("allows exported const enums", () => {
+    assertTypeScriptResult(
+      `
+      export const enum A {
+        Foo,
+        Bar,
+      }
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      var A; (function (A) {
+        const Foo = 0; A[A["Foo"] = Foo] = "Foo";
+        const Bar = Foo + 1; A[A["Bar"] = Bar] = "Bar";
+      })(A || (exports.A = A = {}));
+    `,
+    );
+  });
 });

@@ -198,6 +198,7 @@ export const keywords = {
   private: new KeywordTokenType("private"),
   protected: new KeywordTokenType("protected"),
   as: new KeywordTokenType("as"),
+  enum: new KeywordTokenType("enum"),
 };
 
 // Map keyword names to token types.

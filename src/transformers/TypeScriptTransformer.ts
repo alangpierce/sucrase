@@ -55,8 +55,15 @@ export default class TypeScriptTransformer extends Transformer {
       this.tokens.removeInitialToken();
       return true;
     }
-    if (this.tokens.matchesName("enum")) {
+    if (this.tokens.matches(["enum"]) || this.tokens.matches(["const", "enum"])) {
       this.processEnum();
+      return true;
+    }
+    if (
+      this.tokens.matches(["export", "enum"]) ||
+      this.tokens.matches(["export", "const", "enum"])
+    ) {
+      this.processEnum(true);
       return true;
     }
     return false;
@@ -106,15 +113,23 @@ export default class TypeScriptTransformer extends Transformer {
     return false;
   }
 
-  processEnum(): void {
+  processEnum(isExport: boolean = false): void {
+    // We might have "export const enum", so just remove all relevant tokens.
     this.tokens.removeInitialToken();
+    while (this.tokens.matches(["const"]) || this.tokens.matches(["enum"])) {
+      this.tokens.removeToken();
+    }
     const enumName = this.tokens.currentToken().value;
     this.tokens.removeToken();
     this.tokens.appendCode(`var ${enumName}; (function (${enumName})`);
     this.tokens.copyExpectedToken("{");
     this.processEnumBody(enumName);
     this.tokens.copyExpectedToken("}");
-    this.tokens.appendCode(`)(${enumName} || (${enumName} = {}));`);
+    if (isExport) {
+      this.tokens.appendCode(`)(${enumName} || (exports.${enumName} = ${enumName} = {}));`);
+    } else {
+      this.tokens.appendCode(`)(${enumName} || (${enumName} = {}));`);
+    }
   }
 
   /**

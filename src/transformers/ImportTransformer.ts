@@ -55,8 +55,7 @@ export default class ImportTransformer extends Transformer {
       this.tokens.currentToken().contextName !== "type"
     ) {
       this.hadExport = true;
-      this.processExport();
-      return true;
+      return this.processExport();
     }
     if (this.tokens.matches(["name"]) || this.tokens.matches(["jsxName"])) {
       return this.processIdentifier();
@@ -217,11 +216,18 @@ export default class ImportTransformer extends Transformer {
     return true;
   }
 
-  processExport(): void {
+  processExport(): boolean {
+    if (
+      this.tokens.matches(["export", "enum"]) ||
+      this.tokens.matches(["export", "const", "enum"])
+    ) {
+      // Let the TypeScript transform handle it.
+      return false;
+    }
     if (this.tokens.matches(["export", "default"])) {
       this.processExportDefault();
       this.hadDefaultExport = true;
-      return;
+      return true;
     }
     this.hadNamedExport = true;
     if (
@@ -230,20 +236,25 @@ export default class ImportTransformer extends Transformer {
       this.tokens.matches(["export", "const"])
     ) {
       this.processExportVar();
+      return true;
     } else if (
       this.tokens.matches(["export", "function"]) ||
       this.tokens.matches(["export", "name", "function"])
     ) {
       this.processExportFunction();
+      return true;
     } else if (
       this.tokens.matches(["export", "class"]) ||
       this.tokens.matches(["export", "abstract", "class"])
     ) {
       this.processExportClass();
+      return true;
     } else if (this.tokens.matches(["export", "{"])) {
       this.processExportBindings();
+      return true;
     } else if (this.tokens.matches(["export", "*"])) {
       this.processExportStar();
+      return true;
     } else {
       throw new Error("Unrecognized export syntax.");
     }

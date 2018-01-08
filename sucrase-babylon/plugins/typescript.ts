@@ -1008,6 +1008,7 @@ export default (superClass: ParserClass): ParserClass =>
             // `const enum = 0;` not allowed because "enum" is a strict mode reserved word.
             this.expect(tt._const);
             this.expectContextual("enum");
+            this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
             return this.tsParseEnumDeclaration(nany as N.TsEnumDeclaration, /* isConst */ true);
           }
         // falls through
@@ -1078,6 +1079,7 @@ export default (superClass: ParserClass): ParserClass =>
         case "enum":
           if (next || this.match(tt.name)) {
             if (next) this.next();
+            this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
             return this.tsParseEnumDeclaration(node as N.TsEnumDeclaration, /* isConst */ false);
           }
           break;
@@ -1407,6 +1409,7 @@ export default (superClass: ParserClass): ParserClass =>
           const node: N.TsEnumDeclaration = this.startNode();
           this.expect(tt._const);
           this.expectContextual("enum");
+          this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
           return this.tsParseEnumDeclaration(node, /* isConst */ true);
         }
       }

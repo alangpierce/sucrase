@@ -1,6 +1,5 @@
 import {getTokens} from "../sucrase-babylon";
 import {Token} from "../sucrase-babylon/tokenizer/index";
-import {Comment} from "../sucrase-babylon/types";
 import augmentTokens from "./augmentTokens";
 import TokenProcessor from "./TokenProcessor";
 import RootTransformer from "./transformers/RootTransformer";
@@ -50,17 +49,13 @@ function getSucraseTokens(code: string, options: Options): Array<Token> {
     babylonPlugins = [...babylonPlugins, "typescript"];
   }
 
-  const originalTokens = getTokens(
+  const tokens = getTokens(
     code,
     {
       tokens: true,
       sourceType: "module",
       plugins: babylonPlugins,
     } as any /* tslint:disable-line no-any */,
-  );
-  const tokens: Array<Token> = originalTokens.filter<Token>(
-    (token: Token | Comment): token is Token =>
-      token.type !== "CommentLine" && token.type !== "CommentBlock",
   );
   augmentTokens(code, tokens);
   return tokens;

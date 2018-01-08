@@ -2,7 +2,6 @@
 
 import {Options} from "../options";
 import LocationParser from "../parser/location";
-import {Comment} from "../types";
 import * as charCodes from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart, isKeyword} from "../util/identifier";
 import {Position, SourceLocation} from "../util/location";
@@ -260,29 +259,6 @@ export default abstract class Tokenizer extends LocationParser {
     return (code << 10) + next - 0x35fdc00;
   }
 
-  pushComment(
-    block: boolean,
-    text: string,
-    start: number,
-    end: number,
-    startLoc: Position,
-    endLoc: Position,
-  ): void {
-    const comment: Comment = {
-      type: block ? "CommentBlock" : "CommentLine",
-      value: text,
-      start,
-      end,
-      loc: new SourceLocation(startLoc, endLoc),
-    };
-
-    if (!this.isLookahead) {
-      if (this.options.tokens) this.state.tokens.push(comment);
-      this.state.comments.push(comment);
-      this.addComment(comment);
-    }
-  }
-
   skipBlockComment(): void {
     const startLoc = this.state.curPosition();
     const start = this.state.pos;
@@ -297,15 +273,6 @@ export default abstract class Tokenizer extends LocationParser {
       ++this.state.curLine;
       this.state.lineStart = match.index + match[0].length;
     }
-
-    this.pushComment(
-      true,
-      this.input.slice(start + 2, end),
-      start,
-      this.state.pos,
-      startLoc,
-      this.state.curPosition(),
-    );
   }
 
   skipLineComment(startSkip: number): void {
@@ -323,15 +290,6 @@ export default abstract class Tokenizer extends LocationParser {
         ch = this.input.charCodeAt(this.state.pos);
       }
     }
-
-    this.pushComment(
-      false,
-      this.input.slice(start + startSkip, this.state.pos),
-      start,
-      this.state.pos,
-      startLoc,
-      this.state.curPosition(),
-    );
   }
 
   // Called at the start of the parse and after every token. Skips

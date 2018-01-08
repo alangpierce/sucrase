@@ -45,14 +45,6 @@ export default class State {
 
     this.tokens = [];
 
-    this.comments = [];
-
-    this.trailingComments = [];
-    this.leadingComments = [];
-    this.commentStack = [];
-    // @ts-ignore
-    this.commentPreviousNode = null;
-
     this.pos = 0;
     this.lineStart = 0;
     this.curLine = options.startLine;
@@ -135,16 +127,7 @@ export default class State {
   yieldInPossibleArrowParameters: N.YieldExpression | null;
 
   // Token store.
-  tokens: Array<Token | N.Comment>;
-
-  // Comment store.
-  comments: Array<N.Comment>;
-
-  // Comment attachment store
-  trailingComments: Array<N.Comment>;
-  leadingComments: Array<N.Comment>;
-  commentStack: Array<N.Node>;
-  commentPreviousNode: N.Node;
+  tokens: Array<Token>;
 
   // The current position of the tokenizer in the input.
   pos: number;

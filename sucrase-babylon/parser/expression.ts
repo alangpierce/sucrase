@@ -66,7 +66,6 @@ export default abstract class ExpressionParser extends LValParser {
     if (!this.match(tt.eof)) {
       this.unexpected();
     }
-    expr.comments = this.state.comments;
     return expr;
   }
 

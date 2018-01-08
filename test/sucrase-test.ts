@@ -184,4 +184,28 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("handles code with comments", () => {
+    assertResult(
+      `
+      /**
+       * This is a JSDoc comment.
+       */
+      function foo() {
+        // This is a variable;
+        const x = 3;
+      }
+    `,
+      `"use strict";
+      /**
+       * This is a JSDoc comment.
+       */
+      function foo() {
+        // This is a variable;
+        const x = 3;
+      }
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

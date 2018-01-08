@@ -18,6 +18,7 @@
 //
 // [opp]: http://en.wikipedia.org/wiki/Operator-precedence_parser
 
+import {IdentifierRole} from "../tokenizer";
 import {TokenType, types as tt} from "../tokenizer/types";
 import * as N from "../types";
 import {reservedWords} from "../util/identifier";
@@ -672,6 +673,7 @@ export default abstract class ExpressionParser extends LValParser {
           return node;
         }
 
+        this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.Access;
         return id;
       }
 
@@ -1313,6 +1315,8 @@ export default abstract class ExpressionParser extends LValParser {
       } else {
         prop.value = prop.key.__clone();
       }
+      this.state.tokens[this.state.tokens.length - 1].identifierRole =
+        IdentifierRole.ObjectShorthand;
       prop.shorthand = true;
 
       return this.finishNode(prop, "ObjectProperty");

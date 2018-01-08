@@ -94,6 +94,13 @@ export type TokenContext =
   | "import"
   | "namedExport";
 
+export enum IdentifierRole {
+  Access,
+  Declaration,
+  ObjectShorthand,
+  Assignment,
+}
+
 // Object type used to represent tokens. Note that normally, tokens
 // simply exist as properties on the parser object. This is only
 // used for the onToken callback and the external tokenizer.
@@ -116,6 +123,7 @@ export class Token {
   contextName?: TokenContext;
   contextStartIndex?: number;
   parentContextStartIndex?: number | null;
+  identifierRole?: IdentifierRole;
 }
 
 // ## Tokenizer

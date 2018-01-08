@@ -1,32 +1,11 @@
 import {Token} from "./tokenizer";
 import {SourceLocation} from "./util/location";
 
-/*
- * If making any changes to the AST, update:
- * - This repository:
- *   - This file
- *   - `ast` directory
- * - Babel repository:
- *   - packages/babel-types/src/definitions
- *   - packages/babel-generators/src/generators
- */
-
-export type Comment = {
-  type: "CommentBlock" | "CommentLine";
-  value: string;
-  start: number;
-  end: number;
-  loc: SourceLocation;
-};
-
 export interface NodeBase {
   start: number;
   end: number;
   loc: SourceLocation;
   range: [number, number];
-  leadingComments?: Array<Comment> | null;
-  trailingComments?: Array<Comment> | null;
-  innerComments?: Array<Comment> | null;
   type: string;
 
   // tslint:disable-next-line no-any
@@ -115,8 +94,7 @@ export type BlockStatementLike = Program | BlockStatement;
 export type File = NodeBase & {
   type: "File";
   program: Program;
-  comments: ReadonlyArray<Comment>;
-  tokens: ReadonlyArray<Token | Comment>;
+  tokens: Array<Token>;
 };
 
 export type Program = NodeBase & {

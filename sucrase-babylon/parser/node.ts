@@ -1,4 +1,4 @@
-import {Comment, Node as NodeType, NodeBase} from "../types";
+import {Node as NodeType, NodeBase} from "../types";
 import {Position, SourceLocation} from "../util/location";
 import Parser from "./index";
 import UtilParser from "./util";
@@ -22,9 +22,6 @@ class Node implements NodeBase {
   end: number;
   loc: SourceLocation;
   range: [number, number];
-  leadingComments: Array<Comment> | null;
-  trailingComments: Array<Comment> | null;
-  innerComments: Array<Comment> | null;
   extra: {[key: string]: {}};
 
   __clone(): this {
@@ -71,7 +68,6 @@ export class NodeUtils extends UtilParser {
     node.end = pos;
     node.loc.end = loc;
     if (this.options.ranges) node.range[1] = pos;
-    this.processComment(node);
     return node;
   }
 

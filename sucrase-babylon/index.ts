@@ -4,7 +4,7 @@ import Parser, {ParserClass, plugins} from "./parser";
 import "./tokenizer/context";
 import {types as tokTypes} from "./tokenizer/types";
 
-import {Comment, Expression, File} from "./types";
+import {Expression, File} from "./types";
 
 import estreePlugin from "./plugins/estree";
 import flowPlugin from "./plugins/flow";
@@ -17,7 +17,7 @@ plugins.flow = flowPlugin;
 plugins.jsx = jsxPlugin;
 plugins.typescript = typescriptPlugin;
 
-export function getTokens(input: string, options?: Options): ReadonlyArray<Token | Comment> {
+export function getTokens(input: string, options?: Options): Array<Token> {
   options = Object.assign({}, options, {tokens: true});
   return getParser(options, input).parse().tokens;
 }

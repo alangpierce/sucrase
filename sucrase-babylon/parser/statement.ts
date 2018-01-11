@@ -325,6 +325,14 @@ export default class StatementParser extends ExpressionParser {
     return this.finishNode(node, "DoWhileStatement");
   }
 
+  parseForStatement(node: N.Node): N.ForLike {
+    const startTokenIndex = this.state.tokens.length;
+    const result = this.parseAmbiguousForStatement(node);
+    const endTokenIndex = this.state.tokens.length;
+    this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: false});
+    return result;
+  }
+
   // Disambiguating between a `for` and a `for`/`in` or `for`/`of`
   // loop is non-trivial. Basically, we have to parse the init `var`
   // statement or expression, disallowing the `in` operator (see
@@ -332,8 +340,7 @@ export default class StatementParser extends ExpressionParser {
   // whether the next token is `in` or `of`. When there is no init
   // part (semicolon immediately after the opening parenthesis), it
   // is a regular `for` loop.
-
-  parseForStatement(node: N.Node): N.ForLike {
+  parseAmbiguousForStatement(node: N.Node): N.ForLike {
     this.next();
     this.state.labels.push(loopLabel);
 
@@ -425,6 +432,7 @@ export default class StatementParser extends ExpressionParser {
     node.discriminant = this.parseParenExpression();
     const cases: Array<N.SwitchCase> = [];
     node.cases = cases;
+    const startTokenIndex = this.state.tokens.length;
     this.expect(tt.braceL);
     this.state.labels.push(switchLabel);
 
@@ -459,6 +467,8 @@ export default class StatementParser extends ExpressionParser {
     }
     if (cur) this.finishNode(cur, "SwitchCase");
     this.next(); // Closing brace
+    const endTokenIndex = this.state.tokens.length;
+    this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: false});
     this.state.labels.pop();
     return this.finishNode(node, "SwitchStatement");
   }
@@ -482,7 +492,9 @@ export default class StatementParser extends ExpressionParser {
     if (this.match(tt._catch)) {
       const clause = this.startNode();
       this.next();
+      let catchBindingStartTokenIndex = null;
       if (this.match(tt.parenL)) {
+        catchBindingStartTokenIndex = this.state.tokens.length;
         this.expect(tt.parenL);
         clause.param = this.parseBindingAtom();
         const clashes: {} = Object.create(null);
@@ -493,6 +505,16 @@ export default class StatementParser extends ExpressionParser {
         clause.param = null;
       }
       clause.body = this.parseBlock();
+      if (catchBindingStartTokenIndex != null) {
+        // We need a special scope for the catch binding which includes the binding itself and the
+        // catch block.
+        const endTokenIndex = this.state.tokens.length;
+        this.state.scopes.push({
+          startTokenIndex: catchBindingStartTokenIndex,
+          endTokenIndex,
+          isFunctionScope: false,
+        });
+      }
       node.handler = this.finishNode(clause as N.CatchClause, "CatchClause");
     }
 
@@ -596,10 +618,13 @@ export default class StatementParser extends ExpressionParser {
   // strict"` declarations when `allowStrict` is true (used for
   // function bodies).
 
-  parseBlock(allowDirectives: boolean = false): N.BlockStatement {
+  parseBlock(allowDirectives: boolean = false, isFunctionScope: boolean = false): N.BlockStatement {
     const node = this.startNode();
+    const startTokenIndex = this.state.tokens.length;
     this.expect(tt.braceL);
     this.parseBlockBody(node as N.BlockStatementLike, allowDirectives, false, tt.braceR);
+    const endTokenIndex = this.state.tokens.length;
+    this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope});
     return this.finishNode(node as N.BlockStatement, "BlockStatement");
   }
 
@@ -799,6 +824,8 @@ export default class StatementParser extends ExpressionParser {
       allowExpressionBody,
     );
     const endTokenIndex = this.state.tokens.length;
+    // In addition to the block scope of the function body, we need a separate function-style scope
+    // that includes the params.
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
 
     this.state.inFunction = oldInFunc;

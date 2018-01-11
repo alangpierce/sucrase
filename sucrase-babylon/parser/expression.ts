@@ -27,7 +27,7 @@ import LValParser from "./lval";
 
 export default abstract class ExpressionParser extends LValParser {
   // Forward-declaration: defined in statement.js
-  abstract parseBlock(allowDirectives?: boolean): N.BlockStatement;
+  abstract parseBlock(allowDirectives?: boolean, isFunctionScope?: boolean): N.BlockStatement;
   abstract parseClass(node: N.Class, isStatement: boolean, optionalId?: boolean): N.Class;
   abstract parseDecorators(allowExport?: boolean): void;
   abstract parseFunction<T extends N.NormalFunction>(
@@ -1494,7 +1494,7 @@ export default abstract class ExpressionParser extends LValParser {
       this.state.inGenerator = node.generator;
       this.state.inFunction = true;
       this.state.labels = [];
-      node.body = this.parseBlock(true);
+      node.body = this.parseBlock(true /* allowDirectives */, true /* isFunctionScope */);
       this.state.inFunction = oldInFunc;
       this.state.inGenerator = oldInGen;
       this.state.labels = oldLabels;

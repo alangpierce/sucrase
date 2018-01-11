@@ -13,6 +13,12 @@ export type Label = {
   statementStart?: number;
 };
 
+export type Scope = {
+  isFunctionScope: boolean;
+  startTokenIndex: number;
+  endTokenIndex: number;
+};
+
 export default class State {
   init(options: Options, input: string): void {
     this.strict = options.strictMode === false ? false : options.sourceType === "module";
@@ -44,6 +50,7 @@ export default class State {
     this.yieldInPossibleArrowParameters = null;
 
     this.tokens = [];
+    this.scopes = [];
 
     this.pos = 0;
     this.lineStart = 0;
@@ -128,6 +135,9 @@ export default class State {
 
   // Token store.
   tokens: Array<Token>;
+
+  // Array of all observed scopes, ordered by their ending position.
+  scopes: Array<Scope>;
 
   // The current position of the tokenizer in the input.
   pos: number;

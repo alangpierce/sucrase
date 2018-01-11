@@ -1,40 +1,23 @@
-import {Options} from "./options";
+import {InputOptions} from "./options";
 import Parser, {ParserClass, plugins} from "./parser";
 
 import "./tokenizer/context";
-import {types as tokTypes} from "./tokenizer/types";
 
-import {Expression, File} from "./types";
+import {File} from "./types";
 
 import flowPlugin from "./plugins/flow";
 import jsxPlugin from "./plugins/jsx";
 import typescriptPlugin from "./plugins/typescript";
-import {Token} from "./tokenizer";
 
 plugins.flow = flowPlugin;
 plugins.jsx = jsxPlugin;
 plugins.typescript = typescriptPlugin;
 
-export function getTokens(input: string, options?: Options): Array<Token> {
-  options = Object.assign({}, options, {tokens: true});
-  return getParser(options, input).parse().tokens;
-}
-
-export function parse(input: string, options?: Options): File {
+export function parse(input: string, options?: InputOptions): File {
   return getParser(options, input).parse();
 }
 
-export function parseExpression(input: string, options?: Options): Expression {
-  const parser = getParser(options, input);
-  if (parser.options.strictMode) {
-    parser.state.strict = true;
-  }
-  return parser.getExpression();
-}
-
-export {tokTypes};
-
-function getParser(options: Options | null | undefined, input: string): Parser {
+function getParser(options: InputOptions | null | undefined, input: string): Parser {
   const Cls = options && options.plugins ? getParserClass(options.plugins) : Parser;
   return new Cls(options || null, input);
 }

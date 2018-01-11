@@ -14,6 +14,8 @@ export type Options = {
   tokens: boolean;
 };
 
+export type InputOptions = {[O in keyof Options]?: Options[O]};
+
 export const defaultOptions: Options = {
   // Source type ("script" or "module") for different semantics
   sourceType: "script",
@@ -49,7 +51,7 @@ export const defaultOptions: Options = {
 
 // Interpret and default an options object
 
-export function getOptions(opts: Options | null): Options {
+export function getOptions(opts: InputOptions | null): Options {
   // tslint:disable-next-line no-any
   const options: any = {};
   for (const key of Object.keys(defaultOptions)) {

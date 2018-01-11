@@ -1,4 +1,4 @@
-import {getTokens} from "../sucrase-babylon";
+import {parse} from "../sucrase-babylon";
 import {Token} from "../sucrase-babylon/tokenizer/index";
 import augmentTokens from "./augmentTokens";
 import TokenProcessor from "./TokenProcessor";
@@ -48,15 +48,12 @@ function getSucraseTokens(code: string, options: Options): Array<Token> {
   if (options.transforms.includes("typescript")) {
     babylonPlugins = [...babylonPlugins, "typescript"];
   }
-
-  const tokens = getTokens(
-    code,
-    {
-      tokens: true,
-      sourceType: "module",
-      plugins: babylonPlugins,
-    } as any /* tslint:disable-line no-any */,
-  );
+  const file = parse(code, {
+    tokens: true,
+    sourceType: "module",
+    plugins: babylonPlugins,
+  });
+  const tokens = file.tokens;
   augmentTokens(code, tokens);
   return tokens;
 }

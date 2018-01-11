@@ -28,8 +28,14 @@ export default class StatementParser extends ExpressionParser {
     this.parseBlockBody(program, true, true, tt.eof);
 
     file.program = this.finishNode(program, "Program");
+    this.state.scopes.push({
+      startTokenIndex: 0,
+      endTokenIndex: this.state.tokens.length,
+      isFunctionScope: true,
+    });
 
     if (this.options.tokens) file.tokens = this.state.tokens;
+    file.scopes = this.state.scopes;
 
     return this.finishNode(file, "File");
   }
@@ -785,12 +791,15 @@ export default class StatementParser extends ExpressionParser {
     }
     if (isStatement) this.state.inGenerator = node.generator;
 
+    const startTokenIndex = this.state.tokens.length;
     this.parseFunctionParams(node);
     this.parseFunctionBodyAndFinish(
       node,
       isStatement ? "FunctionDeclaration" : "FunctionExpression",
       allowExpressionBody,
     );
+    const endTokenIndex = this.state.tokens.length;
+    this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
 
     this.state.inFunction = oldInFunc;
     this.state.inMethod = oldInMethod;

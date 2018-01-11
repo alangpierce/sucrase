@@ -1,4 +1,5 @@
 import {Token} from "./tokenizer";
+import {Scope} from "./tokenizer/state";
 import {SourceLocation} from "./util/location";
 
 export interface NodeBase {
@@ -95,6 +96,7 @@ export type File = NodeBase & {
   type: "File";
   program: Program;
   tokens: Array<Token>;
+  scopes: Array<Scope>;
 };
 
 export type Program = NodeBase & {

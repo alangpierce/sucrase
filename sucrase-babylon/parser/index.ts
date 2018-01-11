@@ -1,9 +1,9 @@
-import {getOptions, Options} from "../options";
+import {getOptions, InputOptions} from "../options";
 import {File, Program} from "../types";
 import StatementParser from "./statement";
 
 export type ParserClass = {
-  new (options: Options | null, input: string): Parser;
+  new (inputOptions: InputOptions | null, input: string): Parser;
 };
 
 export const plugins: {
@@ -11,8 +11,8 @@ export const plugins: {
 } = {};
 
 export default class Parser extends StatementParser {
-  constructor(options: Options | null, input: string) {
-    options = getOptions(options);
+  constructor(inputOptions: InputOptions | null, input: string) {
+    const options = getOptions(inputOptions);
     super(options, input);
 
     this.options = options;

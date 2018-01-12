@@ -1,20 +1,11 @@
-import ImportProcessor from "../ImportProcessor";
 import TokenProcessor from "../TokenProcessor";
 import isIdentifier from "../util/isIdentifier";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
 export default class TypeScriptTransformer extends Transformer {
-  constructor(
-    readonly rootTransformer: RootTransformer,
-    readonly tokens: TokenProcessor,
-    readonly importProcessor: ImportProcessor,
-  ) {
+  constructor(readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor) {
     super();
-  }
-
-  preprocess(): void {
-    this.importProcessor.pruneTypeOnlyImports();
   }
 
   process(): boolean {

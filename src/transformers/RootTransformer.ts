@@ -1,5 +1,4 @@
-import ImportProcessor from "../ImportProcessor";
-import {Transform} from "../index";
+import {SucraseContext, Transform} from "../index";
 import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
 import getClassInitializerInfo from "../util/getClassInitializerInfo";
@@ -13,22 +12,23 @@ import TypeScriptTransformer from "./TypeScriptTransformer";
 export default class RootTransformer {
   private transformers: Array<Transformer> = [];
   private nameManager: NameManager;
+  private tokens: TokenProcessor;
 
-  constructor(readonly tokens: TokenProcessor, transforms: Array<Transform>) {
-    this.nameManager = new NameManager(tokens);
-    const importProcessor = transforms.includes("imports")
-      ? new ImportProcessor(this.nameManager, tokens, transforms.includes("typescript"))
-      : null;
-    const identifierReplacer = importProcessor || {getIdentifierReplacement: () => null};
+  constructor(sucraseContext: SucraseContext, transforms: Array<Transform>) {
+    this.nameManager = sucraseContext.nameManager;
+    const {tokenProcessor, importProcessor} = sucraseContext;
+    this.tokens = tokenProcessor;
 
     if (transforms.includes("jsx")) {
-      this.transformers.push(new JSXTransformer(this, tokens, identifierReplacer));
+      this.transformers.push(new JSXTransformer(this, tokenProcessor, importProcessor));
     }
 
     // react-display-name must come before imports since otherwise imports will
     // claim a normal `React` name token.
     if (transforms.includes("react-display-name")) {
-      this.transformers.push(new ReactDisplayNameTransformer(this, tokens, identifierReplacer));
+      this.transformers.push(
+        new ReactDisplayNameTransformer(this, tokenProcessor, importProcessor),
+      );
     }
 
     if (transforms.includes("imports")) {
@@ -36,16 +36,16 @@ export default class RootTransformer {
       this.transformers.push(
         new ImportTransformer(
           this,
-          tokens,
+          tokenProcessor,
           this.nameManager,
-          importProcessor!,
+          importProcessor,
           shouldAddModuleExports,
         ),
       );
     }
 
     if (transforms.includes("flow")) {
-      this.transformers.push(new FlowTransformer(this, tokens));
+      this.transformers.push(new FlowTransformer(this, tokenProcessor));
     }
     if (transforms.includes("typescript")) {
       if (!transforms.includes("imports")) {
@@ -53,15 +53,12 @@ export default class RootTransformer {
           "The TypeScript transform without the import transform is not yet supported.",
         );
       }
-      this.transformers.push(new TypeScriptTransformer(this, tokens, importProcessor!));
+      this.transformers.push(new TypeScriptTransformer(this, tokenProcessor));
     }
   }
 
   transform(): string {
     this.tokens.reset();
-    for (const transformer of this.transformers) {
-      transformer.preprocess();
-    }
     this.processBalancedCode();
     let prefix = "";
     for (const transformer of this.transformers) {

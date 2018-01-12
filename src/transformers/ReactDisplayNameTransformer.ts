@@ -1,5 +1,5 @@
+import ImportProcessor from "../ImportProcessor";
 import TokenProcessor from "../TokenProcessor";
-import {IdentifierReplacer} from "./IdentifierReplacer";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
@@ -15,7 +15,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
   constructor(
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
-    readonly identifierReplacer: IdentifierReplacer,
+    readonly importProcessor: ImportProcessor,
   ) {
     super();
   }
@@ -23,7 +23,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
   process(): boolean {
     const startIndex = this.tokens.currentIndex();
     if (this.tokens.matchesName("createReactClass")) {
-      const newName = this.identifierReplacer.getIdentifierReplacement("createReactClass");
+      const newName = this.importProcessor.getIdentifierReplacement("createReactClass");
       if (newName) {
         this.tokens.replaceToken(`(0, ${newName})`);
       } else {
@@ -37,7 +37,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
       this.tokens.matchesName("React") &&
       this.tokens.matchesNameAtIndex(this.tokens.currentIndex() + 2, "createClass")
     ) {
-      const newName = this.identifierReplacer.getIdentifierReplacement("React");
+      const newName = this.importProcessor.getIdentifierReplacement("React");
       if (newName) {
         this.tokens.replaceToken(newName);
         this.tokens.copyToken();

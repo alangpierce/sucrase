@@ -125,6 +125,7 @@ export class Token {
   contextStartIndex?: number;
   parentContextStartIndex?: number | null;
   identifierRole?: IdentifierRole;
+  shadowsGlobal?: boolean;
 }
 
 // ## Tokenizer

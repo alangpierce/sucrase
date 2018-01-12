@@ -1,6 +1,6 @@
 /* eslint max-len: 0 */
 
-import Parser, {ParserClass} from "../parser";
+import {ParserClass} from "../parser";
 import State from "../tokenizer/state";
 import {TokenType, types as tt} from "../tokenizer/types";
 import * as N from "../types";
@@ -1716,6 +1716,7 @@ export default (superClass: ParserClass): ParserClass =>
       isGenerator: boolean,
       isAsync: boolean,
       isPattern: boolean,
+      isBlockScope: boolean,
       refShorthandDefaultPos: Pos | null,
     ): void {
       if (prop.variance) {
@@ -1738,6 +1739,7 @@ export default (superClass: ParserClass): ParserClass =>
         isGenerator,
         isAsync,
         isPattern,
+        isBlockScope,
         refShorthandDefaultPos,
       );
 
@@ -1767,11 +1769,12 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     parseMaybeDefault(
+      isBlockScope: boolean,
       startPos?: number | null,
       startLoc?: Position | null,
       left?: N.Pattern | null,
     ): N.Pattern {
-      const node = super.parseMaybeDefault(startPos, startLoc, left);
+      const node = super.parseMaybeDefault(isBlockScope, startPos, startLoc, left);
 
       if (
         node.type === "AssignmentPattern" &&
@@ -1915,8 +1918,8 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // parse flow type annotations on variable declarator heads - let foo: string = bar
-    parseVarHead(decl: N.VariableDeclarator): void {
-      super.parseVarHead(decl);
+    parseVarHead(decl: N.VariableDeclarator, isBlockScope: boolean): void {
+      super.parseVarHead(decl, isBlockScope);
       if (this.match(tt.colon)) {
         decl.id.typeAnnotation = this.flowParseTypeAnnotation() as N.TypeAnnotationBase;
         this.finishNode(decl.id, decl.id.type);

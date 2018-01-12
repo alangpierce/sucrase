@@ -740,7 +740,7 @@ export default abstract class ExpressionParser extends LValParser {
         return this.finishNode(node, "ArrayExpression");
 
       case tt.braceL:
-        return this.parseObj(false, refShorthandDefaultPos);
+        return this.parseObj(false, false, refShorthandDefaultPos);
 
       case tt._function:
         return this.parseFunctionExpression();
@@ -916,7 +916,11 @@ export default abstract class ExpressionParser extends LValParser {
         const spreadNodeStartLoc = this.state.startLoc;
         spreadStart = this.state.start;
         exprList.push(
-          this.parseParenItem(this.parseRest(), spreadNodeStartPos, spreadNodeStartLoc),
+          this.parseParenItem(
+            this.parseRest(false /* isBlockScope */),
+            spreadNodeStartPos,
+            spreadNodeStartLoc,
+          ),
         );
 
         if (this.match(tt.comma) && this.lookahead().type === tt.parenR) {
@@ -1092,6 +1096,7 @@ export default abstract class ExpressionParser extends LValParser {
 
   parseObj<T extends N.ObjectPattern | N.ObjectExpression>(
     isPattern: boolean,
+    isBlockScope: boolean,
     refShorthandDefaultPos: Pos | null = null,
   ): T {
     let decorators = [];
@@ -1208,6 +1213,7 @@ export default abstract class ExpressionParser extends LValParser {
         isGenerator,
         isAsync,
         isPattern,
+        isBlockScope,
         refShorthandDefaultPos,
       );
       this.checkPropClash(prop as N.ObjectMember, propHash);
@@ -1303,13 +1309,14 @@ export default abstract class ExpressionParser extends LValParser {
     startPos: number | null,
     startLoc: Position | null,
     isPattern: boolean,
+    isBlockScope: boolean,
     refShorthandDefaultPos: Pos | null,
   ): N.ObjectProperty | null {
     prop.shorthand = false;
 
     if (this.eat(tt.colon)) {
       prop.value = isPattern
-        ? this.parseMaybeDefault(this.state.start, this.state.startLoc)
+        ? this.parseMaybeDefault(isBlockScope, this.state.start, this.state.startLoc)
         : this.parseMaybeAssign(false, refShorthandDefaultPos);
 
       return this.finishNode(prop, "ObjectProperty");
@@ -1319,12 +1326,12 @@ export default abstract class ExpressionParser extends LValParser {
       this.checkReservedWord(prop.key.name, prop.key.start, true, true);
 
       if (isPattern) {
-        prop.value = this.parseMaybeDefault(startPos, startLoc, prop.key.__clone());
+        prop.value = this.parseMaybeDefault(isBlockScope, startPos, startLoc, prop.key.__clone());
       } else if (this.match(tt.eq) && refShorthandDefaultPos) {
         if (!refShorthandDefaultPos.start) {
           refShorthandDefaultPos.start = this.state.start;
         }
-        prop.value = this.parseMaybeDefault(startPos, startLoc, prop.key.__clone());
+        prop.value = this.parseMaybeDefault(isBlockScope, startPos, startLoc, prop.key.__clone());
       } else {
         prop.value = prop.key.__clone();
       }
@@ -1345,6 +1352,7 @@ export default abstract class ExpressionParser extends LValParser {
     isGenerator: boolean,
     isAsync: boolean,
     isPattern: boolean,
+    isBlockScope: boolean,
     refShorthandDefaultPos: Pos | null,
   ): void {
     const node =
@@ -1354,6 +1362,7 @@ export default abstract class ExpressionParser extends LValParser {
         startPos,
         startLoc,
         isPattern,
+        isBlockScope,
         refShorthandDefaultPos,
       );
 

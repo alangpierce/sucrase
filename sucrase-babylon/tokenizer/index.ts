@@ -96,7 +96,8 @@ export type TokenContext =
 
 export enum IdentifierRole {
   Access,
-  Declaration,
+  FunctionScopedDeclaration,
+  BlockScopedDeclaration,
   ObjectShorthand,
   Assignment,
 }

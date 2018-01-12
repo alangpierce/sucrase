@@ -302,7 +302,7 @@ export default (superClass: ParserClass): ParserClass =>
       const returnTokenRequired = returnToken === tt.arrow;
       signature.typeParameters = this.tsTryParseTypeParameters();
       this.expect(tt.parenL);
-      signature.parameters = this.tsParseBindingListForSignature();
+      signature.parameters = this.tsParseBindingListForSignature(false /* isBlockScope */);
       if (returnTokenRequired) {
         signature.typeAnnotation = this.tsParseTypeOrTypePredicateAnnotation(returnToken);
       } else if (this.match(returnToken)) {
@@ -310,13 +310,17 @@ export default (superClass: ParserClass): ParserClass =>
       }
     }
 
-    tsParseBindingListForSignature(): ReadonlyArray<N.Identifier | N.RestElement> {
-      return this.parseBindingList(tt.parenR).map((pattern: N.Identifier | N.RestElement) => {
-        if (pattern.type !== "Identifier" && pattern.type !== "RestElement") {
-          throw this.unexpected(pattern.start, "Name in a signature must be an Identifier.");
-        }
-        return pattern;
-      });
+    tsParseBindingListForSignature(
+      isBlockScope: boolean,
+    ): ReadonlyArray<N.Identifier | N.RestElement> {
+      return this.parseBindingList(tt.parenR, isBlockScope).map(
+        (pattern: N.Identifier | N.RestElement) => {
+          if (pattern.type !== "Identifier" && pattern.type !== "RestElement") {
+            throw this.unexpected(pattern.start, "Name in a signature must be an Identifier.");
+          }
+          return pattern;
+        },
+      );
     }
 
     tsParseTypeMemberSemicolon(): void {
@@ -1191,6 +1195,7 @@ export default (superClass: ParserClass): ParserClass =>
     parseAssignableListItem(
       allowModifiers: boolean | null,
       decorators: Array<N.Decorator>,
+      isBlockScope: boolean,
     ): N.Pattern | N.TSParameterProperty {
       let accessibility: N.Accessibility | null = null;
       let isReadonly = false;
@@ -1199,9 +1204,9 @@ export default (superClass: ParserClass): ParserClass =>
         isReadonly = !!this.tsParseModifier(["readonly"]);
       }
 
-      const left = this.parseMaybeDefault();
+      const left = this.parseMaybeDefault(isBlockScope);
       this.parseAssignableListItemTypes(left);
-      const elt = this.parseMaybeDefault(left.start, left.loc.start, left);
+      const elt = this.parseMaybeDefault(isBlockScope, left.start, left.loc.start, left);
       if (accessibility || isReadonly) {
         const pp: N.TSParameterProperty = this.startNodeAtNode(elt);
         if (decorators.length) {
@@ -1638,6 +1643,7 @@ export default (superClass: ParserClass): ParserClass =>
       isGenerator: boolean,
       isAsync: boolean,
       isPattern: boolean,
+      isBlockScope: boolean,
       refShorthandDefaultPos: Pos | null,
     ): void {
       if (this.isRelational("<")) {
@@ -1651,6 +1657,7 @@ export default (superClass: ParserClass): ParserClass =>
         isGenerator,
         isAsync,
         isPattern,
+        isBlockScope,
         refShorthandDefaultPos,
       );
     }
@@ -1662,8 +1669,8 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // `let x: number;`
-    parseVarHead(decl: N.VariableDeclarator): void {
-      super.parseVarHead(decl);
+    parseVarHead(decl: N.VariableDeclarator, isBlockScope: boolean): void {
+      super.parseVarHead(decl, isBlockScope);
       const type = this.tsTryParseTypeAnnotation();
       if (type) {
         decl.id.typeAnnotation = type;
@@ -1869,13 +1876,13 @@ export default (superClass: ParserClass): ParserClass =>
       }
     }
 
-    parseBindingAtom(): N.Pattern {
+    parseBindingAtom(isBlockScope: boolean): N.Pattern {
       switch (this.state.type) {
         case tt._this:
           // "this" may be the name of a parameter, so allow it.
           return this.parseIdentifier(/* liberal */ true);
         default:
-          return super.parseBindingAtom();
+          return super.parseBindingAtom(isBlockScope);
       }
     }
 
@@ -1893,11 +1900,12 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     parseMaybeDefault(
+      isBlockScope: boolean,
       startPos?: number | null,
       startLoc?: Position | null,
       left?: N.Pattern | null,
     ): N.Pattern {
-      const node = super.parseMaybeDefault(startPos, startLoc, left);
+      const node = super.parseMaybeDefault(isBlockScope, startPos, startLoc, left);
 
       if (
         node.type === "AssignmentPattern" &&

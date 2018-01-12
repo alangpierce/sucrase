@@ -34,6 +34,7 @@ export default abstract class LValParser extends NodeUtils {
   ): Expression;
   abstract parseObj<T extends ObjectPattern | ObjectExpression>(
     isPattern: boolean,
+    isBlockScope: boolean,
     refShorthandDefaultPos?: Pos | null,
   ): T;
   // Forward-declaration: defined in statement.js
@@ -172,10 +173,10 @@ export default abstract class LValParser extends NodeUtils {
     return this.finishNode(node as T, "SpreadElement");
   }
 
-  parseRest(): RestElement {
+  parseRest(isBlockScope: boolean): RestElement {
     const node = this.startNode();
     this.next();
-    node.argument = this.parseBindingAtom();
+    node.argument = this.parseBindingAtom(isBlockScope);
     return this.finishNode(node as RestElement, "RestElement");
   }
 
@@ -188,25 +189,27 @@ export default abstract class LValParser extends NodeUtils {
   }
 
   // Parses lvalue (assignable) atom.
-  parseBindingAtom(): Pattern {
+  parseBindingAtom(isBlockScope: boolean): Pattern {
     switch (this.state.type) {
       case tt._yield:
       case tt.name: {
         this.state.type = tt.name;
         const result = this.parseBindingIdentifier();
-        this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.Declaration;
+        this.state.tokens[this.state.tokens.length - 1].identifierRole = isBlockScope
+          ? IdentifierRole.BlockScopedDeclaration
+          : IdentifierRole.FunctionScopedDeclaration;
         return result;
       }
 
       case tt.bracketL: {
         const node = this.startNode();
         this.next();
-        node.elements = this.parseBindingList(tt.bracketR, true);
+        node.elements = this.parseBindingList(tt.bracketR, isBlockScope, true /* allowEmpty */);
         return this.finishNode(node as ArrayPattern, "ArrayPattern");
       }
 
       case tt.braceL:
-        return this.parseObj<ObjectPattern>(true);
+        return this.parseObj<ObjectPattern>(true, isBlockScope);
 
       default:
         throw this.unexpected();
@@ -215,6 +218,7 @@ export default abstract class LValParser extends NodeUtils {
 
   parseBindingList(
     close: TokenType,
+    isBlockScope: boolean,
     allowEmpty?: boolean,
     allowModifiers: boolean | null = null,
   ): ReadonlyArray<Pattern | TSParameterProperty> {
@@ -233,7 +237,7 @@ export default abstract class LValParser extends NodeUtils {
       } else if (this.eat(close)) {
         break;
       } else if (this.match(tt.ellipsis)) {
-        elts.push(this.parseAssignableListItemTypes(this.parseRest()));
+        elts.push(this.parseAssignableListItemTypes(this.parseRest(isBlockScope)));
         this.expect(close);
         break;
       } else {
@@ -244,7 +248,7 @@ export default abstract class LValParser extends NodeUtils {
         while (this.match(tt.at)) {
           decorators.push(this.parseDecorator());
         }
-        elts.push(this.parseAssignableListItem(allowModifiers, decorators));
+        elts.push(this.parseAssignableListItem(allowModifiers, decorators, isBlockScope));
       }
     }
     return elts;
@@ -253,10 +257,11 @@ export default abstract class LValParser extends NodeUtils {
   parseAssignableListItem(
     allowModifiers: boolean | null,
     decorators: Array<Decorator>,
+    isBlockScope: boolean,
   ): Pattern | TSParameterProperty {
-    const left = this.parseMaybeDefault();
+    const left = this.parseMaybeDefault(isBlockScope);
     this.parseAssignableListItemTypes(left);
-    const elt = this.parseMaybeDefault(left.start, left.loc.start, left);
+    const elt = this.parseMaybeDefault(isBlockScope, left.start, left.loc.start, left);
     if (decorators.length) {
       left.decorators = decorators;
     }
@@ -270,13 +275,14 @@ export default abstract class LValParser extends NodeUtils {
   // Parses assignment pattern around given atom if possible.
 
   parseMaybeDefault(
+    isBlockScope: boolean,
     startPos?: number | null,
     startLoc?: Position | null,
     left?: Pattern | null,
   ): Pattern {
     startLoc = startLoc || this.state.startLoc;
     startPos = startPos || this.state.start;
-    left = left || this.parseBindingAtom();
+    left = left || this.parseBindingAtom(isBlockScope);
     if (!this.eat(tt.eq)) return left;
 
     const node = this.startNodeAt(startPos, startLoc);

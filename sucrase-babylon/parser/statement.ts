@@ -496,7 +496,7 @@ export default class StatementParser extends ExpressionParser {
       if (this.match(tt.parenL)) {
         catchBindingStartTokenIndex = this.state.tokens.length;
         this.expect(tt.parenL);
-        clause.param = this.parseBindingAtom();
+        clause.param = this.parseBindingAtom(true /* isBlockScope */);
         const clashes: {} = Object.create(null);
         this.checkLVal(clause.param, true, clashes, "catch clause");
         this.expect(tt.parenR);
@@ -741,7 +741,8 @@ export default class StatementParser extends ExpressionParser {
     node.kind = kind.keyword;
     for (;;) {
       const decl = this.startNode();
-      this.parseVarHead(decl as N.VariableDeclarator);
+      const isBlockScope = kind === tt._const || kind === tt._let;
+      this.parseVarHead(decl as N.VariableDeclarator, isBlockScope);
       if (this.eat(tt.eq)) {
         decl.init = this.parseMaybeAssign(isFor);
       } else {
@@ -767,8 +768,8 @@ export default class StatementParser extends ExpressionParser {
     return node;
   }
 
-  parseVarHead(decl: N.VariableDeclarator): void {
-    decl.id = this.parseBindingAtom();
+  parseVarHead(decl: N.VariableDeclarator, isBlockScope: boolean): void {
+    decl.id = this.parseBindingAtom(isBlockScope);
     this.checkLVal(decl.id, true, null, "variable declaration");
   }
 
@@ -840,7 +841,12 @@ export default class StatementParser extends ExpressionParser {
     this.state.inParameters = true;
 
     this.expect(tt.parenL);
-    node.params = this.parseBindingList(tt.parenR, /* allowEmpty */ false, allowModifiers);
+    node.params = this.parseBindingList(
+      tt.parenR,
+      false /* isBlockScope */,
+      false /* allowEmpty */,
+      allowModifiers,
+    );
 
     this.state.inParameters = oldInParameters;
   }

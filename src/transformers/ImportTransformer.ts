@@ -21,11 +21,6 @@ export default class ImportTransformer extends Transformer {
     super();
   }
 
-  preprocess(): void {
-    this.nameManager.preprocessNames(this.tokens.tokens);
-    this.importProcessor.preprocessTokens();
-  }
-
   getPrefixCode(): string {
     let prefix = '"use strict";';
     prefix += this.importProcessor.getPrefixCode();
@@ -150,6 +145,9 @@ export default class ImportTransformer extends Transformer {
 
   private processIdentifier(): boolean {
     const token = this.tokens.currentToken();
+    if (token.shadowsGlobal) {
+      return false;
+    }
 
     if (token.identifierRole === IdentifierRole.ObjectShorthand) {
       return this.processObjectShorthand();

@@ -1,5 +1,5 @@
+import ImportProcessor from "../ImportProcessor";
 import TokenProcessor from "../TokenProcessor";
-import {IdentifierReplacer} from "./IdentifierReplacer";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
@@ -7,7 +7,7 @@ export default class JSXTransformer extends Transformer {
   constructor(
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
-    readonly identifierReplacer: IdentifierReplacer,
+    readonly importProcessor: ImportProcessor,
   ) {
     super();
   }
@@ -138,7 +138,7 @@ export default class JSXTransformer extends Transformer {
   }
 
   processJSXTag(): void {
-    const resolvedReactName = this.identifierReplacer.getIdentifierReplacement("React") || "React";
+    const resolvedReactName = this.importProcessor.getIdentifierReplacement("React") || "React";
     // First tag is always jsxTagStart.
     this.tokens.replaceToken(`${resolvedReactName}.createElement(`);
     this.processTagIntro();

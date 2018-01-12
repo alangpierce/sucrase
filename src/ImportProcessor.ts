@@ -1,6 +1,5 @@
 import NameManager from "./NameManager";
 import TokenProcessor from "./TokenProcessor";
-import {IdentifierReplacer} from "./transformers/IdentifierReplacer";
 import isMaybePropertyName from "./util/isMaybePropertyName";
 
 type NamedImport = {
@@ -24,7 +23,7 @@ type ImportInfo = {
  * TypeScript uses a simpler mechanism that does not use functions like interopRequireDefault and
  * interopRequireWildcard, so we also allow that mode for compatibility.
  */
-export default class ImportProcessor implements IdentifierReplacer {
+export default class ImportProcessor {
   private importInfoByPath: Map<string, ImportInfo> = new Map();
   private importsToReplace: Map<string, string> = new Map();
   private identifierReplacements: Map<string, string> = new Map();
@@ -376,5 +375,16 @@ get: () => ${primaryImportName}[key]}); });`;
 
   resolveExportBinding(assignedName: string): string | null {
     return this.exportBindingsByLocalName.get(assignedName) || null;
+  }
+
+  /**
+   * Return all imported/exported names where we might be interested in whether usages of those
+   * names are shadowed.
+   */
+  getGlobalNames(): Set<string> {
+    return new Set([
+      ...this.identifierReplacements.keys(),
+      ...this.exportBindingsByLocalName.keys(),
+    ]);
   }
 }

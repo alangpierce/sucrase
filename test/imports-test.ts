@@ -856,4 +856,27 @@ module.exports = exports.default;
     `,
     );
   });
+
+  it("does not transform shadowed identifiers", () => {
+    assertResult(
+      `
+      import a from 'a';
+      console.log(a);
+      function f() {
+        let a = 3;
+        a = 7;
+        console.log(a);
+      }
+    `,
+      `${PREFIX}
+      var _a = require('a'); var _a2 = _interopRequireDefault(_a);
+      console.log((0, _a2.default));
+      function f() {
+        let a = 3;
+        a = 7;
+        console.log(a);
+      }
+    `,
+    );
+  });
 });

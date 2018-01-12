@@ -6,7 +6,7 @@ export default class NameManager {
 
   constructor(readonly tokens: TokenProcessor) {}
 
-  preprocessNames(tokens: Array<Token>): void {
+  preprocessNames(): void {
     for (const token of this.tokens.tokens) {
       if (token.type.label === "name") {
         this.usedNames.add(token.value);

@@ -118,4 +118,50 @@ describe("scopes", () => {
       ],
     );
   });
+
+  it("creates a special name scope for function expressions but not statements", () => {
+    // We make an extra scope for expression functions so that the name is limited to the function
+    // body. For statement functions, it should be a declaration in the outer scope.
+    assertScopes(
+      `
+      function f() {
+      }
+      const value = function g() {
+      }
+    `,
+      [
+        // Body for f
+        {startTokenIndex: 4, endTokenIndex: 6, isFunctionScope: true},
+        // Params and body for f
+        {startTokenIndex: 2, endTokenIndex: 6, isFunctionScope: true},
+        // Body for g
+        {startTokenIndex: 13, endTokenIndex: 15, isFunctionScope: true},
+        // Params and body for g
+        {startTokenIndex: 11, endTokenIndex: 15, isFunctionScope: true},
+        // Name, params and body for g
+        {startTokenIndex: 10, endTokenIndex: 15, isFunctionScope: true},
+        // Program
+        {startTokenIndex: 0, endTokenIndex: 16, isFunctionScope: true},
+      ],
+    );
+  });
+
+  it("creates a special name scope for class expressions but not statements", () => {
+    // We make an extra scope for expression classes so that the name is limited to the class body.
+    // For statement classes, it should be a declaration in the outer scope.
+    assertScopes(
+      `
+      class C {
+      }
+      const value = class D {
+      }
+    `,
+      [
+        // Class expression scope
+        {startTokenIndex: 8, endTokenIndex: 11, isFunctionScope: false},
+        // Program
+        {startTokenIndex: 0, endTokenIndex: 12, isFunctionScope: true},
+      ],
+    );
+  });
 });

@@ -92,4 +92,28 @@ describe("tokens", () => {
       ],
     );
   });
+
+  it("treats functions as function-scoped and classes as block-scoped", () => {
+    assertTokens(
+      `
+      function f() {
+      }
+      class C {
+      }
+    `,
+      [
+        {label: "function"},
+        {label: "name", identifierRole: IdentifierRole.FunctionScopedDeclaration},
+        {label: "("},
+        {label: ")"},
+        {label: "{"},
+        {label: "}"},
+        {label: "class"},
+        {label: "name", identifierRole: IdentifierRole.BlockScopedDeclaration},
+        {label: "{"},
+        {label: "}"},
+        {label: "eof"},
+      ],
+    );
+  });
 });

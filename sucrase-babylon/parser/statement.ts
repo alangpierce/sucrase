@@ -1,5 +1,6 @@
 /* eslint max-len: 0 */
 
+import {IdentifierRole} from "../tokenizer";
 import {Label} from "../tokenizer/state";
 import {TokenType, types as tt} from "../tokenizer/types";
 import * as N from "../types";
@@ -803,6 +804,8 @@ export default class StatementParser extends ExpressionParser {
       this.unexpected();
     }
 
+    let nameScopeStartTokenIndex = null;
+
     // When parsing function expression, the binding identifier is parsed
     // according to the rules inside the function.
     // e.g. (function* yield() {}) is invalid because "yield" is disallowed in
@@ -813,7 +816,14 @@ export default class StatementParser extends ExpressionParser {
     // function id according to the "isStatement" parameter.
     if (!isStatement) this.state.inGenerator = node.generator;
     if (this.match(tt.name) || this.match(tt._yield)) {
+      // Expression-style functions should limit their name's scope to the function body, so we make
+      // a new function scope to enforce that.
+      if (!isStatement) {
+        nameScopeStartTokenIndex = this.state.tokens.length;
+      }
       node.id = this.parseBindingIdentifier();
+      this.state.tokens[this.state.tokens.length - 1].identifierRole =
+        IdentifierRole.FunctionScopedDeclaration;
     }
     if (isStatement) this.state.inGenerator = node.generator;
 
@@ -828,6 +838,13 @@ export default class StatementParser extends ExpressionParser {
     // In addition to the block scope of the function body, we need a separate function-style scope
     // that includes the params.
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
+    if (nameScopeStartTokenIndex !== null) {
+      this.state.scopes.push({
+        startTokenIndex: nameScopeStartTokenIndex,
+        endTokenIndex,
+        isFunctionScope: true,
+      });
+    }
 
     this.state.inFunction = oldInFunc;
     this.state.inMethod = oldInMethod;
@@ -861,9 +878,24 @@ export default class StatementParser extends ExpressionParser {
   ): T {
     this.next();
     this.takeDecorators(node);
+    // Like with functions, we declare a special "name scope" from the start of the name to the end
+    // of the class, but only with expression-style classes, to represent the fact that the name is
+    // available to the body of the class but not an outer declaration.
+    let nameScopeStartTokenIndex = null;
+    if (!isStatement) {
+      nameScopeStartTokenIndex = this.state.tokens.length;
+    }
     this.parseClassId(node, isStatement, optionalId);
     this.parseClassSuper(node);
     this.parseClassBody(node);
+    if (nameScopeStartTokenIndex !== null) {
+      const endTokenIndex = this.state.tokens.length;
+      this.state.scopes.push({
+        startTokenIndex: nameScopeStartTokenIndex,
+        endTokenIndex,
+        isFunctionScope: false,
+      });
+    }
     return this.finishNode(node, isStatement ? "ClassDeclaration" : "ClassExpression");
   }
 
@@ -1218,6 +1250,8 @@ export default class StatementParser extends ExpressionParser {
   parseClassId(node: N.Class, isStatement: boolean, optionalId: boolean = false): void {
     if (this.match(tt.name)) {
       node.id = this.parseIdentifier();
+      this.state.tokens[this.state.tokens.length - 1].identifierRole =
+        IdentifierRole.BlockScopedDeclaration;
     } else if (optionalId || !isStatement) {
       node.id = null;
     } else {

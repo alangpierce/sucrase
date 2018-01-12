@@ -453,6 +453,7 @@ export default abstract class ExpressionParser extends LValParser {
       return this.finishNode(node, "MemberExpression");
     } else if (!noCalls && this.match(tt.parenL)) {
       const possibleAsync = this.atPossibleAsync(base);
+      const startTokenIndex = this.state.tokens.length;
       this.next();
 
       const node = this.startNodeAt<N.CallExpression>(startPos, startLoc);
@@ -480,7 +481,11 @@ export default abstract class ExpressionParser extends LValParser {
           );
         }
 
-        return this.parseAsyncArrowFromCallExpression(this.startNodeAt(startPos, startLoc), node);
+        return this.parseAsyncArrowFromCallExpression(
+          this.startNodeAt(startPos, startLoc),
+          node,
+          startTokenIndex,
+        );
       } else {
         this.toReferencedList(node.arguments);
       }
@@ -566,11 +571,12 @@ export default abstract class ExpressionParser extends LValParser {
   parseAsyncArrowFromCallExpression(
     node: N.ArrowFunctionExpression,
     call: N.CallExpression,
+    startTokenIndex: number,
   ): N.ArrowFunctionExpression {
     const oldYield = this.state.yieldInPossibleArrowParameters;
     this.state.yieldInPossibleArrowParameters = null;
     this.expect(tt.arrow);
-    this.parseArrowExpression(node, call.arguments, true);
+    this.parseArrowExpression(node, startTokenIndex, call.arguments, true);
     this.state.yieldInPossibleArrowParameters = oldYield;
     return node;
   }
@@ -642,6 +648,7 @@ export default abstract class ExpressionParser extends LValParser {
         if (this.state.inGenerator) this.unexpected();
 
       case tt.name: {
+        const startTokenIndex = this.state.tokens.length;
         node = this.startNode();
         const allowAwait = this.state.value === "await" && this.state.inAsync;
         const allowYield = this.shouldAllowYieldIdentifier();
@@ -660,7 +667,12 @@ export default abstract class ExpressionParser extends LValParser {
           const params = [this.parseIdentifier()];
           this.expect(tt.arrow);
           // let foo = bar => {};
-          this.parseArrowExpression(node as N.ArrowFunctionExpression, params, true);
+          this.parseArrowExpression(
+            node as N.ArrowFunctionExpression,
+            startTokenIndex,
+            params,
+            true,
+          );
           this.state.yieldInPossibleArrowParameters = oldYield;
           return node;
         }
@@ -668,7 +680,7 @@ export default abstract class ExpressionParser extends LValParser {
         if (canBeArrow && !this.canInsertSemicolon() && this.eat(tt.arrow)) {
           const oldYield = this.state.yieldInPossibleArrowParameters;
           this.state.yieldInPossibleArrowParameters = null;
-          this.parseArrowExpression(node as N.ArrowFunctionExpression, [id]);
+          this.parseArrowExpression(node as N.ArrowFunctionExpression, startTokenIndex, [id]);
           this.state.yieldInPossibleArrowParameters = oldYield;
           return node;
         }
@@ -871,6 +883,7 @@ export default abstract class ExpressionParser extends LValParser {
     const startLoc = this.state.startLoc;
 
     let val: N.Expression;
+    const startTokenIndex = this.state.tokens.length;
     this.expect(tt.parenL);
 
     const oldMaybeInArrowParameters = this.state.maybeInArrowParameters;
@@ -939,7 +952,7 @@ export default abstract class ExpressionParser extends LValParser {
           }
         }
 
-        this.parseArrowExpression(parsedArrowNode, exprList);
+        this.parseArrowExpression(parsedArrowNode, startTokenIndex, exprList);
         this.state.yieldInPossibleArrowParameters = oldYield;
         return parsedArrowNode;
       }
@@ -1398,11 +1411,14 @@ export default abstract class ExpressionParser extends LValParser {
     this.state.inMethod = node.kind || true;
     this.state.inGenerator = isGenerator;
 
+    const startTokenIndex = this.state.tokens.length;
     this.initFunction(node, isAsync);
     node.generator = !!isGenerator;
     const allowModifiers = isConstructor; // For TypeScript parameter properties
     this.parseFunctionParams(node as N.Function, allowModifiers);
     this.parseFunctionBodyAndFinish(node, type);
+    const endTokenIndex = this.state.tokens.length;
+    this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
 
     this.state.inFunction = oldInFunc;
     this.state.inMethod = oldInMethod;
@@ -1416,6 +1432,7 @@ export default abstract class ExpressionParser extends LValParser {
   // assignable list.
   parseArrowExpression(
     node: N.ArrowFunctionExpression,
+    startTokenIndex: number,
     params?: Array<N.Expression> | null,
     isAsync: boolean = false,
   ): N.ArrowFunctionExpression {
@@ -1441,6 +1458,9 @@ export default abstract class ExpressionParser extends LValParser {
     this.state.inGenerator = oldInGenerator;
     this.state.inFunction = oldInFunc;
     this.state.maybeInArrowParameters = oldMaybeInArrowParameters;
+
+    const endTokenIndex = this.state.tokens.length;
+    this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
 
     return this.finishNode(node, "ArrowFunctionExpression");
   }

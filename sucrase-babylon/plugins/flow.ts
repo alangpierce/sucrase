@@ -1927,6 +1927,7 @@ export default (superClass: ParserClass): ParserClass =>
     parseAsyncArrowFromCallExpression(
       node: N.ArrowFunctionExpression,
       call: N.CallExpression,
+      startTokenIndex: number,
     ): N.ArrowFunctionExpression {
       if (this.match(tt.colon)) {
         const oldNoAnonFunctionType = this.state.noAnonFunctionType;
@@ -1935,7 +1936,7 @@ export default (superClass: ParserClass): ParserClass =>
         this.state.noAnonFunctionType = oldNoAnonFunctionType;
       }
 
-      return super.parseAsyncArrowFromCallExpression(node, call);
+      return super.parseAsyncArrowFromCallExpression(node, call, startTokenIndex);
     }
 
     // todo description
@@ -2126,11 +2127,13 @@ export default (superClass: ParserClass): ParserClass =>
       startPos: number,
       startLoc: Position,
     ): N.ArrowFunctionExpression | null {
+      const startTokenIndex = this.state.tokens.length;
       const node = this.startNodeAt(startPos, startLoc);
       this.parseFunctionParams(node as N.Function);
       if (!this.parseArrow(node as N.ArrowFunctionExpression)) return null;
       return this.parseArrowExpression(
         node as N.ArrowFunctionExpression,
+        startTokenIndex,
         /* params */ undefined,
         /* isAsync */ true,
       );

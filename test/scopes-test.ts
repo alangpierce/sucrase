@@ -81,4 +81,41 @@ describe("scopes", () => {
       ],
     );
   });
+
+  it("handles functions in different contexts", () => {
+    assertScopes(
+      `
+      const f = () => { console.log("An arrow function!"); }
+      const g = a => b;
+      class C {
+        m(a) {
+          console.log("A class method!");
+        }
+      }
+      const o = {
+        m(a) {
+          console.log("An object method!");
+        }
+      }
+    `,
+      [
+        // Arrow function body
+        {startTokenIndex: 6, endTokenIndex: 15, isFunctionScope: true},
+        // Arrow function
+        {startTokenIndex: 3, endTokenIndex: 15, isFunctionScope: true},
+        // Shorthand arg arrow function
+        {startTokenIndex: 18, endTokenIndex: 21, isFunctionScope: true},
+        // Class method body
+        {startTokenIndex: 29, endTokenIndex: 38, isFunctionScope: true},
+        // Class method
+        {startTokenIndex: 26, endTokenIndex: 38, isFunctionScope: true},
+        // Object method body
+        {startTokenIndex: 47, endTokenIndex: 56, isFunctionScope: true},
+        // Object method
+        {startTokenIndex: 44, endTokenIndex: 56, isFunctionScope: true},
+        // Program
+        {startTokenIndex: 0, endTokenIndex: 58, isFunctionScope: true},
+      ],
+    );
+  });
 });

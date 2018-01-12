@@ -1675,11 +1675,12 @@ export default (superClass: ParserClass): ParserClass =>
     parseAsyncArrowFromCallExpression(
       node: N.ArrowFunctionExpression,
       call: N.CallExpression,
+      startTokenIndex: number,
     ): N.ArrowFunctionExpression {
       if (this.match(tt.colon)) {
         node.returnType = this.tsParseTypeAnnotation();
       }
-      return super.parseAsyncArrowFromCallExpression(node, call);
+      return super.parseAsyncArrowFromCallExpression(node, call, startTokenIndex);
     }
 
     parseMaybeAssign(

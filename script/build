@@ -31,3 +31,14 @@ echo 'Building CommonJS version.'
 
 cp -r build/src dist
 cp -r build/sucrase-babylon dist
+
+echo 'Building @sucrase/gulp-plugin'
+cd ./integrations/gulp-plugin
+yarn
+cd ../..
+
+"${TSC}" \
+  --project ./integrations/gulp-plugin \
+  --outDir ./integrations/gulp-plugin/dist \
+  --module commonjs \
+  --moduleResolution node

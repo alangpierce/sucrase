@@ -20,11 +20,11 @@
     "self-build": "script/self-build",
     "self-test": "mocha test/**/*.ts --opts test/mocha-self-test.opts",
     "benchmark": "node ./build/benchmark/benchmark.js",
-    "lint": "eslint './src/**/*.ts' './test/**/*.ts' './sucrase-babylon/**/*.ts'",
+    "lint": "eslint './src/**/*.ts' './test/**/*.ts' './sucrase-babylon/**/*.ts' './integrations/gulp-plugin/src/**/*.ts'",
     "profile": "node --inspect-brk ./build/benchmark/profile.js",
     "prepublish": "yarn run build",
     "run-examples": "ts-node ./example-runner/example-runner.ts",
-    "test": "yarn lint && tsc --noEmit && mocha test",
+    "test": "yarn lint && tsc --noEmit && tsc --project ./integrations/gulp-plugin --noEmit && mocha test",
     "test-dist": "./node_modules/.bin/mocha build/test --opts test/mocha-self-test.opts"
   },
   "repository": {

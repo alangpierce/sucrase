@@ -1,0 +1,23 @@
+{
+  "name": "@sucrase/gulp-plugin",
+  "version": "1.0.0",
+  "description": "Gulp plugin for Sucrase",
+  "author": "Alan Pierce <alangpierce@gmail.com>",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "repository": "https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin",
+  "peerDependencies": {
+    "sucrase": "^1.8.1"
+  },
+  "devDependencies": {
+    "@types/plugin-error": "^0.1.0",
+    "@types/replace-ext": "^0.0.27",
+    "@types/through2": "^2.0.33",
+    "sucrase": "^1.8.1"
+  },
+  "dependencies": {
+    "plugin-error": "^0.1.2",
+    "replace-ext": "^1.0.0",
+    "through2": "^2.0.3"
+  }
+}

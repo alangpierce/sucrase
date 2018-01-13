@@ -153,8 +153,7 @@ export default class ImportTransformer extends Transformer {
       return this.processObjectShorthand();
     }
 
-    // JSX names should always be transformed.
-    if (token.type.label === "name" && token.identifierRole !== IdentifierRole.Access) {
+    if (token.identifierRole !== IdentifierRole.Access) {
       return false;
     }
     const replacement = this.importProcessor.getIdentifierReplacement(token.value);

@@ -879,4 +879,21 @@ module.exports = exports.default;
     `,
     );
   });
+
+  it("does not transform property accesses in JSX", () => {
+    assertResult(
+      `
+      import React from 'react';
+      import Row from 'row';
+      
+      const e = <foo.Row />;
+    `,
+      `${PREFIX}
+      var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+      var _row = require('row'); var _row2 = _interopRequireDefault(_row);
+      
+      const e = _react2.default.createElement(foo.Row, null );
+    `,
+    );
+  });
 });

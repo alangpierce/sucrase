@@ -1,6 +1,5 @@
-// @ts-ignore
-
 import Parser, {ParserClass} from "../../parser";
+import {IdentifierRole} from "../../tokenizer";
 import {TokContext, types as tc} from "../../tokenizer/context";
 import {TokenType, types as tt} from "../../tokenizer/types";
 import * as N from "../../types";
@@ -231,7 +230,11 @@ export default (superClass: ParserClass): ParserClass =>
       const startPos = this.state.start;
       const startLoc = this.state.startLoc;
       const name = this.jsxParseIdentifier();
-      if (!this.eat(tt.colon)) return name;
+      if (!this.eat(tt.colon)) {
+        // Plain identifier, so this is an access.
+        this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.Access;
+        return name;
+      }
 
       const node = this.startNodeAt(startPos, startLoc);
       node.namespace = name;

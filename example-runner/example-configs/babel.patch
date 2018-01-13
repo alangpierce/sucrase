@@ -1,0 +1,47 @@
+diff --git a/Gulpfile.js b/Gulpfile.js
+index dcdf818e3..c78df5012 100644
+--- a/Gulpfile.js
++++ b/Gulpfile.js
+@@ -4,7 +4,7 @@ const plumber = require("gulp-plumber");
+ const through = require("through2");
+ const chalk = require("chalk");
+ const newer = require("gulp-newer");
+-const babel = require("gulp-babel");
++const sucrase = require("@sucrase/gulp-plugin");
+ const watch = require("gulp-watch");
+ const gutil = require("gulp-util");
+ const filter = require("gulp-filter");
+@@ -57,7 +57,7 @@ gulp.task("build", function() {
+             callback(null, file);
+           })
+         )
+-        .pipe(babel())
++        .pipe(sucrase({transforms: ["imports", "flow"]}))
+         .pipe(
+           through.obj(function(file, enc, callback) {
+             // Passing 'file.relative' because newer() above uses a relative
+diff --git a/Makefile b/Makefile
+index 9f07ae0e2..86fcca611 100644
+--- a/Makefile
++++ b/Makefile
+@@ -72,7 +72,10 @@ test-only:
+ 	./scripts/test.sh
+ 	make test-clean
+ 
+-test: lint test-only
++test:
++	make bootstrap
++	./scripts/test.sh
++	make test-clean
+ 
+ test-ci:
+ 	make bootstrap
+@@ -131,6 +134,8 @@ publish:
+ bootstrap:
+ 	make clean-all
+ 	yarn
++	yarn link sucrase
++	yarn link @sucrase/gulp-plugin
+ 	./node_modules/.bin/lerna bootstrap
+ 	make build
+ 	cd packages/babel-runtime; \

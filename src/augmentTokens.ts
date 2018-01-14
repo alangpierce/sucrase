@@ -410,6 +410,8 @@ class TokenPreprocessor {
       }
     } else if (this.tokens.matches(["{"])) {
       this.skipBalancedCode("{", "}");
+    } else if (this.tokens.matches(["{|"])) {
+      this.skipBalancedCode("{|", "|}");
     } else if (this.tokens.matches(["["])) {
       this.skipBalancedCode("[", "]");
     } else if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {

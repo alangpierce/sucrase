@@ -88,4 +88,19 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("recognizes exact object types", () => {
+    assertFlowResult(
+      `
+      function foo(): {| x: number |} {
+        return 3;
+      }
+    `,
+      `${PREFIX}
+      function foo() {
+        return 3;
+      }
+    `,
+    );
+  });
 });

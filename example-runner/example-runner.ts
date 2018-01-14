@@ -7,6 +7,7 @@ const EXAMPLES = {
   decaffeinate: "https://github.com/decaffeinate/decaffeinate.git",
   "decaffeinate-parser": "https://github.com/decaffeinate/decaffeinate-parser.git",
   "coffee-lex": "https://github.com/decaffeinate/coffee-lex.git",
+  babel: "https://github.com/babel/babel.git",
 };
 
 async function main(): Promise<void> {
@@ -24,7 +25,12 @@ async function main(): Promise<void> {
   if (projects.length === 0) {
     projects = Object.keys(EXAMPLES);
   }
+  const originalCwd = process.cwd();
   await run("yarn link");
+  process.chdir("./integrations/gulp-plugin");
+  await run("yarn link");
+  process.chdir(originalCwd);
+
   const results: Array<string> = [];
   for (const projectName of projects) {
     if (await runProject(projectName, shouldSave)) {
@@ -69,6 +75,7 @@ async function runProject(project: string, shouldSave: boolean): Promise<boolean
 
   await run("yarn");
   await run("yarn link sucrase");
+  await run("yarn link @sucrase/gulp-plugin");
 
   let passed = true;
   try {

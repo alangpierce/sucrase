@@ -124,6 +124,11 @@ export default class TokenProcessor {
     return this.tokens[this.tokenIndex];
   }
 
+  currentTokenCode(): string {
+    const token = this.currentToken();
+    return this.code.slice(token.start, token.end);
+  }
+
   tokenAtRelativeIndex(relativeIndex: number): Token {
     return this.tokens[this.tokenIndex + relativeIndex];
   }

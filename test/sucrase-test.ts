@@ -208,4 +208,44 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("handles methods called `get` and `set` in a class", () => {
+    assertResult(
+      `
+      class A {
+        get() {
+        }
+        set() {
+        }
+      }
+    `,
+      `"use strict";
+      class A {
+        get() {
+        }
+        set() {
+        }
+      }
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
+
+  it("handles async class methods", () => {
+    assertResult(
+      `
+      class A {
+        async foo() {
+        }
+      }
+    `,
+      `"use strict";
+      class A {
+        async foo() {
+        }
+      }
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

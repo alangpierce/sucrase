@@ -1091,6 +1091,7 @@ export default class StatementParser extends ExpressionParser {
         this.pushClassProperty(classBody, publicProp);
       }
     } else if (isSimple && (key as N.Identifier).name === "async" && !this.isLineTerminator()) {
+      this.state.tokens[this.state.tokens.length - 1].type = tt._async;
       // an async method
       const isGenerator = this.match(tt.star);
       if (isGenerator) {
@@ -1117,6 +1118,11 @@ export default class StatementParser extends ExpressionParser {
       ((key as N.Identifier).name === "get" || (key as N.Identifier).name === "set") &&
       !(this.isLineTerminator() && this.match(tt.star))
     ) {
+      if ((key as N.Identifier).name === "get") {
+        this.state.tokens[this.state.tokens.length - 1].type = tt._get;
+      } else {
+        this.state.tokens[this.state.tokens.length - 1].type = tt._set;
+      }
       // `get\n*` is an uninitialized property named 'get' followed by a generator.
       // a getter or setter
       // @ts-ignore

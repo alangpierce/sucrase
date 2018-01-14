@@ -190,6 +190,13 @@ export const keywords = {
   typeof: new KeywordTokenType("typeof", {beforeExpr, prefix, startsExpr}),
   void: new KeywordTokenType("void", {beforeExpr, prefix, startsExpr}),
   delete: new KeywordTokenType("delete", {beforeExpr, prefix, startsExpr}),
+
+  // Other keywords
+  async: new KeywordTokenType("async"),
+  get: new KeywordTokenType("get"),
+  set: new KeywordTokenType("set"),
+
+  // TypeScript keywords
   declare: new KeywordTokenType("declare"),
   readonly: new KeywordTokenType("readonly"),
   abstract: new KeywordTokenType("abstract"),

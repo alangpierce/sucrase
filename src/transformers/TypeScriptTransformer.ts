@@ -14,22 +14,8 @@ export default class TypeScriptTransformer extends Transformer {
       this.rootTransformer.processClass();
       return true;
     }
-    const processedTypeAnnotation = this.rootTransformer.processPossibleTypeAnnotation();
-    if (processedTypeAnnotation) {
-      return true;
-    }
-    if (this.tokens.currentToken().contextName === "type") {
-      this.tokens.removeInitialToken();
-      while (this.tokens.currentToken().contextName === "type") {
-        this.tokens.removeToken();
-      }
-      return true;
-    }
-    if (this.tokens.currentToken().contextName === "typeParameter") {
-      this.tokens.removeInitialToken();
-      while (this.tokens.currentToken().contextName === "typeParameter") {
-        this.tokens.removeToken();
-      }
+    const processedType = this.rootTransformer.processPossibleTypeRange();
+    if (processedType) {
       return true;
     }
     if (

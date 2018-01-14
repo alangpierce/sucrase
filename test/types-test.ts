@@ -194,7 +194,7 @@ describe("type transforms", () => {
       const x: foo = 3;
     `,
       `
-      ;
+      
       const x = 3;
     `,
     );
@@ -207,7 +207,7 @@ describe("type transforms", () => {
       export const x = 1;
     `,
       `${ESMODULE_PREFIX}
-      ;
+      
        const x = exports.x = 1;
     `,
     );
@@ -340,6 +340,23 @@ describe("type transforms", () => {
       `
       function foo() {
         return -1;
+      }
+    `,
+    );
+  });
+
+  it("removes type parameters from class methods", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      class A {
+        b<T>() {
+        }
+      }
+    `,
+      `
+      class A {
+        b() {
+        }
       }
     `,
     );

@@ -63,6 +63,8 @@ export default class State {
     this.startLoc = this.curPosition();
     this.endLoc = this.startLoc;
 
+    this.isType = false;
+
     // @ts-ignore
     this.lastTokEndLoc = null;
     // @ts-ignore
@@ -155,6 +157,8 @@ export default class State {
   // Its start and end offset
   start: number;
   end: number;
+
+  isType: boolean;
 
   // And, if locations are used, the {line, column} object
   // corresponding to those offsets

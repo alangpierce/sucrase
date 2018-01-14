@@ -34,7 +34,7 @@ describe("transform flow", () => {
       const f = (): number => 3;
     `,
       `${PREFIX}
-      ;
+      
       const f = () => 3;
     `,
     );
@@ -110,7 +110,7 @@ describe("transform flow", () => {
       export type * from "a";
     `,
       `${PREFIX}
-      ;
+      
     `,
     );
   });

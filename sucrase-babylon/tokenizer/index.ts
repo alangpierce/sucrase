@@ -112,6 +112,7 @@ export class Token {
     this.value = state.value;
     this.start = state.start;
     this.end = state.end;
+    this.isType = state.isType;
     this.loc = new SourceLocation(state.startLoc, state.endLoc);
   }
 
@@ -120,6 +121,7 @@ export class Token {
   value: any;
   start: number;
   end: number;
+  isType: boolean;
   loc: SourceLocation;
   contextName?: TokenContext;
   contextStartIndex?: number;
@@ -170,6 +172,21 @@ export default abstract class Tokenizer extends LocationParser {
     this.state.lastTokEndLoc = this.state.endLoc;
     this.state.lastTokStartLoc = this.state.startLoc;
     this.nextToken();
+  }
+
+  runInTypeContext<T>(existingTokensInType: number, func: () => T): T {
+    for (
+      let i = this.state.tokens.length - existingTokensInType;
+      i < this.state.tokens.length;
+      i++
+    ) {
+      this.state.tokens[i].isType = true;
+    }
+    const oldIsType = this.state.isType;
+    this.state.isType = true;
+    const result = func();
+    this.state.isType = oldIsType;
+    return result;
   }
 
   // TODO

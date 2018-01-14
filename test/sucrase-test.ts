@@ -248,4 +248,18 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("removes numeric separators from number literals", () => {
+    assertResult(
+      `
+      const n = 1_000_000;
+      const x = 12_34.56_78;
+    `,
+      `"use strict";
+      const n = 1000000;
+      const x = 1234.5678;
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

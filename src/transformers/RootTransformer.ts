@@ -5,6 +5,7 @@ import getClassInitializerInfo from "../util/getClassInitializerInfo";
 import FlowTransformer from "./FlowTransformer";
 import ImportTransformer from "./ImportTransformer";
 import JSXTransformer from "./JSXTransformer";
+import NumericSeparatorTransformer from "./NumericSeparatorTransformer";
 import ReactDisplayNameTransformer from "./ReactDisplayNameTransformer";
 import Transformer from "./Transformer";
 import TypeScriptTransformer from "./TypeScriptTransformer";
@@ -19,6 +20,7 @@ export default class RootTransformer {
     const {tokenProcessor, importProcessor} = sucraseContext;
     this.tokens = tokenProcessor;
 
+    this.transformers.push(new NumericSeparatorTransformer(tokenProcessor));
     if (transforms.includes("jsx")) {
       this.transformers.push(new JSXTransformer(this, tokenProcessor, importProcessor));
     }

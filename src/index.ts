@@ -13,6 +13,7 @@ const DEFAULT_BABYLON_PLUGINS = [
   "objectRestSpread",
   "classProperties",
   "exportNamespaceFrom",
+  "numericSeparator",
 ];
 
 export type Transform =

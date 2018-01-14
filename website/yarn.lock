@@ -2,6 +2,16 @@
 # yarn lockfile v1
 
 
+"@babel/plugin-proposal-numeric-separator@^7.0.0-beta.37":
+  version "7.0.0-beta.37"
+  resolved "https://registry.yarnpkg.com/@babel/plugin-proposal-numeric-separator/-/plugin-proposal-numeric-separator-7.0.0-beta.37.tgz#53cadbbdf34bac5b2920920b22168098fcdc05b8"
+  dependencies:
+    "@babel/plugin-syntax-numeric-separator" "7.0.0-beta.37"
+
+"@babel/plugin-syntax-numeric-separator@7.0.0-beta.37":
+  version "7.0.0-beta.37"
+  resolved "https://registry.yarnpkg.com/@babel/plugin-syntax-numeric-separator/-/plugin-syntax-numeric-separator-7.0.0-beta.37.tgz#45cf626436e0938a087ca7931ef32ad8a49b1815"
+
 "@babel/standalone@^7.0.0-beta.36":
   version "7.0.0-beta.36"
   resolved "https://registry.yarnpkg.com/@babel/standalone/-/standalone-7.0.0-beta.36.tgz#342a44f6daf1f413ab06998056357c1f7e98a1ed"

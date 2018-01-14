@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "https://sucrase.io",
   "dependencies": {
+    "@babel/plugin-proposal-numeric-separator": "^7.0.0-beta.37",
     "@babel/standalone": "^7.0.0-beta.36",
     "autoprefixer": "7.1.2",
     "babel-core": "6.25.0",

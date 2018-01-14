@@ -114,4 +114,17 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("handles `import ... typeof`", () => {
+    assertFlowResult(
+      `
+      import {typeof a as b} from 'c';
+      import typeof d from 'e';
+    `,
+      `${PREFIX}
+      
+      
+    `,
+    );
+  });
 });

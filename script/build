@@ -6,9 +6,7 @@ TSC="${TSC:-node_modules/.bin/tsc}"
 
 # The build dir has all build artifacts, including the benchmark. The dist dir
 # is the subset that's shipped as part of the package.
-rm -rf ./build
 mkdir -p ./build
-rm -rf ./dist
 mkdir -p ./dist
 
 echo 'Building ES module version.'

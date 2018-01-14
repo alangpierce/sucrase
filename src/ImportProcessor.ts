@@ -13,6 +13,7 @@ type ImportInfo = {
   namedImports: Array<NamedImport>;
   namedExports: Array<NamedImport>;
   hasBareImport: boolean;
+  exportStarNames: Array<string>;
   hasStarExport: boolean;
 };
 
@@ -119,13 +120,21 @@ export default class ImportProcessor {
 
   private generateImportReplacements(): void {
     for (const [path, importInfo] of this.importInfoByPath.entries()) {
-      const {defaultNames, wildcardNames, namedImports, namedExports, hasStarExport} = importInfo;
+      const {
+        defaultNames,
+        wildcardNames,
+        namedImports,
+        namedExports,
+        exportStarNames,
+        hasStarExport,
+      } = importInfo;
 
       if (
         defaultNames.length === 0 &&
         wildcardNames.length === 0 &&
         namedImports.length === 0 &&
         namedExports.length === 0 &&
+        exportStarNames.length === 0 &&
         !hasStarExport
       ) {
         // Import is never used, so don't even assign a name.
@@ -149,6 +158,10 @@ export default class ImportProcessor {
             : `${this.interopRequireWildcardName}(${primaryImportName})`;
           requireCode += ` var ${wildcardName} = ${moduleExpr};`;
         }
+      } else if (exportStarNames.length > 0 && secondaryImportName !== primaryImportName) {
+        requireCode += ` var ${secondaryImportName} = ${
+          this.interopRequireWildcardName
+        }(${primaryImportName});`;
       } else if (defaultNames.length > 0 && secondaryImportName !== primaryImportName) {
         requireCode += ` var ${secondaryImportName} = ${
           this.interopRequireDefaultName
@@ -158,6 +171,9 @@ export default class ImportProcessor {
       for (const {importedName, localName} of namedExports) {
         requireCode += ` Object.defineProperty(exports, '${localName}', \
 {enumerable: true, get: () => ${primaryImportName}.${importedName}});`;
+      }
+      for (const exportStarName of exportStarNames) {
+        requireCode += ` exports.${exportStarName} = ${secondaryImportName};`;
       }
       if (hasStarExport) {
         requireCode += ` Object.keys(${primaryImportName}).filter(key => \
@@ -286,14 +302,27 @@ get: () => ${primaryImportName}[key]}); });`;
   }
 
   private preprocessExportStarAtIndex(index: number): void {
-    // export * from
-    index += 3;
+    let exportedName = null;
+    if (this.tokens.matchesAtIndex(index, ["export", "*", "as"])) {
+      // export * as
+      index += 3;
+      exportedName = this.tokens.tokens[index].value;
+      // foo from
+      index += 2;
+    } else {
+      // export * from
+      index += 3;
+    }
     if (!this.tokens.matchesAtIndex(index, ["string"])) {
       throw new Error("Expected string token at the end of star export statement.");
     }
     const path = this.tokens.tokens[index].value;
     const importInfo = this.getImportInfo(path);
-    importInfo.hasStarExport = true;
+    if (exportedName !== null) {
+      importInfo.exportStarNames.push(exportedName);
+    } else {
+      importInfo.hasStarExport = true;
+    }
   }
 
   private getNamedImports(index: number): {newIndex: number; namedImports: Array<NamedImport>} {
@@ -353,6 +382,7 @@ get: () => ${primaryImportName}[key]}); });`;
       namedImports: [],
       namedExports: [],
       hasBareImport: false,
+      exportStarNames: [],
       hasStarExport: false,
     };
     this.importInfoByPath.set(path, newInfo);

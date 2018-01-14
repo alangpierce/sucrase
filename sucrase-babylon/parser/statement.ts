@@ -1397,6 +1397,7 @@ export default class StatementParser extends ExpressionParser {
     );
 
     this.next();
+    this.state.tokens[this.state.tokens.length - 1].type = tt._as;
 
     specifier.exported = this.parseIdentifier(true);
 

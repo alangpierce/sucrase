@@ -66,7 +66,7 @@ function runBabel() {
     () =>
       Babel.transform(config.code, {
         presets: babelPresets,
-        plugins: babelPlugins,
+        plugins: [...babelPlugins, "proposal-export-namespace-from"],
         parserOpts: {plugins: ["jsx", "classProperties"]},
       }).code,
   );

@@ -63,13 +63,15 @@ function partition<T>(
 export default (superClass: ParserClass): ParserClass =>
   class extends superClass {
     flowParseTypeInitialiser(tok?: TokenType): N.FlowType {
-      const oldInType = this.state.inType;
-      this.state.inType = true;
-      this.expect(tok || tt.colon);
+      return this.runInTypeContext(0, () => {
+        const oldInType = this.state.inType;
+        this.state.inType = true;
+        this.expect(tok || tt.colon);
 
-      const type = this.flowParseType();
-      this.state.inType = oldInType;
-      return type;
+        const type = this.flowParseType();
+        this.state.inType = oldInType;
+        return type;
+      });
     }
 
     flowParsePredicate(): N.FlowType {
@@ -93,22 +95,24 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     flowParseTypeAndPredicateInitialiser(): [N.FlowType | null, N.FlowPredicate | null] {
-      const oldInType = this.state.inType;
-      this.state.inType = true;
-      this.expect(tt.colon);
-      let type = null;
-      let predicate = null;
-      if (this.match(tt.modulo)) {
-        this.state.inType = oldInType;
-        predicate = this.flowParsePredicate();
-      } else {
-        type = this.flowParseType();
-        this.state.inType = oldInType;
+      return this.runInTypeContext<[N.FlowType | null, N.FlowPredicate | null]>(0, () => {
+        const oldInType = this.state.inType;
+        this.state.inType = true;
+        this.expect(tt.colon);
+        let type = null;
+        let predicate = null;
         if (this.match(tt.modulo)) {
+          this.state.inType = oldInType;
           predicate = this.flowParsePredicate();
+        } else {
+          type = this.flowParseType();
+          this.state.inType = oldInType;
+          if (this.match(tt.modulo)) {
+            predicate = this.flowParsePredicate();
+          }
         }
-      }
-      return [type, predicate];
+        return [type, predicate];
+      });
     }
 
     flowParseDeclareClass(node: N.FlowDeclareClass): N.FlowDeclareClass {
@@ -481,30 +485,32 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     flowParseTypeParameterDeclaration(): N.TypeParameterDeclaration {
-      const oldInType = this.state.inType;
-      const node = this.startNode();
-      node.params = [];
+      return this.runInTypeContext(0, () => {
+        const oldInType = this.state.inType;
+        const node = this.startNode();
+        node.params = [];
 
-      this.state.inType = true;
+        this.state.inType = true;
 
-      // istanbul ignore else: this condition is already checked at all call sites
-      if (this.isRelational("<") || this.match(tt.typeParameterStart)) {
-        this.next();
-      } else {
-        this.unexpected();
-      }
-
-      do {
-        node.params.push(this.flowParseTypeParameter());
-        if (!this.isRelational(">")) {
-          this.expect(tt.comma);
+        // istanbul ignore else: this condition is already checked at all call sites
+        if (this.isRelational("<") || this.match(tt.typeParameterStart)) {
+          this.next();
+        } else {
+          this.unexpected();
         }
-      } while (!this.isRelational(">"));
-      this.expectRelational(">");
 
-      this.state.inType = oldInType;
+        do {
+          node.params.push(this.flowParseTypeParameter());
+          if (!this.isRelational(">")) {
+            this.expect(tt.comma);
+          }
+        } while (!this.isRelational(">"));
+        this.expectRelational(">");
 
-      return this.finishNode(node as N.TypeParameterDeclaration, "TypeParameterDeclaration");
+        this.state.inType = oldInType;
+
+        return this.finishNode(node as N.TypeParameterDeclaration, "TypeParameterDeclaration");
+      });
     }
 
     flowParseTypeParameterInstantiation(): N.TypeParameterInstantiation {
@@ -1191,8 +1197,10 @@ export default (superClass: ParserClass): ParserClass =>
       // strict mode handling of `interface` since it's a reserved word
       if (this.state.strict && this.match(tt.name) && this.state.value === "interface") {
         const node = this.startNode();
-        this.next();
-        return this.flowParseInterface(node);
+        return this.runInTypeContext(0, () => {
+          this.next();
+          return this.flowParseInterface(node);
+        });
       } else {
         return super.parseStatement(declaration, topLevel);
       }
@@ -1212,18 +1220,28 @@ export default (superClass: ParserClass): ParserClass =>
             this.match(tt._var) ||
             this.match(tt._export)
           ) {
-            return this.flowParseDeclare(node as N.FlowDeclare) as N.ExpressionStatement;
+            return this.runInTypeContext(
+              1,
+              () => this.flowParseDeclare(node as N.FlowDeclare) as N.ExpressionStatement,
+            );
           }
         } else if (this.match(tt.name)) {
           if (expr.name === "interface") {
-            return this.flowParseInterface(node as N.FlowInterface) as N.ExpressionStatement;
+            return this.runInTypeContext(
+              1,
+              () => this.flowParseInterface(node as N.FlowInterface) as N.ExpressionStatement,
+            );
           } else if (expr.name === "type") {
-            return this.flowParseTypeAlias(node as N.FlowTypeAlias) as N.ExpressionStatement;
+            return this.runInTypeContext(
+              1,
+              () => this.flowParseTypeAlias(node as N.FlowTypeAlias) as N.ExpressionStatement,
+            );
           } else if (expr.name === "opaque") {
-            return this.flowParseOpaqueType(
-              node as N.FlowOpaqueType,
-              false,
-            ) as N.ExpressionStatement;
+            return this.runInTypeContext(
+              1,
+              () =>
+                this.flowParseOpaqueType(node as N.FlowOpaqueType, false) as N.ExpressionStatement,
+            );
           }
         }
       }
@@ -1468,32 +1486,38 @@ export default (superClass: ParserClass): ParserClass =>
 
     parseExportDeclaration(node: N.ExportNamedDeclaration): N.Declaration | null {
       if (this.isContextual("type")) {
-        node.exportKind = "type";
+        return this.runInTypeContext(1, () => {
+          node.exportKind = "type";
 
-        const declarationNode = this.startNode();
-        this.next();
+          const declarationNode = this.startNode();
+          this.next();
 
-        if (this.match(tt.braceL)) {
-          // export type { foo, bar };
-          node.specifiers = this.parseExportSpecifiers();
-          this.parseExportFrom(node);
-          return null;
-        } else {
-          // export type Foo = Bar;
-          return this.flowParseTypeAlias(declarationNode) as N.Declaration;
-        }
+          if (this.match(tt.braceL)) {
+            // export type { foo, bar };
+            node.specifiers = this.parseExportSpecifiers();
+            this.parseExportFrom(node);
+            return null;
+          } else {
+            // export type Foo = Bar;
+            return this.flowParseTypeAlias(declarationNode) as N.Declaration;
+          }
+        });
       } else if (this.isContextual("opaque")) {
-        node.exportKind = "type";
+        return this.runInTypeContext(1, () => {
+          node.exportKind = "type";
 
-        const declarationNode = this.startNode();
-        this.next();
-        // export opaque type Foo = Bar;
-        return this.flowParseOpaqueType(declarationNode, false) as N.Declaration;
+          const declarationNode = this.startNode();
+          this.next();
+          // export opaque type Foo = Bar;
+          return this.flowParseOpaqueType(declarationNode, false) as N.Declaration;
+        });
       } else if (this.isContextual("interface")) {
-        node.exportKind = "type";
-        const declarationNode = this.startNode();
-        this.next();
-        return this.flowParseInterface(declarationNode) as N.Declaration;
+        return this.runInTypeContext(1, () => {
+          node.exportKind = "type";
+          const declarationNode = this.startNode();
+          this.next();
+          return this.flowParseInterface(declarationNode) as N.Declaration;
+        });
       } else {
         return super.parseExportDeclaration(node);
       }
@@ -1509,9 +1533,12 @@ export default (superClass: ParserClass): ParserClass =>
     parseExportStar(node: N.ExportNamedDeclaration): void {
       if (this.eatContextual("type")) {
         node.exportKind = "type";
+        this.runInTypeContext(2, () => {
+          super.parseExportStar(node);
+        });
+      } else {
+        super.parseExportStar(node);
       }
-
-      super.parseExportStar(node);
     }
 
     parseExportNamespace(node: N.ExportNamedDeclaration): void {
@@ -1751,21 +1778,23 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     parseAssignableListItemTypes(param: N.Pattern): N.Pattern {
-      if (this.eat(tt.question)) {
-        if (param.type !== "Identifier") {
-          throw this.raise(
-            param.start,
-            "A binding pattern parameter cannot be optional in an implementation signature.",
-          );
-        }
+      return this.runInTypeContext(0, () => {
+        if (this.eat(tt.question)) {
+          if (param.type !== "Identifier") {
+            throw this.raise(
+              param.start,
+              "A binding pattern parameter cannot be optional in an implementation signature.",
+            );
+          }
 
-        (param as N.Identifier).optional = true;
-      }
-      if (this.match(tt.colon)) {
-        param.typeAnnotation = this.flowParseTypeAnnotation() as N.TypeAnnotationBase;
-      }
-      this.finishNode(param, param.type);
-      return param;
+          (param as N.Identifier).optional = true;
+        }
+        if (this.match(tt.colon)) {
+          param.typeAnnotation = this.flowParseTypeAnnotation() as N.TypeAnnotationBase;
+        }
+        this.finishNode(param, param.type);
+        return param;
+      });
     }
 
     parseMaybeDefault(
@@ -1912,7 +1941,9 @@ export default (superClass: ParserClass): ParserClass =>
       // @ts-ignore
       const kind = node.kind;
       if (kind !== "get" && kind !== "set" && this.isRelational("<")) {
-        node.typeParameters = this.flowParseTypeParameterDeclaration();
+        this.runInTypeContext(0, () => {
+          node.typeParameters = this.flowParseTypeParameterDeclaration();
+        });
       }
       super.parseFunctionParams(node);
     }
@@ -1995,7 +2026,7 @@ export default (superClass: ParserClass): ParserClass =>
         let arrowExpression;
         let typeParameters;
         try {
-          typeParameters = this.flowParseTypeParameterDeclaration();
+          typeParameters = this.runInTypeContext(0, () => this.flowParseTypeParameterDeclaration());
           arrowExpression = this.forwardNoArrowParamsConversionAt(typeParameters, () =>
             super.parseMaybeAssign(noIn, refShorthandDefaultPos, afterLeftParse, refNeedsArrowPos),
           );
@@ -2023,39 +2054,41 @@ export default (superClass: ParserClass): ParserClass =>
     // handle return types for arrow functions
     parseArrow(node: N.ArrowFunctionExpression): N.ArrowFunctionExpression | null {
       if (this.match(tt.colon)) {
-        const state = this.state.clone();
-        try {
-          const oldNoAnonFunctionType = this.state.noAnonFunctionType;
-          this.state.noAnonFunctionType = true;
+        this.runInTypeContext(0, () => {
+          const state = this.state.clone();
+          try {
+            const oldNoAnonFunctionType = this.state.noAnonFunctionType;
+            this.state.noAnonFunctionType = true;
 
-          const typeNode = this.startNode<N.TypeAnnotation>();
+            const typeNode = this.startNode<N.TypeAnnotation>();
 
-          [
-            // $FlowFixMe (destructuring not supported yet)
-            // @ts-ignore
-            typeNode.typeAnnotation,
-            // $FlowFixMe (destructuring not supported yet)
-            // @ts-ignore
-            node.predicate,
-          ] = this.flowParseTypeAndPredicateInitialiser();
+            [
+              // $FlowFixMe (destructuring not supported yet)
+              // @ts-ignore
+              typeNode.typeAnnotation,
+              // $FlowFixMe (destructuring not supported yet)
+              // @ts-ignore
+              node.predicate,
+            ] = this.flowParseTypeAndPredicateInitialiser();
 
-          this.state.noAnonFunctionType = oldNoAnonFunctionType;
+            this.state.noAnonFunctionType = oldNoAnonFunctionType;
 
-          if (this.canInsertSemicolon()) this.unexpected();
-          if (!this.match(tt.arrow)) this.unexpected();
+            if (this.canInsertSemicolon()) this.unexpected();
+            if (!this.match(tt.arrow)) this.unexpected();
 
-          // assign after it is clear it is an arrow
-          node.returnType = typeNode.typeAnnotation
-            ? this.finishNode(typeNode, "TypeAnnotation")
-            : null;
-        } catch (err) {
-          if (err instanceof SyntaxError) {
-            this.state = state;
-          } else {
-            // istanbul ignore next: no such error is expected
-            throw err;
+            // assign after it is clear it is an arrow
+            node.returnType = typeNode.typeAnnotation
+              ? this.finishNode(typeNode, "TypeAnnotation")
+              : null;
+          } catch (err) {
+            if (err instanceof SyntaxError) {
+              this.state = state;
+            } else {
+              // istanbul ignore next: no such error is expected
+              throw err;
+            }
           }
-        }
+        });
       }
 
       return super.parseArrow(node);

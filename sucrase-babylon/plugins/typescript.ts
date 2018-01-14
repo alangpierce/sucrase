@@ -278,21 +278,23 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsParseTypeParameters(): N.TsTypeParameterDeclaration {
-      const node: N.TsTypeParameterDeclaration = this.startNode();
+      return this.runInTypeContext(0, () => {
+        const node: N.TsTypeParameterDeclaration = this.startNode();
 
-      if (this.isRelational("<") || this.match(tt.typeParameterStart)) {
-        this.next();
-      } else {
-        this.unexpected();
-      }
+        if (this.isRelational("<") || this.match(tt.typeParameterStart)) {
+          this.next();
+        } else {
+          this.unexpected();
+        }
 
-      node.params = this.tsParseBracketedList(
-        "TypeParametersOrArguments",
-        this.tsParseTypeParameter.bind(this),
-        /* bracket */ false,
-        /* skipFirstToken */ true,
-      );
-      return this.finishNode(node, "TSTypeParameterDeclaration");
+        node.params = this.tsParseBracketedList(
+          "TypeParametersOrArguments",
+          this.tsParseTypeParameter.bind(this),
+          /* bracket */ false,
+          /* skipFirstToken */ true,
+        );
+        return this.finishNode(node, "TSTypeParameterDeclaration");
+      });
     }
 
     // Note: In TypeScript implementation we must provide `yieldContext` and `awaitContext`,
@@ -709,25 +711,27 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsParseTypeOrTypePredicateAnnotation(returnToken: TokenType): N.TsTypeAnnotation {
-      const t: N.TsTypeAnnotation = this.startNode();
-      this.expect(returnToken);
+      return this.runInTypeContext(0, () => {
+        const t: N.TsTypeAnnotation = this.startNode();
+        this.expect(returnToken);
 
-      const typePredicateVariable =
-        this.tsIsIdentifier() && this.tsTryParse(this.tsParseTypePredicatePrefix.bind(this));
+        const typePredicateVariable =
+          this.tsIsIdentifier() && this.tsTryParse(this.tsParseTypePredicatePrefix.bind(this));
 
-      if (!typePredicateVariable) {
-        return this.tsParseTypeAnnotation(/* eatColon */ false, t);
-      }
+        if (!typePredicateVariable) {
+          return this.tsParseTypeAnnotation(/* eatColon */ false, t);
+        }
 
-      const type = this.tsParseTypeAnnotation(/* eatColon */ false);
+        const type = this.tsParseTypeAnnotation(/* eatColon */ false);
 
-      const node: N.TsTypePredicate = this.startNodeAtNode(
-        typePredicateVariable as N.TsTypePredicate,
-      );
-      node.parameterName = typePredicateVariable as N.Identifier;
-      node.typeAnnotation = type;
-      t.typeAnnotation = this.finishNode(node, "TSTypePredicate");
-      return this.finishNode(t, "TSTypeAnnotation");
+        const node: N.TsTypePredicate = this.startNodeAtNode(
+          typePredicateVariable as N.TsTypePredicate,
+        );
+        node.parameterName = typePredicateVariable as N.Identifier;
+        node.typeAnnotation = type;
+        t.typeAnnotation = this.finishNode(node, "TSTypePredicate");
+        return this.finishNode(t, "TSTypeAnnotation");
+      });
     }
 
     tsTryParseTypeOrTypePredicateAnnotation(): N.TsTypeAnnotation | null {
@@ -755,9 +759,11 @@ export default (superClass: ParserClass): ParserClass =>
       eatColon: boolean = true,
       t: N.TsTypeAnnotation = this.startNode(),
     ): N.TsTypeAnnotation {
-      if (eatColon) this.expect(tt.colon);
-      t.typeAnnotation = this.tsParseType();
-      return this.finishNode(t, "TSTypeAnnotation");
+      return this.runInTypeContext(0, () => {
+        if (eatColon) this.expect(tt.colon);
+        t.typeAnnotation = this.tsParseType();
+        return this.finishNode(t, "TSTypeAnnotation");
+      });
     }
 
     tsParseType(): N.TsType {
@@ -788,18 +794,21 @@ export default (superClass: ParserClass): ParserClass =>
 
     tsTryParseTypeArgumentsInExpression(): N.TsTypeParameterInstantiation | null {
       return this.tsTryParseAndCatch(() => {
-        const res: N.TsTypeParameterInstantiation = this.startNode();
-        this.expectRelational("<");
-        this.state.tokens[this.state.tokens.length - 1].type = tt.typeParameterStart;
-        const typeArguments = this.tsParseDelimitedList<N.TsType>(
-          "TypeParametersOrArguments",
-          this.tsParseType.bind(this),
-        );
-        this.expectRelational(">");
-        res.params = typeArguments;
-        this.finishNode(res, "TSTypeParameterInstantiation");
+        const node = this.runInTypeContext(0, () => {
+          const res: N.TsTypeParameterInstantiation = this.startNode();
+          this.expectRelational("<");
+          this.state.tokens[this.state.tokens.length - 1].type = tt.typeParameterStart;
+          const typeArguments = this.tsParseDelimitedList<N.TsType>(
+            "TypeParametersOrArguments",
+            this.tsParseType.bind(this),
+          );
+          this.expectRelational(">");
+          res.params = typeArguments;
+          this.finishNode(res, "TSTypeParameterInstantiation");
+          return res;
+        });
         this.expect(tt.parenL);
-        return res;
+        return node;
       });
     }
 
@@ -996,36 +1005,48 @@ export default (superClass: ParserClass): ParserClass =>
     tsTryParseDeclare(nany: N.Node): N.Declaration | null {
       switch (this.state.type) {
         case tt._function:
-          this.next();
-          return this.parseFunction(
-            nany as N.NormalFunction,
-            /* isStatement */ true,
-          ) as N.Declaration;
+          return this.runInTypeContext(1, () => {
+            this.next();
+            return this.parseFunction(
+              nany as N.NormalFunction,
+              /* isStatement */ true,
+            ) as N.Declaration;
+          });
         case tt._class:
-          return this.parseClass(
-            nany as N.Class,
-            /* isStatement */ true,
-            /* optionalId */ false,
-          ) as N.Declaration;
+          return this.runInTypeContext(
+            1,
+            () =>
+              this.parseClass(
+                nany as N.Class,
+                /* isStatement */ true,
+                /* optionalId */ false,
+              ) as N.Declaration,
+          );
         case tt._const:
           if (this.match(tt._const) && this.isLookaheadContextual("enum")) {
-            // `const enum = 0;` not allowed because "enum" is a strict mode reserved word.
-            this.expect(tt._const);
-            this.expectContextual("enum");
-            this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
-            return this.tsParseEnumDeclaration(nany as N.TsEnumDeclaration, /* isConst */ true);
+            return this.runInTypeContext(1, () => {
+              // `const enum = 0;` not allowed because "enum" is a strict mode reserved word.
+              this.expect(tt._const);
+              this.expectContextual("enum");
+              this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
+              return this.tsParseEnumDeclaration(nany as N.TsEnumDeclaration, /* isConst */ true);
+            });
           }
         // falls through
         case tt._var:
         case tt._let:
-          return this.parseVarStatement(nany as N.VariableDeclaration, this.state.type);
+          return this.runInTypeContext(1, () =>
+            this.parseVarStatement(nany as N.VariableDeclaration, this.state.type),
+          );
         case tt.name: {
-          const value = this.state.value;
-          if (value === "global") {
-            return this.tsParseAmbientExternalModuleDeclaration(nany as N.TsModuleDeclaration);
-          } else {
-            return this.tsParseDeclaration(nany, value, /* next */ true);
-          }
+          return this.runInTypeContext(1, () => {
+            const value = this.state.value;
+            if (value === "global") {
+              return this.tsParseAmbientExternalModuleDeclaration(nany as N.TsModuleDeclaration);
+            } else {
+              return this.tsParseDeclaration(nany, value, /* next */ true);
+            }
+          });
         }
         default:
           return null;
@@ -1090,31 +1111,43 @@ export default (superClass: ParserClass): ParserClass =>
 
         case "interface":
           if (next || this.match(tt.name)) {
-            if (next) this.next();
-            return this.tsParseInterfaceDeclaration(node as N.TsInterfaceDeclaration);
+            // `next` is true in "export" and "declare" contexts, so we want to remove that token
+            // as well.
+            return this.runInTypeContext(1, () => {
+              if (next) this.next();
+              return this.tsParseInterfaceDeclaration(node as N.TsInterfaceDeclaration);
+            });
           }
           break;
 
         case "module":
           if (next) this.next();
           if (this.match(tt.string)) {
-            return this.tsParseAmbientExternalModuleDeclaration(node as N.TsModuleDeclaration);
+            return this.runInTypeContext(next ? 2 : 1, () =>
+              this.tsParseAmbientExternalModuleDeclaration(node as N.TsModuleDeclaration),
+            );
           } else if (next || this.match(tt.name)) {
-            return this.tsParseModuleOrNamespaceDeclaration(node as N.TsModuleDeclaration);
+            return this.runInTypeContext(next ? 2 : 1, () =>
+              this.tsParseModuleOrNamespaceDeclaration(node as N.TsModuleDeclaration),
+            );
           }
           break;
 
         case "namespace":
           if (next || this.match(tt.name)) {
-            if (next) this.next();
-            return this.tsParseModuleOrNamespaceDeclaration(node as N.TsModuleDeclaration);
+            return this.runInTypeContext(1, () => {
+              if (next) this.next();
+              return this.tsParseModuleOrNamespaceDeclaration(node as N.TsModuleDeclaration);
+            });
           }
           break;
 
         case "type":
           if (next || this.match(tt.name)) {
-            if (next) this.next();
-            return this.tsParseTypeAliasDeclaration(node as N.TsTypeAliasDeclaration);
+            return this.runInTypeContext(1, () => {
+              if (next) this.next();
+              return this.tsParseTypeAliasDeclaration(node as N.TsTypeAliasDeclaration);
+            });
           }
           break;
 
@@ -1151,17 +1184,19 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsParseTypeArguments(): N.TsTypeParameterInstantiation {
-      const node = this.startNode();
-      this.expectRelational("<");
-      node.params = this.tsParseDelimitedList(
-        "TypeParametersOrArguments",
-        this.tsParseType.bind(this),
-      );
-      this.expectRelational(">");
-      return this.finishNode(
-        node as N.TsTypeParameterInstantiation,
-        "TSTypeParameterInstantiation",
-      );
+      return this.runInTypeContext(0, () => {
+        const node = this.startNode();
+        this.expectRelational("<");
+        node.params = this.tsParseDelimitedList(
+          "TypeParametersOrArguments",
+          this.tsParseType.bind(this),
+        );
+        this.expectRelational(">");
+        return this.finishNode(
+          node as N.TsTypeParameterInstantiation,
+          "TSTypeParameterInstantiation",
+        );
+      });
     }
 
     tsIsDeclarationStart(): boolean {
@@ -1247,6 +1282,17 @@ export default (superClass: ParserClass): ParserClass =>
         bodilessType = type === "ClassMethod" ? "TSDeclareMethod" : undefined;
       }
       if (bodilessType && !this.match(tt.braceL) && this.isLineTerminator()) {
+        // Retroactively mark the function declaration as a type.
+        let i = this.state.tokens.length - 1;
+        while (
+          i >= 0 &&
+          (this.state.tokens[i].start >= node.start ||
+            this.state.tokens[i].type === tt._default ||
+            this.state.tokens[i].type === tt._export)
+        ) {
+          this.state.tokens[i].isType = true;
+          i--;
+        }
         this.finishNode(node, bodilessType);
         return;
       }
@@ -1330,7 +1376,7 @@ export default (superClass: ParserClass): ParserClass =>
         this.state.tokens[this.state.tokens.length - 1].type = tt._as;
         const node: N.TsAsExpression = this.startNodeAt(leftStartPos, leftStartLoc);
         node.expression = left;
-        node.typeAnnotation = this.tsParseType();
+        node.typeAnnotation = this.runInTypeContext(1, () => this.tsParseType());
         this.finishNode(node, "TSAsExpression");
         return this.parseExprOp(node, leftStartPos, leftStartLoc, minPrec, noIn);
       }
@@ -1570,14 +1616,25 @@ export default (superClass: ParserClass): ParserClass =>
 
     parseExportDeclaration(node: N.ExportNamedDeclaration): N.Declaration | null {
       // "export declare" is equivalent to just "export".
-      const isDeclare = this.eat(tt._declare);
+      const isDeclare = this.eatContextual("declare");
+      if (isDeclare) {
+        this.state.tokens[this.state.tokens.length - 1].type = tt._declare;
+      }
 
       let declaration: N.Declaration | null = null;
       if (this.match(tt.name)) {
-        declaration = this.tsTryParseExportDeclaration();
+        if (isDeclare) {
+          declaration = this.runInTypeContext(2, () => this.tsTryParseExportDeclaration());
+        } else {
+          declaration = this.tsTryParseExportDeclaration();
+        }
       }
       if (!declaration) {
-        declaration = super.parseExportDeclaration(node);
+        if (isDeclare) {
+          declaration = this.runInTypeContext(2, () => super.parseExportDeclaration(node));
+        } else {
+          declaration = super.parseExportDeclaration(node);
+        }
       }
 
       if (declaration && isDeclare) {
@@ -1748,7 +1805,7 @@ export default (superClass: ParserClass): ParserClass =>
       const state = this.state.clone();
       try {
         // This is similar to TypeScript's `tryParseParenthesizedArrowFunctionExpression`.
-        typeParameters = this.tsParseTypeParameters();
+        typeParameters = this.runInTypeContext(0, () => this.tsParseTypeParameters());
         arrowExpression = super.parseMaybeAssign(
           noIn,
           refShorthandDefaultPos,
@@ -1826,19 +1883,21 @@ export default (superClass: ParserClass): ParserClass =>
 
     // Allow type annotations inside of a parameter list.
     parseAssignableListItemTypes(param: N.Pattern): N.Pattern {
-      if (this.eat(tt.question)) {
-        if (param.type !== "Identifier") {
-          throw this.raise(
-            param.start,
-            "A binding pattern parameter cannot be optional in an implementation signature.",
-          );
-        }
+      return this.runInTypeContext(0, () => {
+        if (this.eat(tt.question)) {
+          if (param.type !== "Identifier") {
+            throw this.raise(
+              param.start,
+              "A binding pattern parameter cannot be optional in an implementation signature.",
+            );
+          }
 
-        (param as N.Identifier).optional = true;
-      }
-      const type = this.tsTryParseTypeAnnotation();
-      if (type) param.typeAnnotation = type;
-      return this.finishNode(param, param.type);
+          (param as N.Identifier).optional = true;
+        }
+        const type = this.tsTryParseTypeAnnotation();
+        if (type) param.typeAnnotation = type;
+        return this.finishNode(param, param.type);
+      });
     }
 
     toAssignable(node: N.Node, isBinding: boolean | null, contextDescription: string): N.Node {

@@ -91,6 +91,11 @@ class TokenPreprocessor {
           this.processTypeExpression({disallowArrow: mayBeArrowReturnType});
         }
       } else if (
+        this.tokens.matches(["export", "name", "*"]) &&
+        this.tokens.matchesNameAtRelativeIndex(1, "type")
+      ) {
+        this.processTypeWildcardExport();
+      } else if (
         this.tokens.matches(["export"]) &&
         this.tokens.matchesNameAtRelativeIndex(1, "type")
       ) {
@@ -346,6 +351,17 @@ class TokenPreprocessor {
     this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
     this.advance();
     this.skipTypeExpression();
+    this.contextStack.pop();
+  }
+
+  private processTypeWildcardExport(): void {
+    this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
+    // export type * from "a";
+    this.advance("export");
+    this.advance("name");
+    this.advance("*");
+    this.advance("name");
+    this.advance("string");
     this.contextStack.pop();
   }
 

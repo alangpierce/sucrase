@@ -896,4 +896,15 @@ module.exports = exports.default;
     `,
     );
   });
+
+  it("handles export namespace as named export", () => {
+    assertResult(
+      `
+      export * as a from 'a';
+    `,
+      `${PREFIX}${ESMODULE_PREFIX}
+      var _a = require('a'); var _a2 = _interopRequireWildcard(_a); exports.a = _a2;
+    `,
+    );
+  });
 });

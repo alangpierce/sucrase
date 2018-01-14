@@ -207,7 +207,8 @@ get: () => ${primaryImportName}[key]}); });`;
 
     index++;
     if (
-      this.tokens.matchesNameAtIndex(index, "type") &&
+      (this.tokens.matchesNameAtIndex(index, "type") ||
+        this.tokens.matchesAtIndex(index, ["typeof"])) &&
       !this.tokens.matchesAtIndex(index + 1, [","]) &&
       !this.tokens.matchesNameAtIndex(index + 1, "from")
     ) {
@@ -331,7 +332,8 @@ get: () => ${primaryImportName}[key]}); });`;
       // Flow type imports should just be ignored.
       let isTypeImport = false;
       if (
-        this.tokens.matchesNameAtIndex(index, "type") &&
+        (this.tokens.matchesNameAtIndex(index, "type") ||
+          this.tokens.matchesAtIndex(index, ["typeof"])) &&
         this.tokens.matchesAtIndex(index + 1, ["name"]) &&
         !this.tokens.matchesNameAtIndex(index + 1, "as")
       ) {

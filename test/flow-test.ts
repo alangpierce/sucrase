@@ -103,4 +103,15 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("handles `export type * from`", () => {
+    assertFlowResult(
+      `
+      export type * from "a";
+    `,
+      `${PREFIX}
+      ;
+    `,
+    );
+  });
 });

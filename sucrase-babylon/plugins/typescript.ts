@@ -1701,7 +1701,8 @@ export default (superClass: ParserClass): ParserClass =>
         node.superTypeParameters = this.tsParseTypeArguments();
       }
       if (this.eatContextual("implements")) {
-        node.implements = this.tsParseHeritageClause();
+        this.state.tokens[this.state.tokens.length - 1].type = tt._implements;
+        node.implements = this.runInTypeContext(1, () => this.tsParseHeritageClause());
       }
     }
 

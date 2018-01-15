@@ -274,4 +274,52 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("properly converts static fields in statement classes", () => {
+    assertResult(
+      `
+      class A {
+        static x = 3;
+      }
+    `,
+      `"use strict";
+      class A {
+        
+      } A.x = 3;
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
+
+  it("properly converts static fields in expression classes", () => {
+    assertResult(
+      `
+      const A = class {
+        static x = 3;
+      }
+    `,
+      `"use strict"; var _class;
+      const A = (_class = class {
+        
+      }, _class.x = 3, _class)
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
+
+  it("properly converts exported classes with static fields", () => {
+    assertResult(
+      `
+      export default class C {
+        static x = 3;
+      }
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       class C {
+        
+      } C.x = 3; exports.default = C;
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

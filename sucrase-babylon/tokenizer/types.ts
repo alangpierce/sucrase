@@ -207,6 +207,7 @@ export const keywords = {
   as: new KeywordTokenType("as"),
   enum: new KeywordTokenType("enum"),
   type: new KeywordTokenType("type"),
+  implements: new KeywordTokenType("implements"),
 };
 
 // Map keyword names to token types.

@@ -128,6 +128,7 @@ export class Token {
   shadowsGlobal?: boolean;
   contextId?: number;
   rhsEndIndex?: number;
+  isExpression?: boolean;
 }
 
 // ## Tokenizer

@@ -210,6 +210,7 @@ get: () => ${primaryImportName}[key]}); });`;
 
     index++;
     if (
+      // Ideally "type" would be a token type label, but for now, it's just an identifier.
       (this.tokens.matchesNameAtIndex(index, "type") ||
         this.tokens.matchesAtIndex(index, ["typeof"])) &&
       !this.tokens.matchesAtIndex(index + 1, [","]) &&
@@ -335,7 +336,7 @@ get: () => ${primaryImportName}[key]}); });`;
       // Flow type imports should just be ignored.
       let isTypeImport = false;
       if (
-        (this.tokens.matchesNameAtIndex(index, "type") ||
+        (this.tokens.matchesAtIndex(index, ["type"]) ||
           this.tokens.matchesAtIndex(index, ["typeof"])) &&
         this.tokens.matchesAtIndex(index + 1, ["name"]) &&
         !this.tokens.matchesNameAtIndex(index + 1, "as")

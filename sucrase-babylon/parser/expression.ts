@@ -1663,6 +1663,7 @@ export default abstract class ExpressionParser extends LValParser {
   parseIdentifier(liberal?: boolean): N.Identifier {
     const node = this.startNode();
     const name = this.parseIdentifierName(node.start, liberal);
+    this.state.tokens[this.state.tokens.length - 1].type = tt.name;
     node.name = name;
     node.loc.identifierName = name;
     return this.finishNode(node as N.Identifier, "Identifier");

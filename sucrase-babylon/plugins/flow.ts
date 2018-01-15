@@ -1885,9 +1885,11 @@ export default (superClass: ParserClass): ParserClass =>
 
       let specifierTypeKind = null;
       if (firstIdent.name === "type") {
+        this.state.tokens[this.state.tokens.length - 1].type = tt._type;
         specifierTypeKind = "type";
       } else if (firstIdent.name === "typeof") {
         specifierTypeKind = "typeof";
+        this.state.tokens[this.state.tokens.length - 1].type = tt._typeof;
       }
 
       let isBinding = false;

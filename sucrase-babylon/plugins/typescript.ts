@@ -1095,10 +1095,10 @@ export default (superClass: ParserClass): ParserClass =>
       switch (value) {
         case "abstract":
           if (next || this.match(tt._class)) {
-            this.state.type = tt._abstract;
             const cls: N.ClassDeclaration = node as N.ClassDeclaration;
             cls.abstract = true;
             if (next) this.next();
+            this.state.tokens[this.state.tokens.length - 1].type = tt._abstract;
             return this.parseClass(cls, /* isStatement */ true, /* optionalId */ false);
           }
           break;

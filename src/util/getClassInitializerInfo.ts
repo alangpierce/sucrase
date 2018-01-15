@@ -151,6 +151,7 @@ function isAccessModifier(token: Token): boolean {
     "public",
     "private",
     "protected",
+    "abstract",
   ].includes(token.type.label);
 }
 

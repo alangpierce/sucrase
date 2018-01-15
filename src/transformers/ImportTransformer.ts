@@ -1,6 +1,5 @@
 import {IdentifierRole} from "../../sucrase-babylon/tokenizer";
 import ImportProcessor from "../ImportProcessor";
-import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
 import isMaybePropertyName from "../util/isMaybePropertyName";
 import RootTransformer from "./RootTransformer";
@@ -14,7 +13,6 @@ export default class ImportTransformer extends Transformer {
   constructor(
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
-    readonly nameManager: NameManager,
     readonly importProcessor: ImportProcessor,
     readonly shouldAddModuleExports: boolean,
   ) {
@@ -324,9 +322,9 @@ export default class ImportTransformer extends Transformer {
     }
     const name = this.tokens.currentToken().value;
     this.tokens.copyToken();
-    if (this.tokens.currentToken().contextName === "typeParameter") {
+    if (this.tokens.currentToken().isType) {
       this.tokens.removeInitialToken();
-      while (this.tokens.currentToken().contextName === "typeParameter") {
+      while (this.tokens.currentToken().isType) {
         this.tokens.removeToken();
       }
     }

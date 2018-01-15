@@ -36,13 +36,7 @@ export default class RootTransformer {
     if (transforms.includes("imports")) {
       const shouldAddModuleExports = transforms.includes("add-module-exports");
       this.transformers.push(
-        new ImportTransformer(
-          this,
-          tokenProcessor,
-          this.nameManager,
-          importProcessor,
-          shouldAddModuleExports,
-        ),
+        new ImportTransformer(this, tokenProcessor, importProcessor, shouldAddModuleExports),
       );
     }
 
@@ -130,6 +124,7 @@ export default class RootTransformer {
 
   processClass(): void {
     const classToken = this.tokens.currentToken();
+    const contextId = classToken.contextId;
     this.tokens.copyExpectedToken("class");
     if (this.tokens.matches(["name"]) && !this.tokens.matchesName("implements")) {
       this.tokens.copyToken();
@@ -145,22 +140,9 @@ export default class RootTransformer {
     let hasSuperclass = false;
     if (this.tokens.matches(["extends"])) {
       hasSuperclass = true;
-      // There are only some limited expressions that are allowed within the
-      // `extends` expression, e.g. no top-level binary operators, so we can
-      // skip past even fairly complex expressions by being a bit careful.
-      this.tokens.copyToken();
-      if (this.tokens.matches(["{"])) {
-        // Extending an object literal.
-        this.tokens.copyExpectedToken("{");
-        this.processBalancedCode();
-        this.tokens.copyExpectedToken("}");
-      }
       while (
         !this.tokens.matchesName("implements") &&
-        !(
-          this.tokens.matches(["{"]) &&
-          this.tokens.currentToken().parentContextStartIndex === classToken.contextStartIndex
-        )
+        !(this.tokens.matches(["{"]) && this.tokens.currentToken().contextId === contextId)
       ) {
         this.processToken();
       }
@@ -184,7 +166,10 @@ export default class RootTransformer {
       this.tokens,
     );
     let fieldIndex = 0;
-    const classBlockStartIndex = this.tokens.currentToken().contextStartIndex!;
+    const classContextId = this.tokens.currentToken().contextId;
+    if (classContextId == null) {
+      throw new Error("Expected non-null context ID on class.");
+    }
     this.tokens.copyExpectedToken("{");
 
     if (constructorInsertPos === null && initializerStatements.length > 0) {
@@ -199,7 +184,7 @@ export default class RootTransformer {
       }
     }
 
-    while (!this.tokens.matchesContextEnd("}", classBlockStartIndex)) {
+    while (!this.tokens.matchesContextIdAndLabel("}", classContextId)) {
       if (
         fieldIndex < fieldRanges.length &&
         this.tokens.currentIndex() === fieldRanges[fieldIndex].start

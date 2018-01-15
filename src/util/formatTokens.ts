@@ -10,7 +10,7 @@ export default function formatTokens(code: string, tokens: Array<Token>): string
     (k) => k !== "updateContext" && k !== "label" && k !== "keyword",
   );
 
-  const headings = ["Location", "Label", "Context", "Value", ...typeKeys];
+  const headings = ["Location", "Label", "Value", ...typeKeys];
 
   const lines = new LinesAndColumns(code);
   const rows = [headings, ...tokens.map(getTokenComponents)];
@@ -28,7 +28,6 @@ export default function formatTokens(code: string, tokens: Array<Token>): string
     return [
       formatRange(token.start, token.end),
       token.type.label,
-      `${token.contextName}(${token.contextStartIndex})`,
       token.value != null ? truncate(String(token.value), 14) : "",
       ...typeKeys.map((key) => {
         const value = token.type[key];

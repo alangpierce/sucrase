@@ -103,14 +103,14 @@ export default class ReactDisplayNameTransformer extends Transformer {
     // that context. We need to ignore other other contexts to avoid matching
     // nested displayName keys.
     const objectStartIndex = index + 1;
+    const objectContextId = this.tokens.tokens[objectStartIndex].contextId;
+    if (objectContextId == null) {
+      throw new Error("Expected non-null context ID on object open-brace.");
+    }
 
     for (; index < this.tokens.tokens.length; index++) {
       const token = this.tokens.tokens[index];
-      if (
-        token.type.label === "}" &&
-        token.contextName === "object" &&
-        token.contextStartIndex === objectStartIndex
-      ) {
+      if (token.type.label === "}" && token.contextId === objectContextId) {
         index++;
         break;
       }
@@ -118,8 +118,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
       if (
         this.tokens.matchesNameAtIndex(index, "displayName") &&
         this.tokens.tokens[index].identifierRole === IdentifierRole.ObjectKey &&
-        token.contextName === "object" &&
-        token.contextStartIndex === objectStartIndex
+        token.contextId === objectContextId
       ) {
         // We found a displayName key, so bail out.
         return false;

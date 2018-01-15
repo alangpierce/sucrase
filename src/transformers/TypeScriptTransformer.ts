@@ -142,16 +142,16 @@ export default class TypeScriptTransformer extends Transformer {
       let valueCode;
 
       if (this.tokens.matches(["="])) {
-        const contextStartIndex = this.tokens.currentToken().contextStartIndex!;
+        const rhsEndIndex = this.tokens.currentToken().rhsEndIndex!;
+        if (rhsEndIndex == null) {
+          throw new Error("Expected rhsEndIndex on enum assign.");
+        }
         this.tokens.removeToken();
         if (this.tokens.matches(["string", ","]) || this.tokens.matches(["string", "}"])) {
           valueIsString = true;
         }
         const startToken = this.tokens.currentToken();
-        while (
-          !this.tokens.matchesContextEnd(",", contextStartIndex) &&
-          !this.tokens.matchesContextEnd("}", contextStartIndex)
-        ) {
+        while (this.tokens.currentIndex() < rhsEndIndex) {
           this.tokens.removeToken();
         }
         valueCode = this.tokens.code.slice(

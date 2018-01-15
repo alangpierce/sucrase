@@ -129,6 +129,8 @@ export class Token {
   parentContextStartIndex?: number | null;
   identifierRole?: IdentifierRole;
   shadowsGlobal?: boolean;
+  contextId?: number;
+  rhsEndIndex?: number;
 }
 
 // ## Tokenizer
@@ -153,12 +155,14 @@ export default abstract class Tokenizer extends LocationParser {
   isLookahead: boolean;
   state: State;
   input: string;
+  nextContextId: number;
 
   constructor(options: Options, input: string) {
     super();
     this.state = new State();
     this.state.init(options, input);
     this.isLookahead = false;
+    this.nextContextId = 1;
   }
 
   // Move to the next token

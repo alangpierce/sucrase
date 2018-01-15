@@ -344,4 +344,16 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("puts the prefix after a shebang if necessary", () => {
+    assertResult(
+      `#!/usr/bin/env node
+      console.log("Hello");
+    `,
+      `#!/usr/bin/env node
+"use strict";      console.log("Hello");
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

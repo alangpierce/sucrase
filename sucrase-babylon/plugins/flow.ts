@@ -1452,6 +1452,7 @@ export default (superClass: ParserClass): ParserClass =>
     parseParenItem(node: N.Expression, startPos: number, startLoc: Position): N.Expression {
       node = super.parseParenItem(node, startPos, startLoc);
       if (this.eat(tt.question)) {
+        this.state.tokens[this.state.tokens.length - 1].isType = true;
         node.optional = true;
       }
 

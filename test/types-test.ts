@@ -393,4 +393,15 @@ describe("type transforms", () => {
     `,
     );
   });
+
+  it("handles arrow functions with optional parameters", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      const f = (x?: number) => x + 1;
+    `,
+      `
+      const f = (x) => x + 1;
+    `,
+    );
+  });
 });

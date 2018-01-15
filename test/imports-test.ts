@@ -730,7 +730,7 @@ module.exports = exports.default;
       export * from './MyVars';
     `,
       `${PREFIX}${ESMODULE_PREFIX}
-      var _MyVars = require('./MyVars'); Object.keys(_MyVars).filter(key => key !== 'default' && key !== '__esModule').forEach(key => { Object.defineProperty(exports, key, {enumerable: true, get: () => _MyVars[key]}); });
+      var _MyVars = require('./MyVars'); Object.keys(_MyVars).filter(key => key !== 'default' && key !== '__esModule').forEach(key => { if (exports.hasOwnProperty(key)) { return; } Object.defineProperty(exports, key, {enumerable: true, get: () => _MyVars[key]}); });
     `,
     );
   });

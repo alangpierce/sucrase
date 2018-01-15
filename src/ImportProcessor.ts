@@ -179,8 +179,13 @@ export default class ImportProcessor {
         requireCode += ` exports.${exportStarName} = ${secondaryImportName};`;
       }
       if (hasStarExport) {
+        // Note that TypeScript and Babel do this differently; TypeScript does a simple existence
+        // check in the exports object and does a plain assignment, whereas Babel uses
+        // defineProperty and builds an object of explicitly-exported names so that star exports can
+        // always take lower precedence. For now, we do the easier TypeScript thing.a
         requireCode += ` Object.keys(${primaryImportName}).filter(key => \
 key !== 'default' && key !== '__esModule').forEach(key => { \
+if (exports.hasOwnProperty(key)) { return; } \
 Object.defineProperty(exports, key, {enumerable: true, \
 get: () => ${primaryImportName}[key]}); });`;
       }

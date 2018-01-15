@@ -127,4 +127,15 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("handles export type for individual types", () => {
+    assertFlowResult(
+      `
+      export type {foo};
+    `,
+      `${PREFIX}
+      
+    `,
+    );
+  });
 });

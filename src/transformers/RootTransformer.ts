@@ -66,7 +66,17 @@ export default class RootTransformer {
     for (const transformer of this.transformers) {
       suffix += transformer.getSuffixCode();
     }
-    return prefix + this.tokens.finish() + suffix;
+    let code = this.tokens.finish();
+    if (code.startsWith("#!")) {
+      let newlineIndex = code.indexOf("\n");
+      if (newlineIndex === -1) {
+        newlineIndex = code.length;
+        code += "\n";
+      }
+      return code.slice(0, newlineIndex + 1) + prefix + code.slice(newlineIndex + 1) + suffix;
+    } else {
+      return prefix + this.tokens.finish() + suffix;
+    }
   }
 
   processBalancedCode(): void {

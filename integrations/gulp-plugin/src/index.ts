@@ -32,6 +32,7 @@ function gulpSucrase(options: Options): Transform {
       file.path = replaceExt(file.path, ".js");
       this.push(file);
     } catch (e) {
+      e.message = `Error when processing file ${file.path}: ${e.message}`;
       this.emit("error", new PluginError(PLUGIN_NAME, e));
     }
 

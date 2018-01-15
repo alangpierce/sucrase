@@ -1,3 +1,4 @@
+import {Token} from "../../sucrase-babylon/tokenizer";
 import TokenProcessor from "../TokenProcessor";
 
 export type ClassInitializerInfo = {
@@ -21,9 +22,13 @@ export default function getClassInitializerInfo(tokens: TokenProcessor): ClassIn
   let constructorInsertPos = null;
   const fieldRanges = [];
 
-  const classBlockStartIndex = tokens.currentToken().contextStartIndex!;
+  const classContextId = tokens.currentToken().contextId;
+  if (classContextId == null) {
+    throw new Error("Expected non-null class context ID on class open-brace.");
+  }
+
   tokens.nextToken();
-  while (!tokens.matchesContextEnd("}", classBlockStartIndex)) {
+  while (!tokens.matchesContextIdAndLabel("}", classContextId)) {
     if (tokens.matchesName("constructor")) {
       ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
     } else if (tokens.matches([";"])) {
@@ -31,35 +36,34 @@ export default function getClassInitializerInfo(tokens: TokenProcessor): ClassIn
     } else {
       // Either a regular method or a field. Skip to the identifier part.
       const statementStartIndex = tokens.currentIndex();
-      while (isAccessModifier(tokens)) {
+      while (isAccessModifier(tokens.currentToken())) {
         tokens.nextToken();
       }
       const nameCode = getNameCode(tokens);
       if (tokens.matches(["</>"]) || tokens.matches(["("])) {
-        // This is a method, so just skip to the close-brace at the end.
-        while (
-          !(
-            tokens.matches(["}"]) &&
-            tokens.currentToken().contextName === "block" &&
-            tokens.currentToken().parentContextStartIndex === classBlockStartIndex
-          )
-        ) {
+        // This is a method, so just skip to the next method/field. To do that, we seek forward to
+        // the next start of a class name (either an open bracket or an identifier, or the closing
+        // curly brace), then seek backward to include any access modifiers.
+        while (tokens.currentToken().contextId !== classContextId) {
           tokens.nextToken();
         }
-        tokens.nextToken();
+        while (isAccessModifier(tokens.tokenAtRelativeIndex(-1))) {
+          tokens.previousToken();
+        }
         continue;
       }
-      // This is a field, so skip to either an equals sign or a semicolon.
-      while (
-        !tokens.matchesContextEnd("=", classBlockStartIndex) &&
-        !tokens.matchesContextEnd(";", classBlockStartIndex)
-      ) {
+      // There might be a type annotation that we need to skip.
+      while (tokens.currentToken().isType) {
         tokens.nextToken();
       }
       if (tokens.matches(["="])) {
+        const valueEnd = tokens.currentToken().rhsEndIndex;
+        if (valueEnd == null) {
+          throw new Error("Expected rhsEndIndex on class field assignment.");
+        }
         tokens.nextToken();
         const assignExpressionStart = tokens.currentToken().start;
-        while (!tokens.matchesContextEnd(";", classBlockStartIndex)) {
+        while (tokens.currentIndex() < valueEnd) {
           tokens.nextToken();
         }
         // Note that this can adjust line numbers in the case of multiline string literals.
@@ -87,13 +91,16 @@ function processConstructor(
   const constructorInitializers = [];
 
   tokens.nextToken();
-  const parenStartIndex = tokens.currentToken().contextStartIndex!;
+  const constructorContextId = tokens.currentToken().contextId;
+  if (constructorContextId == null) {
+    throw new Error("Expected context ID on open-paren starting constructor params.");
+  }
   tokens.nextToken();
   // Advance through parameters looking for access modifiers.
-  while (!tokens.matchesContextEnd(")", parenStartIndex)) {
-    if (isAccessModifier(tokens)) {
+  while (!tokens.matchesContextIdAndLabel(")", constructorContextId)) {
+    if (isAccessModifier(tokens.currentToken())) {
       tokens.nextToken();
-      while (isAccessModifier(tokens)) {
+      while (isAccessModifier(tokens.currentToken())) {
         tokens.nextToken();
       }
       const token = tokens.currentToken();
@@ -108,14 +115,16 @@ function processConstructor(
   // )
   tokens.nextToken();
   let constructorInsertPos = tokens.currentIndex();
-  const constructorBodyStartIndex = tokens.currentToken().contextStartIndex!;
 
   // Advance through body looking for a super call.
-  while (!tokens.matchesContextEnd("}", constructorBodyStartIndex)) {
+  while (!tokens.matchesContextIdAndLabel("}", constructorContextId)) {
     if (tokens.matches(["super"])) {
       tokens.nextToken();
-      const superArgsStartIndex = tokens.currentToken().contextStartIndex!;
-      while (!tokens.matchesContextEnd(")", superArgsStartIndex)) {
+      const superCallContextId = tokens.currentToken().contextId;
+      if (superCallContextId == null) {
+        throw new Error("Expected a context ID on the super call");
+      }
+      while (!tokens.matchesContextIdAndLabel(")", superCallContextId)) {
         tokens.nextToken();
       }
       constructorInsertPos = tokens.currentIndex();
@@ -131,18 +140,18 @@ function processConstructor(
 /**
  * Determine if this is any token that can go before the name in a method/field.
  */
-function isAccessModifier(tokens: TokenProcessor): boolean {
-  return (
-    tokens.matches(["async"]) ||
-    tokens.matches(["get"]) ||
-    tokens.matches(["set"]) ||
-    tokens.matches(["+/-"]) ||
-    tokens.matches(["readonly"]) ||
-    tokens.matches(["static"]) ||
-    tokens.matches(["public"]) ||
-    tokens.matches(["private"]) ||
-    tokens.matches(["protected"])
-  );
+function isAccessModifier(token: Token): boolean {
+  return [
+    "async",
+    "get",
+    "set",
+    "+/-",
+    "readonly",
+    "static",
+    "public",
+    "private",
+    "protected",
+  ].includes(token.type.label);
 }
 
 /**
@@ -154,7 +163,11 @@ function isAccessModifier(tokens: TokenProcessor): boolean {
 function getNameCode(tokens: TokenProcessor): string {
   if (tokens.matches(["["])) {
     const startToken = tokens.currentToken();
-    while (!tokens.matchesContextEnd("]", startToken.contextStartIndex!)) {
+    const classContextId = startToken.contextId;
+    if (classContextId == null) {
+      throw new Error("Expected class context ID on computed name open bracket.");
+    }
+    while (!tokens.matchesContextIdAndLabel("]", classContextId)) {
       tokens.nextToken();
     }
     const endToken = tokens.currentToken();

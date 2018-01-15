@@ -1156,15 +1156,19 @@ export default (superClass: ParserClass): ParserClass =>
     // Overrides
     // ==================================
 
-    parseFunctionBody(node: N.Function, allowExpressionBody: boolean | null): void {
+    parseFunctionBody(
+      node: N.Function,
+      allowExpressionBody: boolean | null,
+      funcContextId?: number,
+    ): void {
       if (allowExpressionBody) {
         this.forwardNoArrowParamsConversionAt(node, () => {
-          super.parseFunctionBody(node, true);
+          super.parseFunctionBody(node, true, funcContextId);
         });
         return;
       }
 
-      super.parseFunctionBody(node, false);
+      super.parseFunctionBody(node, false, funcContextId);
     }
 
     parseFunctionBodyAndFinish(

@@ -99,6 +99,7 @@ export enum IdentifierRole {
   FunctionScopedDeclaration,
   BlockScopedDeclaration,
   ObjectShorthand,
+  ObjectKey,
   Assignment,
 }
 

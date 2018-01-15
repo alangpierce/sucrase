@@ -1385,6 +1385,7 @@ export default abstract class ExpressionParser extends LValParser {
           ? this.parseExprAtom()
           : this.parseMaybePrivateName();
 
+      this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.ObjectKey;
       if (prop.key.type !== "PrivateName") {
         // ClassPrivateProperty is never computed, so we don't assign in that case.
         prop.computed = false;

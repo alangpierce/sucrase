@@ -1561,6 +1561,7 @@ export default class StatementParser extends ExpressionParser {
 
       const node = this.startNode<N.ExportSpecifier>();
       node.local = this.parseIdentifier(isDefault);
+      this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.ExportAccess;
       node.exported = this.eatContextual("as") ? this.parseIdentifier(true) : node.local.__clone();
       nodes.push(this.finishNode(node, "ExportSpecifier"));
     }

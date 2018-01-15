@@ -623,4 +623,17 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("does not prune imports that are then exported", () => {
+    assertTypeScriptResult(
+      `
+      import A from 'a';
+      export {A};
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      var _a = require('a');
+      exports.A = _a.default;
+    `,
+    );
+  });
 });

@@ -74,6 +74,10 @@ export default class TokenProcessor {
     return this.matches([label]) && this.currentToken().contextStartIndex === contextStartIndex;
   }
 
+  matchesContextIdAndLabel(label: string, contextId: number): boolean {
+    return this.matches([label]) && this.currentToken().contextId === contextId;
+  }
+
   previousWhitespace(): string {
     return this.code.slice(
       this.tokenIndex > 0 ? this.tokens[this.tokenIndex - 1].end : 0,

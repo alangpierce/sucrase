@@ -1099,6 +1099,8 @@ export default abstract class ExpressionParser extends LValParser {
     isBlockScope: boolean,
     refShorthandDefaultPos: Pos | null = null,
   ): T {
+    // Attach a context ID to the object open and close brace and each object key.
+    const contextId = this.nextContextId++;
     let decorators = [];
     const propHash: {} = Object.create(null);
     let first = true;
@@ -1106,6 +1108,7 @@ export default abstract class ExpressionParser extends LValParser {
 
     node.properties = [];
     this.next();
+    this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
 
     let firstRestLocation = null;
 
@@ -1200,10 +1203,10 @@ export default abstract class ExpressionParser extends LValParser {
             this.next();
             isGenerator = true;
           }
-          this.parsePropertyName(prop as N.ObjectOrClassMember);
+          this.parsePropertyName(prop as N.ObjectOrClassMember, contextId);
         }
       } else {
-        this.parsePropertyName(prop as N.ObjectOrClassMember);
+        this.parsePropertyName(prop as N.ObjectOrClassMember, contextId);
       }
 
       this.parseObjPropValue(
@@ -1215,6 +1218,7 @@ export default abstract class ExpressionParser extends LValParser {
         isPattern,
         isBlockScope,
         refShorthandDefaultPos,
+        contextId,
       );
       this.checkPropClash(prop as N.ObjectMember, propHash);
 
@@ -1224,6 +1228,8 @@ export default abstract class ExpressionParser extends LValParser {
 
       node.properties.push(prop);
     }
+
+    this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
 
     if (firstRestLocation !== null) {
       this.unexpected(
@@ -1272,6 +1278,7 @@ export default abstract class ExpressionParser extends LValParser {
     isGenerator: boolean,
     isAsync: boolean,
     isPattern: boolean,
+    objectContextId: number,
   ): N.ObjectMethod | null {
     if (isAsync || isGenerator || this.match(tt.parenL)) {
       if (isPattern) this.unexpected();
@@ -1289,7 +1296,7 @@ export default abstract class ExpressionParser extends LValParser {
     if (this.isGetterOrSetterMethod(prop, isPattern)) {
       if (isGenerator || isAsync) this.unexpected();
       prop.kind = prop.key.name;
-      this.parsePropertyName(prop);
+      this.parsePropertyName(prop, objectContextId);
       this.parseMethod(
         prop,
         /* isGenerator */ false,
@@ -1354,9 +1361,16 @@ export default abstract class ExpressionParser extends LValParser {
     isPattern: boolean,
     isBlockScope: boolean,
     refShorthandDefaultPos: Pos | null,
+    objectContextId: number,
   ): void {
     const node =
-      this.parseObjectMethod(prop as N.ObjectMethod, isGenerator, isAsync, isPattern) ||
+      this.parseObjectMethod(
+        prop as N.ObjectMethod,
+        isGenerator,
+        isAsync,
+        isPattern,
+        objectContextId,
+      ) ||
       this.parseObjectProperty(
         prop as N.ObjectProperty,
         startPos,
@@ -1371,6 +1385,7 @@ export default abstract class ExpressionParser extends LValParser {
 
   parsePropertyName(
     prop: N.ObjectOrClassMember | N.ClassMember | N.TsNamedTypeElementBase,
+    objectContextId: number,
   ): N.Expression | N.Identifier {
     if (this.eat(tt.bracketL)) {
       (prop as N.ObjectOrClassMember).computed = true;
@@ -1386,6 +1401,7 @@ export default abstract class ExpressionParser extends LValParser {
           : this.parseMaybePrivateName();
 
       this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.ObjectKey;
+      this.state.tokens[this.state.tokens.length - 1].contextId = objectContextId;
       if (prop.key.type !== "PrivateName") {
         // ClassPrivateProperty is never computed, so we don't assign in that case.
         prop.computed = false;

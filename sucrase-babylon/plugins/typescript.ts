@@ -377,7 +377,7 @@ export default (superClass: ParserClass): ParserClass =>
       node: N.TsPropertySignature | N.TsMethodSignature,
       readonly: boolean,
     ): N.TsPropertySignature | N.TsMethodSignature {
-      this.parsePropertyName(node);
+      this.parsePropertyName(node, -1 /* Types don't need context IDs. */);
       if (this.eat(tt.question)) node.optional = true;
       const nodeAny: N.Node = node;
 
@@ -859,7 +859,9 @@ export default (superClass: ParserClass): ParserClass =>
         ? this.parseLiteral<N.StringLiteral>(this.state.value, "StringLiteral")
         : this.parseIdentifier(/* liberal */ true);
       if (this.eat(tt.eq)) {
+        const eqIndex = this.state.tokens.length - 1;
         node.initializer = this.parseMaybeAssign();
+        this.state.tokens[eqIndex].rhsEndIndex = this.state.tokens.length;
       }
       return this.finishNode(node, "TSEnumMember");
     }
@@ -1475,11 +1477,12 @@ export default (superClass: ParserClass): ParserClass =>
       classBody: N.ClassBody,
       member: N.Node,
       state: {hadConstructor: boolean},
+      classContextId: number,
     ): void {
       const accessibility = this.parseAccessModifier();
       if (accessibility) member.accessibility = accessibility;
 
-      super.parseClassMember(classBody, member as N.ClassMember, state);
+      super.parseClassMember(classBody, member as N.ClassMember, state, classContextId);
     }
 
     parseClassMemberWithIsStatic(
@@ -1487,6 +1490,7 @@ export default (superClass: ParserClass): ParserClass =>
       member: N.Node,
       state: {hadConstructor: boolean},
       isStatic: boolean,
+      classContextId: number,
     ): void {
       // @ts-ignore
       const methodOrProp: N.ClassMethod | N.ClassProperty = member;
@@ -1526,13 +1530,19 @@ export default (superClass: ParserClass): ParserClass =>
       if (isReadonly) {
         // Must be a property (if not an index signature).
         methodOrProp.static = isStatic;
-        this.parseClassPropertyName(prop);
+        this.parseClassPropertyName(prop, classContextId);
         this.parsePostMemberNameModifiers(methodOrProp);
         this.pushClassProperty(classBody, prop);
         return;
       }
 
-      super.parseClassMemberWithIsStatic(classBody, member as N.ClassMember, state, isStatic);
+      super.parseClassMemberWithIsStatic(
+        classBody,
+        member as N.ClassMember,
+        state,
+        isStatic,
+        classContextId,
+      );
     }
 
     parsePostMemberNameModifiers(methodOrProp: N.ClassMethod | N.ClassProperty): void {
@@ -1702,6 +1712,7 @@ export default (superClass: ParserClass): ParserClass =>
       isPattern: boolean,
       isBlockScope: boolean,
       refShorthandDefaultPos: Pos | null,
+      objectContextId: number,
     ): void {
       if (this.isRelational("<")) {
         throw new Error("TODO");
@@ -1716,6 +1727,7 @@ export default (superClass: ParserClass): ParserClass =>
         isPattern,
         isBlockScope,
         refShorthandDefaultPos,
+        objectContextId,
       );
     }
 

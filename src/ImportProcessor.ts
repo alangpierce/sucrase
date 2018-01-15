@@ -1,3 +1,4 @@
+import {IdentifierRole} from "../sucrase-babylon/tokenizer";
 import NameManager from "./NameManager";
 import TokenProcessor from "./TokenProcessor";
 import isMaybePropertyName from "./util/isMaybePropertyName";
@@ -95,7 +96,11 @@ export default class ImportProcessor {
   pruneTypeOnlyImports(): void {
     const nonTypeIdentifiers: Set<string> = new Set();
     for (const token of this.tokens.tokens) {
-      if (token.type.label === "name" && !token.isType && token.contextName !== "import") {
+      if (
+        token.type.label === "name" &&
+        !token.isType &&
+        token.identifierRole === IdentifierRole.Access
+      ) {
         nonTypeIdentifiers.add(token.value);
       }
     }

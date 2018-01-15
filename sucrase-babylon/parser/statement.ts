@@ -876,7 +876,12 @@ export default class StatementParser extends ExpressionParser {
     isStatement: /* T === ClassDeclaration */ boolean,
     optionalId: boolean = false,
   ): T {
+    // Put a context ID on the class keyword, the open-brace, and the close-brace, so that later
+    // code can easily navigate to meaningful points on the class.
+    const contextId = this.nextContextId++;
+
     this.next();
+    this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
     this.takeDecorators(node);
     // Like with functions, we declare a special "name scope" from the start of the name to the end
     // of the class, but only with expression-style classes, to represent the fact that the name is
@@ -887,7 +892,10 @@ export default class StatementParser extends ExpressionParser {
     }
     this.parseClassId(node, isStatement, optionalId);
     this.parseClassSuper(node);
-    this.parseClassBody(node);
+    const openBraceIndex = this.state.tokens.length;
+    this.parseClassBody(node, contextId);
+    this.state.tokens[openBraceIndex].contextId = contextId;
+    this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
     if (nameScopeStartTokenIndex !== null) {
       const endTokenIndex = this.state.tokens.length;
       this.state.scopes.push({
@@ -916,7 +924,7 @@ export default class StatementParser extends ExpressionParser {
     );
   }
 
-  parseClassBody(node: N.Class): void {
+  parseClassBody(node: N.Class, classContextId: number): void {
     // class bodies are implicitly strict
     const oldStrict = this.state.strict;
     this.state.strict = true;
@@ -952,7 +960,7 @@ export default class StatementParser extends ExpressionParser {
         decorators = [];
       }
 
-      this.parseClassMember(classBody, member as N.ClassMember, state);
+      this.parseClassMember(classBody, member as N.ClassMember, state, classContextId);
 
       if (
         this.hasPlugin("decorators2") &&
@@ -981,6 +989,7 @@ export default class StatementParser extends ExpressionParser {
     classBody: N.ClassBody,
     member: N.ClassMember,
     state: {hadConstructor: boolean},
+    classContextId: number,
   ): void {
     let isStatic = false;
     if (this.match(tt.name) && this.state.value === "static") {
@@ -1012,7 +1021,7 @@ export default class StatementParser extends ExpressionParser {
       isStatic = true;
     }
 
-    this.parseClassMemberWithIsStatic(classBody, member, state, isStatic);
+    this.parseClassMemberWithIsStatic(classBody, member, state, isStatic, classContextId);
   }
 
   parseClassMemberWithIsStatic(
@@ -1020,6 +1029,7 @@ export default class StatementParser extends ExpressionParser {
     member: N.ClassMember,
     state: {hadConstructor: boolean},
     isStatic: boolean,
+    classContextId: number,
   ): void {
     const publicMethod: N.ClassMethod = member as N.ClassMethod;
     const privateMethod: N.ClassPrivateMethod = member as N.ClassPrivateMethod;
@@ -1034,7 +1044,7 @@ export default class StatementParser extends ExpressionParser {
     if (this.eat(tt.star)) {
       // a generator
       method.kind = "method";
-      this.parseClassPropertyName(method);
+      this.parseClassPropertyName(method, classContextId);
 
       if (method.key.type === "PrivateName") {
         // Private generator method
@@ -1051,7 +1061,7 @@ export default class StatementParser extends ExpressionParser {
       return;
     }
 
-    const key = this.parseClassPropertyName(member);
+    const key = this.parseClassPropertyName(member, classContextId);
     const isPrivate = key.type === "PrivateName";
     // Check the key is not a computed expression or string literal.
     const isSimple = key.type === "Identifier";
@@ -1101,7 +1111,7 @@ export default class StatementParser extends ExpressionParser {
 
       method.kind = "method";
       // The so-called parsed name would have been "async": get the real name.
-      this.parseClassPropertyName(method);
+      this.parseClassPropertyName(method, classContextId);
 
       if (method.key.type === "PrivateName") {
         // private async method
@@ -1128,7 +1138,7 @@ export default class StatementParser extends ExpressionParser {
       // @ts-ignore
       method.kind = (key as N.Identifier).name;
       // The so-called parsed name would have been "get/set": get the real name.
-      this.parseClassPropertyName(publicMethod);
+      this.parseClassPropertyName(publicMethod, classContextId);
 
       if (method.key.type === "PrivateName") {
         // private getter/setter
@@ -1153,8 +1163,11 @@ export default class StatementParser extends ExpressionParser {
     }
   }
 
-  parseClassPropertyName(member: N.ClassMember): N.Expression | N.Identifier {
-    const key = this.parsePropertyName(member);
+  parseClassPropertyName(
+    member: N.ClassMember,
+    classContextId: number,
+  ): N.Expression | N.Identifier {
+    const key = this.parsePropertyName(member, classContextId);
 
     if (
       !member.computed &&

@@ -1726,9 +1726,10 @@ export default (superClass: ParserClass): ParserClass =>
 
     parsePropertyName(
       node: N.ObjectOrClassMember | N.ClassMember | N.TsNamedTypeElementBase,
+      classContextId: number,
     ): N.Identifier {
       const variance = this.flowParseVariance();
-      const key = super.parsePropertyName(node);
+      const key = super.parsePropertyName(node, classContextId);
       // $FlowIgnore ("variance" not defined on TsNamedTypeElementBase)
       // @ts-ignore
       node.variance = variance;
@@ -1745,6 +1746,7 @@ export default (superClass: ParserClass): ParserClass =>
       isPattern: boolean,
       isBlockScope: boolean,
       refShorthandDefaultPos: Pos | null,
+      objectContextId: number,
     ): void {
       if (prop.variance) {
         this.unexpected(prop.variance.start);
@@ -1768,6 +1770,7 @@ export default (superClass: ParserClass): ParserClass =>
         isPattern,
         isBlockScope,
         refShorthandDefaultPos,
+        objectContextId,
       );
 
       // add typeParameters if we found them

@@ -361,4 +361,19 @@ describe("type transforms", () => {
     `,
     );
   });
+
+  it("allows type aliases with fields with multiple type arguments", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      type A = {
+        source: Map<B, C>,
+      };
+    `,
+      `
+      
+
+
+    `,
+    );
+  });
 });

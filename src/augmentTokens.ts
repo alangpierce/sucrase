@@ -95,11 +95,6 @@ class TokenPreprocessor {
         this.tokens.matchesNameAtRelativeIndex(1, "type")
       ) {
         this.processTypeWildcardExport();
-      } else if (
-        this.tokens.matches(["export"]) &&
-        this.tokens.matchesNameAtRelativeIndex(1, "type")
-      ) {
-        this.processTypeAlias();
       } else if (this.startsWithKeyword(["import"])) {
         this.forceContextUntilToken("string", "import");
       } else if (this.tokens.matches(["export", "{"])) {
@@ -107,13 +102,6 @@ class TokenPreprocessor {
       } else if (this.tokens.matches(["as"])) {
         // Note that this does not yet properly handle actual variables named "as".
         this.processTypeAssertion();
-      } else if (
-        this.tokens.matchesName("type") &&
-        this.tokens.matchesAtRelativeIndex(1, ["name"]) &&
-        (this.tokens.matchesAtRelativeIndex(2, ["="]) ||
-          this.tokens.matchesAtRelativeIndex(2, ["</>"]))
-      ) {
-        this.processTypeAlias();
       } else if (
         this.tokens.matches(["export"]) &&
         this.tokens.matchesNameAtRelativeIndex(1, "interface")
@@ -362,21 +350,6 @@ class TokenPreprocessor {
     this.advance("*");
     this.advance("name");
     this.advance("string");
-    this.contextStack.pop();
-  }
-
-  private processTypeAlias(): void {
-    this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
-    if (this.tokens.matches(["export"])) {
-      this.advance("export");
-    }
-    this.advance("name", "type");
-    this.advance("name");
-    if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
-      this.skipBalancedAngleBrackets();
-    }
-    this.advance("=");
-    this.skipTypeExpression();
     this.contextStack.pop();
   }
 

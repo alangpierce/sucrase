@@ -322,4 +322,26 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("properly resolves imported names in class fields", () => {
+    assertResult(
+      `
+      import A from 'A';
+      import B from 'B';
+      class C {
+        a = A;
+        static b = B;
+      }
+    `,
+      `"use strict";
+      var _A = require('A');
+      var _B = require('B');
+      class C {constructor() { this.a = (0, _A.default); }
+        
+        
+      } C.b = (0, _B.default);
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

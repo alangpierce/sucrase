@@ -1,5 +1,10 @@
 import {IdentifierRole, Token} from "../sucrase-babylon/tokenizer";
 
+export type TokenProcessorSnapshot = {
+  resultCode: string;
+  tokenIndex: number;
+};
+
 export default class TokenProcessor {
   private resultCode: string = "";
   private tokenIndex = 0;
@@ -9,10 +14,21 @@ export default class TokenProcessor {
   /**
    * Make a new TokenProcessor for things like lookahead.
    */
-  clone(): TokenProcessor {
-    const result = new TokenProcessor(this.code, this.tokens);
-    result.tokenIndex = this.tokenIndex;
-    return result;
+  snapshot(): TokenProcessorSnapshot {
+    return {resultCode: this.resultCode, tokenIndex: this.tokenIndex};
+  }
+
+  restoreToSnapshot(snapshot: TokenProcessorSnapshot): void {
+    this.resultCode = snapshot.resultCode;
+    this.tokenIndex = snapshot.tokenIndex;
+  }
+
+  getResultCodeIndex(): number {
+    return this.resultCode.length;
+  }
+
+  getCodeInsertedSinceIndex(initialResultCodeIndex: number): string {
+    return this.resultCode.slice(initialResultCodeIndex);
   }
 
   reset(): void {

@@ -125,7 +125,7 @@ export default class RootTransformer {
   }
 
   processClass(): void {
-    const classInfo = getClassInfo(this.tokens);
+    const classInfo = getClassInfo(this, this.tokens);
 
     const needsCommaExpression =
       classInfo.headerInfo.isExpression && classInfo.staticInitializerSuffixes.length > 0;

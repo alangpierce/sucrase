@@ -1,5 +1,6 @@
 import {Token} from "../../sucrase-babylon/tokenizer";
 import TokenProcessor from "../TokenProcessor";
+import RootTransformer from "../transformers/RootTransformer";
 
 export type ClassHeaderInfo = {
   isExpression: boolean;
@@ -25,8 +26,11 @@ export type ClassInfo = {
  * Get information about the class fields for this class, given a token processor pointing to the
  * open-brace at the start of the class.
  */
-export default function getClassInfo(tokens: TokenProcessor): ClassInfo {
-  tokens = tokens.clone();
+export default function getClassInfo(
+  rootTransformer: RootTransformer,
+  tokens: TokenProcessor,
+): ClassInfo {
+  const snapshot = tokens.snapshot();
 
   const headerInfo = processClassHeader(tokens);
 
@@ -80,19 +84,19 @@ export default function getClassInfo(tokens: TokenProcessor): ClassInfo {
           throw new Error("Expected rhsEndIndex on class field assignment.");
         }
         tokens.nextToken();
-        const assignExpressionStart = tokens.currentToken().start;
+        const resultCodeStart = tokens.getResultCodeIndex();
+        // We can't just take this code directly; we need to transform it as well, so delegate to
+        // the root transformer, which has the same backing token stream. This will append to the
+        // code, but the snapshot restore later will restore that.
         while (tokens.currentIndex() < valueEnd) {
-          tokens.nextToken();
+          rootTransformer.processToken();
         }
-        // Note that this can adjust line numbers in the case of multiline string literals.
-        const expressionCode = tokens.code.slice(
-          assignExpressionStart,
-          tokens.currentToken().start,
-        );
+        // Note that this can adjust line numbers in the case of multiline expressions.
+        const expressionCode = tokens.getCodeInsertedSinceIndex(resultCodeStart);
         if (isStatic) {
-          staticInitializerSuffixes.push(`${nameCode} = ${expressionCode}`);
+          staticInitializerSuffixes.push(`${nameCode} =${expressionCode}`);
         } else {
-          classInitializers.push(`this${nameCode} = ${expressionCode}`);
+          classInitializers.push(`this${nameCode} =${expressionCode}`);
         }
       }
       tokens.nextToken();
@@ -100,6 +104,7 @@ export default function getClassInfo(tokens: TokenProcessor): ClassInfo {
     }
   }
 
+  tokens.restoreToSnapshot(snapshot);
   return {
     headerInfo,
     initializerStatements: [...constructorInitializers, ...classInitializers],

@@ -1,3 +1,4 @@
+import {IdentifierRole} from "../../sucrase-babylon/tokenizer";
 import ImportProcessor from "../ImportProcessor";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
@@ -81,12 +82,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
       // that identifier name.
       return this.tokens.tokens[startIndex - 2].value;
     }
-    if (
-      this.tokens.matchesAtIndex(startIndex - 2, ["name", ":"]) &&
-      this.tokens.tokens[startIndex - 2].contextName === "object" &&
-      (this.tokens.tokens[startIndex - 3].type.label === "," ||
-        this.tokens.tokens[startIndex - 3].type.label === "{")
-    ) {
+    if (this.tokens.tokens[startIndex - 2].identifierRole === IdentifierRole.ObjectKey) {
       // This is an object literal value.
       return this.tokens.tokens[startIndex - 2].value;
     }
@@ -121,9 +117,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
 
       if (
         this.tokens.matchesNameAtIndex(index, "displayName") &&
-        this.tokens.matchesAtIndex(index + 1, [":"]) &&
-        (this.tokens.matchesAtIndex(index - 1, [","]) ||
-          this.tokens.matchesAtIndex(index - 1, ["{"])) &&
+        this.tokens.tokens[index].identifierRole === IdentifierRole.ObjectKey &&
         token.contextName === "object" &&
         token.contextStartIndex === objectStartIndex
       ) {

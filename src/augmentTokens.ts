@@ -48,7 +48,6 @@ class TokenPreprocessor {
     }
 
     let pendingClass = false;
-    let ternaryDepth = 0;
 
     while (true) {
       if (this.tokens.matches([...closingTokenLabels, ...followingLabels])) {
@@ -62,56 +61,10 @@ class TokenPreprocessor {
         throw new Error("Unexpected end of program when preprocessing tokens.");
       }
 
-      // A question mark operator can be one of multiple things:
-      // - The first operator in a ternary.
-      // - The first part of the compound operator "?:" for an optional type
-      //   annotation.
-      // - An optional type, like "?number".
-      // We only want to count ternaries, so we ignore ?: and rely on skipping
-      // all types in order to know that it's not an optional type.
-      if (this.tokens.matches(["?"]) && !this.tokens.matches(["?", ":"])) {
-        ternaryDepth++;
-      }
-
-      // A colon can be one of multiple things:
-      // - The second operator in a ternary.
-      // - A type annotation.
-      // - A type cast.
-      // - An object key/value separator.
-      // - The end of a label.
-      // - The end of a case or default statement.
-      // We want to know if we're followed by a type, so we
-      if (this.tokens.matches([":"]) && !this.matchesObjectColon() && !this.matchesLabelColon()) {
-        if (ternaryDepth > 0) {
-          ternaryDepth--;
-          this.advance();
-        } else {
-          const mayBeArrowReturnType = this.tokens.matchesAtRelativeIndex(-1, [")"]);
-          this.advance();
-          this.processTypeExpression({disallowArrow: mayBeArrowReturnType});
-        }
-      } else if (
-        this.tokens.matches(["export", "name", "*"]) &&
-        this.tokens.matchesNameAtRelativeIndex(1, "type")
-      ) {
-        this.processTypeWildcardExport();
-      } else if (this.startsWithKeyword(["import"])) {
+      if (this.startsWithKeyword(["import"])) {
         this.forceContextUntilToken("string", "import");
       } else if (this.tokens.matches(["export", "{"])) {
         this.forceContextUntilToken("}", "namedExport");
-      } else if (this.tokens.matches(["as"])) {
-        // Note that this does not yet properly handle actual variables named "as".
-        this.processTypeAssertion();
-      } else if (
-        this.tokens.matches(["export"]) &&
-        this.tokens.matchesNameAtRelativeIndex(1, "interface")
-      ) {
-        this.processInterfaceDeclaration();
-      } else if (
-        this.tokens.matchesName("interface") &&
-        this.tokens.matchesAtRelativeIndex(1, ["name"])
-      ) {
-        this.processInterfaceDeclaration();
       } else if (this.tokens.matches(["="]) && context === "class") {
         this.advance();
         this.processRegion([], [], "classFieldExpression", {followingLabels: [";"]});
@@ -176,8 +129,6 @@ class TokenPreprocessor {
           this.advance();
           this.processToToken("{", "}", "block");
         }
-      } else if (this.tokens.matches(["declare"]) || this.tokens.matches(["export", "declare"])) {
-        this.processDeclare();
       } else if (this.tokens.matches(["name"])) {
         this.advance();
         if (context === "class" && (this.tokens.matches(["("]) || this.tokens.matches(["</>"]))) {
@@ -193,7 +144,7 @@ class TokenPreprocessor {
           if (this.tokens.matches(["{"])) {
             this.processToToken("{", "}", "block");
           }
-        } else if (context === "class" && this.tokens.matches([":"]) && ternaryDepth === 0) {
+        } else if (context === "class" && this.tokens.matches([":"])) {
           // Process typed class field.
           const identifierTokenIndex = this.tokens.currentIndex() - 1;
           const previousTokenIndex = identifierTokenIndex - 1;
@@ -284,40 +235,6 @@ class TokenPreprocessor {
     this.contextStack.pop();
   }
 
-  private matchesObjectColon(): boolean {
-    if (!this.tokens.matches([":"])) {
-      throw new Error("Expected to be called while on a colon token.");
-    }
-    if (this.getContextInfo().context !== "object") {
-      return false;
-    }
-    let keyStart;
-    if (this.tokens.matchesAtRelativeIndex(-1, ["]"])) {
-      keyStart = this.tokens.tokenAtRelativeIndex(-1).contextStartIndex!;
-    } else {
-      keyStart = this.tokens.currentIndex() - 1;
-    }
-    return (
-      this.tokens.matchesAtIndex(keyStart - 1, [","]) ||
-      this.tokens.matchesAtIndex(keyStart - 1, ["{"])
-    );
-  }
-
-  private matchesLabelColon(): boolean {
-    if (!this.tokens.matches([":"])) {
-      throw new Error("Expected to be called while on a colon token.");
-    }
-    return (
-      this.getContextInfo().context === "switchCaseCondition" ||
-      (this.tokens.matchesAtRelativeIndex(-1, ["default"]) &&
-        !this.tokens.matchesAtRelativeIndex(-2, ["."])) ||
-      this.tokens.matchesAtRelativeIndex(1, ["for"]) ||
-      this.tokens.matchesAtRelativeIndex(1, ["while"]) ||
-      this.tokens.matchesAtRelativeIndex(1, ["do"]) ||
-      this.tokens.matchesAtRelativeIndex(1, ["switch"])
-    );
-  }
-
   private getContextInfo(): ContextInfo {
     return this.contextStack[this.contextStack.length - 1];
   }
@@ -329,42 +246,6 @@ class TokenPreprocessor {
   private processTypeExpression({disallowArrow = false}: {disallowArrow?: boolean} = {}): void {
     this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
     this.skipTypeExpression(disallowArrow);
-    this.contextStack.pop();
-  }
-
-  /**
-   * Process a TypeScript type assertion like "x as number", starting from the "as" token.
-   */
-  private processTypeAssertion(): void {
-    this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
-    this.advance();
-    this.skipTypeExpression();
-    this.contextStack.pop();
-  }
-
-  private processTypeWildcardExport(): void {
-    this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
-    // export type * from "a";
-    this.advance("export");
-    this.advance("name");
-    this.advance("*");
-    this.advance("name");
-    this.advance("string");
-    this.contextStack.pop();
-  }
-
-  private processInterfaceDeclaration(): void {
-    this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
-    if (this.tokens.matches(["export"])) {
-      this.advance("export");
-    }
-    this.advance("name", "interface");
-    this.advance("name");
-    // Skip past any type parameter name or extends declaration.
-    while (!this.tokens.matches(["{"])) {
-      this.advance();
-    }
-    this.skipBalancedCode("{", "}");
     this.contextStack.pop();
   }
 
@@ -538,32 +419,5 @@ class TokenPreprocessor {
     return keywords.some(
       (keyword) => this.tokens.matches([keyword]) || this.tokens.matchesName(keyword),
     );
-  }
-
-  private processDeclare(): void {
-    this.contextStack.push({context: "type", startIndex: this.tokens.currentIndex()});
-    if (this.tokens.matches(["export"])) {
-      this.advance();
-    }
-    this.advance();
-    if (this.tokens.matchesName("module")) {
-      this.advance();
-      this.advance();
-      if (this.tokens.matches([";"])) {
-        this.advance();
-      } else if (this.tokens.matches(["{"])) {
-        this.skipBalancedCode("{", "}");
-      } else {
-        throw new Error("Unexpected end of `declare module`.");
-      }
-    } else if (this.tokens.matches(["class"])) {
-      while (!this.tokens.matches(["{"])) {
-        this.advance();
-      }
-      this.skipBalancedCode("{", "}");
-    } else {
-      throw new Error("Unrecognized declare syntax");
-    }
-    this.contextStack.pop();
   }
 }

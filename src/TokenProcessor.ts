@@ -1,4 +1,4 @@
-import {Token} from "../sucrase-babylon/tokenizer";
+import {IdentifierRole, Token} from "../sucrase-babylon/tokenizer";
 
 export default class TokenProcessor {
   private resultCode: string = "";
@@ -64,7 +64,7 @@ export default class TokenProcessor {
     if (this.matchesAtRelativeIndex(-1, ["."])) {
       return false;
     }
-    if (token.contextName === "object" && this.matchesAtRelativeIndex(1, [":"])) {
+    if (token.identifierRole === IdentifierRole.ObjectKey) {
       return false;
     }
     return token.type.label === name || (token.type.label === "name" && token.value === name);

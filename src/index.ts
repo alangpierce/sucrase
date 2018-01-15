@@ -1,6 +1,5 @@
 import {parse} from "../sucrase-babylon";
 import {Scope} from "../sucrase-babylon/tokenizer/state";
-import augmentTokens from "./augmentTokens";
 import identifyShadowedGlobals from "./identifyShadowedGlobals";
 import ImportProcessor from "./ImportProcessor";
 import NameManager from "./NameManager";
@@ -79,7 +78,6 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
   });
   const tokens = file.tokens;
   const scopes = file.scopes;
-  augmentTokens(code, tokens);
 
   const tokenProcessor = new TokenProcessor(code, tokens);
   const nameManager = new NameManager(tokenProcessor);

@@ -70,10 +70,6 @@ export default class TokenProcessor {
     return token.type.label === name || (token.type.label === "name" && token.value === name);
   }
 
-  matchesContextEnd(label: string, contextStartIndex: number): boolean {
-    return this.matches([label]) && this.currentToken().contextStartIndex === contextStartIndex;
-  }
-
   matchesContextIdAndLabel(label: string, contextId: number): boolean {
     return this.matches([label]) && this.currentToken().contextId === contextId;
   }

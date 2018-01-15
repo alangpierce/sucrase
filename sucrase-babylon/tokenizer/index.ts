@@ -124,9 +124,6 @@ export class Token {
   end: number;
   isType: boolean;
   loc: SourceLocation;
-  contextName?: TokenContext;
-  contextStartIndex?: number;
-  parentContextStartIndex?: number | null;
   identifierRole?: IdentifierRole;
   shadowsGlobal?: boolean;
   contextId?: number;

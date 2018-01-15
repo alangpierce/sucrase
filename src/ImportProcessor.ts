@@ -99,7 +99,9 @@ export default class ImportProcessor {
       if (
         token.type.label === "name" &&
         !token.isType &&
-        token.identifierRole === IdentifierRole.Access
+        (token.identifierRole === IdentifierRole.Access ||
+          token.identifierRole === IdentifierRole.ObjectShorthand ||
+          token.identifierRole === IdentifierRole.ExportAccess)
       ) {
         nonTypeIdentifiers.add(token.value);
       }

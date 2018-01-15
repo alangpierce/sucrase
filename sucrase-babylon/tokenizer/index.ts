@@ -96,11 +96,11 @@ export type TokenContext =
 
 export enum IdentifierRole {
   Access,
+  ExportAccess,
   FunctionScopedDeclaration,
   BlockScopedDeclaration,
   ObjectShorthand,
   ObjectKey,
-  Assignment,
 }
 
 // Object type used to represent tokens. Note that normally, tokens

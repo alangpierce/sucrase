@@ -262,4 +262,16 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("allows using the import keyword as an export", () => {
+    assertResult(
+      `
+      export {Import as import};
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      exports.import = Import;
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

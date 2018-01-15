@@ -6,11 +6,14 @@ export default function formatTokens(code: string, tokens: Array<Token>): string
     return "";
   }
 
+  const tokenKeys = Object.keys(tokens[0]).filter(
+    (k) => k !== "type" && k !== "value" && k !== "start" && k !== "end" && k !== "loc",
+  );
   const typeKeys = Object.keys(tokens[0].type).filter(
     (k) => k !== "updateContext" && k !== "label" && k !== "keyword",
   );
 
-  const headings = ["Location", "Label", "Value", ...typeKeys];
+  const headings = ["Location", "Label", "Value", ...tokenKeys, ...typeKeys];
 
   const lines = new LinesAndColumns(code);
   const rows = [headings, ...tokens.map(getTokenComponents)];
@@ -29,17 +32,20 @@ export default function formatTokens(code: string, tokens: Array<Token>): string
       formatRange(token.start, token.end),
       token.type.label,
       token.value != null ? truncate(String(token.value), 14) : "",
-      ...typeKeys.map((key) => {
-        const value = token.type[key];
-        if (value === true) {
-          return key;
-        } else if (value === false || value === null) {
-          return "";
-        } else {
-          return String(value);
-        }
-      }),
+      ...tokenKeys.map((key) => formatValue(token[key], key)),
+      ...typeKeys.map((key) => formatValue(token.type[key], key)),
     ];
+  }
+
+  // tslint:disable-next-line no-any
+  function formatValue(value: any, key: string): string {
+    if (value === true) {
+      return key;
+    } else if (value === false || value === null) {
+      return "";
+    } else {
+      return String(value);
+    }
   }
 
   function formatRange(start: number, end: number): string {

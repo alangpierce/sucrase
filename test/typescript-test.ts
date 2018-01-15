@@ -589,4 +589,38 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("properly handles simple abstract classes", () => {
+    assertTypeScriptResult(
+      `
+      abstract class A {
+      }
+    `,
+      `"use strict";
+       class A {
+      }
+    `,
+    );
+  });
+
+  it("properly handles exported abstract classes with abstract methods", () => {
+    assertTypeScriptResult(
+      `
+      export abstract class A {
+        abstract a();
+        b(): void {
+          console.log("hello");
+        }
+      }
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       class A {
+        
+        b() {
+          console.log("hello");
+        }
+      } exports.A = A;
+    `,
+    );
+  });
 });

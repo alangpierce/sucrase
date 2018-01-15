@@ -196,7 +196,9 @@ export default class RootTransformer {
         fieldIndex++;
       } else if (this.tokens.currentIndex() === constructorInsertPos) {
         this.tokens.copyToken();
-        this.tokens.appendCode(`;${initializerStatements.join(";")};`);
+        if (initializerStatements.length > 0) {
+          this.tokens.appendCode(`;${initializerStatements.join(";")};`);
+        }
         this.processToken();
       } else {
         this.processToken();

@@ -376,4 +376,21 @@ describe("type transforms", () => {
     `,
     );
   });
+
+  it("handles classes with constructors", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      class A {
+        constructor() {
+        }
+      }
+    `,
+      `
+      class A {
+        constructor() {
+        }
+      }
+    `,
+    );
+  });
 });

@@ -152,6 +152,10 @@ export default class TokenProcessor {
     this.tokenIndex++;
   }
 
+  previousToken(): void {
+    this.tokenIndex--;
+  }
+
   expectToken(label: string): void {
     if (this.tokens[this.tokenIndex].type.label !== label) {
       throw new Error(`Expected token ${label}`);

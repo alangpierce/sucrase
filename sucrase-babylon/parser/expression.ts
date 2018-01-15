@@ -27,7 +27,11 @@ import LValParser from "./lval";
 
 export default abstract class ExpressionParser extends LValParser {
   // Forward-declaration: defined in statement.js
-  abstract parseBlock(allowDirectives?: boolean, isFunctionScope?: boolean): N.BlockStatement;
+  abstract parseBlock(
+    allowDirectives?: boolean,
+    isFunctionScope?: boolean,
+    contextId?: number,
+  ): N.BlockStatement;
   abstract parseClass(node: N.Class, isStatement: boolean, optionalId?: boolean): N.Class;
   abstract parseDecorators(allowExport?: boolean): void;
   abstract parseFunction<T extends N.NormalFunction>(
@@ -37,7 +41,11 @@ export default abstract class ExpressionParser extends LValParser {
     isAsync?: boolean,
     optionalId?: boolean,
   ): T;
-  abstract parseFunctionParams(node: N.Function, allowModifiers?: boolean): void;
+  abstract parseFunctionParams(
+    node: N.Function,
+    allowModifiers?: boolean,
+    funcContextId?: number,
+  ): void;
   abstract takeDecorators(node: N.HasDecorators): void;
 
   // Check if property name clashes with already added.
@@ -455,6 +463,7 @@ export default abstract class ExpressionParser extends LValParser {
       const possibleAsync = this.atPossibleAsync(base);
       const startTokenIndex = this.state.tokens.length;
       this.next();
+      const callContextId = this.nextContextId++;
 
       const node = this.startNodeAt<N.CallExpression>(startPos, startLoc);
       node.callee = base;
@@ -464,11 +473,13 @@ export default abstract class ExpressionParser extends LValParser {
       // refNeedsArrowPos.
       const refTrailingCommaPos: Pos = {start: -1};
 
+      this.state.tokens[this.state.tokens.length - 1].contextId = callContextId;
       node.arguments = this.parseCallExpressionArguments(
         tt.parenR,
         possibleAsync,
         refTrailingCommaPos,
       ) as Array<N.Node>;
+      this.state.tokens[this.state.tokens.length - 1].contextId = callContextId;
       this.finishCallExpression(node);
 
       if (possibleAsync && this.shouldParseAsyncArrow()) {
@@ -1388,9 +1399,11 @@ export default abstract class ExpressionParser extends LValParser {
     objectContextId: number,
   ): N.Expression | N.Identifier {
     if (this.eat(tt.bracketL)) {
+      this.state.tokens[this.state.tokens.length - 1].contextId = objectContextId;
       (prop as N.ObjectOrClassMember).computed = true;
       prop.key = this.parseMaybeAssign();
       this.expect(tt.bracketR);
+      this.state.tokens[this.state.tokens.length - 1].contextId = objectContextId;
     } else {
       const oldInPropertyName = this.state.inPropertyName;
       this.state.inPropertyName = true;
@@ -1437,12 +1450,14 @@ export default abstract class ExpressionParser extends LValParser {
     this.state.inMethod = node.kind || true;
     this.state.inGenerator = isGenerator;
 
+    const funcContextId = this.nextContextId++;
+
     const startTokenIndex = this.state.tokens.length;
     this.initFunction(node, isAsync);
     node.generator = !!isGenerator;
     const allowModifiers = isConstructor; // For TypeScript parameter properties
-    this.parseFunctionParams(node as N.Function, allowModifiers);
-    this.parseFunctionBodyAndFinish(node, type);
+    this.parseFunctionParams(node as N.Function, allowModifiers, funcContextId);
+    this.parseFunctionBodyAndFinish(node, type, null /* allowExpressionBody */, funcContextId);
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
 
@@ -1513,14 +1528,19 @@ export default abstract class ExpressionParser extends LValParser {
     node: N.BodilessFunctionOrMethodBase,
     type: string,
     allowExpressionBody: boolean | null = null,
+    funcContextId?: number,
   ): void {
     // $FlowIgnore (node is not bodiless if we get here)
-    this.parseFunctionBody(node as N.Function, allowExpressionBody);
+    this.parseFunctionBody(node as N.Function, allowExpressionBody, funcContextId);
     this.finishNode(node, type);
   }
 
   // Parse function body and check parameters.
-  parseFunctionBody(node: N.Function, allowExpression: boolean | null): void {
+  parseFunctionBody(
+    node: N.Function,
+    allowExpression: boolean | null,
+    funcContextId?: number,
+  ): void {
     const isExpression = allowExpression && !this.match(tt.braceL);
 
     const oldInParameters = this.state.inParameters;
@@ -1540,7 +1560,11 @@ export default abstract class ExpressionParser extends LValParser {
       this.state.inGenerator = node.generator;
       this.state.inFunction = true;
       this.state.labels = [];
-      node.body = this.parseBlock(true /* allowDirectives */, true /* isFunctionScope */);
+      node.body = this.parseBlock(
+        true /* allowDirectives */,
+        true /* isFunctionScope */,
+        funcContextId,
+      );
       this.state.inFunction = oldInFunc;
       this.state.inGenerator = oldInGen;
       this.state.labels = oldLabels;

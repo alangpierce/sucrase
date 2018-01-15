@@ -619,11 +619,17 @@ export default class StatementParser extends ExpressionParser {
   // strict"` declarations when `allowStrict` is true (used for
   // function bodies).
 
-  parseBlock(allowDirectives: boolean = false, isFunctionScope: boolean = false): N.BlockStatement {
+  parseBlock(
+    allowDirectives: boolean = false,
+    isFunctionScope: boolean = false,
+    contextId?: number,
+  ): N.BlockStatement {
     const node = this.startNode();
     const startTokenIndex = this.state.tokens.length;
     this.expect(tt.braceL);
+    this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
     this.parseBlockBody(node as N.BlockStatementLike, allowDirectives, false, tt.braceR);
+    this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope});
     return this.finishNode(node as N.BlockStatement, "BlockStatement");
@@ -853,17 +859,19 @@ export default class StatementParser extends ExpressionParser {
     return node;
   }
 
-  parseFunctionParams(node: N.Function, allowModifiers?: boolean): void {
+  parseFunctionParams(node: N.Function, allowModifiers?: boolean, funcContextId?: number): void {
     const oldInParameters = this.state.inParameters;
     this.state.inParameters = true;
 
     this.expect(tt.parenL);
+    this.state.tokens[this.state.tokens.length - 1].contextId = funcContextId;
     node.params = this.parseBindingList(
       tt.parenR,
       false /* isBlockScope */,
       false /* allowEmpty */,
       allowModifiers,
     );
+    this.state.tokens[this.state.tokens.length - 1].contextId = funcContextId;
 
     this.state.inParameters = oldInParameters;
   }
@@ -1255,8 +1263,10 @@ export default class StatementParser extends ExpressionParser {
 
     if (this.match(tt.eq)) {
       this.expectPlugin("classProperties");
+      const equalsTokenIndex = this.state.tokens.length;
       this.next();
       node.value = this.parseMaybeAssign();
+      this.state.tokens[equalsTokenIndex].rhsEndIndex = this.state.tokens.length;
     } else {
       node.value = null;
     }

@@ -1271,6 +1271,7 @@ export default (superClass: ParserClass): ParserClass =>
       node: N.BodilessFunctionOrMethodBase,
       type: string,
       allowExpressionBody?: boolean,
+      funcContextId?: number,
     ): void {
       // For arrow functions, `parseArrow` handles the return type itself.
       if (!allowExpressionBody && this.match(tt.colon)) {
@@ -1299,7 +1300,7 @@ export default (superClass: ParserClass): ParserClass =>
         return;
       }
 
-      super.parseFunctionBodyAndFinish(node, type, allowExpressionBody);
+      super.parseFunctionBodyAndFinish(node, type, allowExpressionBody, funcContextId);
     }
 
     parseSubscript(
@@ -1731,10 +1732,10 @@ export default (superClass: ParserClass): ParserClass =>
       );
     }
 
-    parseFunctionParams(node: N.Function, allowModifiers?: boolean): void {
+    parseFunctionParams(node: N.Function, allowModifiers?: boolean, contextId?: number): void {
       const typeParameters = this.tsTryParseTypeParameters();
       if (typeParameters) node.typeParameters = typeParameters;
-      super.parseFunctionParams(node, allowModifiers);
+      super.parseFunctionParams(node, allowModifiers, contextId);
     }
 
     // `let x: number;`

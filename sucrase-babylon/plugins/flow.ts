@@ -1171,6 +1171,7 @@ export default (superClass: ParserClass): ParserClass =>
       node: N.BodilessFunctionOrMethodBase,
       type: string,
       allowExpressionBody?: boolean,
+      funcContextId?: number,
     ): void {
       // For arrow functions, `parseArrow` handles the return type itself.
       if (!allowExpressionBody && this.match(tt.colon)) {
@@ -1189,7 +1190,7 @@ export default (superClass: ParserClass): ParserClass =>
           : null;
       }
 
-      super.parseFunctionBodyAndFinish(node, type, allowExpressionBody);
+      super.parseFunctionBodyAndFinish(node, type, allowExpressionBody, funcContextId);
     }
 
     // interfaces
@@ -1939,7 +1940,7 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // parse function type parameters - function foo<T>() {}
-    parseFunctionParams(node: N.Function): void {
+    parseFunctionParams(node: N.Function, allowModifiers?: boolean, contextId?: number): void {
       // $FlowFixMe
       // @ts-ignore
       const kind = node.kind;
@@ -1948,7 +1949,7 @@ export default (superClass: ParserClass): ParserClass =>
           node.typeParameters = this.flowParseTypeParameterDeclaration();
         });
       }
-      super.parseFunctionParams(node);
+      super.parseFunctionParams(node, allowModifiers, contextId);
     }
 
     // parse flow type annotations on variable declarator heads - let foo: string = bar

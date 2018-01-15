@@ -1,7 +1,7 @@
 import {SucraseContext, Transform} from "../index";
 import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
-import getClassInitializerInfo from "../util/getClassInitializerInfo";
+import getClassInfo, {ClassInfo} from "../util/getClassInfo";
 import FlowTransformer from "./FlowTransformer";
 import ImportTransformer from "./ImportTransformer";
 import JSXTransformer from "./JSXTransformer";
@@ -14,6 +14,7 @@ export default class RootTransformer {
   private transformers: Array<Transformer> = [];
   private nameManager: NameManager;
   private tokens: TokenProcessor;
+  private generatedVariables: Array<string> = [];
 
   constructor(sucraseContext: SucraseContext, transforms: Array<Transform>) {
     this.nameManager = sucraseContext.nameManager;
@@ -60,6 +61,7 @@ export default class RootTransformer {
     for (const transformer of this.transformers) {
       prefix += transformer.getPrefixCode();
     }
+    prefix += this.generatedVariables.map((v) => ` var ${v};`).join("");
     let suffix = "";
     for (const transformer of this.transformers) {
       suffix += transformer.getSuffixCode();
@@ -123,48 +125,46 @@ export default class RootTransformer {
   }
 
   processClass(): void {
+    const classInfo = getClassInfo(this.tokens);
+
+    const needsCommaExpression =
+      classInfo.headerInfo.isExpression && classInfo.staticInitializerSuffixes.length > 0;
+
+    let className = classInfo.headerInfo.className;
+    if (needsCommaExpression) {
+      className = this.nameManager.claimFreeName("_class");
+      this.generatedVariables.push(className);
+      this.tokens.appendCode(` (${className} =`);
+    }
+
     const classToken = this.tokens.currentToken();
     const contextId = classToken.contextId;
+    if (contextId == null) {
+      throw new Error("Expected class to have a context ID.");
+    }
     this.tokens.copyExpectedToken("class");
-    if (this.tokens.matches(["name"]) && !this.tokens.matchesName("implements")) {
-      this.tokens.copyToken();
-    }
-    if (this.tokens.matches(["</>"]) && this.tokens.currentToken().value === "<") {
-      this.tokens.removeInitialToken();
-      while (!(this.tokens.matches(["</>"]) && this.tokens.currentToken().value === ">")) {
-        this.tokens.removeToken();
-      }
-      this.tokens.removeToken();
+    while (!this.tokens.matchesContextIdAndLabel("{", contextId)) {
+      this.processToken();
     }
 
-    let hasSuperclass = false;
-    if (this.tokens.matches(["extends"])) {
-      hasSuperclass = true;
-      while (
-        !this.tokens.matchesName("implements") &&
-        !(this.tokens.matches(["{"]) && this.tokens.currentToken().contextId === contextId)
-      ) {
-        this.processToken();
-      }
-    }
+    this.processClassBody(classInfo);
 
-    if (this.tokens.matchesName("implements")) {
-      while (!this.tokens.matches(["{"])) {
-        this.tokens.removeToken();
-      }
+    const staticInitializerStatements = classInfo.staticInitializerSuffixes.map(
+      (suffix) => `${className}${suffix}`,
+    );
+    if (needsCommaExpression) {
+      this.tokens.appendCode(`, ${staticInitializerStatements.join(", ")}, ${className})`);
+    } else if (classInfo.staticInitializerSuffixes.length > 0) {
+      this.tokens.appendCode(` ${staticInitializerStatements.join("; ")};`);
     }
-
-    this.processClassBody(hasSuperclass);
   }
 
   /**
    * We want to just handle class fields in all contexts, since TypeScript supports them. Later,
    * when some JS implementations support class fields, this should be made optional.
    */
-  processClassBody(hasSuperclass: boolean): void {
-    const {initializerStatements, constructorInsertPos, fieldRanges} = getClassInitializerInfo(
-      this.tokens,
-    );
+  processClassBody(classInfo: ClassInfo): void {
+    const {headerInfo, constructorInsertPos, initializerStatements, fieldRanges} = classInfo;
     let fieldIndex = 0;
     const classContextId = this.tokens.currentToken().contextId;
     if (classContextId == null) {
@@ -174,7 +174,7 @@ export default class RootTransformer {
 
     if (constructorInsertPos === null && initializerStatements.length > 0) {
       const initializersCode = initializerStatements.join(";");
-      if (hasSuperclass) {
+      if (headerInfo.hasSuperclass) {
         const argsName = this.nameManager.claimFreeName("args");
         this.tokens.appendCode(
           `constructor(...${argsName}) { super(...${argsName}); ${initializersCode}; }`,

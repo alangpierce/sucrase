@@ -1,9 +1,20 @@
 import {Token} from "../../sucrase-babylon/tokenizer";
 import TokenProcessor from "../TokenProcessor";
 
-export type ClassInitializerInfo = {
-  // Array of non-semicolon-delimited code strings.
+export type ClassHeaderInfo = {
+  isExpression: boolean;
+  className: string | null;
+  hasSuperclass: boolean;
+};
+
+export type ClassInfo = {
+  headerInfo: ClassHeaderInfo;
+  // Array of non-semicolon-delimited code strings to go in the constructor, after super if
+  // necessary.
   initializerStatements: Array<string>;
+  // Array of static initializer statements, with the class name omitted. For example, if we need to
+  // run `C.x = 3;`, an element of this array will be `.x = 3`.
+  staticInitializerSuffixes: Array<string>;
   // Token index after which we should insert initializer statements (either the start of the
   // constructor, or after the super call), or null if there was no constructor.
   constructorInsertPos: number | null;
@@ -14,11 +25,14 @@ export type ClassInitializerInfo = {
  * Get information about the class fields for this class, given a token processor pointing to the
  * open-brace at the start of the class.
  */
-export default function getClassInitializerInfo(tokens: TokenProcessor): ClassInitializerInfo {
+export default function getClassInfo(tokens: TokenProcessor): ClassInfo {
   tokens = tokens.clone();
+
+  const headerInfo = processClassHeader(tokens);
 
   let constructorInitializers: Array<string> = [];
   const classInitializers: Array<string> = [];
+  const staticInitializerSuffixes: Array<string> = [];
   let constructorInsertPos = null;
   const fieldRanges = [];
 
@@ -36,7 +50,11 @@ export default function getClassInitializerInfo(tokens: TokenProcessor): ClassIn
     } else {
       // Either a regular method or a field. Skip to the identifier part.
       const statementStartIndex = tokens.currentIndex();
+      let isStatic = false;
       while (isAccessModifier(tokens.currentToken())) {
+        if (tokens.matches(["static"])) {
+          isStatic = true;
+        }
         tokens.nextToken();
       }
       const nameCode = getNameCode(tokens);
@@ -71,7 +89,11 @@ export default function getClassInitializerInfo(tokens: TokenProcessor): ClassIn
           assignExpressionStart,
           tokens.currentToken().start,
         );
-        classInitializers.push(`this${nameCode} = ${expressionCode}`);
+        if (isStatic) {
+          staticInitializerSuffixes.push(`${nameCode} = ${expressionCode}`);
+        } else {
+          classInitializers.push(`this${nameCode} = ${expressionCode}`);
+        }
       }
       tokens.nextToken();
       fieldRanges.push({start: statementStartIndex, end: tokens.currentIndex()});
@@ -79,10 +101,37 @@ export default function getClassInitializerInfo(tokens: TokenProcessor): ClassIn
   }
 
   return {
+    headerInfo,
     initializerStatements: [...constructorInitializers, ...classInitializers],
+    staticInitializerSuffixes,
     constructorInsertPos,
     fieldRanges,
   };
+}
+
+function processClassHeader(tokens: TokenProcessor): ClassHeaderInfo {
+  const classToken = tokens.currentToken();
+  const contextId = classToken.contextId;
+  if (contextId == null) {
+    throw new Error("Expected context ID on class token.");
+  }
+  const isExpression = classToken.isExpression;
+  if (isExpression == null) {
+    throw new Error("Expected isExpression on class token.");
+  }
+  let className = null;
+  let hasSuperclass = false;
+  tokens.nextToken();
+  if (tokens.matches(["name"])) {
+    className = tokens.currentToken().value;
+  }
+  while (!tokens.matchesContextIdAndLabel("{", contextId)) {
+    if (tokens.matches(["extends"])) {
+      hasSuperclass = true;
+    }
+    tokens.nextToken();
+  }
+  return {isExpression, className, hasSuperclass};
 }
 
 function processConstructor(

@@ -1714,19 +1714,22 @@ export default (superClass: ParserClass): ParserClass =>
         node.superTypeParameters = this.flowParseTypeParameterInstantiation();
       }
       if (this.isContextual("implements")) {
-        this.next();
-        const implemented: Array<N.FlowClassImplements> = [];
-        node.implements = implemented;
-        do {
-          const innerNode = this.startNode();
-          innerNode.id = this.flowParseRestrictedIdentifier(/* liberal */ true);
-          if (this.isRelational("<")) {
-            innerNode.typeParameters = this.flowParseTypeParameterInstantiation();
-          } else {
-            innerNode.typeParameters = null;
-          }
-          implemented.push(this.finishNode(innerNode, "ClassImplements"));
-        } while (this.eat(tt.comma));
+        this.state.tokens[this.state.tokens.length - 1].type = tt._implements;
+        this.runInTypeContext(0, () => {
+          this.next();
+          const implemented: Array<N.FlowClassImplements> = [];
+          node.implements = implemented;
+          do {
+            const innerNode = this.startNode();
+            innerNode.id = this.flowParseRestrictedIdentifier(/* liberal */ true);
+            if (this.isRelational("<")) {
+              innerNode.typeParameters = this.flowParseTypeParameterInstantiation();
+            } else {
+              innerNode.typeParameters = null;
+            }
+            implemented.push(this.finishNode(innerNode, "ClassImplements"));
+          } while (this.eat(tt.comma));
+        });
       }
     }
 

@@ -890,6 +890,7 @@ export default class StatementParser extends ExpressionParser {
 
     this.next();
     this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
+    this.state.tokens[this.state.tokens.length - 1].isExpression = !isStatement;
     this.takeDecorators(node);
     // Like with functions, we declare a special "name scope" from the start of the name to the end
     // of the class, but only with expression-style classes, to represent the fact that the name is

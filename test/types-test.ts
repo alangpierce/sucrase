@@ -17,8 +17,8 @@ describe("type transforms", () => {
       class C extends D implements E {}
     `,
       `
-      class A {}
-      class C extends D {}
+      class A  {}
+      class C extends D  {}
     `,
     );
   });

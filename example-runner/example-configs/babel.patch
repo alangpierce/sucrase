@@ -1,5 +1,5 @@
 diff --git a/Gulpfile.js b/Gulpfile.js
-index dcdf818e3..c78df5012 100644
+index dcdf818e3..acfa8f4f4 100644
 --- a/Gulpfile.js
 +++ b/Gulpfile.js
 @@ -4,7 +4,7 @@ const plumber = require("gulp-plumber");
@@ -11,6 +11,15 @@ index dcdf818e3..c78df5012 100644
  const watch = require("gulp-watch");
  const gutil = require("gulp-util");
  const filter = require("gulp-filter");
+@@ -33,7 +33,7 @@ gulp.task("build", function() {
+   return merge(
+     sources.map(source => {
+       const base = path.join(__dirname, source);
+-      const f = filter(["**", "!**/packages/babylon/**"]);
++      const f = filter(["**"]);
+ 
+       return gulp
+         .src(getGlobFromSource(source), { base: base })
 @@ -57,7 +57,7 @@ gulp.task("build", function() {
              callback(null, file);
            })
@@ -21,9 +30,18 @@ index dcdf818e3..c78df5012 100644
            through.obj(function(file, enc, callback) {
              // Passing 'file.relative' because newer() above uses a relative
 diff --git a/Makefile b/Makefile
-index 9f07ae0e2..86fcca611 100644
+index 9f07ae0e2..b508157bf 100644
 --- a/Makefile
 +++ b/Makefile
+@@ -14,7 +14,7 @@ SOURCES = packages codemods
+ build: clean
+ 	make clean-lib
+   # Build babylon before building all other projects
+-	make build-babylon
++	# make build-babylon
+ 	./node_modules/.bin/gulp build
+ 	node ./packages/babel-types/scripts/generateTypeHelpers.js
+ 	# call build again as the generated files might need to be compiled again.
 @@ -72,7 +72,10 @@ test-only:
  	./scripts/test.sh
  	make test-clean
@@ -45,3 +63,31 @@ index 9f07ae0e2..86fcca611 100644
  	./node_modules/.bin/lerna bootstrap
  	make build
  	cd packages/babel-runtime; \
+diff --git a/scripts/gulp-tasks.js b/scripts/gulp-tasks.js
+index 2e4891efb..192267df5 100644
+--- a/scripts/gulp-tasks.js
++++ b/scripts/gulp-tasks.js
+@@ -52,6 +52,7 @@ function webpackBuild(opts) {
+                   exclude: ["transform-typeof-symbol"],
+                 },
+               ],
++              "@babel/flow",
+             ],
+           },
+         },
+@@ -78,7 +79,7 @@ function webpackBuild(opts) {
+         },
+       ],
+       // babylon is already bundled and does not require parsing
+-      noParse: [/babylon\/lib/],
++      // noParse: [/babylon\/lib/],
+     },
+     node: {
+       // Mock Node.js modules that Babel require()s but that we don't
+diff --git a/test/mocha.opts b/test/mocha.opts
+index 939595b1b..20955e894 100644
+--- a/test/mocha.opts
++++ b/test/mocha.opts
+@@ -1 +1 @@
+---reporter dot --ui tdd --timeout 10000 --compilers js:@babel/register
++--reporter dot --ui tdd --timeout 10000 --compilers js:sucrase/register/js

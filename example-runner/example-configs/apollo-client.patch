@@ -77,6 +77,19 @@ index 8adfdd8a..f8fb00c7 100644
      "moduleFileExtensions": ["ts", "tsx", "js", "json"]
    }
  }
+diff --git a/packages/apollo-client-preset/src/index.ts b/packages/apollo-client-preset/src/index.ts
+index f38b5ec6..dd45bc67 100644
+--- a/packages/apollo-client-preset/src/index.ts
++++ b/packages/apollo-client-preset/src/index.ts
+@@ -7,7 +7,7 @@ import { InMemoryCache, NormalizedCache } from 'apollo-cache-inmemory';
+ import gql from 'graphql-tag';
+ import ApolloClient from 'apollo-client';
+ 
+-export { gql, InMemoryCache, HttpLink };
++export { gql, HttpLink };
+ 
+ export default class DefaultClient<
+   TCache = NormalizedCache
 diff --git a/packages/apollo-client/package.json b/packages/apollo-client/package.json
 index d75f3c8c..2b74c9cb 100644
 --- a/packages/apollo-client/package.json
@@ -99,6 +112,44 @@ index d75f3c8c..2b74c9cb 100644
      "moduleFileExtensions": ["ts", "tsx", "js", "json"],
      "setupFiles": ["<rootDir>/scripts/tests.js"]
    }
+diff --git a/packages/apollo-client/src/core/QueryManager.ts b/packages/apollo-client/src/core/QueryManager.ts
+index 0f70268a..22da2b53 100644
+--- a/packages/apollo-client/src/core/QueryManager.ts
++++ b/packages/apollo-client/src/core/QueryManager.ts
+@@ -663,7 +663,7 @@ export class QueryManager<TStore> {
+     options.notifyOnNetworkStatusChange = false;
+ 
+     const requestId = this.idCounter;
+-    const resPromise = new Promise<ApolloQueryResult<T>>((resolve, reject) => {
++    var resPromise = new Promise<ApolloQueryResult<T>>((resolve, reject) => {
+       this.addFetchQueryPromise<T>(requestId, resPromise, resolve, reject);
+ 
+       return this.watchQuery<T>(options, false)
+@@ -1028,9 +1028,9 @@ export class QueryManager<TStore> {
+ 
+     let resultFromStore: any;
+     let errorsFromStore: any;
+-    const retPromise = new Promise<ApolloQueryResult<T>>((resolve, reject) => {
++    var retPromise = new Promise<ApolloQueryResult<T>>((resolve, reject) => {
+       this.addFetchQueryPromise<T>(requestId, retPromise, resolve, reject);
+-      const subscription = execute(this.deduplicator, operation).subscribe({
++      var subscription = execute(this.deduplicator, operation).subscribe({
+         next: (result: ExecutionResult) => {
+           // default the lastRequestId to 1
+           const { lastRequestId } = this.getQuery(queryId);
+diff --git a/packages/apollo-client/src/util/subscribeAndCount.ts b/packages/apollo-client/src/util/subscribeAndCount.ts
+index 23685547..0eeeab31 100644
+--- a/packages/apollo-client/src/util/subscribeAndCount.ts
++++ b/packages/apollo-client/src/util/subscribeAndCount.ts
+@@ -8,7 +8,7 @@ export default function subscribeAndCount(
+   cb: (handleCount: number, result: ApolloQueryResult<any>) => any,
+ ): Subscription {
+   let handleCount = 0;
+-  const subscription = observable.subscribe({
++  var subscription = observable.subscribe({
+     next: result => {
+       try {
+         handleCount++;
 diff --git a/packages/apollo-utilities/package.json b/packages/apollo-utilities/package.json
 index 1cbdb3c1..1a4bca6d 100644
 --- a/packages/apollo-utilities/package.json

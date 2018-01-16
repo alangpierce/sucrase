@@ -1,0 +1,145 @@
+diff --git a/package.json b/package.json
+index 3e891362..a6039e3f 100644
+--- a/package.json
++++ b/package.json
+@@ -6,7 +6,7 @@
+     "postinstall": "lerna bootstrap",
+     "postbootstrap": "npm run build",
+     "build": "lerna run -- build",
+-    "test": "lerna run -- test",
++    "test": "lerna run -- build && lerna run -- test",
+     "benchmark": "cd packages/apollo-client && npm run benchmark",
+     "prelint": "npm run lint-fix",
+     "lint": "lerna run -- lint",
+diff --git a/packages/apollo-cache-inmemory/package.json b/packages/apollo-cache-inmemory/package.json
+index 1e2ba3a2..00669af9 100644
+--- a/packages/apollo-cache-inmemory/package.json
++++ b/packages/apollo-cache-inmemory/package.json
+@@ -26,7 +26,7 @@
+     "test": "jest",
+     "lint": "tslint --type-check -p tsconfig.json src/*.ts",
+     "prebuild": "npm run clean",
+-    "build": "tsc -p .",
++    "build": "sucrase src -d lib --transforms typescript,imports",
+     "postbuild": "npm run bundle",
+     "bundle": "rollup -c rollup.config.js",
+     "watch": "tsc -w -p .",
+@@ -66,7 +66,7 @@
+     "transform": {
+       ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+     },
+-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
++    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(js)$",
+     "moduleFileExtensions": ["ts", "tsx", "js", "json"]
+   }
+ }
+diff --git a/packages/apollo-cache/package.json b/packages/apollo-cache/package.json
+index 9f56fcf5..33201e26 100644
+--- a/packages/apollo-cache/package.json
++++ b/packages/apollo-cache/package.json
+@@ -27,7 +27,7 @@
+     "lint":
+       "tslint --type-check -p tsconfig.json src/*.ts && tslint --type-check -p tsconfig.json tests/*.ts",
+     "prebuild": "npm run clean",
+-    "build": "tsc -p .",
++    "build": "sucrase src -d lib --transforms typescript,imports",
+     "postbuild": "npm run bundle",
+     "bundle": "rollup -c rollup.config.js",
+     "watch": "tsc -w -p .",
+@@ -61,7 +61,7 @@
+     "transform": {
+       ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+     },
+-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
++    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(js)$",
+     "moduleFileExtensions": ["ts", "tsx", "js", "json"]
+   }
+ }
+diff --git a/packages/apollo-client-preset/package.json b/packages/apollo-client-preset/package.json
+index 8adfdd8a..f8fb00c7 100644
+--- a/packages/apollo-client-preset/package.json
++++ b/packages/apollo-client-preset/package.json
+@@ -24,7 +24,7 @@
+     "coverage": "jest --coverage",
+     "lint": "tslint --type-check -p tsconfig.json src/*.ts",
+     "prebuild": "npm run clean",
+-    "build": "tsc -p .",
++    "build": "sucrase src -d lib --transforms typescript,imports",
+     "watch": "tsc -w -p .",
+     "clean": "rimraf coverage/* && rimraf lib/*",
+     "prepublishOnly": "npm run build",
+@@ -58,7 +58,7 @@
+     "transform": {
+       ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+     },
+-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
++    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(js)$",
+     "moduleFileExtensions": ["ts", "tsx", "js", "json"]
+   }
+ }
+diff --git a/packages/apollo-client/package.json b/packages/apollo-client/package.json
+index d75f3c8c..2b74c9cb 100644
+--- a/packages/apollo-client/package.json
++++ b/packages/apollo-client/package.json
+@@ -18,7 +18,7 @@
+       "npm run build:benchmark && node --inspect --debug-brk benchmark_lib/benchmark/index.js",
+     "filesize": "npm run build && npm run build:browser",
+     "type-check": "flow check",
+-    "build": "tsc",
++    "build": "sucrase src -d lib --transforms typescript,imports",
+     "build:benchmark": "tsc -p tsconfig.benchmark.json",
+     "build:browser":
+       "browserify ./lib/bundle.umd.js -o=./lib/bundle.js --i apollo-utilities --i apollo-cache --i apollo-link --i apollo-link-dedup && npm run minify:browser",
+@@ -96,7 +96,7 @@
+     "transform": {
+       ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+     },
+-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
++    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(js)$",
+     "moduleFileExtensions": ["ts", "tsx", "js", "json"],
+     "setupFiles": ["<rootDir>/scripts/tests.js"]
+   }
+diff --git a/packages/apollo-utilities/package.json b/packages/apollo-utilities/package.json
+index 1cbdb3c1..1a4bca6d 100644
+--- a/packages/apollo-utilities/package.json
++++ b/packages/apollo-utilities/package.json
+@@ -26,7 +26,7 @@
+     "coverage": "jest --coverage",
+     "lint": "tslint --type-check -p tsconfig.json src/*.ts",
+     "prebuild": "npm run clean",
+-    "build": "tsc -p .",
++    "build": "sucrase src -d lib --transforms typescript,imports",
+     "postbuild": "npm run bundle",
+     "bundle": "rollup -c rollup.config.js",
+     "watch": "tsc -w -p .",
+@@ -60,7 +60,7 @@
+     "transform": {
+       ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+     },
+-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
++    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(js)$",
+     "moduleFileExtensions": ["ts", "tsx", "js", "json"]
+   }
+ }
+diff --git a/packages/graphql-anywhere/package.json b/packages/graphql-anywhere/package.json
+index fbc98de7..802fd6fb 100644
+--- a/packages/graphql-anywhere/package.json
++++ b/packages/graphql-anywhere/package.json
+@@ -9,7 +9,7 @@
+   "scripts": {
+     "coverage": "jest --coverage",
+     "test": "jest",
+-    "build": "tsc",
++    "build": "sucrase src -d lib --transforms typescript,imports",
+     "postbuild": "npm run bundle",
+     "bundle": "rollup -c rollup.config.js && rollup -c rollup.async.config.js",
+     "watch": "tsc -w",
+@@ -63,7 +63,7 @@
+     "transform": {
+       ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+     },
+-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
++    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(js)$",
+     "moduleFileExtensions": ["ts", "tsx", "js", "json"]
+   }
+ }

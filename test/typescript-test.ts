@@ -666,4 +666,15 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("supports export * in TypeScript", () => {
+    assertTypeScriptResult(
+      `
+      export * from './MyVars';
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      var _MyVars = require('./MyVars'); Object.keys(_MyVars).filter(key => key !== 'default' && key !== '__esModule').forEach(key => { if (exports.hasOwnProperty(key)) { return; } Object.defineProperty(exports, key, {enumerable: true, get: () => _MyVars[key]}); });
+    `,
+    );
+  });
 });

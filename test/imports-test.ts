@@ -922,4 +922,25 @@ module.exports = exports.default;
     `,
     );
   });
+
+  it("properly handles object destructuring with imported names", () => {
+    assertResult(
+      `
+      import a from 'a';
+      const {b = a} = {};
+      if (true) {
+        const {a} = {};
+        console.log(a);
+      }
+    `,
+      `${PREFIX}
+      var _a = require('a'); var _a2 = _interopRequireDefault(_a);
+      const {b = (0, _a2.default)} = {};
+      if (true) {
+        const {a} = {};
+        console.log(a);
+      }
+    `,
+    );
+  });
 });

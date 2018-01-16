@@ -1342,6 +1342,17 @@ export default abstract class ExpressionParser extends LValParser {
 
     if (!prop.computed && prop.key.type === "Identifier") {
       this.checkReservedWord(prop.key.name, prop.key.start, true, true);
+      // If we're in a destructuring, we've now discovered that the key was actually an assignee, so
+      // we need to tag it as a declaration with the appropriate scope. Otherwise, we might need to
+      // transform it on access, so mark it as an object shorthand.
+      if (isPattern) {
+        this.state.tokens[this.state.tokens.length - 1].identifierRole = isBlockScope
+          ? IdentifierRole.BlockScopedDeclaration
+          : IdentifierRole.FunctionScopedDeclaration;
+      } else {
+        this.state.tokens[this.state.tokens.length - 1].identifierRole =
+          IdentifierRole.ObjectShorthand;
+      }
 
       if (isPattern) {
         prop.value = this.parseMaybeDefault(isBlockScope, startPos, startLoc, prop.key.__clone());
@@ -1353,8 +1364,6 @@ export default abstract class ExpressionParser extends LValParser {
       } else {
         prop.value = prop.key.__clone();
       }
-      this.state.tokens[this.state.tokens.length - 1].identifierRole =
-        IdentifierRole.ObjectShorthand;
       prop.shorthand = true;
 
       return this.finishNode(prop, "ObjectProperty");

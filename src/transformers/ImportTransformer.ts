@@ -1,7 +1,6 @@
 import {IdentifierRole} from "../../sucrase-babylon/tokenizer";
 import ImportProcessor from "../ImportProcessor";
 import TokenProcessor from "../TokenProcessor";
-import isMaybePropertyName from "../util/isMaybePropertyName";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
@@ -40,10 +39,7 @@ export default class ImportTransformer extends Transformer {
       this.tokens.replaceToken("const");
       return true;
     }
-    if (
-      this.tokens.matches(["import"]) &&
-      !isMaybePropertyName(this.tokens, this.tokens.currentIndex())
-    ) {
+    if (this.tokens.matches(["import"])) {
       this.processImport();
       return true;
     }
@@ -51,11 +47,7 @@ export default class ImportTransformer extends Transformer {
       this.tokens.replaceToken("module.exports");
       return true;
     }
-    if (
-      this.tokens.matches(["export"]) &&
-      !isMaybePropertyName(this.tokens, this.tokens.currentIndex()) &&
-      !this.tokens.currentToken().isType
-    ) {
+    if (this.tokens.matches(["export"]) && !this.tokens.currentToken().isType) {
       this.hadExport = true;
       return this.processExport();
     }
@@ -78,6 +70,20 @@ export default class ImportTransformer extends Transformer {
    * we just need to look it up.
    */
   private processImport(): void {
+    if (this.tokens.matches(["import", "("])) {
+      this.tokens.replaceToken("Promise.resolve().then(() => require");
+      const contextId = this.tokens.currentToken().contextId;
+      if (contextId == null) {
+        throw new Error("Expected context ID on dynamic import invocation.");
+      }
+      this.tokens.copyToken();
+      while (!this.tokens.matchesContextIdAndLabel(")", contextId)) {
+        this.rootTransformer.processToken();
+      }
+      this.tokens.replaceToken("))");
+      return;
+    }
+
     const wasOnlyTypes = this.removeImportAndDetectIfType();
 
     if (wasOnlyTypes) {

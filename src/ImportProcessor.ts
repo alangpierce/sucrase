@@ -1,7 +1,6 @@
 import {IdentifierRole} from "../sucrase-babylon/tokenizer";
 import NameManager from "./NameManager";
 import TokenProcessor from "./TokenProcessor";
-import isMaybePropertyName from "./util/isMaybePropertyName";
 
 type NamedImport = {
   importedName: string;
@@ -75,10 +74,6 @@ export default class ImportProcessor {
     }
 
     for (let i = 0; i < this.tokens.tokens.length; i++) {
-      if (isMaybePropertyName(this.tokens, i)) {
-        continue;
-      }
-
       if (
         this.tokens.matchesAtIndex(i, ["import"]) &&
         !this.tokens.matchesAtIndex(i, ["import", "name", "="])
@@ -228,6 +223,11 @@ get: () => ${primaryImportName}[key]}); });`;
       !this.tokens.matchesNameAtIndex(index + 1, "from")
     ) {
       // import type declaration, so no need to process anything.
+      return;
+    }
+
+    if (this.tokens.matchesAtIndex(index, ["("])) {
+      // Dynamic import, so nothing to do
       return;
     }
 

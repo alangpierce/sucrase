@@ -11,6 +11,7 @@ Babel.registerPlugin(
   "proposal-numeric-separator",
   require("@babel/plugin-proposal-numeric-separator"),
 );
+Babel.registerPlugin("dynamic-import-node", require("babel-plugin-dynamic-import-node"));
 
 let config = null;
 
@@ -75,6 +76,7 @@ function runBabel() {
           "proposal-export-namespace-from",
           "proposal-numeric-separator",
           "proposal-optional-catch-binding",
+          "dynamic-import-node",
         ],
         parserOpts: {plugins: ["jsx", "classProperties", "numericSeparator"]},
       }).code,

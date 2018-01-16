@@ -12,6 +12,7 @@
     "babel-jest": "20.0.3",
     "babel-loader": "7.1.1",
     "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-dynamic-import-node": "^1.2.0",
     "babel-preset-react-app": "^3.0.3",
     "babel-runtime": "6.26.0",
     "base64-js": "^1.2.1",

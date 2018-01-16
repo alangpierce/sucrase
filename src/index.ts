@@ -14,6 +14,7 @@ const DEFAULT_BABYLON_PLUGINS = [
   "exportNamespaceFrom",
   "numericSeparator",
   "optionalCatchBinding",
+  "dynamicImport",
 ];
 
 export type Transform =

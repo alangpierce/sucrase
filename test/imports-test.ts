@@ -907,4 +907,19 @@ module.exports = exports.default;
     `,
     );
   });
+
+  it("handles dynamic imports", () => {
+    assertResult(
+      `
+      async function loadThing() {
+        const foo = await import('foo');
+      }
+    `,
+      `${PREFIX}
+      async function loadThing() {
+        const foo = await Promise.resolve().then(() => require('foo'));
+      }
+    `,
+    );
+  });
 });

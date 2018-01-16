@@ -1005,15 +1005,10 @@ export default abstract class Tokenizer extends LocationParser {
         throwOnInvalid,
       );
       ++this.state.pos;
-      if (code === null) {
-        // $FlowFixMe (is this always non-null?)
-        // @ts-ignore
-        --this.state.invalidTemplateEscapePosition; // to point to the '\'' instead of the 'u'
-      } else if (code > 0x10ffff) {
+      if (code !== null && code > 0x10ffff) {
         if (throwOnInvalid) {
           this.raise(codePos, "Code point out of bounds");
         } else {
-          this.state.invalidTemplateEscapePosition = codePos - 2;
           return null;
         }
       }
@@ -1160,7 +1155,6 @@ export default abstract class Tokenizer extends LocationParser {
           }
           if (octal > 0) {
             if (inTemplate) {
-              this.state.invalidTemplateEscapePosition = codePos;
               return null;
             } else if (this.state.strict) {
               this.raise(codePos, "Octal literal in strict mode");
@@ -1188,7 +1182,6 @@ export default abstract class Tokenizer extends LocationParser {
         this.raise(codePos, "Bad character escape sequence");
       } else {
         this.state.pos = codePos - 1;
-        this.state.invalidTemplateEscapePosition = codePos - 1;
       }
     }
     return n;

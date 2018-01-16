@@ -78,10 +78,6 @@ export default class State {
     this.containsEsc = false;
     this.containsOctal = false;
     this.octalPosition = null;
-
-    this.invalidTemplateEscapePosition = null;
-
-    this.exportedIdentifiers = [];
   }
 
   // TODO
@@ -185,12 +181,6 @@ export default class State {
   // TODO
   containsOctal: boolean;
   octalPosition: number | null;
-
-  // Names of exports store. `default` is stored as a name for both
-  // `export default foo;` and `export { foo as default };`.
-  exportedIdentifiers: Array<string>;
-
-  invalidTemplateEscapePosition: number | null;
 
   curPosition(): Position {
     return new Position(this.curLine, this.pos - this.lineStart);

@@ -1321,7 +1321,7 @@ export default class StatementParser extends ExpressionParser {
     } else if (this.eat(tt._default)) {
       // export default ...
       node.declaration = this.parseExportDefaultExpression();
-      this.checkExport(node as N.ExportNamedDeclaration, true, true);
+      this.checkExport(node as N.ExportNamedDeclaration);
       return this.finishNode(node, "ExportDefaultDeclaration");
     } else if (this.shouldParseExportDeclaration()) {
       if (this.isContextual("async")) {
@@ -1342,7 +1342,7 @@ export default class StatementParser extends ExpressionParser {
       node.specifiers = this.parseExportSpecifiers();
       this.parseExportFrom(node as N.ExportNamedDeclaration);
     }
-    this.checkExport(node as N.ExportNamedDeclaration, true);
+    this.checkExport(node as N.ExportNamedDeclaration);
     return this.finishNode(node, "ExportNamedDeclaration");
   }
 
@@ -1449,36 +1449,7 @@ export default class StatementParser extends ExpressionParser {
     );
   }
 
-  checkExport(
-    node: N.ExportNamedDeclaration,
-    checkNames: boolean = false,
-    isDefault: boolean = false,
-  ): void {
-    if (checkNames) {
-      // Check for duplicate exports
-      if (isDefault) {
-        // Default exports
-        this.checkDuplicateExports(node, "default");
-      } else if (node.specifiers && node.specifiers.length) {
-        // Named exports
-        for (const specifier of node.specifiers) {
-          this.checkDuplicateExports(specifier, specifier.exported.name);
-        }
-      } else if (node.declaration) {
-        // Exported declarations
-        if (
-          node.declaration.type === "FunctionDeclaration" ||
-          node.declaration.type === "ClassDeclaration"
-        ) {
-          this.checkDuplicateExports(node, (node.declaration as N.FunctionDeclaration).id.name);
-        } else if (node.declaration.type === "VariableDeclaration") {
-          for (const declaration of (node.declaration as N.VariableDeclaration).declarations) {
-            this.checkDeclaration(declaration.id);
-          }
-        }
-      }
-    }
-
+  checkExport(node: N.ExportNamedDeclaration): void {
     const currentContextDecorators = this.state.decoratorStack[
       this.state.decoratorStack.length - 1
     ];
@@ -1495,48 +1466,6 @@ export default class StatementParser extends ExpressionParser {
       }
       this.takeDecorators(node.declaration);
     }
-  }
-
-  checkDeclaration(node: N.Pattern | N.ObjectProperty): void {
-    if (node.type === "ObjectPattern") {
-      for (const prop of (node as N.ObjectPattern).properties) {
-        this.checkDeclaration(prop);
-      }
-    } else if (node.type === "ArrayPattern") {
-      for (const elem of (node as N.ArrayPattern).elements) {
-        if (elem) {
-          this.checkDeclaration(elem);
-        }
-      }
-    } else if (node.type === "ObjectProperty") {
-      this.checkDeclaration((node as N.ObjectProperty).value as N.ObjectProperty);
-    } else if (node.type === "RestElement") {
-      this.checkDeclaration((node as N.RestElement).argument);
-    } else if (node.type === "Identifier") {
-      this.checkDuplicateExports(node as N.Identifier, (node as N.Identifier).name);
-    }
-  }
-
-  checkDuplicateExports(
-    node: N.Identifier | N.ExportNamedDeclaration | N.ExportSpecifier,
-    name: string,
-  ): void {
-    if (this.state.exportedIdentifiers.indexOf(name) > -1) {
-      this.raiseDuplicateExportError(node, name);
-    }
-    this.state.exportedIdentifiers.push(name);
-  }
-
-  raiseDuplicateExportError(
-    node: N.Identifier | N.ExportNamedDeclaration | N.ExportSpecifier,
-    name: string,
-  ): never {
-    throw this.raise(
-      node.start,
-      name === "default"
-        ? "Only one default export allowed per module."
-        : `\`${name}\` has already been exported. Exported identifiers must be unique.`,
-    );
   }
 
   // Parses a comma-separated list of module exports.

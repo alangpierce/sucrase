@@ -1070,12 +1070,7 @@ export default abstract class ExpressionParser extends LValParser {
     if (this.state.value === null) {
       if (!isTagged) {
         // TODO: fix this
-        this.raise(
-          this.state.invalidTemplateEscapePosition || 0,
-          "Invalid escape sequence in template",
-        );
-      } else {
-        this.state.invalidTemplateEscapePosition = null;
+        this.raise(this.state.pos, "Invalid escape sequence in template");
       }
     }
     elem.value = {

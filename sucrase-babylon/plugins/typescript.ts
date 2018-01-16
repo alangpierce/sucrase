@@ -989,23 +989,6 @@ export default (superClass: ParserClass): ParserClass =>
       }
     }
 
-    nodeWithSamePosition<T extends N.Node>(original: N.Node, type: string): T {
-      const node = this.startNodeAtNode<T>(original);
-      node.type = type;
-      node.end = original.end;
-      node.loc.end = original.loc.end;
-
-      if (original.leadingComments) {
-        node.leadingComments = original.leadingComments;
-      }
-      if (original.trailingComments) {
-        node.trailingComments = original.trailingComments;
-      }
-      if (original.innerComments) node.innerComments = original.innerComments;
-
-      return node;
-    }
-
     tsTryParseDeclare(nany: N.Node): N.Declaration | null {
       switch (this.state.type) {
         case tt._function:

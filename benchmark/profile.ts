@@ -5,7 +5,7 @@ import * as sucrase from "../src/index";
 
 function main(): void {
   console.log(
-    "Profiling Sucrase on about 100,000 LOC. Make sure you have Chrome DevTools for Node open.",
+    "Profiling Sucrase on about 1 million LOC. Make sure you have Chrome DevTools for Node open.",
   );
   const code = fs.readFileSync("./benchmark/sample/sample.tsx").toString();
   // tslint:disable-next-line no-any

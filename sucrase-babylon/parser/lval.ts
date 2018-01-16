@@ -224,11 +224,21 @@ export default abstract class LValParser extends NodeUtils {
   ): ReadonlyArray<Pattern | TSParameterProperty> {
     const elts: Array<Pattern | TSParameterProperty> = [];
     let first = true;
+
+    let hasRemovedComma = false;
+    const firstItemTokenIndex = this.state.tokens.length;
+
     while (!this.eat(close)) {
       if (first) {
         first = false;
       } else {
         this.expect(tt.comma);
+        // After a "this" type in TypeScript, we need to set the following comma (if any) to also be
+        // a type token so that it will be removed.
+        if (!hasRemovedComma && this.state.tokens[firstItemTokenIndex].isType) {
+          this.state.tokens[this.state.tokens.length - 1].isType = true;
+          hasRemovedComma = true;
+        }
       }
       if (allowEmpty && this.match(tt.comma)) {
         // $FlowFixMe This method returns `ReadonlyArray<?Pattern>` if `allowEmpty` is set.

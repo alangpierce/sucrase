@@ -651,4 +651,19 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows this types in functions", () => {
+    assertTypeScriptResult(
+      `
+      function foo(this: number, x: number): number {
+        return this + x;
+      }
+    `,
+      `"use strict";
+      function foo( x) {
+        return this + x;
+      }
+    `,
+    );
+  });
 });

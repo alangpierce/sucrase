@@ -786,8 +786,10 @@ export default (superClass: ParserClass): ParserClass =>
 
     tsParseTypeAssertion(): N.TsTypeAssertion {
       const node: N.TsTypeAssertion = this.startNode();
-      node.typeAnnotation = this.tsParseType();
-      this.expectRelational(">");
+      this.runInTypeContext(1, () => {
+        node.typeAnnotation = this.tsParseType();
+        this.expectRelational(">");
+      });
       node.expression = this.parseMaybeUnary();
       return this.finishNode(node, "TSTypeAssertion");
     }

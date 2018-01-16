@@ -696,4 +696,16 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows old-style type assertions in non-JSX TypeScript", () => {
+    assertResult(
+      `
+      const x = <number>3;
+    `,
+      `"use strict";
+      const x = 3;
+    `,
+      ["typescript", "imports"],
+    );
+  });
 });

@@ -8,7 +8,6 @@ import RootTransformer from "./transformers/RootTransformer";
 import formatTokens from "./util/formatTokens";
 
 const DEFAULT_BABYLON_PLUGINS = [
-  "jsx",
   "objectRestSpread",
   "classProperties",
   "exportNamespaceFrom",
@@ -67,6 +66,9 @@ export function getFormattedTokens(code: string, options: Options): string {
  */
 function getSucraseContext(code: string, options: Options): SucraseContext {
   let babylonPlugins = options.babylonPlugins || DEFAULT_BABYLON_PLUGINS;
+  if (options.transforms.includes("jsx")) {
+    babylonPlugins = [...babylonPlugins, "jsx"];
+  }
   if (options.transforms.includes("flow")) {
     babylonPlugins = [...babylonPlugins, "flow"];
   }

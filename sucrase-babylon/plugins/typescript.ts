@@ -1954,7 +1954,7 @@ export default (superClass: ParserClass): ParserClass =>
       switch (this.state.type) {
         case tt._this:
           // "this" may be the name of a parameter, so allow it.
-          return this.parseIdentifier(/* liberal */ true);
+          return this.runInTypeContext(0, () => this.parseIdentifier(/* liberal */ true));
         default:
           return super.parseBindingAtom(isBlockScope);
       }

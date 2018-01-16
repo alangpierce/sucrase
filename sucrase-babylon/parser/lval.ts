@@ -19,12 +19,6 @@ import {NodeUtils} from "./node";
 
 export default abstract class LValParser extends NodeUtils {
   // Forward-declaration: defined in expression.js
-  abstract checkReservedWord(
-    word: string,
-    startLoc: number,
-    checkKeywords: boolean,
-    isBinding: boolean,
-  ): void;
   abstract parseIdentifier(liberal?: boolean): Identifier;
   abstract parseMaybeAssign(
     noIn?: boolean | null,
@@ -312,8 +306,6 @@ export default abstract class LValParser extends NodeUtils {
   ): void {
     switch (expr.type) {
       case "Identifier":
-        this.checkReservedWord(expr.name, expr.start, false, true);
-
         if (checkClashes) {
           // we need to prefix this with an underscore for the cases where we have a key of
           // `__proto__`. there's a bug in old V8 where the following wouldn't work:

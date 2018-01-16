@@ -1372,18 +1372,6 @@ export default (superClass: ParserClass): ParserClass =>
       return super.parseExprOp(left, leftStartPos, leftStartLoc, minPrec, noIn);
     }
 
-    checkReservedWord(
-      word: string,
-      startLoc: number,
-      checkKeywords: boolean,
-      // eslint-disable-next-line no-unused-vars
-      isBinding: boolean,
-    ): void {
-      // Don't bother checking for TypeScript code.
-      // Strict mode words may be allowed as in `declare namespace N { const static: number; }`.
-      // And we have a type checker anyway, so don't bother having the parser do it.
-    }
-
     /*
     Don't bother doing this check in TypeScript code because:
     1. We may have a nested export statement with the same name:

@@ -126,7 +126,8 @@ export default class StatementParser extends ExpressionParser {
       case tt._with:
         return this.parseWithStatement(node as N.WithStatement);
       case tt.braceL:
-        return this.parseBlock();
+        this.parseBlock();
+        return node;
       case tt.semi:
         return this.parseEmptyStatement(node as N.EmptyStatement);
       case tt._export:
@@ -482,7 +483,7 @@ export default class StatementParser extends ExpressionParser {
   parseTryStatement(node: N.TryStatement): N.TryStatement {
     this.next();
 
-    node.block = this.parseBlock();
+    this.parseBlock();
     node.handler = null;
 
     if (this.match(tt._catch)) {
@@ -500,7 +501,7 @@ export default class StatementParser extends ExpressionParser {
         this.expectPlugin("optionalCatchBinding");
         clause.param = null;
       }
-      clause.body = this.parseBlock();
+      this.parseBlock();
       if (catchBindingStartTokenIndex != null) {
         // We need a special scope for the catch binding which includes the binding itself and the
         // catch block.
@@ -516,10 +517,8 @@ export default class StatementParser extends ExpressionParser {
 
     // @ts-ignore
     node.guardedHandlers = empty;
-    node.finalizer = this.eat(tt._finally) ? this.parseBlock() : null;
-
-    if (!node.handler && !node.finalizer) {
-      this.raise(node.start, "Missing catch or finally clause");
+    if (this.eat(tt._finally)) {
+      this.parseBlock();
     }
 
     return this.finishNode(node, "TryStatement");
@@ -618,8 +617,7 @@ export default class StatementParser extends ExpressionParser {
     allowDirectives: boolean = false,
     isFunctionScope: boolean = false,
     contextId?: number,
-  ): N.BlockStatement {
-    const node = this.startNode();
+  ): void {
     const startTokenIndex = this.state.tokens.length;
     this.expect(tt.braceL);
     this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
@@ -627,7 +625,6 @@ export default class StatementParser extends ExpressionParser {
     this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope});
-    return this.finishNode(node as N.BlockStatement, "BlockStatement");
   }
 
   isValidDirective(stmt: N.Statement): boolean {
@@ -1582,7 +1579,6 @@ export default class StatementParser extends ExpressionParser {
     if (this.eatContextual("as")) {
       specifier.local = this.parseIdentifier();
     } else {
-      this.checkReservedWord(specifier.imported.name, specifier.start, true, true);
       specifier.local = specifier.imported.__clone();
     }
     this.checkLVal(specifier.local, true, null, "import specifier");

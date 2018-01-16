@@ -23,8 +23,8 @@
     "@types/node" "*"
 
 "@types/node@*":
-  version "8.5.2"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.5.2.tgz#83b8103fa9a2c2e83d78f701a9aa7c9539739aa5"
+  version "9.3.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-9.3.0.tgz#3a129cda7c4e5df2409702626892cb4b96546dd5"
 
 abab@^1.0.3:
   version "1.0.4"
@@ -1393,10 +1393,6 @@ chalk@^2.0.0, chalk@^2.1.0:
     escape-string-regexp "^1.0.5"
     supports-color "^4.0.0"
 
-charcodes@0.0.10:
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/charcodes/-/charcodes-0.0.10.tgz#98d67a7a1e17ce154d1faafd01e72e9a6cff54f5"
-
 chokidar@^1.6.0, chokidar@^1.7.0:
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/chokidar/-/chokidar-1.7.0.tgz#798e689778151c8076b4b360e5edd28cda2bb468"
@@ -1541,7 +1537,11 @@ commander@2.11.x, commander@~2.11.0:
   version "2.11.0"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.11.0.tgz#157152fd1e7a6c8d98a5b715cf376df928004563"
 
-commander@^2.12.2, commander@~2.12.1:
+commander@^2.12.2:
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-2.13.0.tgz#6964bca67685df7c1f1430c584f07d7597885b9c"
+
+commander@~2.12.1:
   version "2.12.2"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.12.2.tgz#0f5946c427ed9ec0d91a46bb9def53e54650e555"
 
@@ -6223,11 +6223,10 @@ style-loader@0.18.2:
     schema-utils "^0.3.0"
 
 sucrase@^1.8.0:
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.8.0.tgz#b657cdc924068d20a26a2eae7ae73ba1d8b69022"
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.9.0.tgz#5078661ebc4a9fed2a8fda055745b9fcdc074c38"
   dependencies:
     "@types/mz" "^0.0.32"
-    charcodes "0.0.10"
     commander "^2.12.2"
     lines-and-columns "^1.1.6"
     mz "^2.7.0"

@@ -636,4 +636,19 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows TypeScript CJS-style imports and exports", () => {
+    assertTypeScriptResult(
+      `
+      import a = require('a');
+      console.log(a);
+      export = 3;
+    `,
+      `"use strict";
+      const a = require('a');
+      console.log(a);
+      module.exports = 3;
+    `,
+    );
+  });
 });

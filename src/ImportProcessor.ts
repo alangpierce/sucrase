@@ -79,10 +79,16 @@ export default class ImportProcessor {
         continue;
       }
 
-      if (this.tokens.matchesAtIndex(i, ["import"])) {
+      if (
+        this.tokens.matchesAtIndex(i, ["import"]) &&
+        !this.tokens.matchesAtIndex(i, ["import", "name", "="])
+      ) {
         this.preprocessImportAtIndex(i);
       }
-      if (this.tokens.matchesAtIndex(i, ["export"])) {
+      if (
+        this.tokens.matchesAtIndex(i, ["export"]) &&
+        !this.tokens.matchesAtIndex(i, ["export", "="])
+      ) {
         this.preprocessExportAtIndex(i);
       }
     }

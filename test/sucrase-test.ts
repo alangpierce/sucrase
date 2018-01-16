@@ -356,4 +356,26 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("handles optional catch binding", () => {
+    assertResult(
+      `
+      const e = 3;
+      try {
+        console.log(e);
+      } catch {
+        console.log("Failed!");
+      }
+    `,
+      `"use strict";
+      const e = 3;
+      try {
+        console.log(e);
+      } catch (e2) {
+        console.log("Failed!");
+      }
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

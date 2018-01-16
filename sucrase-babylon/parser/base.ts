@@ -16,14 +16,6 @@ export default class BaseParser {
   state: State;
   input: string;
 
-  isReservedWord(word: string): boolean {
-    if (word === "await") {
-      return this.inModule;
-    } else {
-      return reservedWords[6](word);
-    }
-  }
-
   hasPlugin(name: string): boolean {
     return Boolean(this.plugins[name]);
   }

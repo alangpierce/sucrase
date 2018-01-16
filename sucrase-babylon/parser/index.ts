@@ -1,5 +1,5 @@
 import {getOptions, InputOptions} from "../options";
-import {File, Program} from "../types";
+import {File} from "../types";
 import StatementParser from "./statement";
 
 export type ParserClass = {

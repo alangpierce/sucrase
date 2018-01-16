@@ -90,18 +90,9 @@ export type BigIntLiteral = NodeBase & {
 
 // Programs
 
-export type BlockStatementLike = Program | BlockStatement;
-
 export type File = {
   tokens: Array<Token>;
   scopes: Array<Scope>;
-};
-
-export type Program = NodeBase & {
-  type: "Program";
-  sourceType: "script" | "module";
-  body: Array<Statement | ModuleDeclaration>; // TODO: ReadonlyArray
-  directives: ReadonlyArray<Directive>; // TODO: Not in spec
 };
 
 // Functions

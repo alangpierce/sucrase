@@ -31,7 +31,7 @@ export default abstract class ExpressionParser extends LValParser {
     allowDirectives?: boolean,
     isFunctionScope?: boolean,
     contextId?: number,
-  ): N.BlockStatement;
+  ): void;
   abstract parseClass(node: N.Class, isStatement: boolean, optionalId?: boolean): N.Class;
   abstract parseDecorators(allowExport?: boolean): void;
   abstract parseFunction<T extends N.NormalFunction>(
@@ -708,7 +708,7 @@ export default abstract class ExpressionParser extends LValParser {
         const oldLabels = this.state.labels;
         this.state.labels = [];
         this.state.inFunction = false;
-        innerNode.body = this.parseBlock(false);
+        this.parseBlock(false);
         this.state.inFunction = oldInFunction;
         this.state.labels = oldLabels;
         return this.finishNode(innerNode, "DoExpression");
@@ -1336,7 +1336,6 @@ export default abstract class ExpressionParser extends LValParser {
     }
 
     if (!prop.computed && prop.key.type === "Identifier") {
-      this.checkReservedWord(prop.key.name, prop.key.start, true, true);
       // If we're in a destructuring, we've now discovered that the key was actually an assignee, so
       // we need to tag it as a declaration with the appropriate scope. Otherwise, we might need to
       // transform it on access, so mark it as an object shorthand.
@@ -1514,20 +1513,6 @@ export default abstract class ExpressionParser extends LValParser {
     node.params = this.toAssignableList(params, true, "arrow function parameters");
   }
 
-  isStrictBody(node: {body: N.BlockStatement}): boolean {
-    const isBlockStatement = node.body.type === "BlockStatement";
-
-    if (isBlockStatement && node.body.directives.length) {
-      for (const directive of node.body.directives) {
-        if (directive.value.value === "use strict") {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   parseFunctionBodyAndFinish(
     node: N.BodilessFunctionOrMethodBase,
     type: string,
@@ -1564,11 +1549,7 @@ export default abstract class ExpressionParser extends LValParser {
       this.state.inGenerator = node.generator;
       this.state.inFunction = true;
       this.state.labels = [];
-      node.body = this.parseBlock(
-        true /* allowDirectives */,
-        true /* isFunctionScope */,
-        funcContextId,
-      );
+      this.parseBlock(true /* allowDirectives */, true /* isFunctionScope */, funcContextId);
       this.state.inFunction = oldInFunc;
       this.state.inGenerator = oldInGen;
       this.state.labels = oldLabels;
@@ -1645,10 +1626,6 @@ export default abstract class ExpressionParser extends LValParser {
   }
 
   parseIdentifierName(pos: number, liberal?: boolean): string {
-    if (!liberal) {
-      this.checkReservedWord(this.state.value, this.state.start, !!this.state.type.keyword, false);
-    }
-
     let name: string;
 
     if (this.match(tt.name)) {
@@ -1665,28 +1642,6 @@ export default abstract class ExpressionParser extends LValParser {
 
     this.next();
     return name;
-  }
-
-  checkReservedWord(
-    word: string,
-    startLoc: number,
-    checkKeywords: boolean,
-    isBinding: boolean,
-  ): void {
-    if (
-      this.state.strict &&
-      (reservedWords.strict(word) || (isBinding && reservedWords.strictBind(word)))
-    ) {
-      this.raise(startLoc, `${word} is a reserved word in strict mode`);
-    }
-
-    if (this.state.inGenerator && word === "yield") {
-      this.raise(startLoc, "yield is a reserved word inside generator functions");
-    }
-
-    if (this.isReservedWord(word) || (checkKeywords && this.isKeyword(word))) {
-      this.raise(startLoc, `${word} is a reserved word`);
-    }
   }
 
   // Parses await expression inside async function.

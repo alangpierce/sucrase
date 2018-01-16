@@ -1939,10 +1939,6 @@ export default (superClass: ParserClass): ParserClass =>
         this.checkReservedType(specifier.local.name, specifier.local.start);
       }
 
-      if (isBinding && !nodeIsTypeImport && !specifierIsTypeImport) {
-        this.checkReservedWord(specifier.local.name, specifier.start, true, true);
-      }
-
       this.checkLVal(specifier.local, true, null, "import specifier");
       node.specifiers.push(this.finishNode(specifier as N.ImportSpecifier, "ImportSpecifier"));
     }

@@ -1,5 +1,5 @@
 diff --git a/package.json b/package.json
-index 826ad87f..138e31f6 100644
+index 826ad87f..f4cdb8db 100644
 --- a/package.json
 +++ b/package.json
 @@ -22,14 +22,14 @@
@@ -10,7 +10,7 @@ index 826ad87f..138e31f6 100644
 +    "compile:core": "sucrase ./src -d ./lib --transforms typescript,imports",
      "compile:scripts": "tsc -p scripts",
 -    "compile:test": "tsc -p test",
-+    "compile:test": "mkdir -p build && sucrase ./test -d ./build/test --transforms typescript,imports && sucrase ./src -d ./build/src --transforms typescript,imports",
++    "compile:test": "mkdir -p build && sucrase ./test -d ./build/test --exclude-dirs files,rules --transforms typescript,imports && sucrase ./src -d ./build/src --transforms typescript,imports",
      "lint": "npm-run-all -p lint:global lint:from-bin",
      "lint:global": "tslint --project test/tsconfig.json --format stylish # test includes 'src' too",
      "lint:from-bin": "node bin/tslint --project test/tsconfig.json --format stylish",

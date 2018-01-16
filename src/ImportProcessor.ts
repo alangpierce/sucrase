@@ -108,7 +108,12 @@ export default class ImportProcessor {
       }
     }
     for (const [path, importInfo] of this.importInfoByPath.entries()) {
-      if (importInfo.hasBareImport) {
+      if (
+        importInfo.hasBareImport ||
+        importInfo.hasStarExport ||
+        importInfo.exportStarNames.length > 0 ||
+        importInfo.namedExports.length > 0
+      ) {
         continue;
       }
       const names = [

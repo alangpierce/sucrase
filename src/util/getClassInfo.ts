@@ -52,7 +52,7 @@ export default function getClassInfo(
     } else if (tokens.matches([";"])) {
       tokens.nextToken();
     } else {
-      // Either a regular method or a field. Skip to the identifier part.
+      // Either a method or a field. Skip to the identifier part.
       const statementStartIndex = tokens.currentIndex();
       let isStatic = false;
       while (isAccessModifier(tokens.currentToken())) {
@@ -60,6 +60,10 @@ export default function getClassInfo(
           isStatic = true;
         }
         tokens.nextToken();
+      }
+      if (tokens.matchesName("constructor")) {
+        ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
+        continue;
       }
       const nameCode = getNameCode(tokens);
       if (tokens.matches(["</>"]) || tokens.matches(["("])) {
@@ -139,6 +143,9 @@ function processClassHeader(tokens: TokenProcessor): ClassHeaderInfo {
   return {isExpression, className, hasSuperclass};
 }
 
+/**
+ * Extract useful information out of a constructor, starting at the "constructor" name.
+ */
 function processConstructor(
   tokens: TokenProcessor,
 ): {constructorInitializers: Array<string>; constructorInsertPos: number} {

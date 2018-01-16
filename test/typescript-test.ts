@@ -677,4 +677,23 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("properly handles access modifiers on constructors", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        x = 1;
+        public constructor() {
+        }
+      }
+    `,
+      `"use strict";
+      class A {
+        
+         constructor() {;this.x = 1;
+        }
+      }
+    `,
+    );
+  });
 });

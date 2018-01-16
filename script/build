@@ -40,3 +40,14 @@ cd ../..
   --outDir ./integrations/gulp-plugin/dist \
   --module commonjs \
   --moduleResolution node
+
+echo 'Building @sucrase/jest-plugin'
+cd ./integrations/jest-plugin
+yarn
+cd ../..
+
+"${TSC}" \
+  --project ./integrations/jest-plugin \
+  --outDir ./integrations/jest-plugin/dist \
+  --module commonjs \
+  --moduleResolution node

@@ -6,3 +6,8 @@ cache:
 node_js:
   - '9'
   - '8'
+script:
+  - yarn test
+  - yarn build
+  - yarn benchmark
+  - yarn run-examples

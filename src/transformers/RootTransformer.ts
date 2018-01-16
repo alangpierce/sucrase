@@ -6,6 +6,7 @@ import FlowTransformer from "./FlowTransformer";
 import ImportTransformer from "./ImportTransformer";
 import JSXTransformer from "./JSXTransformer";
 import NumericSeparatorTransformer from "./NumericSeparatorTransformer";
+import OptionalCatchBindingTransformer from "./OptionalCatchBindingTransformer";
 import ReactDisplayNameTransformer from "./ReactDisplayNameTransformer";
 import Transformer from "./Transformer";
 import TypeScriptTransformer from "./TypeScriptTransformer";
@@ -22,6 +23,7 @@ export default class RootTransformer {
     this.tokens = tokenProcessor;
 
     this.transformers.push(new NumericSeparatorTransformer(tokenProcessor));
+    this.transformers.push(new OptionalCatchBindingTransformer(tokenProcessor, this.nameManager));
     if (transforms.includes("jsx")) {
       this.transformers.push(new JSXTransformer(this, tokenProcessor, importProcessor));
     }

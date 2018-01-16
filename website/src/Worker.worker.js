@@ -7,7 +7,10 @@ import {TRANSFORMS} from "./Constants";
 import {compressCode} from "./URLHashState";
 import getTokens from "./getTokens";
 Babel.registerPlugin("add-module-exports", require("babel-plugin-add-module-exports"));
-Babel.registerPlugin("proposal-numeric-separator", require("@babel/plugin-proposal-numeric-separator"));
+Babel.registerPlugin(
+  "proposal-numeric-separator",
+  require("@babel/plugin-proposal-numeric-separator"),
+);
 
 let config = null;
 
@@ -67,7 +70,12 @@ function runBabel() {
     () =>
       Babel.transform(config.code, {
         presets: babelPresets,
-        plugins: [...babelPlugins, "proposal-export-namespace-from", "proposal-numeric-separator"],
+        plugins: [
+          ...babelPlugins,
+          "proposal-export-namespace-from",
+          "proposal-numeric-separator",
+          "proposal-optional-catch-binding",
+        ],
         parserOpts: {plugins: ["jsx", "classProperties", "numericSeparator"]},
       }).code,
   );

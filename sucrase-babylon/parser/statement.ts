@@ -23,25 +23,20 @@ export default class StatementParser extends ExpressionParser {
   // `program` argument.  If present, the statements will be appended
   // to its body instead of creating a new node.
 
-  parseTopLevel(file: N.File, program: N.Program): N.File {
-    program.sourceType = this.options.sourceType;
+  parseTopLevel(): N.File {
+    this.parseBlockBody(true, true, tt.eof);
 
-    this.parseBlockBody(program, true, true, tt.eof);
-
-    file.program = this.finishNode(program, "Program");
     this.state.scopes.push({
       startTokenIndex: 0,
       endTokenIndex: this.state.tokens.length,
       isFunctionScope: true,
     });
 
-    if (this.options.tokens) file.tokens = this.state.tokens;
-    file.scopes = this.state.scopes;
-
-    return this.finishNode(file, "File");
+    return {
+      tokens: this.state.tokens,
+      scopes: this.state.scopes,
+    };
   }
-
-  // TODO
 
   stmtToDirective(stmt: N.Statement): N.Directive {
     const expr = stmt.expression;
@@ -628,7 +623,7 @@ export default class StatementParser extends ExpressionParser {
     const startTokenIndex = this.state.tokens.length;
     this.expect(tt.braceL);
     this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
-    this.parseBlockBody(node as N.BlockStatementLike, allowDirectives, false, tt.braceR);
+    this.parseBlockBody(allowDirectives, false, tt.braceR);
     this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope});
@@ -643,16 +638,9 @@ export default class StatementParser extends ExpressionParser {
     );
   }
 
-  parseBlockBody(
-    node: N.BlockStatementLike,
-    allowDirectives: boolean,
-    topLevel: boolean,
-    end: TokenType,
-  ): void {
+  parseBlockBody(allowDirectives: boolean, topLevel: boolean, end: TokenType): void {
     const body: Array<N.Statement> = [];
-    node.body = body;
     const directives: Array<N.Directive> = [];
-    node.directives = directives;
     this.parseBlockOrModuleBlockBody(body, allowDirectives ? directives : null, topLevel, end);
   }
 

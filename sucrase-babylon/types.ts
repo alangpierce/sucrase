@@ -92,9 +92,7 @@ export type BigIntLiteral = NodeBase & {
 
 export type BlockStatementLike = Program | BlockStatement;
 
-export type File = NodeBase & {
-  type: "File";
-  program: Program;
+export type File = {
   tokens: Array<Token>;
   scopes: Array<Scope>;
 };

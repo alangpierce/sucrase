@@ -1,0 +1,22 @@
+diff --git a/package.json b/package.json
+index 826ad87f..138e31f6 100644
+--- a/package.json
++++ b/package.json
+@@ -22,14 +22,14 @@
+     "clean:test": "rimraf build && rimraf test/config/node_modules",
+     "docs": "node scripts/buildDocs.js",
+     "compile": "npm-run-all -p compile:core compile:test -s compile:scripts",
+-    "compile:core": "tsc -p src",
++    "compile:core": "sucrase ./src -d ./lib --transforms typescript,imports",
+     "compile:scripts": "tsc -p scripts",
+-    "compile:test": "tsc -p test",
++    "compile:test": "mkdir -p build && sucrase ./test -d ./build/test --transforms typescript,imports && sucrase ./src -d ./build/src --transforms typescript,imports",
+     "lint": "npm-run-all -p lint:global lint:from-bin",
+     "lint:global": "tslint --project test/tsconfig.json --format stylish # test includes 'src' too",
+     "lint:from-bin": "node bin/tslint --project test/tsconfig.json --format stylish",
+     "publish:local": "./scripts/npmPublish.sh",
+-    "test": "npm-run-all test:pre -p test:mocha test:rules",
++    "test": "npm-run-all compile test:pre -p test:mocha test:rules",
+     "test:pre": "cd ./test/config && npm install --no-save",
+     "test:mocha": "mocha --reporter spec --colors \"build/test/**/*Tests.js\"",
+     "test:rules": "node ./build/test/ruleTestRunner.js",

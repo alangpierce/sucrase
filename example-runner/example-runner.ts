@@ -8,6 +8,7 @@ const EXAMPLES = {
   "decaffeinate-parser": "https://github.com/decaffeinate/decaffeinate-parser.git",
   "coffee-lex": "https://github.com/decaffeinate/coffee-lex.git",
   babel: "https://github.com/babel/babel.git",
+  tslint: "https://github.com/palantir/tslint.git",
 };
 
 async function main(): Promise<void> {

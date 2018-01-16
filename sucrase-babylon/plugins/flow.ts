@@ -1399,8 +1399,6 @@ export default (superClass: ParserClass): ParserClass =>
               true,
               "arrow function parameters",
             );
-            // Use super's method to force the parameters to be checked
-            super.checkFunctionNameAndParams(innerNode as N.Function, true);
           } else {
             arrows.push(innerNode as N.ArrowFunctionExpression);
           }
@@ -2119,14 +2117,6 @@ export default (superClass: ParserClass): ParserClass =>
       } else {
         super.setArrowFunctionParameters(node, params);
       }
-    }
-
-    checkFunctionNameAndParams(node: N.Function, isArrowFunction: boolean | null): void {
-      if (isArrowFunction && this.state.noArrowParamsConversionAt.indexOf(node.start) !== -1) {
-        return;
-      }
-
-      super.checkFunctionNameAndParams(node, isArrowFunction);
     }
 
     parseParenAndDistinguishExpression(canBeArrow: boolean): N.Expression {

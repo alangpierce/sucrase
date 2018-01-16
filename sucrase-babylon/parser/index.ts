@@ -28,10 +28,8 @@ export default class Parser extends StatementParser {
   }
 
   parse(): File {
-    const file = this.startNode<File>();
-    const program = this.startNode<Program>();
     this.nextToken();
-    return this.parseTopLevel(file, program);
+    return this.parseTopLevel();
   }
 }
 

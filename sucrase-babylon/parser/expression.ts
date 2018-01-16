@@ -1575,36 +1575,7 @@ export default abstract class ExpressionParser extends LValParser {
     }
     this.state.inAsync = oldInAsync;
 
-    this.checkFunctionNameAndParams(node, allowExpression);
     this.state.inParameters = oldInParameters;
-  }
-
-  checkFunctionNameAndParams(node: N.Function, isArrowFunction: boolean | null): void {
-    // If this is a strict mode function, verify that argument names
-    // are not repeated, and it does not try to bind the words `eval`
-    // or `arguments`.
-    const isStrict = this.isStrictBody(node);
-    // Also check for arrow functions
-    const checkLVal = this.state.strict || isStrict || isArrowFunction;
-
-    const oldStrict = this.state.strict;
-    if (isStrict) this.state.strict = isStrict;
-    if (node.id) {
-      this.checkReservedWord(node.id.name, node.start, true, true);
-    }
-    if (checkLVal) {
-      const nameHash: {} = Object.create(null);
-      if (node.id) {
-        this.checkLVal(node.id, true, null, "function name");
-      }
-      for (const param of node.params) {
-        if (isStrict && param.type !== "Identifier") {
-          this.raise(param.start, "Non-simple parameter in strict mode");
-        }
-        this.checkLVal(param, true, nameHash, "function parameter list");
-      }
-    }
-    this.state.strict = oldStrict;
   }
 
   // Parses a comma-separated list of expressions, and returns them as

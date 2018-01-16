@@ -36,11 +36,19 @@ export default class ImportTransformer extends Transformer {
   }
 
   process(): boolean {
+    if (this.tokens.matches(["import", "name", "="])) {
+      this.tokens.replaceToken("const");
+      return true;
+    }
     if (
       this.tokens.matches(["import"]) &&
       !isMaybePropertyName(this.tokens, this.tokens.currentIndex())
     ) {
       this.processImport();
+      return true;
+    }
+    if (this.tokens.matches(["export", "="])) {
+      this.tokens.replaceToken("module.exports");
       return true;
     }
     if (

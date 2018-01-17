@@ -30,6 +30,11 @@ async function main(): Promise<void> {
   const originalCwd = process.cwd();
   await run("yarn link");
   process.chdir("./integrations/gulp-plugin");
+  await run("yarn link sucrase");
+  await run("yarn link");
+  process.chdir(originalCwd);
+  process.chdir("./integrations/jest-plugin");
+  await run("yarn link sucrase");
   await run("yarn link");
   process.chdir(originalCwd);
 
@@ -78,6 +83,7 @@ async function runProject(project: string, shouldSave: boolean): Promise<boolean
   await run("yarn");
   await run("yarn link sucrase");
   await run("yarn link @sucrase/gulp-plugin");
+  await run("yarn link @sucrase/jest-plugin");
 
   let passed = true;
   try {

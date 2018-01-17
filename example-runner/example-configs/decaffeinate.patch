@@ -1,16 +1,18 @@
 diff --git a/package.json b/package.json
-index aa29f9f..f246d6e 100644
+index aa29f9f..de51dc5 100644
 --- a/package.json
 +++ b/package.json
-@@ -11,11 +11,9 @@
+@@ -11,11 +11,8 @@
    "scripts": {
      "lint": "tslint --config tslint.json --project tsconfig.json --type-check",
      "lint-fix": "tslint --config tslint.json --project tsconfig.json --type-check --fix",
 -    "pretest": "yarn run build",
-     "test": "mocha 'test/**/*.ts'",
-     "prebuild": "rimraf dist && mkdirp dist && npm run lint",
-     "build": "script/build",
+-    "test": "mocha 'test/**/*.ts'",
+-    "prebuild": "rimraf dist && mkdirp dist && npm run lint",
+-    "build": "script/build",
 -    "prepublish": "yarn run build",
++    "test": "yarn build && mocha 'test/**/*.ts'",
++    "build": "sucrase src -d dist --transforms typescript,imports",
      "update-website": "ts-node ./script/update-website.ts"
    },
    "repository": {

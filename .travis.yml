@@ -3,6 +3,7 @@ cache:
   yarn: true
   directories:
     - node_modules
+    - example-runner/example-repos
 node_js:
   - '9'
   - '8'

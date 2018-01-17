@@ -43,8 +43,6 @@ export default class State {
 
     this.labels = [];
 
-    this.decoratorStack = [[]];
-
     this.yieldInPossibleArrowParameters = null;
 
     this.tokens = [];
@@ -113,11 +111,6 @@ export default class State {
 
   // Labels in scope.
   labels: Array<Label>;
-
-  // Leading decorators. Last element of the stack represents the decorators in current context.
-  // Supports nesting of decorators, e.g. @foo(@bar class inner {}) class outer {}
-  // where @foo belongs to the outer class and @bar to the inner
-  decoratorStack: Array<Array<N.Decorator>>;
 
   // The first yield expression inside parenthesized expressions and arrow
   // function parameters. It is used to disallow yield in arrow function

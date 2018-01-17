@@ -32,7 +32,7 @@ export default abstract class LValParser extends NodeUtils {
     refShorthandDefaultPos?: Pos | null,
   ): T;
   // Forward-declaration: defined in statement.js
-  abstract parseDecorator(): Decorator;
+  abstract parseDecorator(): void;
 
   // Convert existing expression atom to assignable pattern
   // if possible.
@@ -241,14 +241,13 @@ export default abstract class LValParser extends NodeUtils {
         this.expect(close);
         break;
       } else {
-        const decorators = [];
         if (this.match(tt.at) && this.hasPlugin("decorators2")) {
           this.raise(this.state.start, "Stage 2 decorators cannot be used to decorate parameters");
         }
         while (this.match(tt.at)) {
-          decorators.push(this.parseDecorator());
+          this.parseDecorator();
         }
-        elts.push(this.parseAssignableListItem(allowModifiers, decorators, isBlockScope));
+        elts.push(this.parseAssignableListItem(allowModifiers, isBlockScope));
       }
     }
     return elts;
@@ -256,16 +255,11 @@ export default abstract class LValParser extends NodeUtils {
 
   parseAssignableListItem(
     allowModifiers: boolean | null,
-    decorators: Array<Decorator>,
     isBlockScope: boolean,
   ): Pattern | TSParameterProperty {
     const left = this.parseMaybeDefault(isBlockScope);
     this.parseAssignableListItemTypes(left);
-    const elt = this.parseMaybeDefault(isBlockScope, left.start, left.loc.start, left);
-    if (decorators.length) {
-      left.decorators = decorators;
-    }
-    return elt;
+    return this.parseMaybeDefault(isBlockScope, left.start, left.loc.start, left);
   }
 
   parseAssignableListItemTypes(param: Pattern): Pattern {

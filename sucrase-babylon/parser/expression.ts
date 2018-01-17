@@ -46,7 +46,6 @@ export default abstract class ExpressionParser extends LValParser {
     allowModifiers?: boolean,
     funcContextId?: number,
   ): void;
-  abstract takeDecorators(node: N.HasDecorators): void;
 
   // Check if property name clashes with already added.
   // Object/class getters and setters are not allowed to clash —
@@ -752,7 +751,6 @@ export default abstract class ExpressionParser extends LValParser {
 
       case tt._class:
         node = this.startNode();
-        this.takeDecorators(node);
         return this.parseClass(node as N.Class, false);
 
       case tt._new:
@@ -1098,7 +1096,6 @@ export default abstract class ExpressionParser extends LValParser {
   ): T {
     // Attach a context ID to the object open and close brace and each object key.
     const contextId = this.nextContextId++;
-    let decorators = [];
     const propHash: {} = Object.create(null);
     let first = true;
     const node = this.startNode();
@@ -1117,30 +1114,11 @@ export default abstract class ExpressionParser extends LValParser {
         if (this.eat(tt.braceR)) break;
       }
 
-      if (this.match(tt.at)) {
-        if (this.hasPlugin("decorators2")) {
-          this.raise(
-            this.state.start,
-            "Stage 2 decorators disallow object literal property decorators",
-          );
-        } else {
-          // we needn't check if decorators (stage 0) plugin is enabled since it's checked by
-          // the call to this.parseDecorator
-          while (this.match(tt.at)) {
-            decorators.push(this.parseDecorator());
-          }
-        }
-      }
-
       let prop = this.startNode();
       let isGenerator = false;
       let isAsync = false;
       let startPos = null;
       let startLoc = null;
-      if (decorators.length) {
-        prop.decorators = decorators;
-        decorators = [];
-      }
 
       if (this.match(tt.ellipsis)) {
         this.expectPlugin("objectRestSpread");
@@ -1233,10 +1211,6 @@ export default abstract class ExpressionParser extends LValParser {
         firstRestLocation,
         "The rest element has to be the last element when destructuring",
       );
-    }
-
-    if (decorators.length) {
-      this.raise(this.state.start, "You have trailing decorators with no property");
     }
 
     return this.finishNode(node as T, isPattern ? "ObjectPattern" : "ObjectExpression");

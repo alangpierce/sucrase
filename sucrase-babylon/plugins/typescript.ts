@@ -881,7 +881,7 @@ export default (superClass: ParserClass): ParserClass =>
       const node: N.TsModuleBlock = this.startNode();
       this.expect(tt.braceL);
       // Inside of a module block is considered "top-level", meaning it can have imports and exports.
-      this.parseBlockOrModuleBlockBody(/* topLevel */ true, /* end */ tt.braceR);
+      this.parseBlockBody(/* topLevel */ true, /* end */ tt.braceR);
       return this.finishNode(node, "TSModuleBlock");
     }
 
@@ -1211,7 +1211,6 @@ export default (superClass: ParserClass): ParserClass =>
 
     parseAssignableListItem(
       allowModifiers: boolean | null,
-      decorators: Array<N.Decorator>,
       isBlockScope: boolean,
     ): N.Pattern | N.TSParameterProperty {
       let accessibility: N.Accessibility | null = null;
@@ -1226,9 +1225,6 @@ export default (superClass: ParserClass): ParserClass =>
       const elt = this.parseMaybeDefault(isBlockScope, left.start, left.loc.start, left);
       if (accessibility || isReadonly) {
         const pp: N.TSParameterProperty = this.startNodeAtNode(elt);
-        if (decorators.length) {
-          pp.decorators = decorators;
-        }
         if (accessibility) pp.accessibility = accessibility;
         if (isReadonly) pp.readonly = isReadonly;
         if (elt.type !== "Identifier" && elt.type !== "AssignmentPattern") {
@@ -1240,9 +1236,6 @@ export default (superClass: ParserClass): ParserClass =>
         pp.parameter = elt as N.AssignmentPattern;
         return this.finishNode(pp, "TSParameterProperty");
       } else {
-        if (decorators.length) {
-          left.decorators = decorators;
-        }
         return elt;
       }
     }

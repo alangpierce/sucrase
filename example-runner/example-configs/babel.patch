@@ -30,7 +30,7 @@ index dcdf818e3..acfa8f4f4 100644
            through.obj(function(file, enc, callback) {
              // Passing 'file.relative' because newer() above uses a relative
 diff --git a/Makefile b/Makefile
-index 9f07ae0e2..b508157bf 100644
+index 9f07ae0e2..64cd4c94e 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -14,7 +14,7 @@ SOURCES = packages codemods
@@ -54,9 +54,11 @@ index 9f07ae0e2..b508157bf 100644
  
  test-ci:
  	make bootstrap
-@@ -131,6 +134,8 @@ publish:
+@@ -129,8 +132,9 @@ publish:
+ 	make clean
+ 
  bootstrap:
- 	make clean-all
+-	make clean-all
  	yarn
 +	yarn link sucrase
 +	yarn link @sucrase/gulp-plugin

@@ -230,20 +230,6 @@ export default abstract class Tokenizer extends LocationParser {
     return curr;
   }
 
-  // Toggle strict mode. Re-reads the next number or string to please
-  // pedantic tests (`"use strict"; 010;` should fail).
-
-  setStrict(strict: boolean): void {
-    this.state.strict = strict;
-    if (!this.match(tt.num) && !this.match(tt.string)) return;
-    this.state.pos = this.state.start;
-    while (this.state.pos < this.state.lineStart) {
-      this.state.lineStart = this.input.lastIndexOf("\n", this.state.lineStart - 2) + 1;
-      --this.state.curLine;
-    }
-    this.nextToken();
-  }
-
   curContext(): TokContext {
     return this.state.context[this.state.context.length - 1];
   }
@@ -255,8 +241,6 @@ export default abstract class Tokenizer extends LocationParser {
     const curContext = this.curContext();
     if (!curContext || !curContext.preserveSpace) this.skipSpace();
 
-    this.state.containsOctal = false;
-    this.state.octalPosition = null;
     this.state.start = this.state.pos;
     this.state.startLoc = this.state.curPosition();
     if (this.state.pos >= this.input.length) {
@@ -982,12 +966,8 @@ export default abstract class Tokenizer extends LocationParser {
       val = parseFloat(str);
     } else if (!octal || str.length === 1) {
       val = parseInt(str, 10);
-    } else if (this.state.strict) {
-      this.raise(start, "Invalid number");
-    } else if (/[89]/.test(str)) {
-      val = parseInt(str, 10);
     } else {
-      val = parseInt(str, 8);
+      this.raise(start, "Invalid number");
     }
     this.finishToken(tt.num, val);
   }
@@ -1143,6 +1123,7 @@ export default abstract class Tokenizer extends LocationParser {
         ++this.state.curLine;
         return "";
       default:
+        // TODO(sucrase): Consider removing all octal parsing.
         if (ch >= charCodes.digit0 && ch <= charCodes.digit7) {
           const codePos = this.state.pos - 1;
           // $FlowFixMe
@@ -1156,13 +1137,8 @@ export default abstract class Tokenizer extends LocationParser {
           if (octal > 0) {
             if (inTemplate) {
               return null;
-            } else if (this.state.strict) {
+            } else {
               this.raise(codePos, "Octal literal in strict mode");
-            } else if (!this.state.containsOctal) {
-              // These properties are only used to throw an error for an octal which occurs
-              // in a directive which occurs prior to a "use strict" directive.
-              this.state.containsOctal = true;
-              this.state.octalPosition = codePos;
             }
           }
           this.state.pos += octalStr.length - 1;

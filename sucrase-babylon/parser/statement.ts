@@ -123,8 +123,6 @@ export default class StatementParser extends ExpressionParser {
 
       case tt._while:
         return this.parseWhileStatement(node as N.WhileStatement);
-      case tt._with:
-        return this.parseWithStatement(node as N.WithStatement);
       case tt.braceL:
         this.parseBlock();
         return node;
@@ -540,16 +538,6 @@ export default class StatementParser extends ExpressionParser {
     return this.finishNode(node, "WhileStatement");
   }
 
-  parseWithStatement(node: N.WithStatement): N.WithStatement {
-    if (this.state.strict) {
-      this.raise(this.state.start, "'with' in strict mode");
-    }
-    this.next();
-    node.object = this.parseParenExpression();
-    node.body = this.parseStatement(false);
-    return this.finishNode(node, "WithStatement");
-  }
-
   parseEmptyStatement(node: N.EmptyStatement): N.EmptyStatement {
     this.next();
     return this.finishNode(node, "EmptyStatement");
@@ -589,15 +577,6 @@ export default class StatementParser extends ExpressionParser {
     });
     node.body = this.parseStatement(true);
 
-    if (
-      node.body.type === "ClassDeclaration" ||
-      (node.body.type === "VariableDeclaration" && node.body.kind !== "var") ||
-      (node.body.type === "FunctionDeclaration" &&
-        (this.state.strict || node.body.generator || node.body.async))
-    ) {
-      this.raise(node.body.start, "Invalid labeled declaration");
-    }
-
     this.state.labels.pop();
     node.label = expr;
     return this.finishNode(node, "LabeledStatement");
@@ -627,60 +606,13 @@ export default class StatementParser extends ExpressionParser {
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope});
   }
 
-  isValidDirective(stmt: N.Statement): boolean {
-    return (
-      stmt.type === "ExpressionStatement" &&
-      stmt.expression.type === "StringLiteral" &&
-      !stmt.expression.extra.parenthesized
-    );
-  }
-
   parseBlockBody(allowDirectives: boolean, topLevel: boolean, end: TokenType): void {
-    const body: Array<N.Statement> = [];
-    const directives: Array<N.Directive> = [];
-    this.parseBlockOrModuleBlockBody(body, allowDirectives ? directives : null, topLevel, end);
+    this.parseBlockOrModuleBlockBody(topLevel, end);
   }
 
-  // Undefined directives means that directives are not allowed.
-  parseBlockOrModuleBlockBody(
-    body: Array<N.Statement>,
-    directives: Array<N.Directive> | null,
-    topLevel: boolean,
-    end: TokenType,
-  ): void {
-    let parsedNonDirective = false;
-    let oldStrict;
-    let octalPosition;
-
+  parseBlockOrModuleBlockBody(topLevel: boolean, end: TokenType): void {
     while (!this.eat(end)) {
-      if (!parsedNonDirective && this.state.containsOctal && !octalPosition) {
-        octalPosition = this.state.octalPosition;
-      }
-
-      const stmt = this.parseStatement(true, topLevel);
-
-      if (directives && !parsedNonDirective && this.isValidDirective(stmt)) {
-        const directive = this.stmtToDirective(stmt);
-        directives.push(directive);
-
-        if (oldStrict === undefined && directive.value.value === "use strict") {
-          oldStrict = this.state.strict;
-          this.setStrict(true);
-
-          if (octalPosition) {
-            this.raise(octalPosition, "Octal literal in strict mode");
-          }
-        }
-
-        continue;
-      }
-
-      parsedNonDirective = true;
-      body.push(stmt);
-    }
-
-    if (oldStrict === false) {
-      this.setStrict(false);
+      this.parseStatement(true, topLevel);
     }
   }
 
@@ -919,9 +851,6 @@ export default class StatementParser extends ExpressionParser {
   }
 
   parseClassBody(node: N.Class, classContextId: number): void {
-    // class bodies are implicitly strict
-    const oldStrict = this.state.strict;
-    this.state.strict = true;
     this.state.classLevel++;
 
     const state = {hadConstructor: false};
@@ -976,7 +905,6 @@ export default class StatementParser extends ExpressionParser {
     node.body = this.finishNode(classBody, "ClassBody");
 
     this.state.classLevel--;
-    this.state.strict = oldStrict;
   }
 
   parseClassMember(

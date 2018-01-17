@@ -1199,8 +1199,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     // interfaces
     parseStatement(declaration: boolean, topLevel?: boolean): N.Statement {
-      // strict mode handling of `interface` since it's a reserved word
-      if (this.state.strict && this.match(tt.name) && this.state.value === "interface") {
+      if (this.match(tt.name) && this.state.value === "interface") {
         const node = this.startNode();
         return this.runInTypeContext(0, () => {
           this.next();

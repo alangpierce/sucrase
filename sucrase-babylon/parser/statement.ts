@@ -1,7 +1,6 @@
 /* eslint max-len: 0 */
 
 import {IdentifierRole} from "../tokenizer";
-import {Label} from "../tokenizer/state";
 import {TokenType, types as tt} from "../tokenizer/types";
 import * as N from "../types";
 import {lineBreak} from "../util/whitespace";
@@ -11,9 +10,6 @@ import ExpressionParser from "./expression";
 
 // tslint:disable-next-line no-any
 const empty: Array<any> = [];
-
-const loopLabel: Label = {kind: "loop"};
-const switchLabel: Label = {kind: "switch"};
 
 export default class StatementParser extends ExpressionParser {
   // ### Statement parsing
@@ -266,19 +262,6 @@ export default class StatementParser extends ExpressionParser {
       this.semicolon();
     }
 
-    // Verify that there is an actual destination to break or
-    // continue to.
-    let i;
-    for (i = 0; i < this.state.labels.length; ++i) {
-      const lab = this.state.labels[i];
-      if (node.label == null || lab.name === node.label.name) {
-        if (lab.kind != null && (isBreak || lab.kind === "loop")) break;
-        if (node.label && isBreak) break;
-      }
-    }
-    if (i === this.state.labels.length) {
-      this.raise(node.start, `Unsyntactic ${keyword}`);
-    }
     return this.finishNode(node, isBreak ? "BreakStatement" : "ContinueStatement");
   }
 
@@ -290,9 +273,7 @@ export default class StatementParser extends ExpressionParser {
 
   parseDoStatement(node: N.DoWhileStatement): N.DoWhileStatement {
     this.next();
-    this.state.labels.push(loopLabel);
     node.body = this.parseStatement(false);
-    this.state.labels.pop();
     this.expect(tt._while);
     node.test = this.parseParenExpression();
     this.eat(tt.semi);
@@ -316,7 +297,6 @@ export default class StatementParser extends ExpressionParser {
   // is a regular `for` loop.
   parseAmbiguousForStatement(node: N.Node): N.ForLike {
     this.next();
-    this.state.labels.push(loopLabel);
 
     let forAwait = false;
     if (this.state.inAsync && this.isContextual("await")) {
@@ -408,7 +388,6 @@ export default class StatementParser extends ExpressionParser {
     node.cases = cases;
     const startTokenIndex = this.state.tokens.length;
     this.expect(tt.braceL);
-    this.state.labels.push(switchLabel);
 
     // Statements under must be grouped (by label) in SwitchCase
     // nodes. `cur` is used to keep the node that we are currently
@@ -443,7 +422,6 @@ export default class StatementParser extends ExpressionParser {
     this.next(); // Closing brace
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: false});
-    this.state.labels.pop();
     return this.finishNode(node, "SwitchStatement");
   }
 
@@ -511,9 +489,7 @@ export default class StatementParser extends ExpressionParser {
   parseWhileStatement(node: N.WhileStatement): N.WhileStatement {
     this.next();
     node.test = this.parseParenExpression();
-    this.state.labels.push(loopLabel);
     node.body = this.parseStatement(false);
-    this.state.labels.pop();
     return this.finishNode(node, "WhileStatement");
   }
 
@@ -527,37 +503,7 @@ export default class StatementParser extends ExpressionParser {
     maybeName: string,
     expr: N.Identifier,
   ): N.LabeledStatement {
-    for (const label of this.state.labels) {
-      if (label.name === maybeName) {
-        this.raise(expr.start, `Label '${maybeName}' is already declared`);
-      }
-    }
-
-    let kind: "loop" | "switch" | null;
-    if (this.state.type.isLoop) {
-      kind = "loop";
-    } else {
-      kind = this.match(tt._switch) ? "switch" : null;
-    }
-    for (let i = this.state.labels.length - 1; i >= 0; i--) {
-      const label = this.state.labels[i];
-      if (label.statementStart === node.start) {
-        label.statementStart = this.state.start;
-        label.kind = kind;
-      } else {
-        break;
-      }
-    }
-
-    this.state.labels.push({
-      name: maybeName,
-      kind,
-      statementStart: this.state.start,
-    });
     node.body = this.parseStatement(true);
-
-    this.state.labels.pop();
-    node.label = expr;
     return this.finishNode(node, "LabeledStatement");
   }
 
@@ -606,7 +552,6 @@ export default class StatementParser extends ExpressionParser {
     node.update = this.match(tt.parenR) ? null : this.parseExpression();
     this.expect(tt.parenR);
     node.body = this.parseStatement(false);
-    this.state.labels.pop();
     return this.finishNode(node, "ForStatement");
   }
 
@@ -627,7 +572,6 @@ export default class StatementParser extends ExpressionParser {
     node.right = this.parseExpression();
     this.expect(tt.parenR);
     node.body = this.parseStatement(false);
-    this.state.labels.pop();
     return this.finishNode(node, type);
   }
 
@@ -825,8 +769,6 @@ export default class StatementParser extends ExpressionParser {
   }
 
   parseClassBody(node: N.Class, classContextId: number): void {
-    this.state.classLevel++;
-
     const state = {hadConstructor: false};
     const classBody: N.ClassBody = this.startNode();
 
@@ -862,8 +804,6 @@ export default class StatementParser extends ExpressionParser {
     }
 
     node.body = this.finishNode(classBody, "ClassBody");
-
-    this.state.classLevel--;
   }
 
   parseClassMember(

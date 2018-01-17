@@ -174,12 +174,8 @@ export default abstract class LValParser extends NodeUtils {
     return this.finishNode(node as RestElement, "RestElement");
   }
 
-  shouldAllowYieldIdentifier(): boolean {
-    return this.match(tt._yield) && !this.state.strict && !this.state.inGenerator;
-  }
-
   parseBindingIdentifier(): Identifier {
-    return this.parseIdentifier(this.shouldAllowYieldIdentifier());
+    return this.parseIdentifier();
   }
 
   // Parses lvalue (assignable) atom.

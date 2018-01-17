@@ -333,14 +333,6 @@ export default abstract class ExpressionParser extends LValParser {
 
       if (update) {
         this.checkLVal(node.argument, null, null, "prefix operation");
-      } else if (this.state.strict && node.operator === "delete") {
-        const arg = node.argument;
-
-        if (arg.type === "Identifier") {
-          this.raise(node.start, "Deleting local variable in strict mode");
-        } else if (arg.type === "MemberExpression" && arg.property.type === "PrivateName") {
-          this.raise(node.start, "Deleting a private field is not allowed");
-        }
       }
 
       return this.finishNode(node, update ? "UpdateExpression" : "UnaryExpression");
@@ -662,8 +654,7 @@ export default abstract class ExpressionParser extends LValParser {
         const startTokenIndex = this.state.tokens.length;
         node = this.startNode();
         const allowAwait = this.state.value === "await" && this.state.inAsync;
-        const allowYield = this.shouldAllowYieldIdentifier();
-        const id = this.parseIdentifier(allowAwait || allowYield);
+        const id = this.parseIdentifier(allowAwait);
 
         if (id.name === "await") {
           if (this.state.inAsync || this.inModule) {

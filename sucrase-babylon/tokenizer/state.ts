@@ -21,8 +21,6 @@ export type Scope = {
 
 export default class State {
   init(options: Options, input: string): void {
-    this.strict = options.strictMode === false ? false : options.sourceType === "module";
-
     this.input = input;
 
     this.potentialArrowAt = -1;
@@ -76,12 +74,7 @@ export default class State {
     this.exprAllowed = true;
 
     this.containsEsc = false;
-    this.containsOctal = false;
-    this.octalPosition = null;
   }
-
-  // TODO
-  strict: boolean;
 
   // TODO
   input: string;
@@ -177,10 +170,6 @@ export default class State {
   // contained any escape sequences. This is needed because words with
   // escape sequences must not be interpreted as keywords.
   containsEsc: boolean;
-
-  // TODO
-  containsOctal: boolean;
-  octalPosition: number | null;
 
   curPosition(): Position {
     return new Position(this.curLine, this.pos - this.lineStart);

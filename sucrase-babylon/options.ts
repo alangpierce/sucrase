@@ -9,7 +9,6 @@ export type Options = {
   allowImportExportEverywhere: boolean;
   allowSuperOutsideMethod: boolean;
   plugins: ReadonlyArray<string>;
-  strictMode: boolean | null;
   ranges: boolean;
   tokens: boolean;
 };
@@ -34,8 +33,6 @@ export const defaultOptions: Options = {
   allowSuperOutsideMethod: false,
   // An array of plugins to enable
   plugins: [],
-  // TODO
-  strictMode: null,
   // Nodes have their start and end characters offsets recorded in
   // `start` and `end` properties (directly on the node, rather than
   // the `loc` object, which holds line/column data. To also add a

@@ -881,12 +881,7 @@ export default (superClass: ParserClass): ParserClass =>
       const node: N.TsModuleBlock = this.startNode();
       this.expect(tt.braceL);
       // Inside of a module block is considered "top-level", meaning it can have imports and exports.
-      this.parseBlockOrModuleBlockBody(
-        (node.body = []),
-        /* directives */ null,
-        /* topLevel */ true,
-        /* end */ tt.braceR,
-      );
+      this.parseBlockOrModuleBlockBody(/* topLevel */ true, /* end */ tt.braceR);
       return this.finishNode(node, "TSModuleBlock");
     }
 

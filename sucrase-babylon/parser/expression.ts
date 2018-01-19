@@ -33,18 +33,14 @@ export default abstract class ExpressionParser extends LValParser {
   ): void;
   abstract parseClass(node: N.Class, isStatement: boolean, optionalId?: boolean): N.Class;
   abstract parseDecorators(allowExport?: boolean): void;
-  abstract parseFunction<T extends N.NormalFunction>(
-    node: T,
+  abstract parseFunction(
+    functionStart: number,
     isStatement: boolean,
     allowExpressionBody?: boolean,
     isAsync?: boolean,
     optionalId?: boolean,
-  ): T;
-  abstract parseFunctionParams(
-    node: N.Function,
-    allowModifiers?: boolean,
-    funcContextId?: number,
   ): void;
+  abstract parseFunctionParams(allowModifiers?: boolean, funcContextId?: number): void;
 
   // ### Expression parsing
 
@@ -444,7 +440,7 @@ export default abstract class ExpressionParser extends LValParser {
         this.state = initialStateForAsyncArrow!;
         state.stop = true;
 
-        this.parseFunctionParams(this.startNode());
+        this.parseFunctionParams();
         return this.parseAsyncArrowFromCallExpression(
           this.startNodeAt(startPos, startLoc),
           node,
@@ -574,7 +570,8 @@ export default abstract class ExpressionParser extends LValParser {
 
       case tt._import:
         if (this.lookahead().type === tt.dot) {
-          return this.parseImportMetaProperty();
+          this.parseImportMetaProperty();
+          return this.startNode();
         }
 
         this.expectPlugin("dynamicImport");
@@ -606,7 +603,8 @@ export default abstract class ExpressionParser extends LValParser {
           }
         } else if (id.name === "async" && this.match(tt._function) && !this.canInsertSemicolon()) {
           this.next();
-          return this.parseFunction(node as N.NormalFunction, false, false, true);
+          this.parseFunction(node.start, false, false, true);
+          return node;
         } else if (canBeArrow && id.name === "async" && this.match(tt.name)) {
           const params = [this.parseIdentifier()];
           this.expect(tt.arrow);
@@ -680,7 +678,8 @@ export default abstract class ExpressionParser extends LValParser {
         return this.parseObj(false, false, refShorthandDefaultPos);
 
       case tt._function:
-        return this.parseFunctionExpression();
+        this.parseFunctionExpression();
+        return this.startNode();
 
       case tt.at:
         this.parseDecorators();
@@ -690,7 +689,8 @@ export default abstract class ExpressionParser extends LValParser {
         return this.parseClass(node as N.Class, false);
 
       case tt._new:
-        return this.parseNew();
+        this.parseNew();
+        return this.startNode();
 
       case tt.backQuote:
         return this.parseTemplate(false);
@@ -734,22 +734,16 @@ export default abstract class ExpressionParser extends LValParser {
     }
   }
 
-  parseFunctionExpression(): N.FunctionExpression | N.MetaProperty {
-    const node = this.startNode();
+  parseFunctionExpression(): void {
+    const functionStart = this.state.start;
     const meta = this.parseIdentifier(true);
     if (this.state.inGenerator && this.eat(tt.dot)) {
-      return this.parseMetaProperty(node as N.MetaProperty, meta, "sent");
+      this.parseMetaProperty(meta, "sent");
     }
-    return this.parseFunction(node as N.FunctionExpression, false);
+    this.parseFunction(functionStart, false);
   }
 
-  parseMetaProperty(
-    node: N.MetaProperty,
-    meta: N.Identifier,
-    propertyName: string,
-  ): N.MetaProperty {
-    node.meta = meta;
-
+  parseMetaProperty(meta: N.Identifier, propertyName: string): void {
     if (meta.name === "function" && propertyName === "sent") {
       if (this.isContextual(propertyName)) {
         this.expectPlugin("functionSent");
@@ -759,20 +753,10 @@ export default abstract class ExpressionParser extends LValParser {
       }
     }
 
-    node.property = this.parseIdentifier(true);
-
-    if (node.property.name !== propertyName) {
-      this.raise(
-        node.property.start,
-        `The only valid meta property for ${meta.name} is ${meta.name}.${propertyName}`,
-      );
-    }
-
-    return this.finishNode(node, "MetaProperty");
+    this.parseIdentifier(true);
   }
 
-  parseImportMetaProperty(): N.MetaProperty {
-    const node = this.startNode();
+  parseImportMetaProperty(): void {
     const id = this.parseIdentifier(true);
     this.expect(tt.dot);
 
@@ -787,7 +771,7 @@ export default abstract class ExpressionParser extends LValParser {
     if (!this.inModule) {
       this.raise(id.start, `import.meta may appear only with 'sourceType: "module"'`);
     }
-    return this.parseMetaProperty(node as N.MetaProperty, id, "meta");
+    this.parseMetaProperty(id, "meta");
   }
 
   parseLiteral<T extends N.Literal>(
@@ -887,7 +871,7 @@ export default abstract class ExpressionParser extends LValParser {
         // get proper token annotations.
         this.state = initialState;
         // Don't specify a context ID because arrow function don't need a context ID.
-        this.parseFunctionParams(this.startNode());
+        this.parseFunctionParams();
         this.parseArrow(this.startNode());
         this.parseArrowExpression(parsedArrowNode, startTokenIndex, exprList);
         return parsedArrowNode;
@@ -945,12 +929,11 @@ export default abstract class ExpressionParser extends LValParser {
   // argument to parseSubscripts to prevent it from consuming the
   // argument list.
 
-  parseNew(): N.NewExpression | N.MetaProperty {
-    const node = this.startNode();
+  parseNew(): void {
     const meta = this.parseIdentifier(true);
 
     if (this.eat(tt.dot)) {
-      const metaProp = this.parseMetaProperty(node as N.MetaProperty, meta, "target");
+      this.parseMetaProperty(meta, "target");
 
       if (!this.state.inFunction && !this.state.inClassProperty) {
         let error = "new.target can only be used in functions";
@@ -959,26 +942,18 @@ export default abstract class ExpressionParser extends LValParser {
           error += " or class properties";
         }
 
-        this.raise(metaProp.start, error);
+        this.raise(this.state.pos, error);
       }
-
-      return metaProp;
     }
 
-    node.callee = this.parseNoCallExpr();
-    if (this.eat(tt.questionDot)) node.optional = true;
-    this.parseNewArguments(node as N.NewExpression);
-    return this.finishNode(node as N.NewExpression, "NewExpression");
+    this.parseNoCallExpr();
+    this.eat(tt.questionDot);
+    this.parseNewArguments();
   }
 
-  parseNewArguments(node: N.NewExpression): void {
+  parseNewArguments(): void {
     if (this.eat(tt.parenL)) {
-      const args = this.parseExprList(tt.parenR);
-      this.toReferencedList(args);
-      // $FlowFixMe (parseExprList should be all non-null in this case)
-      node.arguments = args as Array<N.Node>;
-    } else {
-      node.arguments = [];
+      this.parseExprList(tt.parenR);
     }
   }
 
@@ -1157,20 +1132,6 @@ export default abstract class ExpressionParser extends LValParser {
     );
   }
 
-  // get methods aren't allowed to have any parameters
-  // set methods must have exactly 1 parameter
-  checkGetterSetterParamCount(method: N.ObjectMethod | N.ClassMethod): void {
-    const paramCount = method.kind === "get" ? 0 : 1;
-    if (method.params.length !== paramCount) {
-      const start = method.start;
-      if (method.kind === "get") {
-        this.raise(start, "getter should have no params");
-      } else {
-        this.raise(start, "setter should have exactly one param");
-      }
-    }
-  }
-
   parseObjectMethod(
     prop: N.ObjectMethod,
     isGenerator: boolean,
@@ -1202,7 +1163,6 @@ export default abstract class ExpressionParser extends LValParser {
         /* isConstructor */ false,
         "ObjectMethod",
       );
-      this.checkGetterSetterParamCount(prop);
       return prop;
     }
 
@@ -1321,14 +1281,6 @@ export default abstract class ExpressionParser extends LValParser {
     return prop.key;
   }
 
-  // Initialize empty function node.
-
-  initFunction(node: N.BodilessFunctionOrMethodBase, isAsync: boolean): void {
-    node.id = null;
-    node.generator = false;
-    node.async = isAsync;
-  }
-
   // Parse object or class method.
 
   parseMethod<T extends N.MethodLike>(
@@ -1347,12 +1299,18 @@ export default abstract class ExpressionParser extends LValParser {
 
     const funcContextId = this.nextContextId++;
 
+    const functionStart = node.start;
     const startTokenIndex = this.state.tokens.length;
-    this.initFunction(node, isAsync);
-    node.generator = !!isGenerator;
     const allowModifiers = isConstructor; // For TypeScript parameter properties
-    this.parseFunctionParams(node as N.Function, allowModifiers, funcContextId);
-    this.parseFunctionBodyAndFinish(node, type, null /* allowExpressionBody */, funcContextId);
+    this.parseFunctionParams(allowModifiers, funcContextId);
+    this.parseFunctionBodyAndFinish(
+      functionStart,
+      isAsync,
+      isGenerator,
+      type,
+      null /* allowExpressionBody */,
+      funcContextId,
+    );
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
 
@@ -1374,11 +1332,11 @@ export default abstract class ExpressionParser extends LValParser {
   ): N.ArrowFunctionExpression {
     const oldInFunc = this.state.inFunction;
     this.state.inFunction = true;
-    this.initFunction(node, isAsync);
 
+    const functionStart = node.start;
     const oldInGenerator = this.state.inGenerator;
     this.state.inGenerator = false;
-    this.parseFunctionBody(node, true);
+    this.parseFunctionBody(functionStart, isAsync, false /* isGenerator */, true);
     this.state.inGenerator = oldInGenerator;
     this.state.inFunction = oldInFunc;
 
@@ -1389,19 +1347,21 @@ export default abstract class ExpressionParser extends LValParser {
   }
 
   parseFunctionBodyAndFinish(
-    node: N.BodilessFunctionOrMethodBase,
+    functionStart: number,
+    isAsync: boolean,
+    isGenerator: boolean,
     type: string,
     allowExpressionBody: boolean | null = null,
     funcContextId?: number,
   ): void {
-    // $FlowIgnore (node is not bodiless if we get here)
-    this.parseFunctionBody(node as N.Function, allowExpressionBody, funcContextId);
-    this.finishNode(node, type);
+    this.parseFunctionBody(functionStart, isAsync, isGenerator, allowExpressionBody, funcContextId);
   }
 
   // Parse function body and check parameters.
   parseFunctionBody(
-    node: N.Function,
+    functionStart: number,
+    isAsync: boolean,
+    isGenerator: boolean,
     allowExpression: boolean | null,
     funcContextId?: number,
   ): void {
@@ -1410,17 +1370,16 @@ export default abstract class ExpressionParser extends LValParser {
     const oldInParameters = this.state.inParameters;
     const oldInAsync = this.state.inAsync;
     this.state.inParameters = false;
-    this.state.inAsync = node.async;
+    this.state.inAsync = isAsync;
 
     if (isExpression) {
-      // @ts-ignore
-      node.body = this.parseMaybeAssign();
+      this.parseMaybeAssign();
     } else {
       // Start a new scope with regard to labels and the `inGenerator`
       // flag (restore them to their old value afterwards).
       const oldInGen = this.state.inGenerator;
       const oldInFunc = this.state.inFunction;
-      this.state.inGenerator = node.generator;
+      this.state.inGenerator = isGenerator;
       this.state.inFunction = true;
       this.parseBlock(true /* allowDirectives */, true /* isFunctionScope */, funcContextId);
       this.state.inFunction = oldInFunc;

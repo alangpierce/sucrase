@@ -14,11 +14,6 @@ const empty: Array<any> = [];
 export default class StatementParser extends ExpressionParser {
   // ### Statement parsing
 
-  // Parse a program. Initializes the parser, reads any number of
-  // statements, and wraps them in a Program node.  Optionally takes a
-  // `program` argument.  If present, the statements will be appended
-  // to its body instead of creating a new node.
-
   parseTopLevel(): N.File {
     this.parseBlockBody(true, tt.eof);
 
@@ -73,7 +68,7 @@ export default class StatementParser extends ExpressionParser {
       case tt._function:
         if (this.lookahead().type === tt.dot) break;
         if (!declaration) this.unexpected();
-        this.parseFunctionStatement(node as N.FunctionDeclaration);
+        this.parseFunctionStatement();
         return;
 
       case tt._class:
@@ -138,12 +133,13 @@ export default class StatementParser extends ExpressionParser {
       }
       case tt.name:
         if (this.state.value === "async") {
+          const functionStart = this.state.start;
           // peek ahead and see if next token is a function
           const state = this.state.clone();
           this.next();
           if (this.match(tt._function) && !this.canInsertSemicolon()) {
             this.expect(tt._function);
-            this.parseFunction(node as N.NormalFunction, true, false, true);
+            this.parseFunction(functionStart, true, false, true);
             return;
           } else {
             this.state = state;
@@ -313,9 +309,10 @@ export default class StatementParser extends ExpressionParser {
     this.parseFor();
   }
 
-  parseFunctionStatement(node: N.FunctionDeclaration): N.FunctionDeclaration {
+  parseFunctionStatement(): void {
+    const functionStart = this.state.start;
     this.next();
-    return this.parseFunction(node, true);
+    this.parseFunction(functionStart, true);
   }
 
   parseIfStatement(node: N.IfStatement): N.IfStatement {
@@ -577,26 +574,25 @@ export default class StatementParser extends ExpressionParser {
   // Parse a function declaration or literal (depending on the
   // `isStatement` parameter).
 
-  parseFunction<T extends N.NormalFunction>(
-    node: T,
+  parseFunction(
+    functionStart: number,
     isStatement: boolean,
     allowExpressionBody?: boolean,
     isAsync: boolean = false,
     optionalId?: boolean,
-  ): T {
+  ): void {
     const oldInFunc = this.state.inFunction;
     const oldInMethod = this.state.inMethod;
     const oldInGenerator = this.state.inGenerator;
     this.state.inFunction = true;
     this.state.inMethod = false;
 
-    this.initFunction(node, isAsync);
-
+    let isGenerator = false;
     if (this.match(tt.star)) {
-      if (node.async) {
+      if (isAsync) {
         this.expectPlugin("asyncGenerators");
       }
-      node.generator = true;
+      isGenerator = true;
       this.next();
     }
 
@@ -614,23 +610,25 @@ export default class StatementParser extends ExpressionParser {
     // valid because yield is parsed as if it was outside the generator.
     // Therefore, this.state.inGenerator is set before or after parsing the
     // function id according to the "isStatement" parameter.
-    if (!isStatement) this.state.inGenerator = node.generator;
+    if (!isStatement) this.state.inGenerator = isGenerator;
     if (this.match(tt.name) || this.match(tt._yield)) {
       // Expression-style functions should limit their name's scope to the function body, so we make
       // a new function scope to enforce that.
       if (!isStatement) {
         nameScopeStartTokenIndex = this.state.tokens.length;
       }
-      node.id = this.parseBindingIdentifier();
+      this.parseBindingIdentifier();
       this.state.tokens[this.state.tokens.length - 1].identifierRole =
         IdentifierRole.FunctionScopedDeclaration;
     }
-    if (isStatement) this.state.inGenerator = node.generator;
+    if (isStatement) this.state.inGenerator = isGenerator;
 
     const startTokenIndex = this.state.tokens.length;
-    this.parseFunctionParams(node);
+    this.parseFunctionParams();
     this.parseFunctionBodyAndFinish(
-      node,
+      functionStart,
+      isAsync,
+      isGenerator,
       isStatement ? "FunctionDeclaration" : "FunctionExpression",
       allowExpressionBody,
     );
@@ -649,17 +647,15 @@ export default class StatementParser extends ExpressionParser {
     this.state.inFunction = oldInFunc;
     this.state.inMethod = oldInMethod;
     this.state.inGenerator = oldInGenerator;
-
-    return node;
   }
 
-  parseFunctionParams(node: N.Function, allowModifiers?: boolean, funcContextId?: number): void {
+  parseFunctionParams(allowModifiers?: boolean, funcContextId?: number): void {
     const oldInParameters = this.state.inParameters;
     this.state.inParameters = true;
 
     this.expect(tt.parenL);
     this.state.tokens[this.state.tokens.length - 1].contextId = funcContextId;
-    node.params = this.parseBindingList(
+    this.parseBindingList(
       tt.parenR,
       false /* isBlockScope */,
       false /* allowEmpty */,
@@ -928,8 +924,6 @@ export default class StatementParser extends ExpressionParser {
         }
         this.pushClassMethod(classBody, publicMethod, false, false, /* isConstructor */ false);
       }
-
-      this.checkGetterSetterParamCount(publicMethod);
     } else if (this.isLineTerminator()) {
       // an uninitialized class property (due to ASI, since we don't otherwise recognize the next token)
       if (isPrivate) {
@@ -1116,13 +1110,16 @@ export default class StatementParser extends ExpressionParser {
 
   parseExportDefaultExpression(): N.Expression | N.Declaration {
     const expr = this.startNode();
+    const functionStart = this.state.start;
     if (this.eat(tt._function)) {
-      return this.parseFunction(expr as N.NormalFunction, true, false, false, true);
+      this.parseFunction(functionStart, true, false, false, true);
+      return expr;
     } else if (this.isContextual("async") && this.lookahead().type === tt._function) {
       // async function declaration
       this.eatContextual("async");
       this.eat(tt._function);
-      return this.parseFunction(expr as N.NormalFunction, true, false, true, true);
+      this.parseFunction(functionStart, true, false, true, true);
+      return expr;
     } else if (this.match(tt._class)) {
       return this.parseClass(expr as N.Class, true, true);
     } else {

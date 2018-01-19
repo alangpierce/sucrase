@@ -11,19 +11,20 @@ branches:
     - "master"
 matrix:
   include:
-    - node_js: '8'
-      script:
-        - yarn test
-    - script:
-        - yarn test
-        - yarn build
-        - yarn benchmark
-    - script:
-        - yarn build
-        - yarn run-examples decaffeinate decaffeinate-parser coffee-lex tslint apollo-client
+    # Put the slowest builds first, since they are more likely to start first
     - script:
         - yarn build
         - yarn run-examples babel
+    - script:
+        - yarn build
+        - yarn run-examples tslint apollo-client
+    - script:
+        - yarn test
+        - yarn build
+        - yarn run-examples decaffeinate decaffeinate-parser coffee-lex
+    - node_js: '8'
+      script:
+        - yarn test
   # Exclude the default build; we only want to run explicitly-included builds.
   exclude:
     node_js: '9'

@@ -1,14 +1,29 @@
 language: node_js
-cache:
-  yarn: true
-  directories:
-    - node_modules
-    - example-runner/example-repos
 node_js:
   - '9'
-  - '8'
-script:
-  - yarn test
-  - yarn build
-  - yarn benchmark
-  - yarn run-examples
+# Theoretically we could cache node_modules and example-repos, but those end up
+# being very slow to download and are largely duplicated with yarn cache.
+cache:
+  yarn: true
+# Don't do feature branch builds; we only need one build per PR.
+branches:
+  only:
+    - "master"
+matrix:
+  include:
+    - node_js: '8'
+      script:
+        - yarn test
+    - script:
+        - yarn test
+        - yarn build
+        - yarn benchmark
+    - script:
+        - yarn build
+        - yarn run-examples decaffeinate decaffeinate-parser coffee-lex tslint apollo-client
+    - script:
+        - yarn build
+        - yarn run-examples babel
+  # Exclude the default build; we only want to run explicitly-included builds.
+  exclude:
+    node_js: '9'

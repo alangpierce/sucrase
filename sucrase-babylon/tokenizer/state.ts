@@ -6,13 +6,6 @@ import {TokContext, types as ct} from "./context";
 import {Token} from "./index";
 import {TokenType, types as tt} from "./types";
 
-export type Label = {
-  // eslint-disable-next-line no-restricted-globals
-  name?: string;
-  kind: "loop" | "switch" | null;
-  statementStart?: number;
-};
-
 export type Scope = {
   isFunctionScope: boolean;
   startTokenIndex: number;
@@ -38,10 +31,6 @@ export default class State {
     this.inType = false;
     this.inClassProperty = false;
     this.noAnonFunctionType = false;
-
-    this.classLevel = 0;
-
-    this.labels = [];
 
     this.yieldInPossibleArrowParameters = null;
 
@@ -105,12 +94,6 @@ export default class State {
   noAnonFunctionType: boolean;
   inPropertyName: boolean;
   inClassProperty: boolean;
-
-  // Check whether we are in a (nested) class or not.
-  classLevel: number;
-
-  // Labels in scope.
-  labels: Array<Label>;
 
   // The first yield expression inside parenthesized expressions and arrow
   // function parameters. It is used to disallow yield in arrow function

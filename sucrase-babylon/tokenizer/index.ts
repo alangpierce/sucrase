@@ -589,16 +589,9 @@ export default abstract class Tokenizer extends LocationParser {
   getTokenFromCode(code: number): void {
     switch (code) {
       case charCodes.numberSign:
-        if (
-          (this.hasPlugin("classPrivateProperties") || this.hasPlugin("classPrivateMethods")) &&
-          this.state.classLevel > 0
-        ) {
-          ++this.state.pos;
-          this.finishToken(tt.hash);
-          return;
-        } else {
-          this.raise(this.state.pos, `Unexpected character '${codePointToString(code)}'`);
-        }
+        ++this.state.pos;
+        this.finishToken(tt.hash);
+        return;
 
       // The interpretation of a dot depends on whether it is followed
       // by a digit or another two dots.

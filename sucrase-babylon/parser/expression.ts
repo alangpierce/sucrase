@@ -695,12 +695,9 @@ export default abstract class ExpressionParser extends LValParser {
         const innerNode = this.startNode();
         this.next();
         const oldInFunction = this.state.inFunction;
-        const oldLabels = this.state.labels;
-        this.state.labels = [];
         this.state.inFunction = false;
         this.parseBlock(false);
         this.state.inFunction = oldInFunction;
-        this.state.labels = oldLabels;
         return this.finishNode(innerNode, "DoExpression");
       }
 
@@ -1510,14 +1507,11 @@ export default abstract class ExpressionParser extends LValParser {
       // flag (restore them to their old value afterwards).
       const oldInGen = this.state.inGenerator;
       const oldInFunc = this.state.inFunction;
-      const oldLabels = this.state.labels;
       this.state.inGenerator = node.generator;
       this.state.inFunction = true;
-      this.state.labels = [];
       this.parseBlock(true /* allowDirectives */, true /* isFunctionScope */, funcContextId);
       this.state.inFunction = oldInFunc;
       this.state.inGenerator = oldInGen;
-      this.state.labels = oldLabels;
     }
     this.state.inAsync = oldInAsync;
 

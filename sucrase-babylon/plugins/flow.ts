@@ -1198,15 +1198,15 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // interfaces
-    parseStatement(declaration: boolean, topLevel?: boolean): N.Statement {
+    parseStatement(declaration: boolean, topLevel?: boolean): void {
       if (this.match(tt.name) && this.state.value === "interface") {
         const node = this.startNode();
-        return this.runInTypeContext(0, () => {
+        this.runInTypeContext(0, () => {
           this.next();
-          return this.flowParseInterface(node);
+          this.flowParseInterface(node);
         });
       } else {
-        return super.parseStatement(declaration, topLevel);
+        super.parseStatement(declaration, topLevel);
       }
     }
 
@@ -1487,9 +1487,9 @@ export default (superClass: ParserClass): ParserClass =>
       return node;
     }
 
-    parseExportDeclaration(node: N.ExportNamedDeclaration): N.Declaration | null {
+    parseExportDeclaration(node: N.ExportNamedDeclaration): void {
       if (this.isContextual("type")) {
-        return this.runInTypeContext(1, () => {
+        this.runInTypeContext(1, () => {
           node.exportKind = "type";
 
           const declarationNode = this.startNode();
@@ -1499,30 +1499,29 @@ export default (superClass: ParserClass): ParserClass =>
             // export type { foo, bar };
             node.specifiers = this.parseExportSpecifiers();
             this.parseExportFrom(node);
-            return null;
           } else {
             // export type Foo = Bar;
-            return this.flowParseTypeAlias(declarationNode) as N.Declaration;
+            this.flowParseTypeAlias(declarationNode);
           }
         });
       } else if (this.isContextual("opaque")) {
-        return this.runInTypeContext(1, () => {
+        this.runInTypeContext(1, () => {
           node.exportKind = "type";
 
           const declarationNode = this.startNode();
           this.next();
           // export opaque type Foo = Bar;
-          return this.flowParseOpaqueType(declarationNode, false) as N.Declaration;
+          this.flowParseOpaqueType(declarationNode, false);
         });
       } else if (this.isContextual("interface")) {
-        return this.runInTypeContext(1, () => {
+        this.runInTypeContext(1, () => {
           node.exportKind = "type";
           const declarationNode = this.startNode();
           this.next();
-          return this.flowParseInterface(declarationNode) as N.Declaration;
+          this.flowParseInterface(declarationNode);
         });
       } else {
-        return super.parseExportDeclaration(node);
+        super.parseExportDeclaration(node);
       }
     }
 

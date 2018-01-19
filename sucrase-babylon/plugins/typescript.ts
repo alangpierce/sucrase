@@ -1417,7 +1417,7 @@ export default (superClass: ParserClass): ParserClass =>
       return super.parseExportDefaultExpression();
     }
 
-    parseStatementContent(declaration: boolean, topLevel: boolean = false): N.Statement {
+    parseStatementContent(declaration: boolean, topLevel: boolean = false): void {
       if (this.state.type === tt._const) {
         const ahead = this.lookahead();
         if (ahead.type === tt.name && ahead.value === "enum") {
@@ -1425,10 +1425,11 @@ export default (superClass: ParserClass): ParserClass =>
           this.expect(tt._const);
           this.expectContextual("enum");
           this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
-          return this.tsParseEnumDeclaration(node, /* isConst */ true);
+          this.tsParseEnumDeclaration(node, /* isConst */ true);
+          return;
         }
       }
-      return super.parseStatementContent(declaration, topLevel);
+      super.parseStatementContent(declaration, topLevel);
     }
 
     parseAccessModifier(): N.Accessibility | null {
@@ -1602,16 +1603,16 @@ export default (superClass: ParserClass): ParserClass =>
           declaration = this.tsTryParseExportDeclaration();
         }
       }
+      // TODO(sucrase): We still compute the declaration for this null check, but ideally we'd be
+      // able to get rid of it.
       if (!declaration) {
         if (isDeclare) {
-          declaration = this.runInTypeContext(2, () => super.parseExportDeclaration(node));
+          this.runInTypeContext(2, () => {
+            super.parseExportDeclaration(node);
+          });
         } else {
-          declaration = super.parseExportDeclaration(node);
+          super.parseExportDeclaration(node);
         }
-      }
-
-      if (declaration && isDeclare) {
-        declaration.declare = true;
       }
 
       return declaration;

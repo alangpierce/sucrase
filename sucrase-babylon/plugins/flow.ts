@@ -1340,21 +1340,6 @@ export default (superClass: ParserClass): ParserClass =>
       }
     }
 
-    // this is a list of nodes, from something like a call expression, we need to filter the
-    // type casts that we've found that are illegal in this context
-    toReferencedList(
-      exprList: ReadonlyArray<N.Expression | null>,
-    ): ReadonlyArray<N.Expression | null> {
-      for (let i = 0; i < exprList.length; i++) {
-        const expr = exprList[i];
-        if (expr && expr._exprListItem && expr.type === "TypeCastExpression") {
-          this.raise(expr.start, "Unexpected type cast");
-        }
-      }
-
-      return exprList;
-    }
-
     // parse an item inside a expression list eg. `(NODE, NODE)` where NODE represents
     // the position where this function is called
     parseExprListItem(
@@ -1398,7 +1383,6 @@ export default (superClass: ParserClass): ParserClass =>
 
     // parse type parameters for class methods
     pushClassMethod(
-      classBody: N.ClassBody,
       method: N.ClassMethod,
       isGenerator: boolean,
       isAsync: boolean,
@@ -1412,11 +1396,10 @@ export default (superClass: ParserClass): ParserClass =>
         method.typeParameters = this.flowParseTypeParameterDeclaration();
       }
 
-      super.pushClassMethod(classBody, method, isGenerator, isAsync, isConstructor);
+      super.pushClassMethod(method, isGenerator, isAsync, isConstructor);
     }
 
     pushClassPrivateMethod(
-      classBody: N.ClassBody,
       method: N.ClassPrivateMethod,
       isGenerator: boolean,
       isAsync: boolean,
@@ -1429,7 +1412,7 @@ export default (superClass: ParserClass): ParserClass =>
         method.typeParameters = this.flowParseTypeParameterDeclaration();
       }
 
-      super.pushClassPrivateMethod(classBody, method, isGenerator, isAsync);
+      super.pushClassPrivateMethod(method, isGenerator, isAsync);
     }
 
     // parse a the super class type parameters and implements

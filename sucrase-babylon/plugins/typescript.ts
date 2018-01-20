@@ -1429,7 +1429,6 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     parseClassMember(
-      classBody: N.ClassBody,
       member: N.Node,
       state: {hadConstructor: boolean},
       classContextId: number,
@@ -1437,11 +1436,10 @@ export default (superClass: ParserClass): ParserClass =>
       const accessibility = this.parseAccessModifier();
       if (accessibility) member.accessibility = accessibility;
 
-      super.parseClassMember(classBody, member as N.ClassMember, state, classContextId);
+      super.parseClassMember(member as N.ClassMember, state, classContextId);
     }
 
     parseClassMemberWithIsStatic(
-      classBody: N.ClassBody,
       member: N.Node,
       state: {hadConstructor: boolean},
       isStatic: boolean,
@@ -1477,7 +1475,6 @@ export default (superClass: ParserClass): ParserClass =>
       if (!isAbstract && !isStatic && !methodOrProp.accessibility) {
         const idx = this.tsTryParseIndexSignature(member as N.TsIndexSignature);
         if (idx) {
-          classBody.body.push(idx);
           return;
         }
       }
@@ -1487,17 +1484,11 @@ export default (superClass: ParserClass): ParserClass =>
         methodOrProp.static = isStatic;
         this.parseClassPropertyName(prop, classContextId);
         this.parsePostMemberNameModifiers(methodOrProp);
-        this.pushClassProperty(classBody, prop);
+        this.pushClassProperty(prop);
         return;
       }
 
-      super.parseClassMemberWithIsStatic(
-        classBody,
-        member as N.ClassMember,
-        state,
-        isStatic,
-        classContextId,
-      );
+      super.parseClassMemberWithIsStatic(member as N.ClassMember, state, isStatic, classContextId);
     }
 
     parsePostMemberNameModifiers(methodOrProp: N.ClassMethod | N.ClassProperty): void {
@@ -1615,7 +1606,6 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     pushClassMethod(
-      classBody: N.ClassBody,
       method: N.ClassMethod,
       isGenerator: boolean,
       isAsync: boolean,
@@ -1623,18 +1613,17 @@ export default (superClass: ParserClass): ParserClass =>
     ): void {
       const typeParameters = this.tsTryParseTypeParameters();
       if (typeParameters) method.typeParameters = typeParameters;
-      super.pushClassMethod(classBody, method, isGenerator, isAsync, isConstructor);
+      super.pushClassMethod(method, isGenerator, isAsync, isConstructor);
     }
 
     pushClassPrivateMethod(
-      classBody: N.ClassBody,
       method: N.ClassPrivateMethod,
       isGenerator: boolean,
       isAsync: boolean,
     ): void {
       const typeParameters = this.tsTryParseTypeParameters();
       if (typeParameters) method.typeParameters = typeParameters;
-      super.pushClassPrivateMethod(classBody, method, isGenerator, isAsync);
+      super.pushClassPrivateMethod(method, isGenerator, isAsync);
     }
 
     parseClassSuper(): boolean {
@@ -1917,19 +1906,6 @@ export default (superClass: ParserClass): ParserClass =>
         node.typeAnnotation.end,
         node.typeAnnotation.loc.end,
       );
-    }
-
-    toReferencedList(
-      exprList: ReadonlyArray<N.Expression | null>,
-    ): ReadonlyArray<N.Expression | null> {
-      for (let i = 0; i < exprList.length; i++) {
-        const expr = exprList[i];
-        if (expr && expr._exprListItem && expr.type === "TsTypeCastExpression") {
-          this.raise(expr.start, "Did not expect a type annotation here.");
-        }
-      }
-
-      return exprList;
     }
 
     shouldParseArrow(): boolean {

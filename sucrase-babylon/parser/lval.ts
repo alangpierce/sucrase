@@ -33,12 +33,6 @@ export default abstract class LValParser extends NodeUtils {
   // Forward-declaration: defined in statement.js
   abstract parseDecorator(): void;
 
-  // Convert list of expression atoms to a list of
-
-  toReferencedList(exprList: ReadonlyArray<Expression | null>): ReadonlyArray<Expression | null> {
-    return exprList;
-  }
-
   // Parses spread element.
 
   parseSpread<T extends RestElement | SpreadElement>(refShorthandDefaultPos: Pos | null): T {

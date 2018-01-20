@@ -67,7 +67,6 @@ export default abstract class ExpressionParser extends LValParser {
       while (this.eat(tt.comma)) {
         node.expressions.push(this.parseMaybeAssign(noIn, refShorthandDefaultPos));
       }
-      this.toReferencedList(node.expressions);
       return this.finishNode(node, "SequenceExpression");
     }
     return expr;
@@ -446,8 +445,6 @@ export default abstract class ExpressionParser extends LValParser {
           node,
           startTokenIndex,
         );
-      } else {
-        this.toReferencedList(node.arguments);
       }
       return node;
     } else if (this.match(tt.backQuote)) {
@@ -671,7 +668,6 @@ export default abstract class ExpressionParser extends LValParser {
         node = this.startNode();
         this.next();
         node.elements = this.parseExprList(tt.bracketR, true, refShorthandDefaultPos);
-        this.toReferencedList(node.elements);
         return this.finishNode(node, "ArrayExpression");
 
       case tt.braceL:
@@ -892,7 +888,6 @@ export default abstract class ExpressionParser extends LValParser {
     if (exprList.length > 1) {
       val = this.startNodeAt(innerStartPos, innerStartLoc);
       val.expressions = exprList;
-      this.toReferencedList(val.expressions);
       this.finishNodeAt(val, "SequenceExpression", innerEndPos, innerEndLoc);
     } else {
       val = exprList[0];

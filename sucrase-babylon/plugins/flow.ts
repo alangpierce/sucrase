@@ -1720,11 +1720,10 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // parse flow type annotations on variable declarator heads - let foo: string = bar
-    parseVarHead(decl: N.VariableDeclarator, isBlockScope: boolean): void {
-      super.parseVarHead(decl, isBlockScope);
+    parseVarHead(isBlockScope: boolean): void {
+      super.parseVarHead(isBlockScope);
       if (this.match(tt.colon)) {
-        decl.id.typeAnnotation = this.flowParseTypeAnnotation() as N.TypeAnnotationBase;
-        this.finishNode(decl.id, decl.id.type);
+        this.flowParseTypeAnnotation();
       }
     }
 

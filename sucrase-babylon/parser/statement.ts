@@ -77,19 +77,19 @@ export default class StatementParser extends ExpressionParser {
         return;
 
       case tt._if:
-        this.parseIfStatement(node as N.IfStatement);
+        this.parseIfStatement();
         return;
       case tt._return:
-        this.parseReturnStatement(node as N.ReturnStatement);
+        this.parseReturnStatement();
         return;
       case tt._switch:
-        this.parseSwitchStatement(node as N.SwitchStatement);
+        this.parseSwitchStatement();
         return;
       case tt._throw:
-        this.parseThrowStatement(node as N.ThrowStatement);
+        this.parseThrowStatement();
         return;
       case tt._try:
-        this.parseTryStatement(node as N.TryStatement);
+        this.parseTryStatement();
         return;
 
       case tt._let:
@@ -97,7 +97,7 @@ export default class StatementParser extends ExpressionParser {
         if (!declaration) this.unexpected(); // NOTE: falls through to _var
 
       case tt._var:
-        this.parseVarStatement(node as N.VariableDeclaration, starttype);
+        this.parseVarStatement(starttype);
         return;
 
       case tt._while:
@@ -276,20 +276,12 @@ export default class StatementParser extends ExpressionParser {
     }
 
     if (this.match(tt._var) || this.match(tt._let) || this.match(tt._const)) {
-      const init = this.startNode();
       const varKind = this.state.type;
       this.next();
-      this.parseVar(init as N.VariableDeclaration, true, varKind);
-      this.finishNode(init, "VariableDeclaration");
-
+      this.parseVar(true, varKind);
       if (this.match(tt._in) || this.isContextual("of")) {
-        if (init.declarations.length === 1 && !init.declarations[0].init) {
-          this.parseForIn(forAwait);
-          return;
-        }
-      }
-      if (forAwait) {
-        this.unexpected();
+        this.parseForIn(forAwait);
+        return;
       }
       this.parseFor();
       return;
@@ -315,17 +307,16 @@ export default class StatementParser extends ExpressionParser {
     this.parseFunction(functionStart, true);
   }
 
-  parseIfStatement(node: N.IfStatement): N.IfStatement {
+  parseIfStatement(): void {
     this.next();
-    node.test = this.parseParenExpression();
+    this.parseParenExpression();
     this.parseStatement(false);
     if (this.eat(tt._else)) {
       this.parseStatement(false);
     }
-    return this.finishNode(node, "IfStatement");
   }
 
-  parseReturnStatement(node: N.ReturnStatement): N.ReturnStatement {
+  parseReturnStatement(): void {
     if (!this.state.inFunction && !this.options.allowReturnOutsideFunction) {
       this.raise(this.state.start, "'return' outside of function");
     }
@@ -336,88 +327,55 @@ export default class StatementParser extends ExpressionParser {
     // optional arguments, we eagerly look for a semicolon or the
     // possibility to insert one.
 
-    if (this.isLineTerminator()) {
-      node.argument = null;
-    } else {
-      node.argument = this.parseExpression();
+    if (!this.isLineTerminator()) {
+      this.parseExpression();
       this.semicolon();
     }
-
-    return this.finishNode(node, "ReturnStatement");
   }
 
-  parseSwitchStatement(node: N.SwitchStatement): N.SwitchStatement {
+  parseSwitchStatement(): void {
     this.next();
-    node.discriminant = this.parseParenExpression();
-    const cases: Array<N.SwitchCase> = [];
-    node.cases = cases;
+    this.parseParenExpression();
     const startTokenIndex = this.state.tokens.length;
     this.expect(tt.braceL);
 
-    // Statements under must be grouped (by label) in SwitchCase
-    // nodes. `cur` is used to keep the node that we are currently
-    // adding statements to.
-
-    let cur: N.Node | null = null;
-    for (let sawDefault; !this.match(tt.braceR); ) {
+    // Don't bother validation; just go through any sequence of cases, defaults, and statements.
+    while (!this.match(tt.braceR)) {
       if (this.match(tt._case) || this.match(tt._default)) {
         const isCase = this.match(tt._case);
-        if (cur) this.finishNode(cur, "SwitchCase");
-        cur = this.startNode();
-        cases.push(cur as N.SwitchCase);
-        cur.consequent = [];
         this.next();
         if (isCase) {
-          cur.test = this.parseExpression();
-        } else {
-          if (sawDefault) {
-            this.raise(this.state.lastTokStart, "Multiple default clauses");
-          }
-          sawDefault = true;
-          cur.test = null;
+          this.parseExpression();
         }
         this.expect(tt.colon);
-      } else if (cur) {
-        this.parseStatement(true);
       } else {
-        this.unexpected();
+        this.parseStatement(true);
       }
     }
-    if (cur) this.finishNode(cur, "SwitchCase");
     this.next(); // Closing brace
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: false});
-    return this.finishNode(node, "SwitchStatement");
   }
 
-  parseThrowStatement(node: N.ThrowStatement): N.ThrowStatement {
+  parseThrowStatement(): void {
     this.next();
-    if (lineBreak.test(this.input.slice(this.state.lastTokEnd, this.state.start))) {
-      this.raise(this.state.lastTokEnd, "Illegal newline after throw");
-    }
-    node.argument = this.parseExpression();
+    this.parseExpression();
     this.semicolon();
-    return this.finishNode(node, "ThrowStatement");
   }
 
-  parseTryStatement(node: N.TryStatement): N.TryStatement {
+  parseTryStatement(): void {
     this.next();
 
     this.parseBlock();
-    node.handler = null;
 
     if (this.match(tt._catch)) {
-      const clause = this.startNode();
       this.next();
       let catchBindingStartTokenIndex = null;
       if (this.match(tt.parenL)) {
         catchBindingStartTokenIndex = this.state.tokens.length;
         this.expect(tt.parenL);
-        clause.param = this.parseBindingAtom(true /* isBlockScope */);
+        this.parseBindingAtom(true /* isBlockScope */);
         this.expect(tt.parenR);
-      } else {
-        this.expectPlugin("optionalCatchBinding");
-        clause.param = null;
       }
       this.parseBlock();
       if (catchBindingStartTokenIndex != null) {
@@ -430,23 +388,16 @@ export default class StatementParser extends ExpressionParser {
           isFunctionScope: false,
         });
       }
-      node.handler = this.finishNode(clause as N.CatchClause, "CatchClause");
     }
-
-    // @ts-ignore
-    node.guardedHandlers = empty;
     if (this.eat(tt._finally)) {
       this.parseBlock();
     }
-
-    return this.finishNode(node, "TryStatement");
   }
 
-  parseVarStatement(node: N.VariableDeclaration, kind: TokenType): N.VariableDeclaration {
+  parseVarStatement(kind: TokenType): void {
     this.next();
-    this.parseVar(node, false, kind);
+    this.parseVar(false, kind);
     this.semicolon();
-    return this.finishNode(node, "VariableDeclaration");
   }
 
   parseWhileStatement(node: N.WhileStatement): N.WhileStatement {
@@ -533,42 +484,19 @@ export default class StatementParser extends ExpressionParser {
 
   // Parse a list of variable declarations.
 
-  parseVar(node: N.VariableDeclaration, isFor: boolean, kind: TokenType): N.VariableDeclaration {
-    const declarations: Array<N.VariableDeclarator> = [];
-    node.declarations = declarations;
-    // @ts-ignore
-    node.kind = kind.keyword;
-    for (;;) {
-      const decl = this.startNode();
+  parseVar(isFor: boolean, kind: TokenType): void {
+    while (true) {
       const isBlockScope = kind === tt._const || kind === tt._let;
-      this.parseVarHead(decl as N.VariableDeclarator, isBlockScope);
+      this.parseVarHead(isBlockScope);
       if (this.eat(tt.eq)) {
-        decl.init = this.parseMaybeAssign(isFor);
-      } else {
-        if (kind === tt._const && !(this.match(tt._in) || this.isContextual("of"))) {
-          // `const` with no initializer is allowed in TypeScript. It could be a declaration `const x: number;`.
-          if (!this.hasPlugin("typescript")) {
-            this.unexpected();
-          }
-        } else if (
-          decl.id.type !== "Identifier" &&
-          !(isFor && (this.match(tt._in) || this.isContextual("of")))
-        ) {
-          this.raise(
-            this.state.lastTokEnd,
-            "Complex binding patterns require an initialization value",
-          );
-        }
-        decl.init = null;
+        this.parseMaybeAssign(isFor);
       }
-      declarations.push(this.finishNode(decl as N.VariableDeclarator, "VariableDeclarator"));
       if (!this.eat(tt.comma)) break;
     }
-    return node;
   }
 
-  parseVarHead(decl: N.VariableDeclarator, isBlockScope: boolean): void {
-    decl.id = this.parseBindingAtom(isBlockScope);
+  parseVarHead(isBlockScope: boolean): void {
+    this.parseBindingAtom(isBlockScope);
   }
 
   // Parse a function declaration or literal (depending on the
@@ -669,7 +597,7 @@ export default class StatementParser extends ExpressionParser {
   // Parse a class declaration or literal (depending on the
   // `isStatement` parameter).
 
-  parseClass(isStatement: /* T === ClassDeclaration */ boolean, optionalId: boolean = false): void {
+  parseClass(isStatement: boolean, optionalId: boolean = false): void {
     // Put a context ID on the class keyword, the open-brace, and the close-brace, so that later
     // code can easily navigate to meaningful points on the class.
     const contextId = this.nextContextId++;

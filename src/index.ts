@@ -12,7 +12,6 @@ const DEFAULT_BABYLON_PLUGINS = [
   "classProperties",
   "exportNamespaceFrom",
   "numericSeparator",
-  "optionalCatchBinding",
   "dynamicImport",
 ];
 

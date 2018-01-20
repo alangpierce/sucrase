@@ -1010,9 +1010,10 @@ export default (superClass: ParserClass): ParserClass =>
         // falls through
         case tt._var:
         case tt._let:
-          return this.runInTypeContext(1, () =>
-            this.parseVarStatement(nany as N.VariableDeclaration, this.state.type),
-          );
+          this.runInTypeContext(1, () => {
+            this.parseVarStatement(this.state.type);
+          });
+          return this.startNode<N.Declaration>();
         case tt.name: {
           return this.runInTypeContext(1, () => {
             const value = this.state.value;
@@ -1701,13 +1702,9 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // `let x: number;`
-    parseVarHead(decl: N.VariableDeclarator, isBlockScope: boolean): void {
-      super.parseVarHead(decl, isBlockScope);
-      const type = this.tsTryParseTypeAnnotation();
-      if (type) {
-        decl.id.typeAnnotation = type;
-        this.finishNode(decl.id, decl.id.type); // set end position to end of type
-      }
+    parseVarHead(isBlockScope: boolean): void {
+      super.parseVarHead(isBlockScope);
+      this.tsTryParseTypeAnnotation();
     }
 
     // parse the return type of an async arrow function - let foo = (async (): number => {});

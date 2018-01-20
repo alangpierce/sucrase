@@ -1180,46 +1180,31 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // declares, interfaces and type aliases
-    parseExpressionStatement(
-      node: N.ExpressionStatement,
-      expr: N.Expression,
-    ): N.ExpressionStatement {
-      if (expr.type === "Identifier") {
-        if (expr.name === "declare") {
-          if (
-            this.match(tt._class) ||
-            this.match(tt.name) ||
-            this.match(tt._function) ||
-            this.match(tt._var) ||
-            this.match(tt._export)
-          ) {
-            return this.runInTypeContext(
-              1,
-              () => this.flowParseDeclare(node as N.FlowDeclare) as N.ExpressionStatement,
-            );
-          }
-        } else if (this.match(tt.name)) {
-          if (expr.name === "interface") {
-            return this.runInTypeContext(
-              1,
-              () => this.flowParseInterface(node as N.FlowInterface) as N.ExpressionStatement,
-            );
-          } else if (expr.name === "type") {
-            return this.runInTypeContext(
-              1,
-              () => this.flowParseTypeAlias(node as N.FlowTypeAlias) as N.ExpressionStatement,
-            );
-          } else if (expr.name === "opaque") {
-            return this.runInTypeContext(
-              1,
-              () =>
-                this.flowParseOpaqueType(node as N.FlowOpaqueType, false) as N.ExpressionStatement,
-            );
-          }
+    parseIdentifierStatement(name: string): void {
+      if (name === "declare") {
+        if (
+          this.match(tt._class) ||
+          this.match(tt.name) ||
+          this.match(tt._function) ||
+          this.match(tt._var) ||
+          this.match(tt._export)
+        ) {
+          this.runInTypeContext(1, () => {
+            this.flowParseDeclare(this.startNode());
+          });
+        }
+      } else if (this.match(tt.name)) {
+        if (name === "interface") {
+          this.runInTypeContext(1, () => {
+            this.flowParseInterface(this.startNode());
+          });
+        } else if (name === "type") {
+          this.runInTypeContext(1, () => this.flowParseTypeAlias(this.startNode()));
+        } else if (name === "opaque") {
+          this.runInTypeContext(1, () => this.flowParseOpaqueType(this.startNode(), false));
         }
       }
-
-      return super.parseExpressionStatement(node, expr);
+      super.parseIdentifierStatement(name);
     }
 
     // export type
@@ -1299,18 +1284,16 @@ export default (superClass: ParserClass): ParserClass =>
       return node;
     }
 
-    parseExportDeclaration(node: N.ExportNamedDeclaration): void {
+    parseExportDeclaration(): void {
       if (this.isContextual("type")) {
         this.runInTypeContext(1, () => {
-          node.exportKind = "type";
-
           const declarationNode = this.startNode();
           this.next();
 
           if (this.match(tt.braceL)) {
             // export type { foo, bar };
-            node.specifiers = this.parseExportSpecifiers();
-            this.parseExportFrom(node);
+            this.parseExportSpecifiers();
+            this.parseExportFrom();
           } else {
             // export type Foo = Bar;
             this.flowParseTypeAlias(declarationNode);
@@ -1318,8 +1301,6 @@ export default (superClass: ParserClass): ParserClass =>
         });
       } else if (this.isContextual("opaque")) {
         this.runInTypeContext(1, () => {
-          node.exportKind = "type";
-
           const declarationNode = this.startNode();
           this.next();
           // export opaque type Foo = Bar;
@@ -1327,13 +1308,12 @@ export default (superClass: ParserClass): ParserClass =>
         });
       } else if (this.isContextual("interface")) {
         this.runInTypeContext(1, () => {
-          node.exportKind = "type";
           const declarationNode = this.startNode();
           this.next();
           this.flowParseInterface(declarationNode);
         });
       } else {
-        super.parseExportDeclaration(node);
+        super.parseExportDeclaration();
       }
     }
 

@@ -987,13 +987,11 @@ export default (superClass: ParserClass): ParserClass =>
     tsTryParseDeclare(nany: N.Node): N.Declaration | null {
       switch (this.state.type) {
         case tt._function:
-          return this.runInTypeContext(1, () => {
+          this.runInTypeContext(1, () => {
             this.next();
-            return this.parseFunction(
-              nany as N.NormalFunction,
-              /* isStatement */ true,
-            ) as N.Declaration;
+            this.parseFunction(nany.start, /* isStatement */ true);
           });
+          return this.startNode<N.Declaration>();
         case tt._class:
           return this.runInTypeContext(
             1,
@@ -1147,7 +1145,7 @@ export default (superClass: ParserClass): ParserClass =>
         const node: N.ArrowFunctionExpression = this.startNodeAt(startPos, startLoc);
         node.typeParameters = this.tsParseTypeParameters();
         // Don't use overloaded parseFunctionParams which would look for "<" again.
-        super.parseFunctionParams(node);
+        super.parseFunctionParams();
         node.returnType = this.tsTryParseTypeOrTypePredicateAnnotation();
         this.expect(tt.arrow);
         return node;
@@ -1161,7 +1159,7 @@ export default (superClass: ParserClass): ParserClass =>
       res.generator = false;
       res.expression = true; // May be set again by parseFunctionBody.
       res.async = true;
-      this.parseFunctionBody(res, true);
+      this.parseFunctionBody(res.start, true /* isAsync */, false /* isGenerator */, true);
       return this.finishNode(res, "ArrowFunctionExpression");
     }
 
@@ -1241,14 +1239,16 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     parseFunctionBodyAndFinish(
-      node: N.BodilessFunctionOrMethodBase,
+      functionStart: number,
+      isAsync: boolean,
+      isGenerator: boolean,
       type: string,
       allowExpressionBody?: boolean,
       funcContextId?: number,
     ): void {
       // For arrow functions, `parseArrow` handles the return type itself.
       if (!allowExpressionBody && this.match(tt.colon)) {
-        node.returnType = this.tsParseTypeOrTypePredicateAnnotation(tt.colon);
+        this.tsParseTypeOrTypePredicateAnnotation(tt.colon);
       }
 
       let bodilessType;
@@ -1262,18 +1262,24 @@ export default (superClass: ParserClass): ParserClass =>
         let i = this.state.tokens.length - 1;
         while (
           i >= 0 &&
-          (this.state.tokens[i].start >= node.start ||
+          (this.state.tokens[i].start >= functionStart ||
             this.state.tokens[i].type === tt._default ||
             this.state.tokens[i].type === tt._export)
         ) {
           this.state.tokens[i].isType = true;
           i--;
         }
-        this.finishNode(node, bodilessType);
         return;
       }
 
-      super.parseFunctionBodyAndFinish(node, type, allowExpressionBody, funcContextId);
+      super.parseFunctionBodyAndFinish(
+        functionStart,
+        isAsync,
+        isGenerator,
+        type,
+        allowExpressionBody,
+        funcContextId,
+      );
     }
 
     parseSubscript(
@@ -1319,22 +1325,19 @@ export default (superClass: ParserClass): ParserClass =>
       return super.parseSubscript(base, startPos, startLoc, noCalls, state);
     }
 
-    parseNewArguments(node: N.NewExpression): void {
+    parseNewArguments(): void {
       if (this.isRelational("<")) {
         // tsTryParseAndCatch is expensive, so avoid if not necessary.
         // 99% certain this is `new C<T>();`. But may be `new C < T;`, which is also legal.
-        const typeParameters = this.tsTryParseAndCatch(() => {
+        this.tsTryParseAndCatch(() => {
           this.state.type = tt.typeParameterStart;
           const args = this.tsParseTypeArguments();
           if (!this.match(tt.parenL)) this.unexpected();
           return args;
         });
-        if (typeParameters) {
-          node.typeParameters = typeParameters;
-        }
       }
 
-      super.parseNewArguments(node);
+      super.parseNewArguments();
     }
 
     parseExprOp(
@@ -1696,10 +1699,9 @@ export default (superClass: ParserClass): ParserClass =>
       );
     }
 
-    parseFunctionParams(node: N.Function, allowModifiers?: boolean, contextId?: number): void {
-      const typeParameters = this.tsTryParseTypeParameters();
-      if (typeParameters) node.typeParameters = typeParameters;
-      super.parseFunctionParams(node, allowModifiers, contextId);
+    parseFunctionParams(allowModifiers?: boolean, contextId?: number): void {
+      this.tsTryParseTypeParameters();
+      super.parseFunctionParams(allowModifiers, contextId);
     }
 
     // `let x: number;`

@@ -1144,29 +1144,26 @@ export default (superClass: ParserClass): ParserClass =>
     // ==================================
 
     parseFunctionBodyAndFinish(
-      node: N.BodilessFunctionOrMethodBase,
+      functionStart: number,
+      isAsync: boolean,
+      isGenerator: boolean,
       type: string,
       allowExpressionBody?: boolean,
       funcContextId?: number,
     ): void {
       // For arrow functions, `parseArrow` handles the return type itself.
       if (!allowExpressionBody && this.match(tt.colon)) {
-        const typeNode = this.startNode();
-
-        [
-          // $FlowFixMe (destructuring not supported yet)
-          typeNode.typeAnnotation,
-          // $FlowFixMe (destructuring not supported yet)
-          // @ts-ignore
-          node.predicate,
-        ] = this.flowParseTypeAndPredicateInitialiser();
-
-        node.returnType = typeNode.typeAnnotation
-          ? this.finishNode(typeNode as N.TypeAnnotation, "TypeAnnotation")
-          : null;
+        this.flowParseTypeAndPredicateInitialiser();
       }
 
-      super.parseFunctionBodyAndFinish(node, type, allowExpressionBody, funcContextId);
+      super.parseFunctionBodyAndFinish(
+        functionStart,
+        isAsync,
+        isGenerator,
+        type,
+        allowExpressionBody,
+        funcContextId,
+      );
     }
 
     // interfaces
@@ -1716,16 +1713,15 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // parse function type parameters - function foo<T>() {}
-    parseFunctionParams(node: N.Function, allowModifiers?: boolean, contextId?: number): void {
-      // $FlowFixMe
-      // @ts-ignore
-      const kind = node.kind;
-      if (kind !== "get" && kind !== "set" && this.isRelational("<")) {
+    parseFunctionParams(allowModifiers?: boolean, contextId?: number): void {
+      // Originally this checked if the method is a getter/setter, but if it was, we'd crash soon
+      // anyway, so don't try to propagate that information.
+      if (this.isRelational("<")) {
         this.runInTypeContext(0, () => {
-          node.typeParameters = this.flowParseTypeParameterDeclaration();
+          this.flowParseTypeParameterDeclaration();
         });
       }
-      super.parseFunctionParams(node, allowModifiers, contextId);
+      super.parseFunctionParams(allowModifiers, contextId);
     }
 
     // parse flow type annotations on variable declarator heads - let foo: string = bar
@@ -1914,7 +1910,7 @@ export default (superClass: ParserClass): ParserClass =>
     ): N.ArrowFunctionExpression | null {
       const startTokenIndex = this.state.tokens.length;
       const node = this.startNodeAt(startPos, startLoc);
-      this.parseFunctionParams(node as N.Function);
+      this.parseFunctionParams();
       if (!this.parseArrow(node as N.ArrowFunctionExpression)) return null;
       return this.parseArrowExpression(
         node as N.ArrowFunctionExpression,

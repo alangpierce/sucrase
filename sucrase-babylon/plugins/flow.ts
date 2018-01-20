@@ -1135,7 +1135,6 @@ export default (superClass: ParserClass): ParserClass =>
       functionStart: number,
       isAsync: boolean,
       isGenerator: boolean,
-      type: string,
       allowExpressionBody?: boolean,
       funcContextId?: number,
     ): void {
@@ -1148,7 +1147,6 @@ export default (superClass: ParserClass): ParserClass =>
         functionStart,
         isAsync,
         isGenerator,
-        type,
         allowExpressionBody,
         funcContextId,
       );
@@ -1360,11 +1358,11 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // parse class property type annotations
-    parseClassProperty(node: N.ClassProperty): N.ClassProperty {
+    parseClassProperty(): void {
       if (this.match(tt.colon)) {
-        node.typeAnnotation = this.flowParseTypeAnnotation() as N.TypeAnnotationBase;
+        this.flowParseTypeAnnotation();
       }
-      return super.parseClassProperty(node);
+      super.parseClassProperty();
     }
 
     // determine whether or not we're currently in the position where a class method would appear
@@ -1382,37 +1380,16 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // parse type parameters for class methods
-    pushClassMethod(
-      method: N.ClassMethod,
+    parseClassMethod(
+      functionStart: number,
       isGenerator: boolean,
       isAsync: boolean,
       isConstructor: boolean,
     ): void {
-      if (method.variance) {
-        this.unexpected(method.variance.start);
-      }
-      delete method.variance;
       if (this.isRelational("<")) {
-        method.typeParameters = this.flowParseTypeParameterDeclaration();
+        this.flowParseTypeParameterDeclaration();
       }
-
-      super.pushClassMethod(method, isGenerator, isAsync, isConstructor);
-    }
-
-    pushClassPrivateMethod(
-      method: N.ClassPrivateMethod,
-      isGenerator: boolean,
-      isAsync: boolean,
-    ): void {
-      if (method.variance) {
-        this.unexpected(method.variance.start);
-      }
-      delete method.variance;
-      if (this.isRelational("<")) {
-        method.typeParameters = this.flowParseTypeParameterDeclaration();
-      }
-
-      super.pushClassPrivateMethod(method, isGenerator, isAsync);
+      super.parseClassMethod(functionStart, isGenerator, isAsync, isConstructor);
     }
 
     // parse a the super class type parameters and implements
@@ -1436,16 +1413,9 @@ export default (superClass: ParserClass): ParserClass =>
       return hadSuper;
     }
 
-    parsePropertyName(
-      node: N.ObjectOrClassMember | N.ClassMember | N.TsNamedTypeElementBase,
-      classContextId: number,
-    ): N.Identifier {
-      const variance = this.flowParseVariance();
-      const key = super.parsePropertyName(node, classContextId);
-      // $FlowIgnore ("variance" not defined on TsNamedTypeElementBase)
-      // @ts-ignore
-      node.variance = variance;
-      return key as N.Identifier;
+    parsePropertyName(classContextId: number): void {
+      this.flowParseVariance();
+      super.parsePropertyName(classContextId);
     }
 
     // parse type parameters for object method shorthand
@@ -1492,46 +1462,13 @@ export default (superClass: ParserClass): ParserClass =>
       }
     }
 
-    parseAssignableListItemTypes(param: N.Pattern): N.Pattern {
-      return this.runInTypeContext(0, () => {
-        if (this.eat(tt.question)) {
-          if (param.type !== "Identifier") {
-            throw this.raise(
-              param.start,
-              "A binding pattern parameter cannot be optional in an implementation signature.",
-            );
-          }
-
-          (param as N.Identifier).optional = true;
-        }
+    parseAssignableListItemTypes(): void {
+      this.runInTypeContext(0, () => {
+        this.eat(tt.question);
         if (this.match(tt.colon)) {
-          param.typeAnnotation = this.flowParseTypeAnnotation() as N.TypeAnnotationBase;
+          this.flowParseTypeAnnotation();
         }
-        this.finishNode(param, param.type);
-        return param;
       });
-    }
-
-    parseMaybeDefault(
-      isBlockScope: boolean,
-      startPos?: number | null,
-      startLoc?: Position | null,
-      left?: N.Pattern | null,
-    ): N.Pattern {
-      const node = super.parseMaybeDefault(isBlockScope, startPos, startLoc, left);
-
-      if (
-        node.type === "AssignmentPattern" &&
-        node.typeAnnotation &&
-        (node as N.AssignmentPattern).right.start < node.typeAnnotation.start
-      ) {
-        this.raise(
-          node.typeAnnotation.start,
-          "Type annotations must come before default assignments, e.g. instead of `age = 25: number` use `age: number = 25`",
-        );
-      }
-
-      return node;
     }
 
     // parse typeof and type imports

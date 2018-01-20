@@ -484,10 +484,8 @@ export default class StatementParser extends ExpressionParser {
     optionalId?: boolean,
   ): void {
     const oldInFunc = this.state.inFunction;
-    const oldInMethod = this.state.inMethod;
     const oldInGenerator = this.state.inGenerator;
     this.state.inFunction = true;
-    this.state.inMethod = false;
 
     let isGenerator = false;
     if (this.match(tt.star)) {
@@ -527,13 +525,7 @@ export default class StatementParser extends ExpressionParser {
 
     const startTokenIndex = this.state.tokens.length;
     this.parseFunctionParams();
-    this.parseFunctionBodyAndFinish(
-      functionStart,
-      isAsync,
-      isGenerator,
-      isStatement ? "FunctionDeclaration" : "FunctionExpression",
-      allowExpressionBody,
-    );
+    this.parseFunctionBodyAndFinish(functionStart, isAsync, isGenerator, allowExpressionBody);
     const endTokenIndex = this.state.tokens.length;
     // In addition to the block scope of the function body, we need a separate function-style scope
     // that includes the params.
@@ -547,7 +539,6 @@ export default class StatementParser extends ExpressionParser {
     }
 
     this.state.inFunction = oldInFunc;
-    this.state.inMethod = oldInMethod;
     this.state.inGenerator = oldInGenerator;
   }
 
@@ -620,7 +611,6 @@ export default class StatementParser extends ExpressionParser {
   }
 
   parseClassBody(classContextId: number): void {
-    const state = {hadConstructor: false};
     this.expect(tt.braceL);
 
     while (!this.eat(tt.braceR)) {
@@ -632,30 +622,12 @@ export default class StatementParser extends ExpressionParser {
         this.parseDecorator();
         continue;
       }
-
-      const member = this.startNode();
-
-      this.parseClassMember(member as N.ClassMember, state, classContextId);
-
-      if (
-        this.hasPlugin("decorators2") &&
-        ["method", "get", "set"].indexOf(member.kind) === -1 &&
-        member.decorators &&
-        member.decorators.length > 0
-      ) {
-        this.raise(
-          member.start,
-          "Stage 2 decorators may only be used with a class or a class method",
-        );
-      }
+      const memberStart = this.state.start;
+      this.parseClassMember(memberStart, classContextId);
     }
   }
 
-  parseClassMember(
-    member: N.ClassMember,
-    state: {hadConstructor: boolean},
-    classContextId: number,
-  ): void {
+  parseClassMember(memberStart: number, classContextId: number): void {
     let isStatic = false;
     if (this.match(tt.name) && this.state.value === "static") {
       const key = this.parseIdentifier(true); // eats 'static'
@@ -668,7 +640,7 @@ export default class StatementParser extends ExpressionParser {
         method.computed = false;
         method.key = key;
         method.static = false;
-        this.pushClassMethod(method, false, false, /* isConstructor */ false);
+        this.parseClassMethod(memberStart, false, false, /* isConstructor */ false);
         return;
       } else if (this.isClassProperty()) {
         // @ts-ignore
@@ -678,7 +650,7 @@ export default class StatementParser extends ExpressionParser {
         prop.computed = false;
         prop.key = key;
         prop.static = false;
-        this.parseClassProperty(prop);
+        this.parseClassProperty();
         return;
       }
       // otherwise something static
@@ -686,85 +658,41 @@ export default class StatementParser extends ExpressionParser {
       isStatic = true;
     }
 
-    this.parseClassMemberWithIsStatic(member, state, isStatic, classContextId);
+    this.parseClassMemberWithIsStatic(memberStart, isStatic, classContextId);
   }
 
   parseClassMemberWithIsStatic(
-    member: N.ClassMember,
-    state: {hadConstructor: boolean},
+    memberStart: number,
     isStatic: boolean,
     classContextId: number,
   ): void {
-    const publicMethod: N.ClassMethod = member as N.ClassMethod;
-    const privateMethod: N.ClassPrivateMethod = member as N.ClassPrivateMethod;
-    const publicProp: N.ClassProperty = member as N.ClassProperty;
-    const privateProp: N.ClassPrivateProperty = member as N.ClassPrivateProperty;
-
-    const method: typeof publicMethod | typeof privateMethod = publicMethod;
-    const publicMember: typeof publicMethod | typeof publicProp = publicMethod;
-
-    member.static = isStatic;
-
     if (this.eat(tt.star)) {
       // a generator
-      method.kind = "method";
-      this.parseClassPropertyName(method, classContextId);
-
-      if (method.key.type === "PrivateName") {
-        // Private generator method
-        this.pushClassPrivateMethod(privateMethod, true, false);
-        return;
-      }
-
-      if (this.isNonstaticConstructor(publicMethod)) {
-        this.raise(publicMethod.key.start, "Constructor can't be a generator");
-      }
-
-      this.pushClassMethod(publicMethod, true, false, /* isConstructor */ false);
-
+      this.parseClassPropertyName(classContextId);
+      this.parseClassMethod(memberStart, true, false, /* isConstructor */ false);
       return;
     }
 
-    const key = this.parseClassPropertyName(member, classContextId);
-    const isPrivate = key.type === "PrivateName";
-    // Check the key is not a computed expression or string literal.
-    const isSimple = key.type === "Identifier";
-
-    this.parsePostMemberNameModifiers(publicMember);
+    // Get the identifier name so we can tell if it's actually a keyword like "async", "get", or
+    // "set".
+    this.parseClassPropertyName(classContextId);
+    let simpleName = null;
+    let isConstructor = false;
+    const token = this.state.tokens[this.state.tokens.length - 1];
+    if (token.type === tt.name) {
+      simpleName = token.value;
+    }
+    // We allow "constructor" as either an identifier or a string.
+    if (token.value === "constructor") {
+      isConstructor = true;
+    }
+    this.parsePostMemberNameModifiers();
 
     if (this.isClassMethod()) {
-      method.kind = "method";
-
-      if (isPrivate) {
-        this.pushClassPrivateMethod(privateMethod, false, false);
-        return;
-      }
-
-      // a normal method
-      const isConstructor = this.isNonstaticConstructor(publicMethod);
-
-      if (isConstructor) {
-        publicMethod.kind = "constructor";
-
-        if (publicMethod.decorators) {
-          this.raise(publicMethod.start, "You can't attach decorators to a class constructor");
-        }
-
-        // TypeScript allows multiple overloaded constructor declarations.
-        if (state.hadConstructor && !this.hasPlugin("typescript")) {
-          this.raise(key.start, "Duplicate constructor in the same class");
-        }
-        state.hadConstructor = true;
-      }
-
-      this.pushClassMethod(publicMethod, false, false, isConstructor);
+      this.parseClassMethod(memberStart, false, false, isConstructor);
     } else if (this.isClassProperty()) {
-      if (isPrivate) {
-        this.pushClassPrivateProperty(privateProp);
-      } else {
-        this.pushClassProperty(publicProp);
-      }
-    } else if (isSimple && (key as N.Identifier).name === "async" && !this.isLineTerminator()) {
+      this.parseClassProperty();
+    } else if (simpleName === "async" && !this.isLineTerminator()) {
       this.state.tokens[this.state.tokens.length - 1].type = tt._async;
       // an async method
       const isGenerator = this.match(tt.star);
@@ -773,149 +701,68 @@ export default class StatementParser extends ExpressionParser {
         this.next();
       }
 
-      method.kind = "method";
       // The so-called parsed name would have been "async": get the real name.
-      this.parseClassPropertyName(method, classContextId);
-
-      if (method.key.type === "PrivateName") {
-        // private async method
-        this.pushClassPrivateMethod(privateMethod, isGenerator, true);
-      } else {
-        if (this.isNonstaticConstructor(publicMethod)) {
-          this.raise(publicMethod.key.start, "Constructor can't be an async function");
-        }
-
-        this.pushClassMethod(publicMethod, isGenerator, true, /* isConstructor */ false);
-      }
+      this.parseClassPropertyName(classContextId);
+      this.parseClassMethod(
+        memberStart,
+        isGenerator,
+        true /* isAsync */,
+        false /* isConstructor */,
+      );
     } else if (
-      isSimple &&
-      ((key as N.Identifier).name === "get" || (key as N.Identifier).name === "set") &&
+      (simpleName === "get" || simpleName === "set") &&
       !(this.isLineTerminator() && this.match(tt.star))
     ) {
-      if ((key as N.Identifier).name === "get") {
+      if (simpleName === "get") {
         this.state.tokens[this.state.tokens.length - 1].type = tt._get;
       } else {
         this.state.tokens[this.state.tokens.length - 1].type = tt._set;
       }
       // `get\n*` is an uninitialized property named 'get' followed by a generator.
       // a getter or setter
-      // @ts-ignore
-      method.kind = (key as N.Identifier).name;
       // The so-called parsed name would have been "get/set": get the real name.
-      this.parseClassPropertyName(publicMethod, classContextId);
-
-      if (method.key.type === "PrivateName") {
-        // private getter/setter
-        this.pushClassPrivateMethod(privateMethod, false, false);
-      } else {
-        if (this.isNonstaticConstructor(publicMethod)) {
-          this.raise(publicMethod.key.start, "Constructor can't have get/set modifier");
-        }
-        this.pushClassMethod(publicMethod, false, false, /* isConstructor */ false);
-      }
+      this.parseClassPropertyName(classContextId);
+      this.parseClassMethod(memberStart, false, false, /* isConstructor */ false);
     } else if (this.isLineTerminator()) {
       // an uninitialized class property (due to ASI, since we don't otherwise recognize the next token)
-      if (isPrivate) {
-        this.pushClassPrivateProperty(privateProp);
-      } else {
-        this.pushClassProperty(publicProp);
-      }
+      this.parseClassProperty();
     } else {
       this.unexpected();
     }
   }
 
-  parseClassPropertyName(
-    member: N.ClassMember,
-    classContextId: number,
-  ): N.Expression | N.Identifier {
-    const key = this.parsePropertyName(member, classContextId);
-
-    if (
-      !member.computed &&
-      member.static &&
-      ((key as N.Identifier).name === "prototype" || (key as N.StringLiteral).value === "prototype")
-    ) {
-      this.raise(key.start, "Classes may not have static property named prototype");
-    }
-
-    if (key.type === "PrivateName" && (key as N.PrivateName).id.name === "constructor") {
-      this.raise(key.start, "Classes may not have a private field named '#constructor'");
-    }
-
-    return key;
-  }
-
-  pushClassProperty(prop: N.ClassProperty): void {
-    // This only affects properties, not methods.
-    if (this.isNonstaticConstructor(prop)) {
-      this.raise(prop.key.start, "Classes may not have a non-static field named 'constructor'");
-    }
-    this.parseClassProperty(prop);
-  }
-
-  pushClassPrivateProperty(prop: N.ClassPrivateProperty): void {
-    this.expectPlugin("classPrivateProperties", prop.key.start);
-    this.parseClassPrivateProperty(prop);
-  }
-
-  pushClassMethod(
-    method: N.ClassMethod,
+  parseClassMethod(
+    functionStart: number,
     isGenerator: boolean,
     isAsync: boolean,
     isConstructor: boolean,
   ): void {
-    this.parseMethod(method, isGenerator, isAsync, isConstructor, "ClassMethod");
+    this.parseMethod(functionStart, isGenerator, isAsync, isConstructor);
   }
 
-  pushClassPrivateMethod(
-    method: N.ClassPrivateMethod,
-    isGenerator: boolean,
-    isAsync: boolean,
-  ): void {
-    this.expectPlugin("classPrivateMethods", method.key.start);
-    this.parseMethod(method, isGenerator, isAsync, /* isConstructor */ false, "ClassPrivateMethod");
+  // Return the name of the class property, if it is a simple identifier.
+  parseClassPropertyName(classContextId: number): void {
+    this.parsePropertyName(classContextId);
   }
 
   // Overridden in typescript.js
-  parsePostMemberNameModifiers(
-    // eslint-disable-next-line no-unused-vars
-    methodOrProp: N.ClassMethod | N.ClassProperty,
-  ): void {}
+  parsePostMemberNameModifiers(): void {}
 
   // Overridden in typescript.js
   parseAccessModifier(): N.Accessibility | null {
     return null;
   }
 
-  parseClassPrivateProperty(node: N.ClassPrivateProperty): N.ClassPrivateProperty {
+  parseClassProperty(): void {
     this.state.inClassProperty = true;
-    node.value = this.eat(tt.eq) ? this.parseMaybeAssign() : null;
-    this.semicolon();
-    this.state.inClassProperty = false;
-    return this.finishNode(node, "ClassPrivateProperty");
-  }
-
-  parseClassProperty(node: N.ClassProperty): N.ClassProperty {
-    if (!node.typeAnnotation) {
-      this.expectPlugin("classProperties");
-    }
-
-    this.state.inClassProperty = true;
-
     if (this.match(tt.eq)) {
-      this.expectPlugin("classProperties");
       const equalsTokenIndex = this.state.tokens.length;
       this.next();
-      node.value = this.parseMaybeAssign();
+      this.parseMaybeAssign();
       this.state.tokens[equalsTokenIndex].rhsEndIndex = this.state.tokens.length;
-    } else {
-      node.value = null;
     }
     this.semicolon();
     this.state.inClassProperty = false;
-
-    return this.finishNode(node, "ClassProperty");
   }
 
   parseClassId(isStatement: boolean, optionalId: boolean = false): void {

@@ -350,14 +350,14 @@ export default (superClass: ParserClass): ParserClass =>
       return this.eat(tt.name) && this.match(tt.colon);
     }
 
-    tsTryParseIndexSignature(node: N.TsIndexSignature): N.TsIndexSignature | null {
+    tsTryParseIndexSignature(): boolean {
       if (
         !(
           this.match(tt.bracketL) &&
           this.tsLookAhead(this.tsIsUnambiguouslyIndexSignature.bind(this))
         )
       ) {
-        return null;
+        return false;
       }
 
       this.expect(tt.bracketL);
@@ -365,19 +365,17 @@ export default (superClass: ParserClass): ParserClass =>
       this.expect(tt.colon);
       id.typeAnnotation = this.tsParseTypeAnnotation(/* eatColon */ false);
       this.expect(tt.bracketR);
-      node.parameters = [id];
 
-      const type = this.tsTryParseTypeAnnotation();
-      if (type) node.typeAnnotation = type;
+      this.tsTryParseTypeAnnotation();
       this.tsParseTypeMemberSemicolon();
-      return this.finishNode(node, "TSIndexSignature");
+      return true;
     }
 
     tsParsePropertyOrMethodSignature(
       node: N.TsPropertySignature | N.TsMethodSignature,
       readonly: boolean,
     ): N.TsPropertySignature | N.TsMethodSignature {
-      this.parsePropertyName(node, -1 /* Types don't need context IDs. */);
+      this.parsePropertyName(-1 /* Types don't need context IDs. */);
       if (this.eat(tt.question)) node.optional = true;
       const nodeAny: N.Node = node;
 
@@ -407,10 +405,9 @@ export default (superClass: ParserClass): ParserClass =>
       const node = this.startNode();
       const readonly = !!this.tsParseModifier(["readonly"]);
 
-      const idx = this.tsTryParseIndexSignature(node as N.TsIndexSignature);
-      if (idx) {
-        if (readonly) node.readonly = true;
-        return idx;
+      const found = this.tsTryParseIndexSignature();
+      if (found) {
+        return this.startNode();
       }
       return this.tsParsePropertyOrMethodSignature(node as N.TsMethodSignature, readonly);
     }
@@ -1203,42 +1200,21 @@ export default (superClass: ParserClass): ParserClass =>
       return super.isExportDefaultSpecifier();
     }
 
-    parseAssignableListItem(
-      allowModifiers: boolean | null,
-      isBlockScope: boolean,
-    ): N.Pattern | N.TSParameterProperty {
-      let accessibility: N.Accessibility | null = null;
-      let isReadonly = false;
+    parseAssignableListItem(allowModifiers: boolean | null, isBlockScope: boolean): void {
       if (allowModifiers) {
-        accessibility = this.parseAccessModifier();
-        isReadonly = !!this.tsParseModifier(["readonly"]);
+        this.parseAccessModifier();
+        this.tsParseModifier(["readonly"]);
       }
 
-      const left = this.parseMaybeDefault(isBlockScope);
-      this.parseAssignableListItemTypes(left);
-      const elt = this.parseMaybeDefault(isBlockScope, left.start, left.loc.start, left);
-      if (accessibility || isReadonly) {
-        const pp: N.TSParameterProperty = this.startNodeAtNode(elt);
-        if (accessibility) pp.accessibility = accessibility;
-        if (isReadonly) pp.readonly = isReadonly;
-        if (elt.type !== "Identifier" && elt.type !== "AssignmentPattern") {
-          throw this.raise(
-            pp.start,
-            "A parameter property may not be declared using a binding pattern.",
-          );
-        }
-        pp.parameter = elt as N.AssignmentPattern;
-        return this.finishNode(pp, "TSParameterProperty");
-      } else {
-        return elt;
-      }
+      this.parseMaybeDefault(isBlockScope);
+      this.parseAssignableListItemTypes();
+      this.parseMaybeDefault(isBlockScope, true);
     }
 
     parseFunctionBodyAndFinish(
       functionStart: number,
       isAsync: boolean,
       isGenerator: boolean,
-      type: string,
       allowExpressionBody?: boolean,
       funcContextId?: number,
     ): void {
@@ -1247,13 +1223,10 @@ export default (superClass: ParserClass): ParserClass =>
         this.tsParseTypeOrTypePredicateAnnotation(tt.colon);
       }
 
-      let bodilessType;
-      if (type === "FunctionDeclaration") {
-        bodilessType = "TSDeclareFunction";
-      } else {
-        bodilessType = type === "ClassMethod" ? "TSDeclareMethod" : undefined;
-      }
-      if (bodilessType && !this.match(tt.braceL) && this.isLineTerminator()) {
+      // The original code checked the node type to make sure this function type allows a missing
+      // body, but we skip that to avoid sending around the node type. We instead just use the
+      // allowExpressionBody boolean to make sure it's not an arrow function.
+      if (!allowExpressionBody && !this.match(tt.braceL) && this.isLineTerminator()) {
         // Retroactively mark the function declaration as a type.
         let i = this.state.tokens.length - 1;
         while (
@@ -1272,7 +1245,6 @@ export default (superClass: ParserClass): ParserClass =>
         functionStart,
         isAsync,
         isGenerator,
-        type,
         allowExpressionBody,
         funcContextId,
       );
@@ -1428,30 +1400,16 @@ export default (superClass: ParserClass): ParserClass =>
       return this.tsParseModifier(["public", "protected", "private"]);
     }
 
-    parseClassMember(
-      member: N.Node,
-      state: {hadConstructor: boolean},
-      classContextId: number,
-    ): void {
-      const accessibility = this.parseAccessModifier();
-      if (accessibility) member.accessibility = accessibility;
-
-      super.parseClassMember(member as N.ClassMember, state, classContextId);
+    parseClassMember(memberStart: number, classContextId: number): void {
+      this.parseAccessModifier();
+      super.parseClassMember(memberStart, classContextId);
     }
 
     parseClassMemberWithIsStatic(
-      member: N.Node,
-      state: {hadConstructor: boolean},
+      memberStart: number,
       isStatic: boolean,
       classContextId: number,
     ): void {
-      // @ts-ignore
-      const methodOrProp: N.ClassMethod | N.ClassProperty = member;
-      // @ts-ignore
-      const prop: N.ClassProperty = member;
-      // @ts-ignore
-      const propOrIdx: N.ClassProperty | N.TsIndexSignature = member;
-
       let isAbstract = false;
       let isReadonly = false;
 
@@ -1469,31 +1427,28 @@ export default (superClass: ParserClass): ParserClass =>
           break;
       }
 
-      if (isAbstract) methodOrProp.abstract = true;
-      if (isReadonly) propOrIdx.readonly = true;
-
-      if (!isAbstract && !isStatic && !methodOrProp.accessibility) {
-        const idx = this.tsTryParseIndexSignature(member as N.TsIndexSignature);
-        if (idx) {
+      // We no longer check for public/private/etc, but tsTryParseIndexSignature should just return
+      // false in that case for valid code.
+      if (!isAbstract && !isStatic) {
+        const found = this.tsTryParseIndexSignature();
+        if (found) {
           return;
         }
       }
 
       if (isReadonly) {
         // Must be a property (if not an index signature).
-        methodOrProp.static = isStatic;
-        this.parseClassPropertyName(prop, classContextId);
-        this.parsePostMemberNameModifiers(methodOrProp);
-        this.pushClassProperty(prop);
+        this.parseClassPropertyName(classContextId);
+        this.parsePostMemberNameModifiers();
+        this.parseClassProperty();
         return;
       }
 
-      super.parseClassMemberWithIsStatic(member as N.ClassMember, state, isStatic, classContextId);
+      super.parseClassMemberWithIsStatic(memberStart, isStatic, classContextId);
     }
 
-    parsePostMemberNameModifiers(methodOrProp: N.ClassMethod | N.ClassProperty): void {
-      const optional = this.eat(tt.question);
-      if (optional) methodOrProp.optional = true;
+    parsePostMemberNameModifiers(): void {
+      this.eat(tt.question);
     }
 
     // Note: The reason we do this in `parseIdentifierStatement` and not `parseStatement`
@@ -1599,31 +1554,19 @@ export default (superClass: ParserClass): ParserClass =>
       this.tsTryParseTypeParameters();
     }
 
-    parseClassProperty(node: N.ClassProperty): N.ClassProperty {
-      const type = this.tsTryParseTypeAnnotation();
-      if (type) node.typeAnnotation = type;
-      return super.parseClassProperty(node);
+    parseClassProperty(): void {
+      this.tsTryParseTypeAnnotation();
+      super.parseClassProperty();
     }
 
-    pushClassMethod(
-      method: N.ClassMethod,
+    parseClassMethod(
+      functionStart: number,
       isGenerator: boolean,
       isAsync: boolean,
       isConstructor: boolean,
     ): void {
-      const typeParameters = this.tsTryParseTypeParameters();
-      if (typeParameters) method.typeParameters = typeParameters;
-      super.pushClassMethod(method, isGenerator, isAsync, isConstructor);
-    }
-
-    pushClassPrivateMethod(
-      method: N.ClassPrivateMethod,
-      isGenerator: boolean,
-      isAsync: boolean,
-    ): void {
-      const typeParameters = this.tsTryParseTypeParameters();
-      if (typeParameters) method.typeParameters = typeParameters;
-      super.pushClassPrivateMethod(method, isGenerator, isAsync);
+      this.tsTryParseTypeParameters();
+      super.parseClassMethod(functionStart, isGenerator, isAsync, isConstructor);
     }
 
     parseClassSuper(): boolean {
@@ -1824,21 +1767,10 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // Allow type annotations inside of a parameter list.
-    parseAssignableListItemTypes(param: N.Pattern): N.Pattern {
-      return this.runInTypeContext(0, () => {
-        if (this.eat(tt.question)) {
-          if (param.type !== "Identifier") {
-            throw this.raise(
-              param.start,
-              "A binding pattern parameter cannot be optional in an implementation signature.",
-            );
-          }
-
-          (param as N.Identifier).optional = true;
-        }
-        const type = this.tsTryParseTypeAnnotation();
-        if (type) param.typeAnnotation = type;
-        return this.finishNode(param, param.type);
+    parseAssignableListItemTypes(): void {
+      this.runInTypeContext(0, () => {
+        this.eat(tt.question);
+        this.tsTryParseTypeAnnotation();
       });
     }
 
@@ -1863,29 +1795,6 @@ export default (superClass: ParserClass): ParserClass =>
 
     isClassProperty(): boolean {
       return this.match(tt.colon) || super.isClassProperty();
-    }
-
-    parseMaybeDefault(
-      isBlockScope: boolean,
-      startPos?: number | null,
-      startLoc?: Position | null,
-      left?: N.Pattern | null,
-    ): N.Pattern {
-      const node = super.parseMaybeDefault(isBlockScope, startPos, startLoc, left);
-
-      if (
-        node.type === "AssignmentPattern" &&
-        node.typeAnnotation &&
-        (node as N.AssignmentPattern).right.start < node.typeAnnotation.start
-      ) {
-        this.raise(
-          node.typeAnnotation.start,
-          "Type annotations must come before default assignments, " +
-            "e.g. instead of `age = 25: number` use `age: number = 25`",
-        );
-      }
-
-      return node;
     }
 
     // ensure that inside types, we bypass the jsx parser plugin

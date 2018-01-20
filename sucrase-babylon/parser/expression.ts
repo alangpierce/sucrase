@@ -540,28 +540,10 @@ export default abstract class ExpressionParser extends LValParser {
 
     switch (this.state.type) {
       case tt._super:
-        if (
-          !this.state.inMethod &&
-          !this.state.inClassProperty &&
-          !this.options.allowSuperOutsideMethod
-        ) {
-          this.raise(this.state.start, "super is only allowed in object methods and classes");
-        }
-
         node = this.startNode();
         this.next();
         if (!this.match(tt.parenL) && !this.match(tt.bracketL) && !this.match(tt.dot)) {
           this.unexpected();
-        }
-        if (
-          this.match(tt.parenL) &&
-          this.state.inMethod !== "constructor" &&
-          !this.options.allowSuperOutsideMethod
-        ) {
-          this.raise(
-            node.start,
-            "super() is only valid inside a class constructor. Make sure the method name is spelled exactly as 'constructor'.",
-          );
         }
         return this.finishNode(node, "Super");
 
@@ -1078,10 +1060,10 @@ export default abstract class ExpressionParser extends LValParser {
             this.next();
             isGenerator = true;
           }
-          this.parsePropertyName(prop as N.ObjectOrClassMember, contextId);
+          this.parsePropertyName(contextId);
         }
       } else {
-        this.parsePropertyName(prop as N.ObjectOrClassMember, contextId);
+        this.parsePropertyName(contextId);
       }
 
       this.parseObjPropValue(
@@ -1114,12 +1096,11 @@ export default abstract class ExpressionParser extends LValParser {
     return this.finishNode(node as T, isPattern ? "ObjectPattern" : "ObjectExpression");
   }
 
-  isGetterOrSetterMethod(prop: N.ObjectMethod, isPattern: boolean): boolean {
+  isGetterOrSetterMethod(isPattern: boolean): boolean {
+    // We go off of the next and don't bother checking if the node key is actually "get" or "set".
+    // This lets us avoid generating a node, and should only make the validation worse.
     return (
       !isPattern &&
-      !prop.computed &&
-      prop.key.type === "Identifier" &&
-      (prop.key.name === "get" || prop.key.name === "set") &&
       (this.match(tt.string) || // get "string"() {}
       this.match(tt.num) || // get 1() {}
       this.match(tt.bracketL) || // get ["string"]() {}
@@ -1128,90 +1109,74 @@ export default abstract class ExpressionParser extends LValParser {
     );
   }
 
+  // Returns true if this was a method.
   parseObjectMethod(
-    prop: N.ObjectMethod,
     isGenerator: boolean,
     isAsync: boolean,
     isPattern: boolean,
     objectContextId: number,
-  ): N.ObjectMethod | null {
+  ): boolean {
+    // We don't need to worry about modifiers because object methods can't have optional bodies, so
+    // the start will never be used.
+    const functionStart = this.state.start;
     if (isAsync || isGenerator || this.match(tt.parenL)) {
       if (isPattern) this.unexpected();
-      prop.kind = "method";
-      prop.method = true;
-      return this.parseMethod(
-        prop,
-        isGenerator,
-        isAsync,
-        /* isConstructor */ false,
-        "ObjectMethod",
-      );
+      this.parseMethod(functionStart, isGenerator, isAsync, /* isConstructor */ false);
+      return true;
     }
 
-    if (this.isGetterOrSetterMethod(prop, isPattern)) {
+    if (this.isGetterOrSetterMethod(isPattern)) {
       if (isGenerator || isAsync) this.unexpected();
-      prop.kind = prop.key.name;
-      this.parsePropertyName(prop, objectContextId);
+      this.parsePropertyName(objectContextId);
       this.parseMethod(
-        prop,
+        functionStart,
         /* isGenerator */ false,
         /* isAsync */ false,
         /* isConstructor */ false,
-        "ObjectMethod",
       );
-      return prop;
+      return true;
     }
-
-    return null;
+    return false;
   }
 
   parseObjectProperty(
-    prop: N.ObjectProperty,
     startPos: number | null,
     startLoc: Position | null,
     isPattern: boolean,
     isBlockScope: boolean,
     refShorthandDefaultPos: Pos | null,
-  ): N.ObjectProperty | null {
-    prop.shorthand = false;
-
+  ): void {
     if (this.eat(tt.colon)) {
-      prop.value = isPattern
-        ? this.parseMaybeDefault(isBlockScope, this.state.start, this.state.startLoc)
-        : this.parseMaybeAssign(false, refShorthandDefaultPos);
-
-      return this.finishNode(prop, "ObjectProperty");
+      if (isPattern) {
+        this.parseMaybeDefault(isBlockScope);
+      } else {
+        this.parseMaybeAssign(false, refShorthandDefaultPos);
+      }
+      return;
     }
 
-    if (!prop.computed && prop.key.type === "Identifier") {
-      // If we're in a destructuring, we've now discovered that the key was actually an assignee, so
-      // we need to tag it as a declaration with the appropriate scope. Otherwise, we might need to
-      // transform it on access, so mark it as an object shorthand.
-      if (isPattern) {
-        this.state.tokens[this.state.tokens.length - 1].identifierRole = isBlockScope
-          ? IdentifierRole.BlockScopedDeclaration
-          : IdentifierRole.FunctionScopedDeclaration;
-      } else {
-        this.state.tokens[this.state.tokens.length - 1].identifierRole =
-          IdentifierRole.ObjectShorthand;
-      }
+    // Since there's no colon, we assume this is an object shorthand.
 
-      if (isPattern) {
-        prop.value = this.parseMaybeDefault(isBlockScope, startPos, startLoc, prop.key.__clone());
-      } else if (this.match(tt.eq) && refShorthandDefaultPos) {
-        if (!refShorthandDefaultPos.start) {
-          refShorthandDefaultPos.start = this.state.start;
-        }
-        prop.value = this.parseMaybeDefault(isBlockScope, startPos, startLoc, prop.key.__clone());
-      } else {
-        prop.value = prop.key.__clone();
-      }
-      prop.shorthand = true;
-
-      return this.finishNode(prop, "ObjectProperty");
+    // If we're in a destructuring, we've now discovered that the key was actually an assignee, so
+    // we need to tag it as a declaration with the appropriate scope. Otherwise, we might need to
+    // transform it on access, so mark it as an object shorthand.
+    if (isPattern) {
+      this.state.tokens[this.state.tokens.length - 1].identifierRole = isBlockScope
+        ? IdentifierRole.BlockScopedDeclaration
+        : IdentifierRole.FunctionScopedDeclaration;
+    } else {
+      this.state.tokens[this.state.tokens.length - 1].identifierRole =
+        IdentifierRole.ObjectShorthand;
     }
 
-    return null;
+    if (isPattern) {
+      this.parseMaybeDefault(isBlockScope, true);
+    } else if (this.match(tt.eq) && refShorthandDefaultPos) {
+      if (!refShorthandDefaultPos.start) {
+        refShorthandDefaultPos.start = this.state.start;
+      }
+      this.parseMaybeDefault(isBlockScope, true);
+    }
   }
 
   parseObjPropValue(
@@ -1225,77 +1190,49 @@ export default abstract class ExpressionParser extends LValParser {
     refShorthandDefaultPos: Pos | null,
     objectContextId: number,
   ): void {
-    const node =
-      this.parseObjectMethod(
-        prop as N.ObjectMethod,
-        isGenerator,
-        isAsync,
-        isPattern,
-        objectContextId,
-      ) ||
-      this.parseObjectProperty(
-        prop as N.ObjectProperty,
-        startPos,
-        startLoc,
-        isPattern,
-        isBlockScope,
-        refShorthandDefaultPos,
-      );
-
-    if (!node) this.unexpected();
+    const wasMethod = this.parseObjectMethod(isGenerator, isAsync, isPattern, objectContextId);
+    if (!wasMethod) {
+      this.parseObjectProperty(startPos, startLoc, isPattern, isBlockScope, refShorthandDefaultPos);
+    }
   }
 
-  parsePropertyName(
-    prop: N.ObjectOrClassMember | N.ClassMember | N.TsNamedTypeElementBase,
-    objectContextId: number,
-  ): N.Expression | N.Identifier {
+  parsePropertyName(objectContextId: number): void {
     if (this.eat(tt.bracketL)) {
       this.state.tokens[this.state.tokens.length - 1].contextId = objectContextId;
-      (prop as N.ObjectOrClassMember).computed = true;
-      prop.key = this.parseMaybeAssign();
+      this.parseMaybeAssign();
       this.expect(tt.bracketR);
       this.state.tokens[this.state.tokens.length - 1].contextId = objectContextId;
     } else {
       const oldInPropertyName = this.state.inPropertyName;
       this.state.inPropertyName = true;
-      // We check if it's valid for it to be a private name when we push it.
-      (prop as N.ObjectOrClassMember).key =
-        this.match(tt.num) || this.match(tt.string)
-          ? this.parseExprAtom()
-          : this.parseMaybePrivateName();
+      if (this.match(tt.num) || this.match(tt.string)) {
+        this.parseExprAtom();
+      } else {
+        this.parseMaybePrivateName();
+      }
 
       this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.ObjectKey;
       this.state.tokens[this.state.tokens.length - 1].contextId = objectContextId;
-      if (prop.key.type !== "PrivateName") {
-        // ClassPrivateProperty is never computed, so we don't assign in that case.
-        prop.computed = false;
-      }
 
       this.state.inPropertyName = oldInPropertyName;
     }
-
-    return prop.key;
   }
 
   // Parse object or class method.
 
-  parseMethod<T extends N.MethodLike>(
-    node: T,
+  parseMethod(
+    functionStart: number,
     isGenerator: boolean,
     isAsync: boolean,
     isConstructor: boolean,
-    type: string,
-  ): T {
+  ): void {
     const oldInFunc = this.state.inFunction;
-    const oldInMethod = this.state.inMethod;
     const oldInGenerator = this.state.inGenerator;
     this.state.inFunction = true;
-    this.state.inMethod = node.kind || true;
     this.state.inGenerator = isGenerator;
 
     const funcContextId = this.nextContextId++;
 
-    const functionStart = node.start;
     const startTokenIndex = this.state.tokens.length;
     const allowModifiers = isConstructor; // For TypeScript parameter properties
     this.parseFunctionParams(allowModifiers, funcContextId);
@@ -1303,7 +1240,6 @@ export default abstract class ExpressionParser extends LValParser {
       functionStart,
       isAsync,
       isGenerator,
-      type,
       null /* allowExpressionBody */,
       funcContextId,
     );
@@ -1311,10 +1247,7 @@ export default abstract class ExpressionParser extends LValParser {
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
 
     this.state.inFunction = oldInFunc;
-    this.state.inMethod = oldInMethod;
     this.state.inGenerator = oldInGenerator;
-
-    return node;
   }
 
   // Parse arrow function expression.
@@ -1346,7 +1279,6 @@ export default abstract class ExpressionParser extends LValParser {
     functionStart: number,
     isAsync: boolean,
     isGenerator: boolean,
-    type: string,
     allowExpressionBody: boolean | null = null,
     funcContextId?: number,
   ): void {

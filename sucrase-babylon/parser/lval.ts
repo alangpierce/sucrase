@@ -112,7 +112,8 @@ export default abstract class LValParser extends NodeUtils {
       } else if (this.eat(close)) {
         break;
       } else if (this.match(tt.ellipsis)) {
-        elts.push(this.parseAssignableListItemTypes(this.parseRest(isBlockScope)));
+        this.parseRest(isBlockScope);
+        this.parseAssignableListItemTypes();
         this.expect(close);
         break;
       } else {
@@ -122,41 +123,28 @@ export default abstract class LValParser extends NodeUtils {
         while (this.match(tt.at)) {
           this.parseDecorator();
         }
-        elts.push(this.parseAssignableListItem(allowModifiers, isBlockScope));
+        this.parseAssignableListItem(allowModifiers, isBlockScope);
       }
     }
     return elts;
   }
 
-  parseAssignableListItem(
-    allowModifiers: boolean | null,
-    isBlockScope: boolean,
-  ): Pattern | TSParameterProperty {
-    const left = this.parseMaybeDefault(isBlockScope);
-    this.parseAssignableListItemTypes(left);
-    return this.parseMaybeDefault(isBlockScope, left.start, left.loc.start, left);
+  parseAssignableListItem(allowModifiers: boolean | null, isBlockScope: boolean): void {
+    this.parseMaybeDefault(isBlockScope);
+    this.parseAssignableListItemTypes();
+    this.parseMaybeDefault(isBlockScope, true /* leftAlreadyParsed */);
   }
 
-  parseAssignableListItemTypes(param: Pattern): Pattern {
-    return param;
-  }
+  parseAssignableListItemTypes(): void {}
 
   // Parses assignment pattern around given atom if possible.
-
-  parseMaybeDefault(
-    isBlockScope: boolean,
-    startPos?: number | null,
-    startLoc?: Position | null,
-    left?: Pattern | null,
-  ): Pattern {
-    startLoc = startLoc || this.state.startLoc;
-    startPos = startPos || this.state.start;
-    left = left || this.parseBindingAtom(isBlockScope);
-    if (!this.eat(tt.eq)) return left;
-
-    const node = this.startNodeAt(startPos, startLoc);
-    node.left = left;
-    node.right = this.parseMaybeAssign();
-    return this.finishNode(node as AssignmentPattern, "AssignmentPattern");
+  parseMaybeDefault(isBlockScope: boolean, leftAlreadyParsed: boolean = false): void {
+    if (!leftAlreadyParsed) {
+      this.parseBindingAtom(isBlockScope);
+    }
+    if (!this.eat(tt.eq)) {
+      return;
+    }
+    this.parseMaybeAssign();
   }
 }

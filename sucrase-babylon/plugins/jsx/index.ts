@@ -260,14 +260,16 @@ export default (superClass: ParserClass): ParserClass =>
 
     // Parses any type of JSX attribute value.
 
-    jsxParseAttributeValue(): N.Expression {
+    jsxParseAttributeValue(): void {
       switch (this.state.type) {
         case tt.braceL:
-          return this.jsxParseExpressionContainer();
+          this.jsxParseExpressionContainer();
+          return;
 
         case tt.jsxTagStart:
         case tt.string:
-          return this.parseExprAtom();
+          this.parseExprAtom();
+          return;
 
         default:
           throw this.raise(
@@ -323,7 +325,9 @@ export default (superClass: ParserClass): ParserClass =>
         return this.finishNode(node, "JSXSpreadAttribute");
       }
       node.name = this.jsxParseNamespacedName();
-      node.value = this.eat(tt.eq) ? this.jsxParseAttributeValue() : null;
+      if (this.eat(tt.eq)) {
+        this.jsxParseAttributeValue();
+      }
       return this.finishNode(node, "JSXAttribute");
     }
 
@@ -460,11 +464,14 @@ export default (superClass: ParserClass): ParserClass =>
     // Overrides
     // ==================================
 
-    parseExprAtom(refShortHandDefaultPos: Pos | null = null): N.Expression {
+    // Returns true if this was an arrow function.
+    parseExprAtom(refShortHandDefaultPos: Pos | null = null): boolean {
       if (this.match(tt.jsxText)) {
-        return this.parseLiteral(this.state.value, "JSXText");
+        this.parseLiteral(this.state.value, "JSXText");
+        return false;
       } else if (this.match(tt.jsxTagStart)) {
-        return this.jsxParseElement();
+        this.jsxParseElement();
+        return false;
       } else {
         return super.parseExprAtom(refShortHandDefaultPos);
       }

@@ -68,21 +68,19 @@ export default abstract class ExpressionParser extends LValParser {
 
   // Parse an assignment expression. This includes applications of
   // operators like `+=`.
-
+  // Returns true if the expression was an arrow function.
   parseMaybeAssign(
     noIn: boolean | null = null,
     refShorthandDefaultPos?: Pos | null,
     afterLeftParse?: Function,
     refNeedsArrowPos?: Pos | null,
-  ): N.Expression {
-    const startPos = this.state.start;
-    const startLoc = this.state.startLoc;
+  ): boolean {
     if (this.match(tt._yield) && this.state.inGenerator) {
-      let left = this.parseYield();
+      this.parseYield();
       if (afterLeftParse) {
-        left = afterLeftParse.call(this, left, startPos, startLoc);
+        afterLeftParse.call(this);
       }
-      return left;
+      return false;
     }
 
     let failOnShorthandAssign;
@@ -97,97 +95,72 @@ export default abstract class ExpressionParser extends LValParser {
       this.state.potentialArrowAt = this.state.start;
     }
 
-    let left = this.parseMaybeConditional(noIn, refShorthandDefaultPos, refNeedsArrowPos);
+    const wasArrow = this.parseMaybeConditional(noIn, refShorthandDefaultPos, refNeedsArrowPos);
     if (afterLeftParse) {
-      left = afterLeftParse.call(this, left, startPos, startLoc);
+      afterLeftParse.call(this);
     }
     if (this.state.type.isAssign) {
-      const node = this.startNodeAt(startPos, startLoc);
-      node.operator = this.state.value;
       // Note that we keep the LHS tokens as accesses for now.
       refShorthandDefaultPos.start = 0; // reset because shorthand default was used correctly
 
-      if (left.extra && left.extra.parenthesized) {
-        let errorMsg;
-        if (left.type === "ObjectPattern") {
-          errorMsg = "`({a}) = 0` use `({a} = 0)`";
-        } else if (left.type === "ArrayPattern") {
-          errorMsg = "`([a]) = 0` use `([a] = 0)`";
-        }
-        if (errorMsg) {
-          this.raise(
-            left.start,
-            `You're trying to assign to a parenthesized expression, eg. instead of ${errorMsg}`,
-          );
-        }
-      }
-
       this.next();
-      node.right = this.parseMaybeAssign(noIn);
-      return this.finishNode(node, "AssignmentExpression");
+      this.parseMaybeAssign(noIn);
+      return false;
     } else if (failOnShorthandAssign && refShorthandDefaultPos.start) {
       this.unexpected(refShorthandDefaultPos.start);
     }
-
-    return left;
+    return wasArrow;
   }
 
   // Parse a ternary conditional (`?:`) operator.
-
+  // Returns true if the expression was an arrow function.
   parseMaybeConditional(
     noIn: boolean | null,
     refShorthandDefaultPos: Pos,
     refNeedsArrowPos?: Pos | null,
-  ): N.Expression {
+  ): boolean {
     const startPos = this.state.start;
     const startLoc = this.state.startLoc;
-    const potentialArrowAt = this.state.potentialArrowAt;
-    const expr = this.parseExprOps(noIn, refShorthandDefaultPos);
-
-    if (expr.type === "ArrowFunctionExpression" && expr.start === potentialArrowAt) {
-      return expr;
+    const wasArrow = this.parseExprOps(noIn, refShorthandDefaultPos);
+    if (wasArrow) {
+      return true;
     }
-    if (refShorthandDefaultPos && refShorthandDefaultPos.start) return expr;
-
-    return this.parseConditional(expr, noIn, startPos, startLoc, refNeedsArrowPos);
+    if (refShorthandDefaultPos && refShorthandDefaultPos.start) {
+      return false;
+    }
+    this.parseConditional(noIn, startPos, startLoc, refNeedsArrowPos);
+    return false;
   }
 
   parseConditional(
-    expr: N.Expression,
     noIn: boolean | null,
     startPos: number,
     startLoc: Position,
     // FIXME: Disabling this for now since can't seem to get it to play nicely
     // eslint-disable-next-line no-unused-vars
     refNeedsArrowPos?: Pos | null,
-  ): N.Expression {
+  ): void {
     if (this.eat(tt.question)) {
-      const node = this.startNodeAt(startPos, startLoc);
-      node.test = expr;
-      node.consequent = this.parseMaybeAssign();
+      this.parseMaybeAssign();
       this.expect(tt.colon);
-      node.alternate = this.parseMaybeAssign(noIn);
-      return this.finishNode(node, "ConditionalExpression");
+      this.parseMaybeAssign(noIn);
     }
-    return expr;
   }
 
   // Start the precedence parser.
-
-  parseExprOps(noIn: boolean | null, refShorthandDefaultPos: Pos): N.Expression {
+  // Returns true if this was an arrow function
+  parseExprOps(noIn: boolean | null, refShorthandDefaultPos: Pos): boolean {
     const startPos = this.state.start;
     const startLoc = this.state.startLoc;
-    const potentialArrowAt = this.state.potentialArrowAt;
-    const expr = this.parseMaybeUnary(refShorthandDefaultPos);
-
-    if (expr.type === "ArrowFunctionExpression" && expr.start === potentialArrowAt) {
-      return expr;
+    const wasArrow = this.parseMaybeUnary(refShorthandDefaultPos);
+    if (wasArrow) {
+      return true;
     }
     if (refShorthandDefaultPos && refShorthandDefaultPos.start) {
-      return expr;
+      return false;
     }
-
-    return this.parseExprOp(expr, startPos, startLoc, -1, noIn);
+    this.parseExprOp(startPos, startLoc, -1, noIn);
+    return false;
   }
 
   // Parse binary operators with the operator precedence parsing
@@ -197,31 +170,16 @@ export default abstract class ExpressionParser extends LValParser {
   // operator that has a lower precedence than the set it is parsing.
 
   parseExprOp(
-    left: N.Expression,
     leftStartPos: number,
     leftStartLoc: Position,
     minPrec: number,
     noIn: boolean | null,
-  ): N.Expression {
+  ): void {
     const prec = this.state.type.binop;
     if (prec != null && (!noIn || !this.match(tt._in))) {
       if (prec > minPrec) {
         const node = this.startNodeAt(leftStartPos, leftStartLoc);
-        node.left = left;
         node.operator = this.state.value;
-
-        if (
-          node.operator === "**" &&
-          left.type === "UnaryExpression" &&
-          left.extra &&
-          !left.extra.parenthesizedArgument &&
-          !left.extra.parenthesized
-        ) {
-          this.raise(
-            left.argument.start,
-            "Illegal expression. Wrap left hand side or entire exponentiation in parentheses.",
-          );
-        }
 
         const op = this.state.type;
         this.next();
@@ -239,32 +197,18 @@ export default abstract class ExpressionParser extends LValParser {
           this.expectPlugin("nullishCoalescingOperator");
         }
 
-        node.right = this.parseExprOp(
-          this.parseMaybeUnary(),
-          startPos,
-          startLoc,
-          op.rightAssociative ? prec - 1 : prec,
-          noIn,
-        );
-
-        this.finishNode(
-          node,
-          op === tt.logicalOR || op === tt.logicalAND || op === tt.nullishCoalescing
-            ? "LogicalExpression"
-            : "BinaryExpression",
-        );
-        return this.parseExprOp(node, leftStartPos, leftStartLoc, minPrec, noIn);
+        this.parseMaybeUnary();
+        this.parseExprOp(startPos, startLoc, op.rightAssociative ? prec - 1 : prec, noIn);
+        this.parseExprOp(leftStartPos, leftStartLoc, minPrec, noIn);
       }
     }
-    return left;
   }
 
   // Parse unary operators, both prefix and postfix.
-
-  parseMaybeUnary(refShorthandDefaultPos: Pos | null = null): N.Expression {
+  // Returns true if this was an arrow function.
+  parseMaybeUnary(refShorthandDefaultPos: Pos | null = null): boolean {
     if (this.state.type.prefix) {
       const node = this.startNode();
-      const update = this.match(tt.incDec);
       node.operator = this.state.value;
       node.prefix = true;
 
@@ -272,137 +216,87 @@ export default abstract class ExpressionParser extends LValParser {
         this.expectPlugin("throwExpressions");
       }
       this.next();
-
-      const argType = this.state.type;
-      node.argument = this.parseMaybeUnary();
-
-      this.addExtra(
-        node,
-        "parenthesizedArgument",
-        argType === tt.parenL && (!node.argument.extra || !node.argument.extra.parenthesized),
-      );
-
+      this.parseMaybeUnary();
       if (refShorthandDefaultPos && refShorthandDefaultPos.start) {
         this.unexpected(refShorthandDefaultPos.start);
       }
-
-      return this.finishNode(node, update ? "UpdateExpression" : "UnaryExpression");
+      return false;
     }
 
-    const startPos = this.state.start;
-    const startLoc = this.state.startLoc;
-    let expr = this.parseExprSubscripts(refShorthandDefaultPos);
-    if (refShorthandDefaultPos && refShorthandDefaultPos.start) return expr;
+    const wasArrow = this.parseExprSubscripts(refShorthandDefaultPos);
+    if (wasArrow) {
+      return true;
+    }
+    if (refShorthandDefaultPos && refShorthandDefaultPos.start) {
+      return false;
+    }
     while (this.state.type.postfix && !this.canInsertSemicolon()) {
-      const node = this.startNodeAt(startPos, startLoc);
-      node.operator = this.state.value;
-      node.prefix = false;
-      node.argument = expr;
       this.next();
-      expr = this.finishNode(node, "UpdateExpression");
     }
-    return expr;
+    return false;
   }
 
   // Parse call, dot, and `[]`-subscript expressions.
-
-  parseExprSubscripts(refShorthandDefaultPos: Pos | null = null): N.Expression {
+  // Returns true if this was an arrow function.
+  parseExprSubscripts(refShorthandDefaultPos: Pos | null = null): boolean {
     const startPos = this.state.start;
     const startLoc = this.state.startLoc;
-    const potentialArrowAt = this.state.potentialArrowAt;
-    const expr = this.parseExprAtom(refShorthandDefaultPos);
-
-    if (expr.type === "ArrowFunctionExpression" && expr.start === potentialArrowAt) {
-      return expr;
+    const wasArrow = this.parseExprAtom(refShorthandDefaultPos);
+    if (wasArrow) {
+      return true;
     }
 
     if (refShorthandDefaultPos && refShorthandDefaultPos.start) {
-      return expr;
+      return false;
     }
 
-    return this.parseSubscripts(expr, startPos, startLoc);
+    this.parseSubscripts(startPos, startLoc);
+    return false;
   }
 
-  parseSubscripts(
-    base: N.Expression,
-    startPos: number,
-    startLoc: Position,
-    noCalls: boolean | null = null,
-  ): N.Expression {
+  parseSubscripts(startPos: number, startLoc: Position, noCalls: boolean | null = null): void {
     const state = {stop: false};
     do {
-      base = this.parseSubscript(base, startPos, startLoc, noCalls, state);
+      this.parseSubscript(startPos, startLoc, noCalls, state);
     } while (!state.stop);
-    return base;
   }
 
   /** Set 'state.stop = true' to indicate that we should stop parsing subscripts. */
   parseSubscript(
-    base: N.Expression,
     startPos: number,
     startLoc: Position,
     noCalls: boolean | null,
     state: {stop: boolean},
-  ): N.Expression {
+  ): void {
     if (!noCalls && this.eat(tt.doubleColon)) {
-      const node = this.startNodeAt(startPos, startLoc);
-      node.object = base;
-      node.callee = this.parseNoCallExpr();
+      this.parseNoCallExpr();
       state.stop = true;
-      return this.parseSubscripts(
-        this.finishNode(node, "BindExpression"),
-        startPos,
-        startLoc,
-        noCalls,
-      );
+      this.parseSubscripts(startPos, startLoc, noCalls);
     } else if (this.match(tt.questionDot)) {
       this.expectPlugin("optionalChaining");
 
       if (noCalls && this.lookahead().type === tt.parenL) {
         state.stop = true;
-        return base;
+        return;
       }
       this.next();
 
-      const node = this.startNodeAt(startPos, startLoc);
-
       if (this.eat(tt.bracketL)) {
-        node.object = base;
         this.parseExpression();
-        node.computed = true;
-        node.optional = true;
         this.expect(tt.bracketR);
-        return this.finishNode(node, "MemberExpression");
       } else if (this.eat(tt.parenL)) {
-        const possibleAsync = this.atPossibleAsync(base);
-
-        node.callee = base;
-        node.arguments = this.parseCallExpressionArguments(tt.parenR, possibleAsync);
-        node.optional = true;
-
-        return this.finishNode(node, "CallExpression");
+        const possibleAsync = this.atPossibleAsync();
+        this.parseCallExpressionArguments(tt.parenR, possibleAsync);
       } else {
-        node.object = base;
-        node.property = this.parseIdentifier(true);
-        node.computed = false;
-        node.optional = true;
-        return this.finishNode(node, "MemberExpression");
+        this.parseIdentifier(true);
       }
     } else if (this.eat(tt.dot)) {
-      const node = this.startNodeAt(startPos, startLoc);
-      node.object = base;
-      node.property = this.parseMaybePrivateName();
-      node.computed = false;
-      return this.finishNode(node, "MemberExpression");
+      this.parseMaybePrivateName();
     } else if (this.eat(tt.bracketL)) {
-      const node = this.startNodeAt(startPos, startLoc);
-      node.object = base;
       this.parseExpression();
-      node.computed = true;
       this.expect(tt.bracketR);
-      return this.finishNode(node, "MemberExpression");
     } else if (!noCalls && this.match(tt.parenL)) {
-      const possibleAsync = this.atPossibleAsync(base);
+      const possibleAsync = this.atPossibleAsync();
       // We see "async", but it's possible it's a usage of the name "async". Parse as if it's a
       // function call, and if we see an arrow later, backtrack and re-parse as a parameter list.
       const initialStateForAsyncArrow = possibleAsync ? this.state.clone() : null;
@@ -411,22 +305,14 @@ export default abstract class ExpressionParser extends LValParser {
 
       const callContextId = this.nextContextId++;
 
-      const node = this.startNodeAt<N.CallExpression>(startPos, startLoc);
-      node.callee = base;
-
       // TODO: Clean up/merge this into `this.state` or a class like acorn's
       // `DestructuringErrors` alongside refShorthandDefaultPos and
       // refNeedsArrowPos.
       const refTrailingCommaPos: Pos = {start: -1};
 
       this.state.tokens[this.state.tokens.length - 1].contextId = callContextId;
-      node.arguments = this.parseCallExpressionArguments(
-        tt.parenR,
-        possibleAsync,
-        refTrailingCommaPos,
-      ) as Array<N.Node>;
+      this.parseCallExpressionArguments(tt.parenR, possibleAsync, refTrailingCommaPos);
       this.state.tokens[this.state.tokens.length - 1].contextId = callContextId;
-      this.finishNode(node, "CallExpression");
 
       if (possibleAsync && this.shouldParseAsyncArrow()) {
         // We hit an arrow, so backtrack and start again parsing function parameters.
@@ -434,29 +320,21 @@ export default abstract class ExpressionParser extends LValParser {
         state.stop = true;
 
         this.parseFunctionParams();
-        return this.parseAsyncArrowFromCallExpression(
-          this.startNodeAt(startPos, startLoc),
-          node,
-          startTokenIndex,
-        );
+        this.parseAsyncArrowFromCallExpression(startPos, startTokenIndex);
       }
-      return node;
     } else if (this.match(tt.backQuote)) {
-      const node = this.startNodeAt(startPos, startLoc);
-      node.tag = base;
-      node.quasi = this.parseTemplate(true);
-      return this.finishNode(node, "TaggedTemplateExpression");
+      // Tagged template expression.
+      this.parseTemplate(true);
     } else {
       state.stop = true;
-      return base;
     }
   }
 
-  atPossibleAsync(base: N.Expression): boolean {
+  atPossibleAsync(): boolean {
+    // This was made less strict than the original version to avoid passing around nodes, but it
+    // should be safe to have rare false positives here.
     return (
-      this.state.potentialArrowAt === base.start &&
-      base.type === "Identifier" &&
-      base.name === "async" &&
+      this.state.tokens[this.state.tokens.length - 1].value === "async" &&
       !this.canInsertSemicolon()
     );
   }
@@ -505,99 +383,79 @@ export default abstract class ExpressionParser extends LValParser {
     return this.match(tt.arrow);
   }
 
-  parseAsyncArrowFromCallExpression(
-    node: N.ArrowFunctionExpression,
-    call: N.CallExpression,
-    startTokenIndex: number,
-  ): N.ArrowFunctionExpression {
+  parseAsyncArrowFromCallExpression(functionStart: number, startTokenIndex: number): void {
     this.expect(tt.arrow);
-    this.parseArrowExpression(node, startTokenIndex, call.arguments, true);
-    return node;
+    this.parseArrowExpression(functionStart, startTokenIndex, true);
   }
 
   // Parse a no-call expression (like argument of `new` or `::` operators).
 
-  parseNoCallExpr(): N.Expression {
+  parseNoCallExpr(): void {
     const startPos = this.state.start;
     const startLoc = this.state.startLoc;
-    return this.parseSubscripts(this.parseExprAtom(), startPos, startLoc, true);
+    this.parseExprAtom();
+    this.parseSubscripts(startPos, startLoc, true);
   }
 
   // Parse an atomic expression — either a single token that is an
   // expression, an expression started by a keyword like `function` or
   // `new`, or an expression wrapped in punctuation like `()`, `[]`,
   // or `{}`.
-
-  parseExprAtom(refShorthandDefaultPos?: Pos | null): N.Expression {
+  // Returns true if the parsed expression was an arrow function.
+  parseExprAtom(refShorthandDefaultPos?: Pos | null): boolean {
     const canBeArrow = this.state.potentialArrowAt === this.state.start;
     let node: N.Expression;
 
     switch (this.state.type) {
       case tt._super:
-        node = this.startNode();
         this.next();
-        if (!this.match(tt.parenL) && !this.match(tt.bracketL) && !this.match(tt.dot)) {
-          this.unexpected();
-        }
-        return this.finishNode(node, "Super");
+        return false;
 
       case tt._import:
         if (this.lookahead().type === tt.dot) {
           this.parseImportMetaProperty();
-          return this.startNode();
+          return false;
         }
-
-        this.expectPlugin("dynamicImport");
-
-        node = this.startNode();
         this.next();
-        if (!this.match(tt.parenL)) {
-          this.unexpected(null, tt.parenL);
-        }
-        return this.finishNode(node, "Import");
+        return false;
 
       case tt._this:
-        node = this.startNode();
         this.next();
-        return this.finishNode(node, "ThisExpression");
+        return false;
 
       case tt._yield:
         if (this.state.inGenerator) this.unexpected();
 
       case tt.name: {
         const startTokenIndex = this.state.tokens.length;
-        node = this.startNode();
-        const allowAwait = this.state.value === "await" && this.state.inAsync;
-        const id = this.parseIdentifier(allowAwait);
-
-        if (id.name === "await") {
+        const functionStart = this.state.start;
+        const name = this.state.value;
+        const allowAwait = name === "await" && this.state.inAsync;
+        this.parseIdentifier(allowAwait);
+        if (name === "await") {
           if (this.state.inAsync || this.inModule) {
-            return this.parseAwait(node as N.AwaitExpression);
+            this.parseAwait();
+            return false;
           }
-        } else if (id.name === "async" && this.match(tt._function) && !this.canInsertSemicolon()) {
+        } else if (name === "async" && this.match(tt._function) && !this.canInsertSemicolon()) {
           this.next();
-          this.parseFunction(node.start, false, false, true);
-          return node;
-        } else if (canBeArrow && id.name === "async" && this.match(tt.name)) {
-          const params = [this.parseIdentifier()];
+          this.parseFunction(functionStart, false, false, true);
+          return false;
+        } else if (canBeArrow && name === "async" && this.match(tt.name)) {
+          this.parseIdentifier();
           this.expect(tt.arrow);
           // let foo = bar => {};
-          this.parseArrowExpression(
-            node as N.ArrowFunctionExpression,
-            startTokenIndex,
-            params,
-            true,
-          );
-          return node;
+          this.parseArrowExpression(functionStart, startTokenIndex, true);
+          return true;
         }
 
         if (canBeArrow && !this.canInsertSemicolon() && this.eat(tt.arrow)) {
-          this.parseArrowExpression(node as N.ArrowFunctionExpression, startTokenIndex, [id]);
-          return node;
+          this.parseArrowExpression(functionStart, startTokenIndex);
+          return true;
         }
 
         this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.Access;
-        return id;
+        return false;
       }
 
       case tt._do: {
@@ -608,77 +466,75 @@ export default abstract class ExpressionParser extends LValParser {
         this.state.inFunction = false;
         this.parseBlock(false);
         this.state.inFunction = oldInFunction;
-        return this.finishNode(innerNode, "DoExpression");
+        return false;
       }
 
       case tt.regexp: {
         const value = this.state.value;
-        node = this.parseLiteral(value.value, "RegExpLiteral");
-        node.pattern = value.pattern;
-        node.flags = value.flags;
-        return node;
+        this.parseLiteral(value.value, "RegExpLiteral");
+        return false;
       }
 
       case tt.num:
-        return this.parseLiteral(this.state.value, "NumericLiteral");
+        this.parseLiteral(this.state.value, "NumericLiteral");
+        return false;
 
       case tt.bigint:
-        return this.parseLiteral(this.state.value, "BigIntLiteral");
+        this.parseLiteral(this.state.value, "BigIntLiteral");
+        return false;
 
       case tt.string:
-        return this.parseLiteral(this.state.value, "StringLiteral");
+        this.parseLiteral(this.state.value, "StringLiteral");
+        return false;
 
       case tt._null:
-        node = this.startNode();
         this.next();
-        return this.finishNode(node, "NullLiteral");
+        return false;
 
       case tt._true:
       case tt._false:
-        return this.parseBooleanLiteral();
+        this.parseBooleanLiteral();
+        return false;
 
-      case tt.parenL:
-        return this.parseParenAndDistinguishExpression(canBeArrow);
+      case tt.parenL: {
+        const wasArrow = this.parseParenAndDistinguishExpression(canBeArrow);
+        return wasArrow;
+      }
 
       case tt.bracketL:
-        node = this.startNode();
         this.next();
-        node.elements = this.parseExprList(tt.bracketR, true, refShorthandDefaultPos);
-        return this.finishNode(node, "ArrayExpression");
+        this.parseExprList(tt.bracketR, true, refShorthandDefaultPos);
+        return false;
 
       case tt.braceL:
-        return this.parseObj(false, false, refShorthandDefaultPos);
+        this.parseObj(false, false, refShorthandDefaultPos);
+        return false;
 
       case tt._function:
         this.parseFunctionExpression();
-        return this.startNode();
+        return false;
 
       case tt.at:
         this.parseDecorators();
+      // Fall through.
 
       case tt._class:
         node = this.startNode();
         this.parseClass(false);
-        return this.startNode();
+        return false;
 
       case tt._new:
         this.parseNew();
-        return this.startNode();
+        return false;
 
       case tt.backQuote:
-        return this.parseTemplate(false);
+        this.parseTemplate(false);
+        return false;
 
       case tt.doubleColon: {
-        node = this.startNode();
         this.next();
-        node.object = null;
-        const callee = this.parseNoCallExpr();
-        node.callee = callee;
-        if (callee.type === "MemberExpression") {
-          return this.finishNode(node, "BindExpression");
-        } else {
-          throw this.raise(callee.start, "Binding should be performed on object property.");
-        }
+        this.parseNoCallExpr();
+        return false;
       }
 
       default:
@@ -770,15 +626,12 @@ export default abstract class ExpressionParser extends LValParser {
     this.expect(tt.parenR);
   }
 
-  parseParenAndDistinguishExpression(canBeArrow: boolean): N.Expression {
-    const startPos = this.state.start;
-    const startLoc = this.state.startLoc;
-
+  // Returns true if this was an arrow expression.
+  parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
     // Assume this is a normal parenthesized expression, but if we see an arrow, we'll bail and
     // start over as a parameter list.
     const initialState = this.state.clone();
 
-    let val: N.Expression;
     const startTokenIndex = this.state.tokens.length;
     this.expect(tt.parenL);
 
@@ -803,16 +656,9 @@ export default abstract class ExpressionParser extends LValParser {
       }
 
       if (this.match(tt.ellipsis)) {
-        const spreadNodeStartPos = this.state.start;
-        const spreadNodeStartLoc = this.state.startLoc;
         spreadStart = this.state.start;
-        exprList.push(
-          this.parseParenItem(
-            this.parseRest(false /* isBlockScope */),
-            spreadNodeStartPos,
-            spreadNodeStartLoc,
-          ),
-        );
+        this.parseRest(false /* isBlockScope */);
+        this.parseParenItem();
 
         if (this.match(tt.comma) && this.lookahead().type === tt.parenR) {
           this.raise(this.state.start, "A trailing comma is not permitted after the rest element");
@@ -835,18 +681,19 @@ export default abstract class ExpressionParser extends LValParser {
     const innerEndLoc = this.state.startLoc;
     this.expect(tt.parenR);
 
-    const arrowNode = this.startNodeAt<N.ArrowFunctionExpression>(startPos, startLoc);
     if (canBeArrow && this.shouldParseArrow()) {
-      const parsedArrowNode = this.parseArrow(arrowNode);
-      if (parsedArrowNode) {
+      const wasArrow = this.parseArrow();
+      if (wasArrow) {
         // It was an arrow function this whole time, so start over and parse it as params so that we
         // get proper token annotations.
         this.state = initialState;
+        // We don't need to worry about functionStart for arrow functions, so just use something.
+        const functionStart = this.state.start;
         // Don't specify a context ID because arrow function don't need a context ID.
         this.parseFunctionParams();
-        this.parseArrow(this.startNode());
-        this.parseArrowExpression(parsedArrowNode, startTokenIndex, exprList);
-        return parsedArrowNode;
+        this.parseArrow();
+        this.parseArrowExpression(functionStart, startTokenIndex);
+        return true;
       }
     }
 
@@ -858,41 +705,26 @@ export default abstract class ExpressionParser extends LValParser {
     if (refShorthandDefaultPos.start) {
       this.unexpected(refShorthandDefaultPos.start);
     }
-    if (refNeedsArrowPos.start) this.unexpected(refNeedsArrowPos.start);
-
-    if (exprList.length > 1) {
-      val = this.startNodeAt(innerStartPos, innerStartLoc);
-      val.expressions = exprList;
-      this.finishNodeAt(val, "SequenceExpression", innerEndPos, innerEndLoc);
-    } else {
-      val = exprList[0];
+    if (refNeedsArrowPos.start) {
+      this.unexpected(refNeedsArrowPos.start);
     }
 
-    this.addExtra(val, "parenthesized", true);
-    this.addExtra(val, "parenStart", startPos);
-
-    return val;
+    return false;
   }
 
   shouldParseArrow(): boolean {
     return !this.canInsertSemicolon();
   }
 
-  parseArrow(node: N.ArrowFunctionExpression): N.ArrowFunctionExpression | null {
+  // Returns whether there was an arrow token.
+  parseArrow(): boolean {
     if (this.eat(tt.arrow)) {
-      return node;
+      return true;
     }
-    return null;
+    return false;
   }
 
-  parseParenItem(
-    node: N.Expression,
-    startPos: number,
-    // eslint-disable-next-line no-unused-vars
-    startLoc: Position,
-  ): N.Expression {
-    return node;
-  }
+  parseParenItem(): void {}
 
   // New's precedence is slightly tricky. It must allow its argument to
   // be a `[]` or dot subscript expression, but not a call — at least,
@@ -1247,15 +1079,13 @@ export default abstract class ExpressionParser extends LValParser {
   // If the parameters are provided, they will be converted to an
   // assignable list.
   parseArrowExpression(
-    node: N.ArrowFunctionExpression,
+    functionStart: number,
     startTokenIndex: number,
-    params?: Array<N.Expression> | null,
     isAsync: boolean = false,
-  ): N.ArrowFunctionExpression {
+  ): void {
     const oldInFunc = this.state.inFunction;
     this.state.inFunction = true;
 
-    const functionStart = node.start;
     const oldInGenerator = this.state.inGenerator;
     this.state.inGenerator = false;
     this.parseFunctionBody(functionStart, isAsync, false /* isGenerator */, true);
@@ -1264,8 +1094,6 @@ export default abstract class ExpressionParser extends LValParser {
 
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
-
-    return this.finishNode(node, "ArrowFunctionExpression");
   }
 
   parseFunctionBodyAndFinish(
@@ -1398,19 +1226,8 @@ export default abstract class ExpressionParser extends LValParser {
 
   // Parses await expression inside async function.
 
-  parseAwait(node: N.AwaitExpression): N.AwaitExpression {
-    // istanbul ignore next: this condition is checked at the call site so won't be hit here
-    if (!this.state.inAsync) {
-      this.unexpected();
-    }
-    if (this.match(tt.star)) {
-      this.raise(
-        node.start,
-        "await* has been removed from the async functions proposal. Use Promise.all() instead.",
-      );
-    }
-    node.argument = this.parseMaybeUnary();
-    return this.finishNode(node, "AwaitExpression");
+  parseAwait(): void {
+    this.parseMaybeUnary();
   }
 
   // Parses yield expression inside generator.

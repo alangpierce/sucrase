@@ -1877,41 +1877,6 @@ export default (superClass: ParserClass): ParserClass =>
       });
     }
 
-    toAssignable(node: N.Node, isBinding: boolean | null, contextDescription: string): N.Node {
-      switch (node.type) {
-        case "TSTypeCastExpression":
-          return super.toAssignable(
-            this.typeCastToParameter(node as N.TsTypeCastExpression),
-            isBinding,
-            contextDescription,
-          );
-        case "TSParameterProperty":
-          return super.toAssignable(node, isBinding, contextDescription);
-        default:
-          return super.toAssignable(node, isBinding, contextDescription);
-      }
-    }
-
-    checkLVal(
-      expr: N.Expression,
-      isBinding: boolean | null,
-      checkClashes: {[key: string]: boolean} | null,
-      contextDescription: string,
-    ): void {
-      switch (expr.type) {
-        case "TSTypeCastExpression":
-          // Allow "typecasts" to appear on the left of assignment expressions,
-          // because it may be in an arrow function.
-          // e.g. `const f = (foo: number = 0) => foo;`
-          return;
-        case "TSParameterProperty":
-          this.checkLVal(expr.parameter, isBinding, checkClashes, "parameter property");
-          return;
-        default:
-          super.checkLVal(expr, isBinding, checkClashes, contextDescription);
-      }
-    }
-
     parseBindingAtom(isBlockScope: boolean): N.Pattern {
       switch (this.state.type) {
         case tt._this:
@@ -1965,20 +1930,6 @@ export default (superClass: ParserClass): ParserClass =>
       } else {
         super.readToken(code);
       }
-    }
-
-    toAssignableList(
-      exprList: Array<N.Expression>,
-      isBinding: boolean | null,
-      contextDescription: string,
-    ): ReadonlyArray<N.Pattern> {
-      for (let i = 0; i < exprList.length; i++) {
-        const expr = exprList[i];
-        if (expr && expr.type === "TSTypeCastExpression") {
-          exprList[i] = this.typeCastToParameter(expr as N.TsTypeCastExpression);
-        }
-      }
-      return super.toAssignableList(exprList, isBinding, contextDescription);
     }
 
     typeCastToParameter(node: N.TsTypeCastExpression): N.Node {

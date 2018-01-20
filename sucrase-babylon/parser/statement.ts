@@ -331,11 +331,8 @@ export default class StatementParser extends ExpressionParser {
     }
 
     const refShorthandDefaultPos = {start: 0};
-    const init = this.parseExpression(true, refShorthandDefaultPos);
+    this.parseExpression(true, refShorthandDefaultPos);
     if (this.match(tt._in) || this.isContextual("of")) {
-      const description = this.isContextual("of") ? "for-of statement" : "for-in statement";
-      this.toAssignable(init, null, description);
-      this.checkLVal(init, null, null, description);
       this.parseForIn(forAwait);
       return;
     } else if (refShorthandDefaultPos.start) {
@@ -451,8 +448,6 @@ export default class StatementParser extends ExpressionParser {
         catchBindingStartTokenIndex = this.state.tokens.length;
         this.expect(tt.parenL);
         clause.param = this.parseBindingAtom(true /* isBlockScope */);
-        const clashes: {} = Object.create(null);
-        this.checkLVal(clause.param, true, clashes, "catch clause");
         this.expect(tt.parenR);
       } else {
         this.expectPlugin("optionalCatchBinding");
@@ -608,7 +603,6 @@ export default class StatementParser extends ExpressionParser {
 
   parseVarHead(decl: N.VariableDeclarator, isBlockScope: boolean): void {
     decl.id = this.parseBindingAtom(isBlockScope);
-    this.checkLVal(decl.id, true, null, "variable declaration");
   }
 
   // Parse a function declaration or literal (depending on the
@@ -1311,14 +1305,8 @@ export default class StatementParser extends ExpressionParser {
     return this.match(tt.name);
   }
 
-  parseImportSpecifierLocal(
-    node: N.ImportDeclaration,
-    specifier: N.Node,
-    type: string,
-    contextDescription: string,
-  ): void {
+  parseImportSpecifierLocal(node: N.ImportDeclaration, specifier: N.Node, type: string): void {
     specifier.local = this.parseIdentifier();
-    this.checkLVal(specifier.local, true, null, contextDescription);
     node.specifiers.push(this.finishNode(specifier as N.ImportDefaultSpecifier, type));
   }
 
@@ -1327,12 +1315,7 @@ export default class StatementParser extends ExpressionParser {
     let first = true;
     if (this.shouldParseDefaultImport(node)) {
       // import defaultObj, { x, y as z } from '...'
-      this.parseImportSpecifierLocal(
-        node,
-        this.startNode(),
-        "ImportDefaultSpecifier",
-        "default import specifier",
-      );
+      this.parseImportSpecifierLocal(node, this.startNode(), "ImportDefaultSpecifier");
 
       if (!this.eat(tt.comma)) return;
     }
@@ -1342,12 +1325,7 @@ export default class StatementParser extends ExpressionParser {
       this.next();
       this.expectContextual("as");
 
-      this.parseImportSpecifierLocal(
-        node,
-        specifier,
-        "ImportNamespaceSpecifier",
-        "import namespace specifier",
-      );
+      this.parseImportSpecifierLocal(node, specifier, "ImportNamespaceSpecifier");
 
       return;
     }
@@ -1381,7 +1359,6 @@ export default class StatementParser extends ExpressionParser {
     } else {
       specifier.local = specifier.imported.__clone();
     }
-    this.checkLVal(specifier.local, true, null, "import specifier");
     node.specifiers.push(this.finishNode(specifier as N.ImportSpecifier, "ImportSpecifier"));
   }
 }

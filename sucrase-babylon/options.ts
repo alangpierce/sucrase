@@ -6,7 +6,6 @@ export type Options = {
   sourceFilename?: string;
   startLine: number;
   allowReturnOutsideFunction: boolean;
-  allowImportExportEverywhere: boolean;
   allowSuperOutsideMethod: boolean;
   plugins: ReadonlyArray<string>;
   ranges: boolean;
@@ -26,9 +25,6 @@ export const defaultOptions: Options = {
   // When enabled, a return at the top level is not considered an
   // error.
   allowReturnOutsideFunction: false,
-  // When enabled, import/export statements are not constrained to
-  // appearing at the top of the program.
-  allowImportExportEverywhere: false,
   // TODO
   allowSuperOutsideMethod: false,
   // An array of plugins to enable

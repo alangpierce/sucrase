@@ -101,13 +101,13 @@ export default class StatementParser extends ExpressionParser {
         return;
 
       case tt._while:
-        this.parseWhileStatement(node as N.WhileStatement);
+        this.parseWhileStatement();
         return;
       case tt.braceL:
         this.parseBlock();
         return;
       case tt.semi:
-        this.parseEmptyStatement(node as N.EmptyStatement);
+        this.parseEmptyStatement();
         return;
       case tt._export:
       case tt._import: {
@@ -115,20 +115,12 @@ export default class StatementParser extends ExpressionParser {
         if (nextToken.type === tt.parenL || nextToken.type === tt.dot) {
           break;
         }
-
-        if (!this.options.allowImportExportEverywhere && !topLevel) {
-          this.raise(this.state.start, "'import' and 'export' may only appear at the top level");
-        }
-
         this.next();
-
-        let result;
         if (starttype === tt._import) {
-          result = this.parseImport(node);
+          this.parseImport(node);
         } else {
-          result = this.parseExport(node);
+          this.parseExport(node);
         }
-
         return;
       }
       case tt.name:
@@ -155,13 +147,16 @@ export default class StatementParser extends ExpressionParser {
     // simply start parsing an expression, and afterwards, if the
     // next token is a colon and the expression was a simple
     // Identifier node, we switch to interpreting it as a label.
-    const maybeName = this.state.value;
     const expr = this.parseExpression();
-
-    if (starttype === tt.name && expr.type === "Identifier" && this.eat(tt.colon)) {
-      this.parseLabeledStatement(node as N.LabeledStatement, maybeName, expr as N.Identifier);
+    if (expr.type !== "Identifier") {
+      this.semicolon();
+      return;
+    }
+    if (this.eat(tt.colon)) {
+      this.parseLabeledStatement();
     } else {
-      this.parseExpressionStatement(node as N.ExpressionStatement, expr);
+      // This was an identifier, so we might want to handle flow/typescript-specific cases.
+      this.parseIdentifierStatement(expr.name);
     }
   }
 
@@ -400,31 +395,26 @@ export default class StatementParser extends ExpressionParser {
     this.semicolon();
   }
 
-  parseWhileStatement(node: N.WhileStatement): N.WhileStatement {
+  parseWhileStatement(): void {
     this.next();
-    node.test = this.parseParenExpression();
+    this.parseParenExpression();
     this.parseStatement(false);
-    return this.finishNode(node, "WhileStatement");
   }
 
-  parseEmptyStatement(node: N.EmptyStatement): N.EmptyStatement {
+  parseEmptyStatement(): void {
     this.next();
-    return this.finishNode(node, "EmptyStatement");
   }
 
-  parseLabeledStatement(
-    node: N.LabeledStatement,
-    maybeName: string,
-    expr: N.Identifier,
-  ): N.LabeledStatement {
+  parseLabeledStatement(): void {
     this.parseStatement(true);
-    return this.finishNode(node, "LabeledStatement");
   }
 
-  parseExpressionStatement(node: N.ExpressionStatement, expr: N.Expression): N.ExpressionStatement {
-    node.expression = expr;
+  /**
+   * Parse a statement starting with an identifier of the given name. Subclasses match on the name
+   * to handle statements like "declare".
+   */
+  parseIdentifierStatement(name: string): void {
     this.semicolon();
-    return this.finishNode(node, "ExpressionStatement");
   }
 
   // Parse a semicolon-enclosed block of statements, handling `"use
@@ -1003,7 +993,7 @@ export default class StatementParser extends ExpressionParser {
       } else {
         this.parseExportSpecifiersMaybe(node as N.ExportNamedDeclaration);
       }
-      this.parseExportFrom(node as N.ExportNamedDeclaration, true);
+      this.parseExportFrom();
     } else if (this.eat(tt._default)) {
       // export default ...
       node.declaration = this.parseExportDefaultExpression();
@@ -1020,12 +1010,12 @@ export default class StatementParser extends ExpressionParser {
 
       node.specifiers = [];
       node.source = null;
-      this.parseExportDeclaration(node as N.ExportNamedDeclaration);
+      this.parseExportDeclaration();
     } else {
       // export { x, y as z } [from '...']
       node.declaration = null;
       node.specifiers = this.parseExportSpecifiers();
-      this.parseExportFrom(node as N.ExportNamedDeclaration);
+      this.parseExportFrom();
     }
     return this.finishNode(node, "ExportNamedDeclaration");
   }
@@ -1053,7 +1043,7 @@ export default class StatementParser extends ExpressionParser {
   }
 
   // eslint-disable-next-line no-unused-vars
-  parseExportDeclaration(node: N.ExportNamedDeclaration): void {
+  parseExportDeclaration(): void {
     this.parseStatement(true);
   }
 
@@ -1078,15 +1068,10 @@ export default class StatementParser extends ExpressionParser {
     }
   }
 
-  parseExportFrom(node: N.ExportNamedDeclaration, expect?: boolean): void {
+  parseExportFrom(): void {
     if (this.eatContextual("from")) {
-      node.source = this.match(tt.string) ? (this.parseExprAtom() as N.Literal) : this.unexpected();
-    } else if (expect) {
-      this.unexpected();
-    } else {
-      node.source = null;
+      this.parseExprAtom();
     }
-
     this.semicolon();
   }
 
@@ -1100,7 +1085,7 @@ export default class StatementParser extends ExpressionParser {
     if (this.isContextual("as")) {
       this.parseExportNamespace(node);
     } else {
-      this.parseExportFrom(node, true);
+      this.parseExportFrom();
       this.finishNode(node, "ExportAllDeclaration");
     }
   }
@@ -1121,7 +1106,7 @@ export default class StatementParser extends ExpressionParser {
     node.specifiers = [this.finishNode(specifier, "ExportNamespaceSpecifier")];
 
     this.parseExportSpecifiersMaybe(node);
-    this.parseExportFrom(node, true);
+    this.parseExportFrom();
   }
 
   shouldParseExportDeclaration(): boolean {

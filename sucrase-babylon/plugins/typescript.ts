@@ -868,13 +868,11 @@ export default (superClass: ParserClass): ParserClass =>
       return this.finishNode(node, "TSEnumMember");
     }
 
-    tsParseEnumDeclaration(node: N.TsEnumDeclaration, isConst: boolean): N.TsEnumDeclaration {
-      if (isConst) node.const = true;
-      node.id = this.parseIdentifier();
+    tsParseEnumDeclaration(): void {
+      this.parseIdentifier();
       this.expect(tt.braceL);
-      node.members = this.tsParseDelimitedList("EnumMembers", this.tsParseEnumMember.bind(this));
+      this.tsParseDelimitedList("EnumMembers", this.tsParseEnumMember.bind(this));
       this.expect(tt.braceR);
-      return this.finishNode(node, "TSEnumDeclaration");
     }
 
     tsParseModuleBlock(): N.TsModuleBlock {
@@ -897,23 +895,20 @@ export default (superClass: ParserClass): ParserClass =>
       return this.finishNode(node, "TSModuleDeclaration");
     }
 
-    tsParseAmbientExternalModuleDeclaration(node: N.TsModuleDeclaration): N.TsModuleDeclaration {
+    tsParseAmbientExternalModuleDeclaration(): void {
       if (this.isContextual("global")) {
-        node.global = true;
-        node.id = this.parseIdentifier();
+        this.parseIdentifier();
       } else if (this.match(tt.string)) {
-        node.id = this.parseExprAtom() as N.StringLiteral;
+        this.parseExprAtom();
       } else {
         this.unexpected();
       }
 
       if (this.match(tt.braceL)) {
-        node.body = this.tsParseModuleBlock();
+        this.tsParseModuleBlock();
       } else {
         this.semicolon();
       }
-
-      return this.finishNode(node, "TSModuleDeclaration");
     }
 
     tsParseImportEqualsDeclaration(
@@ -984,28 +979,33 @@ export default (superClass: ParserClass): ParserClass =>
       }
     }
 
-    tsTryParseDeclare(nany: N.Node): N.Declaration | null {
+    // Returns true if a statement matched.
+    tsTryParseDeclare(): boolean {
       switch (this.state.type) {
         case tt._function:
           this.runInTypeContext(1, () => {
             this.next();
-            this.parseFunction(nany.start, /* isStatement */ true);
+            // We don't need to precisely get the function start here, since it's only used to mark
+            // the function as a type if it's bodiless, and it's already a type here.
+            const functionStart = this.state.start;
+            this.parseFunction(functionStart, /* isStatement */ true);
           });
-          return this.startNode<N.Declaration>();
+          return true;
         case tt._class:
           this.runInTypeContext(1, () => {
             this.parseClass(/* isStatement */ true, /* optionalId */ false);
           });
-          return this.startNode<N.Declaration>();
+          return true;
         case tt._const:
           if (this.match(tt._const) && this.isLookaheadContextual("enum")) {
-            return this.runInTypeContext(1, () => {
+            this.runInTypeContext(1, () => {
               // `const enum = 0;` not allowed because "enum" is a strict mode reserved word.
               this.expect(tt._const);
               this.expectContextual("enum");
               this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
-              return this.tsParseEnumDeclaration(nany as N.TsEnumDeclaration, /* isConst */ true);
+              this.tsParseEnumDeclaration();
             });
+            return true;
           }
         // falls through
         case tt._var:
@@ -1013,36 +1013,38 @@ export default (superClass: ParserClass): ParserClass =>
           this.runInTypeContext(1, () => {
             this.parseVarStatement(this.state.type);
           });
-          return this.startNode<N.Declaration>();
+          return true;
         case tt.name: {
           return this.runInTypeContext(1, () => {
             const value = this.state.value;
             if (value === "global") {
-              return this.tsParseAmbientExternalModuleDeclaration(nany as N.TsModuleDeclaration);
+              this.tsParseAmbientExternalModuleDeclaration();
+              return true;
             } else {
-              return this.tsParseDeclaration(nany, value, /* next */ true);
+              return this.tsParseDeclaration(value, /* next */ true);
             }
           });
         }
         default:
-          return null;
+          return false;
       }
     }
 
     // Note: this won't be called unless the keyword is allowed in `shouldParseExportDeclaration`.
-    tsTryParseExportDeclaration(): N.Declaration | null {
-      return this.tsParseDeclaration(this.startNode(), this.state.value, /* next */ true);
+    // Returns true if it matched a declaration.
+    tsTryParseExportDeclaration(): boolean {
+      return this.tsParseDeclaration(this.state.value, /* next */ true);
     }
 
-    tsParseExpressionStatement(node: N.Node, expr: N.Identifier): N.Declaration | null {
-      switch (expr.name) {
+    // Returns true if it matched a statement.
+    tsParseExpressionStatement(name: string): boolean {
+      switch (name) {
         case "declare": {
           const declareTokenIndex = this.state.tokens.length - 1;
-          const declaration = this.tsTryParseDeclare(node);
-          if (declaration) {
+          const matched = this.tsTryParseDeclare();
+          if (matched) {
             this.state.tokens[declareTokenIndex].type = tt._declare;
-            declaration.declare = true;
-            return declaration;
+            return true;
           }
           break;
         }
@@ -1050,31 +1052,27 @@ export default (superClass: ParserClass): ParserClass =>
           // `global { }` (with no `declare`) may appear inside an ambient module declaration.
           // Would like to use tsParseAmbientExternalModuleDeclaration here, but already ran past "global".
           if (this.match(tt.braceL)) {
-            const mod: N.TsModuleDeclaration = node as N.TsModuleDeclaration;
-            mod.global = true;
-            mod.id = expr;
-            mod.body = this.tsParseModuleBlock();
-            return this.finishNode(mod, "TSModuleDeclaration");
+            this.tsParseModuleBlock();
+            return true;
           }
           break;
 
         default:
-          return this.tsParseDeclaration(node, expr.name, /* next */ false);
+          return this.tsParseDeclaration(name, /* next */ false);
       }
-      return null;
+      return false;
     }
 
     // Common to tsTryParseDeclare, tsTryParseExportDeclaration, and tsParseExpressionStatement.
-    tsParseDeclaration(node: N.Node, value: string, next: boolean): N.Declaration | null {
-      switch (value) {
+    // Returns true if it matched a declaration.
+    tsParseDeclaration(name: string, next: boolean): boolean {
+      switch (name) {
         case "abstract":
           if (next || this.match(tt._class)) {
-            const cls: N.ClassDeclaration = node as N.ClassDeclaration;
-            cls.abstract = true;
             if (next) this.next();
             this.state.tokens[this.state.tokens.length - 1].type = tt._abstract;
             this.parseClass(/* isStatement */ true, /* optionalId */ false);
-            return this.startNode<N.Declaration>();
+            return true;
           }
           break;
 
@@ -1082,7 +1080,8 @@ export default (superClass: ParserClass): ParserClass =>
           if (next || this.match(tt.name)) {
             if (next) this.next();
             this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
-            return this.tsParseEnumDeclaration(node as N.TsEnumDeclaration, /* isConst */ false);
+            this.tsParseEnumDeclaration();
+            return true;
           }
           break;
 
@@ -1090,48 +1089,53 @@ export default (superClass: ParserClass): ParserClass =>
           if (next || this.match(tt.name)) {
             // `next` is true in "export" and "declare" contexts, so we want to remove that token
             // as well.
-            return this.runInTypeContext(1, () => {
+            this.runInTypeContext(1, () => {
               if (next) this.next();
-              return this.tsParseInterfaceDeclaration(node as N.TsInterfaceDeclaration);
+              this.tsParseInterfaceDeclaration(this.startNode());
             });
+            return true;
           }
           break;
 
         case "module":
           if (next) this.next();
           if (this.match(tt.string)) {
-            return this.runInTypeContext(next ? 2 : 1, () =>
-              this.tsParseAmbientExternalModuleDeclaration(node as N.TsModuleDeclaration),
-            );
+            this.runInTypeContext(next ? 2 : 1, () => {
+              this.tsParseAmbientExternalModuleDeclaration();
+            });
+            return true;
           } else if (next || this.match(tt.name)) {
-            return this.runInTypeContext(next ? 2 : 1, () =>
-              this.tsParseModuleOrNamespaceDeclaration(node as N.TsModuleDeclaration),
+            this.runInTypeContext(next ? 2 : 1, () =>
+              this.tsParseModuleOrNamespaceDeclaration(this.startNode()),
             );
+            return true;
           }
           break;
 
         case "namespace":
           if (next || this.match(tt.name)) {
-            return this.runInTypeContext(1, () => {
+            this.runInTypeContext(1, () => {
               if (next) this.next();
-              return this.tsParseModuleOrNamespaceDeclaration(node as N.TsModuleDeclaration);
+              return this.tsParseModuleOrNamespaceDeclaration(this.startNode());
             });
+            return true;
           }
           break;
 
         case "type":
           if (next || this.match(tt.name)) {
-            return this.runInTypeContext(1, () => {
+            this.runInTypeContext(1, () => {
               if (next) this.next();
-              return this.tsParseTypeAliasDeclaration(node as N.TsTypeAliasDeclaration);
+              return this.tsParseTypeAliasDeclaration(this.startNode());
             });
+            return true;
           }
           break;
 
         default:
           break;
       }
-      return null;
+      return false;
     }
 
     tsTryParseGenericAsyncArrowFunction(
@@ -1421,11 +1425,10 @@ export default (superClass: ParserClass): ParserClass =>
       if (this.state.type === tt._const) {
         const ahead = this.lookahead();
         if (ahead.type === tt.name && ahead.value === "enum") {
-          const node: N.TsEnumDeclaration = this.startNode();
           this.expect(tt._const);
           this.expectContextual("enum");
           this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
-          this.tsParseEnumDeclaration(node, /* isConst */ true);
+          this.tsParseEnumDeclaration();
           return;
         }
       }
@@ -1513,22 +1516,15 @@ export default (superClass: ParserClass): ParserClass =>
       if (optional) methodOrProp.optional = true;
     }
 
-    // Note: The reason we do this in `parseExpressionStatement` and not `parseStatement`
+    // Note: The reason we do this in `parseIdentifierStatement` and not `parseStatement`
     // is that e.g. `type()` is valid JS, so we must try parsing that first.
     // If it's really a type, we will parse `type` as the statement, and can correct it here
     // by parsing the rest.
-    parseExpressionStatement(
-      node: N.ExpressionStatement,
-      expr: N.Expression,
-    ): N.ExpressionStatement {
-      const decl =
-        expr.type === "Identifier"
-          ? ((this.tsParseExpressionStatement(
-              node,
-              expr as N.Identifier,
-            ) as {}) as N.ExpressionStatement)
-          : null;
-      return decl || super.parseExpressionStatement(node, expr);
+    parseIdentifierStatement(name: string): void {
+      const matched = this.tsParseExpressionStatement(name);
+      if (!matched) {
+        super.parseIdentifierStatement(name);
+      }
     }
 
     // export type
@@ -1588,34 +1584,30 @@ export default (superClass: ParserClass): ParserClass =>
       return node;
     }
 
-    parseExportDeclaration(node: N.ExportNamedDeclaration): N.Declaration | null {
+    parseExportDeclaration(): void {
       // "export declare" is equivalent to just "export".
       const isDeclare = this.eatContextual("declare");
       if (isDeclare) {
         this.state.tokens[this.state.tokens.length - 1].type = tt._declare;
       }
 
-      let declaration: N.Declaration | null = null;
+      let matchedDeclaration = false;
       if (this.match(tt.name)) {
         if (isDeclare) {
-          declaration = this.runInTypeContext(2, () => this.tsTryParseExportDeclaration());
+          matchedDeclaration = this.runInTypeContext(2, () => this.tsTryParseExportDeclaration());
         } else {
-          declaration = this.tsTryParseExportDeclaration();
+          matchedDeclaration = this.tsTryParseExportDeclaration();
         }
       }
-      // TODO(sucrase): We still compute the declaration for this null check, but ideally we'd be
-      // able to get rid of it.
-      if (!declaration) {
+      if (!matchedDeclaration) {
         if (isDeclare) {
           this.runInTypeContext(2, () => {
-            super.parseExportDeclaration(node);
+            super.parseExportDeclaration();
           });
         } else {
-          super.parseExportDeclaration(node);
+          super.parseExportDeclaration();
         }
       }
-
-      return declaration;
     }
 
     parseClassId(isStatement: boolean, optionalId: boolean = false): void {

@@ -1370,16 +1370,14 @@ export default (superClass: ParserClass): ParserClass =>
       }
     }
 
-    parseExportDefaultExpression(): N.Expression | N.Declaration {
+    parseExportDefaultExpression(): void {
       if (this.isContextual("abstract") && this.lookahead().type === tt._class) {
-        const cls = this.startNode();
         this.state.type = tt._abstract;
         this.next(); // Skip "abstract"
         this.parseClass(true, true);
-        cls.abstract = true;
-        return cls;
+        return;
       }
-      return super.parseExportDefaultExpression();
+      super.parseExportDefaultExpression();
     }
 
     parseStatementContent(declaration: boolean, topLevel: boolean = false): void {

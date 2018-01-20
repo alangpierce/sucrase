@@ -73,7 +73,7 @@ export default (superClass: ParserClass): ParserClass =>
         this.raise(moduloPos, "Spaces between ´%´ and ´checks´ are not allowed here.");
       }
       if (this.eat(tt.parenL)) {
-        node.value = this.parseExpression();
+        this.parseExpression();
         this.expect(tt.parenR);
         return this.finishNode(node, "DeclaredPredicate");
       } else {

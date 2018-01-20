@@ -57,19 +57,13 @@ export default abstract class ExpressionParser extends LValParser {
   // and object pattern might appear (so it's possible to raise
   // delayed syntax error at correct position).
 
-  parseExpression(noIn?: boolean, refShorthandDefaultPos?: Pos): N.Expression {
-    const startPos = this.state.start;
-    const startLoc = this.state.startLoc;
-    const expr = this.parseMaybeAssign(noIn, refShorthandDefaultPos);
+  parseExpression(noIn?: boolean, refShorthandDefaultPos?: Pos): void {
+    this.parseMaybeAssign(noIn, refShorthandDefaultPos);
     if (this.match(tt.comma)) {
-      const node = this.startNodeAt(startPos, startLoc);
-      node.expressions = [expr];
       while (this.eat(tt.comma)) {
-        node.expressions.push(this.parseMaybeAssign(noIn, refShorthandDefaultPos));
+        this.parseMaybeAssign(noIn, refShorthandDefaultPos);
       }
-      return this.finishNode(node, "SequenceExpression");
     }
-    return expr;
   }
 
   // Parse an assignment expression. This includes applications of
@@ -374,7 +368,7 @@ export default abstract class ExpressionParser extends LValParser {
 
       if (this.eat(tt.bracketL)) {
         node.object = base;
-        node.property = this.parseExpression();
+        this.parseExpression();
         node.computed = true;
         node.optional = true;
         this.expect(tt.bracketR);
@@ -403,7 +397,7 @@ export default abstract class ExpressionParser extends LValParser {
     } else if (this.eat(tt.bracketL)) {
       const node = this.startNodeAt(startPos, startLoc);
       node.object = base;
-      node.property = this.parseExpression();
+      this.parseExpression();
       node.computed = true;
       this.expect(tt.bracketR);
       return this.finishNode(node, "MemberExpression");
@@ -770,11 +764,10 @@ export default abstract class ExpressionParser extends LValParser {
     return this.finishNode(node as T, type);
   }
 
-  parseParenExpression(): N.Expression {
+  parseParenExpression(): void {
     this.expect(tt.parenL);
-    const val = this.parseExpression();
+    this.parseExpression();
     this.expect(tt.parenR);
-    return val;
   }
 
   parseParenAndDistinguishExpression(canBeArrow: boolean): N.Expression {
@@ -962,7 +955,7 @@ export default abstract class ExpressionParser extends LValParser {
     node.quasis = [curElt];
     while (!curElt.tail) {
       this.expect(tt.dollarBraceL);
-      node.expressions.push(this.parseExpression());
+      this.parseExpression();
       this.expect(tt.braceR);
       node.quasis.push((curElt = this.parseTemplateElement(isTagged)));
     }

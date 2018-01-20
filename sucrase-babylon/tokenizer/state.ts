@@ -24,15 +24,12 @@ export default class State {
     this.inMethod = false;
     this.inFunction = false;
     this.inParameters = false;
-    this.maybeInArrowParameters = false;
     this.inGenerator = false;
     this.inAsync = false;
     this.inPropertyName = false;
     this.inType = false;
     this.inClassProperty = false;
     this.noAnonFunctionType = false;
-
-    this.yieldInPossibleArrowParameters = null;
 
     this.tokens = [];
     this.scopes = [];
@@ -86,7 +83,6 @@ export default class State {
   // Flags to track whether we are in a function, a generator.
   inFunction: boolean;
   inParameters: boolean;
-  maybeInArrowParameters: boolean;
   inGenerator: boolean;
   inMethod: boolean | N.MethodKind;
   inAsync: boolean;
@@ -94,11 +90,6 @@ export default class State {
   noAnonFunctionType: boolean;
   inPropertyName: boolean;
   inClassProperty: boolean;
-
-  // The first yield expression inside parenthesized expressions and arrow
-  // function parameters. It is used to disallow yield in arrow function
-  // parameters.
-  yieldInPossibleArrowParameters: N.YieldExpression | null;
 
   // Token store.
   tokens: Array<Token>;

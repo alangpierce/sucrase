@@ -575,11 +575,8 @@ export default abstract class ExpressionParser extends LValParser {
     call: N.CallExpression,
     startTokenIndex: number,
   ): N.ArrowFunctionExpression {
-    const oldYield = this.state.yieldInPossibleArrowParameters;
-    this.state.yieldInPossibleArrowParameters = null;
     this.expect(tt.arrow);
     this.parseArrowExpression(node, startTokenIndex, call.arguments, true);
-    this.state.yieldInPossibleArrowParameters = oldYield;
     return node;
   }
 
@@ -663,8 +660,6 @@ export default abstract class ExpressionParser extends LValParser {
           this.next();
           return this.parseFunction(node as N.NormalFunction, false, false, true);
         } else if (canBeArrow && id.name === "async" && this.match(tt.name)) {
-          const oldYield = this.state.yieldInPossibleArrowParameters;
-          this.state.yieldInPossibleArrowParameters = null;
           const params = [this.parseIdentifier()];
           this.expect(tt.arrow);
           // let foo = bar => {};
@@ -674,15 +669,11 @@ export default abstract class ExpressionParser extends LValParser {
             params,
             true,
           );
-          this.state.yieldInPossibleArrowParameters = oldYield;
           return node;
         }
 
         if (canBeArrow && !this.canInsertSemicolon() && this.eat(tt.arrow)) {
-          const oldYield = this.state.yieldInPossibleArrowParameters;
-          this.state.yieldInPossibleArrowParameters = null;
           this.parseArrowExpression(node as N.ArrowFunctionExpression, startTokenIndex, [id]);
-          this.state.yieldInPossibleArrowParameters = oldYield;
           return node;
         }
 
@@ -887,11 +878,6 @@ export default abstract class ExpressionParser extends LValParser {
     const startTokenIndex = this.state.tokens.length;
     this.expect(tt.parenL);
 
-    const oldMaybeInArrowParameters = this.state.maybeInArrowParameters;
-    const oldYield = this.state.yieldInPossibleArrowParameters;
-    this.state.maybeInArrowParameters = true;
-    this.state.yieldInPossibleArrowParameters = null;
-
     const innerStartPos = this.state.start;
     const innerStartLoc = this.state.startLoc;
     const exprList = [];
@@ -945,8 +931,6 @@ export default abstract class ExpressionParser extends LValParser {
     const innerEndLoc = this.state.startLoc;
     this.expect(tt.parenR);
 
-    this.state.maybeInArrowParameters = oldMaybeInArrowParameters;
-
     const arrowNode = this.startNodeAt<N.ArrowFunctionExpression>(startPos, startLoc);
     if (canBeArrow && this.shouldParseArrow()) {
       const parsedArrowNode = this.parseArrow(arrowNode);
@@ -958,12 +942,9 @@ export default abstract class ExpressionParser extends LValParser {
         this.parseFunctionParams(this.startNode());
         this.parseArrow(this.startNode());
         this.parseArrowExpression(parsedArrowNode, startTokenIndex, exprList);
-        this.state.yieldInPossibleArrowParameters = oldYield;
         return parsedArrowNode;
       }
     }
-
-    this.state.yieldInPossibleArrowParameters = oldYield;
 
     if (!exprList.length) {
       this.unexpected(this.state.lastTokStart);
@@ -1446,28 +1427,16 @@ export default abstract class ExpressionParser extends LValParser {
     params?: Array<N.Expression> | null,
     isAsync: boolean = false,
   ): N.ArrowFunctionExpression {
-    // if we got there, it's no more "yield in possible arrow parameters";
-    // it's just "yield in arrow parameters"
-    if (this.state.yieldInPossibleArrowParameters) {
-      this.raise(
-        this.state.yieldInPossibleArrowParameters.start,
-        "yield is not allowed in the parameters of an arrow function inside a generator",
-      );
-    }
-
     const oldInFunc = this.state.inFunction;
     this.state.inFunction = true;
     this.initFunction(node, isAsync);
     if (params) this.setArrowFunctionParameters(node, params);
 
     const oldInGenerator = this.state.inGenerator;
-    const oldMaybeInArrowParameters = this.state.maybeInArrowParameters;
     this.state.inGenerator = false;
-    this.state.maybeInArrowParameters = false;
     this.parseFunctionBody(node, true);
     this.state.inGenerator = oldInGenerator;
     this.state.inFunction = oldInFunc;
-    this.state.maybeInArrowParameters = oldMaybeInArrowParameters;
 
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
@@ -1631,14 +1600,6 @@ export default abstract class ExpressionParser extends LValParser {
 
     if (this.state.inParameters) {
       this.raise(node.start, "yield is not allowed in generator parameters");
-    }
-    if (
-      this.state.maybeInArrowParameters &&
-      // We only set yieldInPossibleArrowParameters if we haven't already
-      // found a possible invalid YieldExpression.
-      !this.state.yieldInPossibleArrowParameters
-    ) {
-      this.state.yieldInPossibleArrowParameters = node as N.YieldExpression;
     }
 
     this.next();

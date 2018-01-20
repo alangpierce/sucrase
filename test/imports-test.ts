@@ -943,4 +943,23 @@ module.exports = exports.default;
     `,
     );
   });
+
+  it("properly handles arrow functions with parameters shadowing imported names", () => {
+    assertResult(
+      `
+      import a from 'a';
+      const f = (a, b);
+      const g = (a, b) => c;
+      const h = a => c;
+      const f2 = async (a) => c;
+    `,
+      `${PREFIX}
+      var _a = require('a'); var _a2 = _interopRequireDefault(_a);
+      const f = ((0, _a2.default), b);
+      const g = (a, b) => c;
+      const h = a => c;
+      const f2 = async (a) => c;
+    `,
+    );
+  });
 });

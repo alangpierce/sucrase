@@ -452,8 +452,12 @@ export default abstract class ExpressionParser extends LValParser {
       return this.finishNode(node, "MemberExpression");
     } else if (!noCalls && this.match(tt.parenL)) {
       const possibleAsync = this.atPossibleAsync(base);
+      // We see "async", but it's possible it's a usage of the name "async". Parse as if it's a
+      // function call, and if we see an arrow later, backtrack and re-parse as a parameter list.
+      const initialStateForAsyncArrow = possibleAsync ? this.state.clone() : null;
       const startTokenIndex = this.state.tokens.length;
       this.next();
+
       const callContextId = this.nextContextId++;
 
       const node = this.startNodeAt<N.CallExpression>(startPos, startLoc);
@@ -474,15 +478,11 @@ export default abstract class ExpressionParser extends LValParser {
       this.finishCallExpression(node);
 
       if (possibleAsync && this.shouldParseAsyncArrow()) {
+        // We hit an arrow, so backtrack and start again parsing function parameters.
+        this.state = initialStateForAsyncArrow!;
         state.stop = true;
 
-        if (refTrailingCommaPos.start > -1) {
-          this.raise(
-            refTrailingCommaPos.start,
-            "A trailing comma is not permitted after the rest element",
-          );
-        }
-
+        this.parseFunctionParams(this.startNode());
         return this.parseAsyncArrowFromCallExpression(
           this.startNodeAt(startPos, startLoc),
           node,
@@ -879,6 +879,10 @@ export default abstract class ExpressionParser extends LValParser {
     const startPos = this.state.start;
     const startLoc = this.state.startLoc;
 
+    // Assume this is a normal parenthesized expression, but if we see an arrow, we'll bail and
+    // start over as a parameter list.
+    const initialState = this.state.clone();
+
     let val: N.Expression;
     const startTokenIndex = this.state.tokens.length;
     this.expect(tt.parenL);
@@ -947,12 +951,12 @@ export default abstract class ExpressionParser extends LValParser {
     if (canBeArrow && this.shouldParseArrow()) {
       const parsedArrowNode = this.parseArrow(arrowNode);
       if (parsedArrowNode) {
-        for (const param of exprList) {
-          if (param.extra && param.extra.parenthesized) {
-            this.unexpected(param.extra.parenStart);
-          }
-        }
-
+        // It was an arrow function this whole time, so start over and parse it as params so that we
+        // get proper token annotations.
+        this.state = initialState;
+        // Don't specify a context ID because arrow function don't need a context ID.
+        this.parseFunctionParams(this.startNode());
+        this.parseArrow(this.startNode());
         this.parseArrowExpression(parsedArrowNode, startTokenIndex, exprList);
         this.state.yieldInPossibleArrowParameters = oldYield;
         return parsedArrowNode;

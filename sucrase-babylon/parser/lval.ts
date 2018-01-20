@@ -3,7 +3,6 @@ import {TokenType, types as tt} from "../tokenizer/types";
 import {
   ArrayPattern,
   AssignmentPattern,
-  Decorator,
   Expression,
   Identifier,
   Node,

@@ -18,7 +18,6 @@ export default class State {
 
     this.potentialArrowAt = -1;
 
-    this.inMethod = false;
     this.inFunction = false;
     this.inParameters = false;
     this.inGenerator = false;
@@ -67,7 +66,6 @@ export default class State {
   inFunction: boolean;
   inParameters: boolean;
   inGenerator: boolean;
-  inMethod: boolean | N.MethodKind;
   inAsync: boolean;
   inType: boolean;
   noAnonFunctionType: boolean;

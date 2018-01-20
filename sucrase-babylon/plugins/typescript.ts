@@ -1312,7 +1312,7 @@ export default (superClass: ParserClass): ParserClass =>
             /* possibleAsync */ false,
           ) as Array<N.Node>;
           node.typeParameters = typeArguments;
-          return this.finishCallExpression(node);
+          this.finishNode(node, "CallExpression");
         }
       }
 

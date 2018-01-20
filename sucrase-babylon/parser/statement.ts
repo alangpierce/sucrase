@@ -34,29 +34,6 @@ export default class StatementParser extends ExpressionParser {
     };
   }
 
-  stmtToDirective(stmt: N.Statement): N.Directive {
-    const expr = stmt.expression;
-
-    const directiveLiteral = this.startNodeAt(expr.start, expr.loc.start);
-    const directive = this.startNodeAt(stmt.start, stmt.loc.start);
-
-    const raw = this.input.slice(expr.start, expr.end);
-    const val = raw.slice(1, -1); // remove quotes
-    directiveLiteral.value = val;
-
-    this.addExtra(directiveLiteral, "raw", raw);
-    this.addExtra(directiveLiteral, "rawValue", val);
-
-    directive.value = this.finishNodeAt(
-      directiveLiteral,
-      "DirectiveLiteral",
-      expr.end,
-      expr.loc.end,
-    );
-
-    return this.finishNodeAt(directive as N.Directive, "Directive", stmt.end, stmt.loc.end);
-  }
-
   // Parse a single statement.
   //
   // If expecting a statement and finding a slash operator, parse a
@@ -157,8 +134,6 @@ export default class StatementParser extends ExpressionParser {
           result = this.parseExport(node);
         }
 
-        this.assertModuleNodeAllowed(node);
-
         return;
       }
       case tt.name:
@@ -191,12 +166,6 @@ export default class StatementParser extends ExpressionParser {
       this.parseLabeledStatement(node as N.LabeledStatement, maybeName, expr as N.Identifier);
     } else {
       this.parseExpressionStatement(node as N.ExpressionStatement, expr);
-    }
-  }
-
-  assertModuleNodeAllowed(node: N.Node): void {
-    if (!this.options.allowImportExportEverywhere && !this.inModule) {
-      this.raise(node.start, `'import' and 'export' may appear only with 'sourceType: "module"'`);
     }
   }
 

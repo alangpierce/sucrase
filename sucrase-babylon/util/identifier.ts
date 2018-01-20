@@ -5,14 +5,6 @@ function makePredicate(words: string): (str: string) => boolean {
   return (str: string) => wordsArr.indexOf(str) >= 0;
 }
 
-// Reserved word lists for various dialects of the language
-
-export const reservedWords = {
-  "6": makePredicate("enum await"),
-  strict: makePredicate("implements interface let package private protected public static yield"),
-  strictBind: makePredicate("eval arguments"),
-};
-
 // And the keywords
 
 export const isKeyword = makePredicate(

@@ -21,7 +21,6 @@
 import {IdentifierRole} from "../tokenizer";
 import {TokenType, types as tt} from "../tokenizer/types";
 import * as N from "../types";
-import {reservedWords} from "../util/identifier";
 import {Pos, Position} from "../util/location";
 import LValParser from "./lval";
 
@@ -46,36 +45,6 @@ export default abstract class ExpressionParser extends LValParser {
     allowModifiers?: boolean,
     funcContextId?: number,
   ): void;
-
-  // Check if property name clashes with already added.
-  // Object/class getters and setters are not allowed to clash —
-  // either with each other or with an init property — and in
-  // strict mode, init properties are also not allowed to be repeated.
-
-  checkPropClash(prop: N.ObjectMember, propHash: {[key: string]: boolean}): void {
-    if (prop.computed || prop.kind) return;
-
-    const key = prop.key;
-    // It is either an Identifier or a String/NumericLiteral
-    const name = key.type === "Identifier" ? key.name : String(key.value);
-
-    if (name === "__proto__") {
-      if (propHash.proto) {
-        this.raise(key.start, "Redefinition of __proto__ property");
-      }
-      propHash.proto = true;
-    }
-  }
-
-  // Convenience method to parse an Expression only
-  getExpression(): N.Expression {
-    this.nextToken();
-    const expr = this.parseExpression();
-    if (!this.match(tt.eof)) {
-      this.unexpected();
-    }
-    return expr;
-  }
 
   // ### Expression parsing
 
@@ -468,7 +437,7 @@ export default abstract class ExpressionParser extends LValParser {
         refTrailingCommaPos,
       ) as Array<N.Node>;
       this.state.tokens[this.state.tokens.length - 1].contextId = callContextId;
-      this.finishCallExpression(node);
+      this.finishNode(node, "CallExpression");
 
       if (possibleAsync && this.shouldParseAsyncArrow()) {
         // We hit an arrow, so backtrack and start again parsing function parameters.
@@ -503,20 +472,6 @@ export default abstract class ExpressionParser extends LValParser {
       base.name === "async" &&
       !this.canInsertSemicolon()
     );
-  }
-
-  finishCallExpression(node: N.CallExpression): N.CallExpression {
-    if (node.callee.type === "Import") {
-      if (node.arguments.length !== 1) {
-        this.raise(node.start, "import() requires exactly one argument");
-      }
-
-      const importArg = node.arguments[0];
-      if (importArg && importArg.type === "SpreadElement") {
-        this.raise(importArg.start, "... is not allowed in import()");
-      }
-    }
-    return this.finishNode(node, "CallExpression");
   }
 
   parseCallExpressionArguments(
@@ -1169,8 +1124,6 @@ export default abstract class ExpressionParser extends LValParser {
         refShorthandDefaultPos,
         contextId,
       );
-      this.checkPropClash(prop as N.ObjectMember, propHash);
-
       if (prop.shorthand) {
         this.addExtra(prop, "shorthand", true);
       }

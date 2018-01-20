@@ -1,7 +1,6 @@
 // @flow
 
 import {Options} from "../options";
-import {reservedWords} from "../util/identifier";
 
 import State from "../tokenizer/state";
 

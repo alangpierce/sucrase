@@ -1294,21 +1294,6 @@ export default (superClass: ParserClass): ParserClass =>
       return node;
     }
 
-    assertModuleNodeAllowed(node: N.Node): void {
-      if (
-        (node.type === "ImportDeclaration" &&
-          (node.importKind === "type" || node.importKind === "typeof")) ||
-        (node.type === "ExportNamedDeclaration" && node.exportKind === "type") ||
-        (node.type === "ExportAllDeclaration" && node.exportKind === "type")
-      ) {
-        // Allow Flowtype imports and exports in all conditions because
-        // Flow itself does not care about 'sourceType'.
-        return;
-      }
-
-      super.assertModuleNodeAllowed(node);
-    }
-
     parseExport(node: N.ExportNamedDeclaration): N.ExportNamedDeclaration {
       node = super.parseExport(node) as N.ExportNamedDeclaration;
       if (node.type === "ExportNamedDeclaration" || node.type === "ExportAllDeclaration") {

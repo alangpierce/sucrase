@@ -993,15 +993,10 @@ export default (superClass: ParserClass): ParserClass =>
           });
           return this.startNode<N.Declaration>();
         case tt._class:
-          return this.runInTypeContext(
-            1,
-            () =>
-              this.parseClass(
-                nany as N.Class,
-                /* isStatement */ true,
-                /* optionalId */ false,
-              ) as N.Declaration,
-          );
+          this.runInTypeContext(1, () => {
+            this.parseClass(/* isStatement */ true, /* optionalId */ false);
+          });
+          return this.startNode<N.Declaration>();
         case tt._const:
           if (this.match(tt._const) && this.isLookaheadContextual("enum")) {
             return this.runInTypeContext(1, () => {
@@ -1077,7 +1072,8 @@ export default (superClass: ParserClass): ParserClass =>
             cls.abstract = true;
             if (next) this.next();
             this.state.tokens[this.state.tokens.length - 1].type = tt._abstract;
-            return this.parseClass(cls, /* isStatement */ true, /* optionalId */ false);
+            this.parseClass(/* isStatement */ true, /* optionalId */ false);
+            return this.startNode<N.Declaration>();
           }
           break;
 
@@ -1413,7 +1409,7 @@ export default (superClass: ParserClass): ParserClass =>
         const cls = this.startNode();
         this.state.type = tt._abstract;
         this.next(); // Skip "abstract"
-        this.parseClass(cls as N.Class, true, true);
+        this.parseClass(true, true);
         cls.abstract = true;
         return cls;
       }
@@ -1621,14 +1617,13 @@ export default (superClass: ParserClass): ParserClass =>
       return declaration;
     }
 
-    parseClassId(node: N.Class, isStatement: boolean, optionalId: boolean = false): void {
+    parseClassId(isStatement: boolean, optionalId: boolean = false): void {
       if ((!isStatement || optionalId) && this.isContextual("implements")) {
         return;
       }
 
-      super.parseClassId(node, isStatement, optionalId);
-      const typeParameters = this.tsTryParseTypeParameters();
-      if (typeParameters) node.typeParameters = typeParameters;
+      super.parseClassId(isStatement, optionalId);
+      this.tsTryParseTypeParameters();
     }
 
     parseClassProperty(node: N.ClassProperty): N.ClassProperty {
@@ -1660,15 +1655,16 @@ export default (superClass: ParserClass): ParserClass =>
       super.pushClassPrivateMethod(classBody, method, isGenerator, isAsync);
     }
 
-    parseClassSuper(node: N.Class): void {
-      super.parseClassSuper(node);
-      if (node.superClass && this.isRelational("<")) {
-        node.superTypeParameters = this.tsParseTypeArguments();
+    parseClassSuper(): boolean {
+      const hasSuper = super.parseClassSuper();
+      if (hasSuper && this.isRelational("<")) {
+        this.tsParseTypeArguments();
       }
       if (this.eatContextual("implements")) {
         this.state.tokens[this.state.tokens.length - 1].type = tt._implements;
-        node.implements = this.runInTypeContext(1, () => this.tsParseHeritageClause());
+        this.runInTypeContext(1, () => this.tsParseHeritageClause());
       }
+      return hasSuper;
     }
 
     parseObjPropValue(

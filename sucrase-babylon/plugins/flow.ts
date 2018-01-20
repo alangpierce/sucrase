@@ -1363,10 +1363,10 @@ export default (superClass: ParserClass): ParserClass =>
       super.parseExportNamespace(node);
     }
 
-    parseClassId(node: N.Class, isStatement: boolean, optionalId: boolean = false): void {
-      super.parseClassId(node, isStatement, optionalId);
+    parseClassId(isStatement: boolean, optionalId: boolean = false): void {
+      super.parseClassId(isStatement, optionalId);
       if (this.isRelational("<")) {
-        node.typeParameters = this.flowParseTypeParameterDeclaration();
+        this.flowParseTypeParameterDeclaration();
       }
     }
 
@@ -1482,29 +1482,24 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // parse a the super class type parameters and implements
-    parseClassSuper(node: N.Class): void {
-      super.parseClassSuper(node);
-      if (node.superClass && this.isRelational("<")) {
-        node.superTypeParameters = this.flowParseTypeParameterInstantiation();
+    parseClassSuper(): boolean {
+      const hadSuper = super.parseClassSuper();
+      if (hadSuper && this.isRelational("<")) {
+        this.flowParseTypeParameterInstantiation();
       }
       if (this.isContextual("implements")) {
         this.state.tokens[this.state.tokens.length - 1].type = tt._implements;
         this.runInTypeContext(0, () => {
           this.next();
-          const implemented: Array<N.FlowClassImplements> = [];
-          node.implements = implemented;
           do {
-            const innerNode = this.startNode();
-            innerNode.id = this.flowParseRestrictedIdentifier(/* liberal */ true);
+            this.flowParseRestrictedIdentifier(/* liberal */ true);
             if (this.isRelational("<")) {
-              innerNode.typeParameters = this.flowParseTypeParameterInstantiation();
-            } else {
-              innerNode.typeParameters = null;
+              this.flowParseTypeParameterInstantiation();
             }
-            implemented.push(this.finishNode(innerNode, "ClassImplements"));
           } while (this.eat(tt.comma));
         });
       }
+      return hadSuper;
     }
 
     parsePropertyName(

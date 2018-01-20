@@ -31,7 +31,7 @@ export default abstract class ExpressionParser extends LValParser {
     isFunctionScope?: boolean,
     contextId?: number,
   ): void;
-  abstract parseClass(node: N.Class, isStatement: boolean, optionalId?: boolean): N.Class;
+  abstract parseClass(isStatement: boolean, optionalId?: boolean): void;
   abstract parseDecorators(allowExport?: boolean): void;
   abstract parseFunction(
     functionStart: number,
@@ -686,7 +686,8 @@ export default abstract class ExpressionParser extends LValParser {
 
       case tt._class:
         node = this.startNode();
-        return this.parseClass(node as N.Class, false);
+        this.parseClass(false);
+        return this.startNode();
 
       case tt._new:
         this.parseNew();

@@ -261,18 +261,9 @@ export default (superClass: ParserClass): ParserClass =>
     // Parses any type of JSX attribute value.
 
     jsxParseAttributeValue(): N.Expression {
-      let node;
       switch (this.state.type) {
         case tt.braceL:
-          node = this.jsxParseExpressionContainer();
-          if (node.expression.type === "JSXEmptyExpression") {
-            throw this.raise(
-              node.start,
-              "JSX attributes must only be assigned a non-empty expression",
-            );
-          } else {
-            return node;
-          }
+          return this.jsxParseExpressionContainer();
 
         case tt.jsxTagStart:
         case tt.string:
@@ -301,7 +292,7 @@ export default (superClass: ParserClass): ParserClass =>
       const node = this.startNode();
       this.expect(tt.braceL);
       this.expect(tt.ellipsis);
-      node.expression = this.parseExpression();
+      this.parseExpression();
       this.expect(tt.braceR);
 
       return this.finishNode(node, "JSXSpreadChild");
@@ -315,7 +306,7 @@ export default (superClass: ParserClass): ParserClass =>
       if (this.match(tt.braceR)) {
         node.expression = this.jsxParseEmptyExpression();
       } else {
-        node.expression = this.parseExpression();
+        this.parseExpression();
       }
       this.expect(tt.braceR);
       return this.finishNode(node, "JSXExpressionContainer");

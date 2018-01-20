@@ -3,13 +3,7 @@
 import {IdentifierRole} from "../tokenizer";
 import {TokenType, types as tt} from "../tokenizer/types";
 import * as N from "../types";
-import {lineBreak} from "../util/whitespace";
 import ExpressionParser from "./expression";
-
-// Reused empty array added for node fields that are always empty.
-
-// tslint:disable-next-line no-any
-const empty: Array<any> = [];
 
 export default class StatementParser extends ExpressionParser {
   // ### Statement parsing
@@ -146,8 +140,16 @@ export default class StatementParser extends ExpressionParser {
     // simply start parsing an expression, and afterwards, if the
     // next token is a colon and the expression was a simple
     // Identifier node, we switch to interpreting it as a label.
-    const expr = this.parseExpression();
-    if (expr.type !== "Identifier") {
+    const initialTokensLength = this.state.tokens.length;
+    this.parseExpression();
+    let simpleName = null;
+    if (this.state.tokens.length === initialTokensLength + 1) {
+      const token = this.state.tokens[this.state.tokens.length - 1];
+      if (token.type === tt.name) {
+        simpleName = token.value;
+      }
+    }
+    if (simpleName == null) {
       this.semicolon();
       return;
     }
@@ -155,7 +157,7 @@ export default class StatementParser extends ExpressionParser {
       this.parseLabeledStatement();
     } else {
       // This was an identifier, so we might want to handle flow/typescript-specific cases.
-      this.parseIdentifierStatement(expr.name);
+      this.parseIdentifierStatement(simpleName);
     }
   }
 
@@ -790,16 +792,12 @@ export default class StatementParser extends ExpressionParser {
       this.parseExportStar();
     } else if (this.isExportDefaultSpecifier()) {
       this.expectPlugin("exportDefaultFrom");
-      const specifier = this.startNode();
-      specifier.exported = this.parseIdentifier(true);
-      const specifiers = [this.finishNode(specifier, "ExportDefaultSpecifier")];
+      this.parseIdentifier(true);
       if (this.match(tt.comma) && this.lookahead().type === tt.star) {
         this.expect(tt.comma);
-        const innerSpecifier = this.startNode();
         this.expect(tt.star);
         this.expectContextual("as");
-        innerSpecifier.exported = this.parseIdentifier();
-        specifiers.push(this.finishNode(innerSpecifier, "ExportNamespaceSpecifier"));
+        this.parseIdentifier();
       } else {
         this.parseExportSpecifiersMaybe();
       }
@@ -824,25 +822,20 @@ export default class StatementParser extends ExpressionParser {
     }
   }
 
-  parseExportDefaultExpression(): N.Expression | N.Declaration {
-    const expr = this.startNode();
+  parseExportDefaultExpression(): void {
     const functionStart = this.state.start;
     if (this.eat(tt._function)) {
       this.parseFunction(functionStart, true, false, false, true);
-      return expr;
     } else if (this.isContextual("async") && this.lookahead().type === tt._function) {
       // async function declaration
       this.eatContextual("async");
       this.eat(tt._function);
       this.parseFunction(functionStart, true, false, true, true);
-      return expr;
     } else if (this.match(tt._class)) {
       this.parseClass(true, true);
-      return this.startNode();
     } else {
-      const res = this.parseMaybeAssign();
+      this.parseMaybeAssign();
       this.semicolon();
-      return res;
     }
   }
 
@@ -917,8 +910,7 @@ export default class StatementParser extends ExpressionParser {
 
   // Parses a comma-separated list of module exports.
 
-  parseExportSpecifiers(): Array<N.ExportSpecifier> {
-    const nodes: Array<N.ExportSpecifier> = [];
+  parseExportSpecifiers(): void {
     let first = true;
     let needsFrom;
 
@@ -936,19 +928,17 @@ export default class StatementParser extends ExpressionParser {
       const isDefault = this.match(tt._default);
       if (isDefault && !needsFrom) needsFrom = true;
 
-      const node = this.startNode<N.ExportSpecifier>();
-      node.local = this.parseIdentifier(isDefault);
+      this.parseIdentifier(isDefault);
       this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.ExportAccess;
-      node.exported = this.eatContextual("as") ? this.parseIdentifier(true) : node.local.__clone();
-      nodes.push(this.finishNode(node, "ExportSpecifier"));
+      if (this.eatContextual("as")) {
+        this.parseIdentifier(true);
+      }
     }
 
     // https://github.com/ember-cli/ember-cli/pull/3739
     if (needsFrom && !this.isContextual("from")) {
       this.unexpected();
     }
-
-    return nodes;
   }
 
   // Parses import declaration.

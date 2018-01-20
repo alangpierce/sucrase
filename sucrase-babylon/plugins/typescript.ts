@@ -911,16 +911,11 @@ export default (superClass: ParserClass): ParserClass =>
       }
     }
 
-    tsParseImportEqualsDeclaration(
-      node: N.TsImportEqualsDeclaration,
-      isExport?: boolean,
-    ): N.TsImportEqualsDeclaration {
-      node.isExport = isExport || false;
-      node.id = this.parseIdentifier();
+    tsParseImportEqualsDeclaration(): void {
+      this.parseIdentifier();
       this.expect(tt.eq);
-      node.moduleReference = this.tsParseModuleReference();
+      this.tsParseModuleReference();
       this.semicolon();
-      return this.finishNode(node, "TSImportEqualsDeclaration");
     }
 
     tsIsExternalModuleReference(): boolean {
@@ -1375,37 +1370,31 @@ export default (superClass: ParserClass): ParserClass =>
     */
     checkDuplicateExports(): void {}
 
-    parseImport(node: N.Node): N.ImportDeclaration | N.TsImportEqualsDeclaration {
+    parseImport(): void {
       if (this.match(tt.name) && this.lookahead().type === tt.eq) {
-        return this.tsParseImportEqualsDeclaration(node as N.TsImportEqualsDeclaration);
+        this.tsParseImportEqualsDeclaration();
+        return;
       }
-      return super.parseImport(node);
+      super.parseImport();
     }
 
-    parseExport(node: N.Node): N.Node {
+    parseExport(): void {
       if (this.match(tt._import)) {
         // `export import A = B;`
         this.expect(tt._import);
-        return this.tsParseImportEqualsDeclaration(
-          node as N.TsImportEqualsDeclaration,
-          /* isExport */ true,
-        );
+        this.tsParseImportEqualsDeclaration();
       } else if (this.eat(tt.eq)) {
         // `export = x;`
-        const assign: N.TsExportAssignment = node as N.TsExportAssignment;
-        assign.expression = this.parseExpression();
+        this.parseExpression();
         this.semicolon();
-        return this.finishNode(assign, "TSExportAssignment");
       } else if (this.eatContextual("as")) {
         // `export as namespace A;`
-        const decl: N.TsNamespaceExportDeclaration = node as N.TsNamespaceExportDeclaration;
         // See `parseNamespaceExportDeclaration` in TypeScript's own parser
         this.expectContextual("namespace");
-        decl.id = this.parseIdentifier();
+        this.parseIdentifier();
         this.semicolon();
-        return this.finishNode(decl, "TSNamespaceExportDeclaration");
       } else {
-        return super.parseExport(node);
+        super.parseExport();
       }
     }
 

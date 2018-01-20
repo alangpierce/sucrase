@@ -390,4 +390,16 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("handles prefix operators with a parenthesized operand", () => {
+    assertResult(
+      `
+      const x = +(y);
+    `,
+      `"use strict";
+      const x = +(y);
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

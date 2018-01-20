@@ -781,14 +781,12 @@ export default (superClass: ParserClass): ParserClass =>
       }
     }
 
-    tsParseTypeAssertion(): N.TsTypeAssertion {
-      const node: N.TsTypeAssertion = this.startNode();
+    tsParseTypeAssertion(): void {
       this.runInTypeContext(1, () => {
-        node.typeAnnotation = this.tsParseType();
+        this.tsParseType();
         this.expectRelational(">");
       });
-      node.expression = this.parseMaybeUnary();
-      return this.finishNode(node, "TSTypeAssertion");
+      this.parseMaybeUnary();
     }
 
     tsTryParseTypeArgumentsInExpression(): N.TsTypeParameterInstantiation | null {
@@ -852,17 +850,18 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsParseEnumMember(): N.TsEnumMember {
-      const node: N.TsEnumMember = this.startNode();
       // Computed property names are grammar errors in an enum, so accept just string literal or identifier.
-      node.id = this.match(tt.string)
-        ? this.parseLiteral<N.StringLiteral>(this.state.value, "StringLiteral")
-        : this.parseIdentifier(/* liberal */ true);
+      if (this.match(tt.string)) {
+        this.parseLiteral<N.StringLiteral>(this.state.value, "StringLiteral");
+      } else {
+        this.parseIdentifier(/* liberal */ true);
+      }
       if (this.eat(tt.eq)) {
         const eqIndex = this.state.tokens.length - 1;
-        node.initializer = this.parseMaybeAssign();
+        this.parseMaybeAssign();
         this.state.tokens[eqIndex].rhsEndIndex = this.state.tokens.length;
       }
-      return this.finishNode(node, "TSEnumMember");
+      return this.startNode();
     }
 
     tsParseEnumDeclaration(): void {
@@ -1251,46 +1250,33 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     parseSubscript(
-      base: N.Expression,
       startPos: number,
       startLoc: Position,
       noCalls: boolean | null,
       state: {stop: boolean},
-    ): N.Expression {
+    ): void {
       if (!this.hasPrecedingLineBreak() && this.eat(tt.bang)) {
-        const nonNullExpression: N.TsNonNullExpression = this.startNodeAt(startPos, startLoc);
-        nonNullExpression.expression = base;
-        return this.finishNode(nonNullExpression, "TSNonNullExpression");
+        return;
       }
 
       if (!noCalls && this.isRelational("<")) {
-        if (this.atPossibleAsync(base)) {
+        if (this.atPossibleAsync()) {
           // Almost certainly this is a generic async function `async <T>() => ...
           // But it might be a call with a type argument `async<T>();`
           const asyncArrowFn = this.tsTryParseGenericAsyncArrowFunction(startPos, startLoc);
           if (asyncArrowFn) {
-            return asyncArrowFn;
+            return;
           }
         }
-
-        const node: N.CallExpression = this.startNodeAt(startPos, startLoc);
-        node.callee = base;
 
         // May be passing type arguments. But may just be the `<` operator.
         const typeArguments = this.tsTryParseTypeArgumentsInExpression(); // Also eats the "("
         if (typeArguments) {
           // possibleAsync always false here, because we would have handled it above.
-          // $FlowIgnore (won't be any undefined arguments)
-          node.arguments = this.parseCallExpressionArguments(
-            tt.parenR,
-            /* possibleAsync */ false,
-          ) as Array<N.Node>;
-          node.typeParameters = typeArguments;
-          this.finishNode(node, "CallExpression");
+          this.parseCallExpressionArguments(tt.parenR, /* possibleAsync */ false);
         }
       }
-
-      return super.parseSubscript(base, startPos, startLoc, noCalls, state);
+      super.parseSubscript(startPos, startLoc, noCalls, state);
     }
 
     parseNewArguments(): void {
@@ -1309,26 +1295,23 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     parseExprOp(
-      left: N.Expression,
       leftStartPos: number,
       leftStartLoc: Position,
       minPrec: number,
       noIn: boolean | null,
-    ): N.Expression {
+    ): void {
       if (
         nonNull(tt._in.binop) > minPrec &&
         !this.hasPrecedingLineBreak() &&
         this.eatContextual("as")
       ) {
         this.state.tokens[this.state.tokens.length - 1].type = tt._as;
-        const node: N.TsAsExpression = this.startNodeAt(leftStartPos, leftStartLoc);
-        node.expression = left;
-        node.typeAnnotation = this.runInTypeContext(1, () => this.tsParseType());
-        this.finishNode(node, "TSAsExpression");
-        return this.parseExprOp(node, leftStartPos, leftStartLoc, minPrec, noIn);
+        this.runInTypeContext(1, () => this.tsParseType());
+        this.parseExprOp(leftStartPos, leftStartLoc, minPrec, noIn);
+        return;
       }
 
-      return super.parseExprOp(left, leftStartPos, leftStartLoc, minPrec, noIn);
+      super.parseExprOp(leftStartPos, leftStartLoc, minPrec, noIn);
     }
 
     /*
@@ -1469,21 +1452,22 @@ export default (superClass: ParserClass): ParserClass =>
 
     // An apparent conditional expression could actually be an optional parameter in an arrow function.
     parseConditional(
-      expr: N.Expression,
       noIn: boolean | null,
       startPos: number,
       startLoc: Position,
       refNeedsArrowPos?: Pos | null,
-    ): N.Expression {
+    ): void {
       // only do the expensive clone if there is a question mark
       // and if we come from inside parens
       if (!refNeedsArrowPos || !this.match(tt.question)) {
-        return super.parseConditional(expr, noIn, startPos, startLoc, refNeedsArrowPos);
+        super.parseConditional(noIn, startPos, startLoc, refNeedsArrowPos);
+        return;
       }
 
       const state = this.state.clone();
       try {
-        return super.parseConditional(expr, noIn, startPos, startLoc);
+        super.parseConditional(noIn, startPos, startLoc);
+        return;
       } catch (err) {
         if (!(err instanceof SyntaxError)) {
           // istanbul ignore next: no such error is expected
@@ -1493,28 +1477,19 @@ export default (superClass: ParserClass): ParserClass =>
         this.state = state;
         // @ts-ignore
         refNeedsArrowPos.start = err.pos || this.state.start;
-        return expr;
       }
     }
 
     // Note: These "type casts" are *not* valid TS expressions.
     // But we parse them here and change them when completing the arrow function.
-    parseParenItem(node: N.Expression, startPos: number, startLoc: Position): N.Expression {
-      node = super.parseParenItem(node, startPos, startLoc);
+    parseParenItem(): void {
+      super.parseParenItem();
       if (this.eat(tt.question)) {
         this.state.tokens[this.state.tokens.length - 1].isType = true;
-        node.optional = true;
       }
-
       if (this.match(tt.colon)) {
-        const typeCastNode: N.TsTypeCastExpression = this.startNodeAt(startPos, startLoc);
-        typeCastNode.expression = node;
-        typeCastNode.typeAnnotation = this.tsParseTypeAnnotation();
-
-        return this.finishNode(typeCastNode, "TSTypeCastExpression");
+        this.tsParseTypeAnnotation();
       }
-
-      return node;
     }
 
     parseExportDeclaration(): void {
@@ -1619,23 +1594,20 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // parse the return type of an async arrow function - let foo = (async (): number => {});
-    parseAsyncArrowFromCallExpression(
-      node: N.ArrowFunctionExpression,
-      call: N.CallExpression,
-      startTokenIndex: number,
-    ): N.ArrowFunctionExpression {
+    parseAsyncArrowFromCallExpression(functionStart: number, startTokenIndex: number): void {
       if (this.match(tt.colon)) {
-        node.returnType = this.tsParseTypeAnnotation();
+        this.tsParseTypeAnnotation();
       }
-      return super.parseAsyncArrowFromCallExpression(node, call, startTokenIndex);
+      super.parseAsyncArrowFromCallExpression(functionStart, startTokenIndex);
     }
 
+    // Returns true if the expression was an arrow function.
     parseMaybeAssign(
       noIn: boolean | null = null,
       refShorthandDefaultPos?: Pos | null,
       afterLeftParse?: Function,
       refNeedsArrowPos?: Pos | null,
-    ): N.Expression {
+    ): boolean {
       // Note: When the JSX plugin is on, type assertions (`<T> x`) aren't valid syntax.
 
       let jsxError: SyntaxError | null = null;
@@ -1683,19 +1655,18 @@ export default (superClass: ParserClass): ParserClass =>
 
       // Either way, we're looking at a '<': tt.typeParameterStart or relational.
 
-      let arrowExpression;
-      let typeParameters: N.TsTypeParameterDeclaration;
+      let wasArrow = false;
       const state = this.state.clone();
       try {
         // This is similar to TypeScript's `tryParseParenthesizedArrowFunctionExpression`.
-        typeParameters = this.runInTypeContext(0, () => this.tsParseTypeParameters());
-        arrowExpression = super.parseMaybeAssign(
+        this.runInTypeContext(0, () => this.tsParseTypeParameters());
+        wasArrow = super.parseMaybeAssign(
           noIn,
           refShorthandDefaultPos,
           afterLeftParse,
           refNeedsArrowPos,
         );
-        if (arrowExpression.type !== "ArrowFunctionExpression") {
+        if (!wasArrow) {
           this.unexpected(); // Go to the catch block (needs a SyntaxError).
         }
       } catch (err) {
@@ -1723,25 +1694,20 @@ export default (superClass: ParserClass): ParserClass =>
           refNeedsArrowPos,
         );
       }
-
-      // Correct TypeScript code should have at least 1 type parameter, but don't crash on bad code.
-      if (typeParameters && typeParameters.params.length !== 0) {
-        this.resetStartLocationFromNode(arrowExpression, typeParameters.params[0]);
-      }
-      arrowExpression.typeParameters = typeParameters;
-      return arrowExpression;
+      return wasArrow;
     }
 
     // Handle type assertions
-    parseMaybeUnary(refShorthandDefaultPos?: Pos | null): N.Expression {
+    parseMaybeUnary(refShorthandDefaultPos?: Pos | null): boolean {
       if (!this.hasPlugin("jsx") && this.eatRelational("<")) {
-        return this.tsParseTypeAssertion();
+        this.tsParseTypeAssertion();
+        return false;
       } else {
         return super.parseMaybeUnary(refShorthandDefaultPos);
       }
     }
 
-    parseArrow(node: N.ArrowFunctionExpression): N.ArrowFunctionExpression | null {
+    parseArrow(): boolean {
       if (this.match(tt.colon)) {
         // This is different from how the TS parser does it.
         // TS uses lookahead. Babylon parses it as a parenthesized expression and converts.
@@ -1750,7 +1716,6 @@ export default (superClass: ParserClass): ParserClass =>
           const returnType = this.tsParseTypeOrTypePredicateAnnotation(tt.colon);
           if (this.canInsertSemicolon()) this.unexpected();
           if (!this.match(tt.arrow)) this.unexpected();
-          node.returnType = returnType;
         } catch (err) {
           if (err instanceof SyntaxError) {
             this.state = state;
@@ -1760,8 +1725,7 @@ export default (superClass: ParserClass): ParserClass =>
           }
         }
       }
-
-      return super.parseArrow(node);
+      return super.parseArrow();
     }
 
     // Allow type annotations inside of a parameter list.

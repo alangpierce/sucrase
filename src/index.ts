@@ -7,12 +7,7 @@ import TokenProcessor from "./TokenProcessor";
 import RootTransformer from "./transformers/RootTransformer";
 import formatTokens from "./util/formatTokens";
 
-const DEFAULT_BABYLON_PLUGINS = [
-  "objectRestSpread",
-  "classProperties",
-  "numericSeparator",
-  "dynamicImport",
-];
+const DEFAULT_BABYLON_PLUGINS = ["objectRestSpread", "classProperties", "numericSeparator"];
 
 export type Transform =
   | "jsx"

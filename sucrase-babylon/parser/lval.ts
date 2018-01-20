@@ -24,7 +24,7 @@ export default abstract class LValParser extends NodeUtils {
     refShorthandDefaultPos?: Pos | null,
     afterLeftParse?: Function,
     refNeedsArrowPos?: Pos | null,
-  ): Expression;
+  ): void;
   abstract parseObj<T extends ObjectPattern | ObjectExpression>(
     isPattern: boolean,
     isBlockScope: boolean,
@@ -38,7 +38,7 @@ export default abstract class LValParser extends NodeUtils {
   parseSpread<T extends RestElement | SpreadElement>(refShorthandDefaultPos: Pos | null): T {
     const node = this.startNode();
     this.next();
-    node.argument = this.parseMaybeAssign(false, refShorthandDefaultPos);
+    this.parseMaybeAssign(false, refShorthandDefaultPos);
     return this.finishNode(node as T, "SpreadElement");
   }
 

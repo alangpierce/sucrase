@@ -509,10 +509,12 @@ export default (superClass: ParserClass): ParserClass =>
       return this.finishNode(node as N.TypeParameterInstantiation, "TypeParameterInstantiation");
     }
 
-    flowParseObjectPropertyKey(): N.Expression {
-      return this.match(tt.num) || this.match(tt.string)
-        ? this.parseExprAtom()
-        : this.parseIdentifier(true);
+    flowParseObjectPropertyKey(): void {
+      if (this.match(tt.num) || this.match(tt.string)) {
+        this.parseExprAtom();
+      } else {
+        this.parseIdentifier(true);
+      }
     }
 
     flowParseObjectTypeIndexer(
@@ -524,7 +526,7 @@ export default (superClass: ParserClass): ParserClass =>
 
       this.expect(tt.bracketL);
       if (this.lookahead().type === tt.colon) {
-        node.id = this.flowParseObjectPropertyKey();
+        this.flowParseObjectPropertyKey();
         node.key = this.flowParseTypeInitialiser();
       } else {
         node.id = null;
@@ -669,7 +671,7 @@ export default (superClass: ParserClass): ParserClass =>
 
         return this.finishNode(node, "ObjectTypeSpreadProperty");
       } else {
-        node.key = this.flowParseObjectPropertyKey();
+        this.flowParseObjectPropertyKey();
         node.static = isStatic;
         node.kind = kind;
 
@@ -1217,49 +1219,41 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     parseConditional(
-      expr: N.Expression,
       noIn: boolean | null,
       startPos: number,
       startLoc: Position,
       refNeedsArrowPos?: Pos | null,
-    ): N.Expression {
+    ): void {
       // only do the expensive clone if there is a question mark
       // and if we come from inside parens
       if (refNeedsArrowPos && this.match(tt.question)) {
         const state = this.state.clone();
         try {
-          return super.parseConditional(expr, noIn, startPos, startLoc);
+          super.parseConditional(noIn, startPos, startLoc);
+          return;
         } catch (err) {
           if (err instanceof SyntaxError) {
             this.state = state;
             // @ts-ignore
             refNeedsArrowPos.start = err.pos || this.state.start;
-            return expr;
+            return;
           } else {
             // istanbul ignore next: no such error is expected
             throw err;
           }
         }
       }
-      return super.parseConditional(expr, noIn, startPos, startLoc, refNeedsArrowPos);
+      super.parseConditional(noIn, startPos, startLoc, refNeedsArrowPos);
     }
 
-    parseParenItem(node: N.Expression, startPos: number, startLoc: Position): N.Expression {
-      node = super.parseParenItem(node, startPos, startLoc);
+    parseParenItem(): void {
+      super.parseParenItem();
       if (this.eat(tt.question)) {
         this.state.tokens[this.state.tokens.length - 1].isType = true;
-        node.optional = true;
       }
-
       if (this.match(tt.colon)) {
-        const typeCastNode = this.startNodeAt(startPos, startLoc);
-        typeCastNode.expression = node;
-        typeCastNode.typeAnnotation = this.flowParseTypeAnnotation();
-
-        return this.finishNode(typeCastNode, "TypeCastExpression");
+        this.flowParseTypeAnnotation();
       }
-
-      return node;
     }
 
     parseExportDeclaration(): void {
@@ -1559,19 +1553,14 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // parse the return type of an async arrow function - let foo = (async (): number => {});
-    parseAsyncArrowFromCallExpression(
-      node: N.ArrowFunctionExpression,
-      call: N.CallExpression,
-      startTokenIndex: number,
-    ): N.ArrowFunctionExpression {
+    parseAsyncArrowFromCallExpression(functionStart: number, startTokenIndex: number): void {
       if (this.match(tt.colon)) {
         const oldNoAnonFunctionType = this.state.noAnonFunctionType;
         this.state.noAnonFunctionType = true;
-        node.returnType = this.flowParseTypeAnnotation() as N.TypeAnnotationBase;
+        this.flowParseTypeAnnotation();
         this.state.noAnonFunctionType = oldNoAnonFunctionType;
       }
-
-      return super.parseAsyncArrowFromCallExpression(node, call, startTokenIndex);
+      super.parseAsyncArrowFromCallExpression(functionStart, startTokenIndex);
     }
 
     // todo description
@@ -1594,7 +1583,7 @@ export default (superClass: ParserClass): ParserClass =>
       refShorthandDefaultPos?: Pos | null,
       afterLeftParse?: Function,
       refNeedsArrowPos?: Pos | null,
-    ): N.Expression {
+    ): boolean {
       let jsxError = null;
       if (tt.jsxTagStart && this.match(tt.jsxTagStart)) {
         const state = this.state.clone();
@@ -1624,24 +1613,22 @@ export default (superClass: ParserClass): ParserClass =>
       }
 
       if (jsxError != null || this.isRelational("<")) {
-        let arrowExpression;
+        let wasArrow = false;
         let typeParameters;
         try {
           typeParameters = this.runInTypeContext(0, () => this.flowParseTypeParameterDeclaration());
-          arrowExpression = super.parseMaybeAssign(
+          wasArrow = super.parseMaybeAssign(
             noIn,
             refShorthandDefaultPos,
             afterLeftParse,
             refNeedsArrowPos,
           );
-          arrowExpression.typeParameters = typeParameters;
-          this.resetStartLocationFromNode(arrowExpression, typeParameters);
         } catch (err) {
           throw jsxError || err;
         }
 
-        if (arrowExpression.type === "ArrowFunctionExpression") {
-          return arrowExpression;
+        if (wasArrow) {
+          return true;
         } else if (jsxError != null) {
           throw jsxError;
         } else {
@@ -1656,34 +1643,18 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // handle return types for arrow functions
-    parseArrow(node: N.ArrowFunctionExpression): N.ArrowFunctionExpression | null {
+    parseArrow(): boolean {
       if (this.match(tt.colon)) {
         this.runInTypeContext(0, () => {
           const state = this.state.clone();
           try {
             const oldNoAnonFunctionType = this.state.noAnonFunctionType;
             this.state.noAnonFunctionType = true;
-
-            const typeNode = this.startNode<N.TypeAnnotation>();
-
-            [
-              // $FlowFixMe (destructuring not supported yet)
-              // @ts-ignore
-              typeNode.typeAnnotation,
-              // $FlowFixMe (destructuring not supported yet)
-              // @ts-ignore
-              node.predicate,
-            ] = this.flowParseTypeAndPredicateInitialiser();
-
+            this.flowParseTypeAndPredicateInitialiser();
             this.state.noAnonFunctionType = oldNoAnonFunctionType;
 
             if (this.canInsertSemicolon()) this.unexpected();
             if (!this.match(tt.arrow)) this.unexpected();
-
-            // assign after it is clear it is an arrow
-            node.returnType = typeNode.typeAnnotation
-              ? this.finishNode(typeNode, "TypeAnnotation")
-              : null;
           } catch (err) {
             if (err instanceof SyntaxError) {
               this.state = state;
@@ -1695,53 +1666,49 @@ export default (superClass: ParserClass): ParserClass =>
         });
       }
 
-      return super.parseArrow(node);
+      return super.parseArrow();
     }
 
     shouldParseArrow(): boolean {
       return this.match(tt.colon) || super.shouldParseArrow();
     }
 
-    parseSubscripts(
-      base: N.Expression,
-      startPos: number,
-      startLoc: Position,
-      noCalls?: boolean | null,
-    ): N.Expression {
-      if (base.type === "Identifier" && base.name === "async" && this.isRelational("<")) {
+    parseSubscripts(startPos: number, startLoc: Position, noCalls?: boolean | null): void {
+      if (
+        this.state.tokens[this.state.tokens.length - 1].value === "async" &&
+        this.isRelational("<")
+      ) {
         const state = this.state.clone();
         let error;
         try {
-          const node = this.parseAsyncArrowWithTypeParameters(startPos, startLoc);
-          if (node) return node;
+          const wasArrow = this.parseAsyncArrowWithTypeParameters(startPos, startLoc);
+          if (wasArrow) {
+            return;
+          }
         } catch (e) {
           error = e;
         }
 
         this.state = state;
         try {
-          return super.parseSubscripts(base, startPos, startLoc, noCalls);
+          super.parseSubscripts(startPos, startLoc, noCalls);
+          return;
         } catch (e) {
           throw error || e;
         }
       }
 
-      return super.parseSubscripts(base, startPos, startLoc, noCalls);
+      super.parseSubscripts(startPos, startLoc, noCalls);
     }
 
-    parseAsyncArrowWithTypeParameters(
-      startPos: number,
-      startLoc: Position,
-    ): N.ArrowFunctionExpression | null {
+    // Returns true if there was an arrow function here.
+    parseAsyncArrowWithTypeParameters(startPos: number, startLoc: Position): boolean {
       const startTokenIndex = this.state.tokens.length;
-      const node = this.startNodeAt(startPos, startLoc);
       this.parseFunctionParams();
-      if (!this.parseArrow(node as N.ArrowFunctionExpression)) return null;
-      return this.parseArrowExpression(
-        node as N.ArrowFunctionExpression,
-        startTokenIndex,
-        /* params */ undefined,
-        /* isAsync */ true,
-      );
+      if (!this.parseArrow()) {
+        return false;
+      }
+      this.parseArrowExpression(startPos, startTokenIndex, /* isAsync */ true);
+      return true;
     }
   } as ParserClass;

@@ -146,10 +146,8 @@ export default abstract class ExpressionParser extends LValParser {
     if (this.state.type.isAssign) {
       const node = this.startNodeAt(startPos, startLoc);
       node.operator = this.state.value;
-      node.left = this.match(tt.eq) ? this.toAssignable(left, null, "assignment expression") : left;
+      // Note that we keep the LHS tokens as accesses for now.
       refShorthandDefaultPos.start = 0; // reset because shorthand default was used correctly
-
-      this.checkLVal(left, null, null, "assignment expression");
 
       if (left.extra && left.extra.parenthesized) {
         let errorMsg;
@@ -330,10 +328,6 @@ export default abstract class ExpressionParser extends LValParser {
         this.unexpected(refShorthandDefaultPos.start);
       }
 
-      if (update) {
-        this.checkLVal(node.argument, null, null, "prefix operation");
-      }
-
       return this.finishNode(node, update ? "UpdateExpression" : "UnaryExpression");
     }
 
@@ -346,7 +340,6 @@ export default abstract class ExpressionParser extends LValParser {
       node.operator = this.state.value;
       node.prefix = false;
       node.argument = expr;
-      this.checkLVal(expr, null, null, "postfix operation");
       this.next();
       expr = this.finishNode(node, "UpdateExpression");
     }
@@ -1104,10 +1097,9 @@ export default abstract class ExpressionParser extends LValParser {
 
       if (this.match(tt.ellipsis)) {
         this.expectPlugin("objectRestSpread");
+        // Note that this is labeled as an access on the token even though it might be an
+        // assignment.
         prop = this.parseSpread(isPattern ? {start: 0} : null);
-        if (isPattern) {
-          this.toAssignable(prop, true, "object pattern");
-        }
         node.properties.push(prop);
         if (isPattern) {
           const position = this.state.start;
@@ -1430,7 +1422,6 @@ export default abstract class ExpressionParser extends LValParser {
     const oldInFunc = this.state.inFunction;
     this.state.inFunction = true;
     this.initFunction(node, isAsync);
-    if (params) this.setArrowFunctionParameters(node, params);
 
     const oldInGenerator = this.state.inGenerator;
     this.state.inGenerator = false;
@@ -1442,10 +1433,6 @@ export default abstract class ExpressionParser extends LValParser {
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
 
     return this.finishNode(node, "ArrowFunctionExpression");
-  }
-
-  setArrowFunctionParameters(node: N.ArrowFunctionExpression, params: Array<N.Expression>): void {
-    node.params = this.toAssignableList(params, true, "arrow function parameters");
   }
 
   parseFunctionBodyAndFinish(

@@ -378,4 +378,16 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("handles array destructuring", () => {
+    assertResult(
+      `
+      [a] = b;
+    `,
+      `"use strict";
+      [a] = b;
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

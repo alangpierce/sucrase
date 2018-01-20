@@ -10,7 +10,6 @@ import formatTokens from "./util/formatTokens";
 const DEFAULT_BABYLON_PLUGINS = [
   "objectRestSpread",
   "classProperties",
-  "exportNamespaceFrom",
   "numericSeparator",
   "dynamicImport",
 ];

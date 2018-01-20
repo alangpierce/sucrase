@@ -212,7 +212,7 @@ export default (superClass: ParserClass): ParserClass =>
             );
           }
           this.next();
-          this.parseImport(innerBodyNode);
+          this.parseImport();
         } else {
           this.expectContextual(
             "declare",
@@ -302,19 +302,7 @@ export default (superClass: ParserClass): ParserClass =>
           this.isContextual("type") || // declare export type ...
           this.isContextual("opaque") // declare export opaque type ...
         ) {
-          node = this.parseExport(node as N.ExportNamedDeclaration);
-          if (node.type === "ExportNamedDeclaration") {
-            // flow does not support the ExportNamedDeclaration
-            // $FlowIgnore
-            node.type = "ExportDeclaration";
-            // $FlowFixMe
-            node.default = false;
-            delete node.exportKind;
-          }
-
-          // $FlowIgnore
-          node.type = `Declare${node.type}`;
-
+          this.parseExport();
           return node;
         }
       }
@@ -1276,14 +1264,6 @@ export default (superClass: ParserClass): ParserClass =>
       return node;
     }
 
-    parseExport(node: N.ExportNamedDeclaration): N.ExportNamedDeclaration {
-      node = super.parseExport(node) as N.ExportNamedDeclaration;
-      if (node.type === "ExportNamedDeclaration" || node.type === "ExportAllDeclaration") {
-        node.exportKind = node.exportKind || "value";
-      }
-      return node;
-    }
-
     parseExportDeclaration(): void {
       if (this.isContextual("type")) {
         this.runInTypeContext(1, () => {
@@ -1324,23 +1304,14 @@ export default (superClass: ParserClass): ParserClass =>
       );
     }
 
-    parseExportStar(node: N.ExportNamedDeclaration): void {
+    parseExportStar(): void {
       if (this.eatContextual("type")) {
-        node.exportKind = "type";
         this.runInTypeContext(2, () => {
-          super.parseExportStar(node);
+          super.parseExportStar();
         });
       } else {
-        super.parseExportStar(node);
+        super.parseExportStar();
       }
-    }
-
-    parseExportNamespace(node: N.ExportNamedDeclaration): void {
-      if (node.exportKind === "type") {
-        this.unexpected();
-      }
-
-      super.parseExportNamespace(node);
     }
 
     parseClassId(isStatement: boolean, optionalId: boolean = false): void {
@@ -1580,26 +1551,8 @@ export default (superClass: ParserClass): ParserClass =>
       return node;
     }
 
-    shouldParseDefaultImport(node: N.ImportDeclaration): boolean {
-      if (!hasTypeImportKind(node)) {
-        return super.shouldParseDefaultImport(node);
-      }
-
-      return isMaybeDefaultImport(this.state);
-    }
-
-    parseImportSpecifierLocal(node: N.ImportDeclaration, specifier: N.Node, type: string): void {
-      specifier.local = hasTypeImportKind(node)
-        ? this.flowParseRestrictedIdentifier(true)
-        : this.parseIdentifier();
-
-      node.specifiers.push(this.finishNode(specifier as N.ImportSpecifier, type));
-    }
-
     // parse typeof and type imports
-    parseImportSpecifiers(node: N.ImportDeclaration): void {
-      node.importKind = "value";
-
+    parseImportSpecifiers(): void {
       let kind = null;
       if (this.match(tt._typeof)) {
         kind = "typeof";
@@ -1616,18 +1569,15 @@ export default (superClass: ParserClass): ParserClass =>
 
         if (isMaybeDefaultImport(lh) || lh.type === tt.braceL || lh.type === tt.star) {
           this.next();
-          // @ts-ignore
-          node.importKind = kind;
         }
       }
 
-      super.parseImportSpecifiers(node);
+      super.parseImportSpecifiers();
     }
 
     // parse import-type/typeof shorthand
-    parseImportSpecifier(node: N.ImportDeclaration): void {
+    parseImportSpecifier(): void {
       const specifier = this.startNode();
-      const firstIdentLoc = this.state.start;
       const firstIdent = this.parseIdentifier(true);
 
       let specifierTypeKind = null;
@@ -1639,7 +1589,6 @@ export default (superClass: ParserClass): ParserClass =>
         this.state.tokens[this.state.tokens.length - 1].type = tt._typeof;
       }
 
-      let isBinding = false;
       if (this.isContextual("as") && !this.isLookaheadContextual("as")) {
         const as_ident = this.parseIdentifier(true);
         if (specifierTypeKind !== null && !this.match(tt.name) && !this.state.type.keyword) {
@@ -1660,31 +1609,13 @@ export default (superClass: ParserClass): ParserClass =>
         if (this.eatContextual("as")) {
           specifier.local = this.parseIdentifier();
         } else {
-          isBinding = true;
           specifier.local = specifier.imported.__clone();
         }
       } else {
-        isBinding = true;
         specifier.imported = firstIdent;
         specifier.importKind = null;
         specifier.local = specifier.imported.__clone();
       }
-
-      const nodeIsTypeImport = hasTypeImportKind(node);
-      const specifierIsTypeImport = hasTypeImportKind(specifier);
-
-      if (nodeIsTypeImport && specifierIsTypeImport) {
-        this.raise(
-          firstIdentLoc,
-          "The `type` and `typeof` keywords on named imports can only be used on regular `import` statements. It cannot be used with `import type` or `import typeof` statements",
-        );
-      }
-
-      if (nodeIsTypeImport || specifierIsTypeImport) {
-        this.checkReservedType(specifier.local.name, specifier.local.start);
-      }
-
-      node.specifiers.push(this.finishNode(specifier as N.ImportSpecifier, "ImportSpecifier"));
     }
 
     // parse function type parameters - function foo<T>() {}

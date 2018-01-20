@@ -45,7 +45,6 @@ export default class StatementParser extends ExpressionParser {
 
   parseStatementContent(declaration: boolean, topLevel: boolean): void {
     const starttype = this.state.type;
-    const node = this.startNode();
 
     // Most types of statements are recognized by the keyword they
     // start with. Many are trivial to parse, some require a bit of
@@ -117,9 +116,9 @@ export default class StatementParser extends ExpressionParser {
         }
         this.next();
         if (starttype === tt._import) {
-          this.parseImport(node);
+          this.parseImport();
         } else {
-          this.parseExport(node);
+          this.parseExport();
         }
         return;
       }
@@ -971,18 +970,15 @@ export default class StatementParser extends ExpressionParser {
 
   // Parses module export declaration.
 
-  // TODO: better type. Node is an N.AnyExport.
-  parseExport(node: N.Node): N.Node {
+  parseExport(): void {
     // export * from '...'
     if (this.shouldParseExportStar()) {
-      this.parseExportStar(node as N.ExportNamedDeclaration);
-      if (node.type === "ExportAllDeclaration") return node;
+      this.parseExportStar();
     } else if (this.isExportDefaultSpecifier()) {
       this.expectPlugin("exportDefaultFrom");
       const specifier = this.startNode();
       specifier.exported = this.parseIdentifier(true);
       const specifiers = [this.finishNode(specifier, "ExportDefaultSpecifier")];
-      node.specifiers = specifiers;
       if (this.match(tt.comma) && this.lookahead().type === tt.star) {
         this.expect(tt.comma);
         const innerSpecifier = this.startNode();
@@ -991,13 +987,12 @@ export default class StatementParser extends ExpressionParser {
         innerSpecifier.exported = this.parseIdentifier();
         specifiers.push(this.finishNode(innerSpecifier, "ExportNamespaceSpecifier"));
       } else {
-        this.parseExportSpecifiersMaybe(node as N.ExportNamedDeclaration);
+        this.parseExportSpecifiersMaybe();
       }
       this.parseExportFrom();
     } else if (this.eat(tt._default)) {
       // export default ...
-      node.declaration = this.parseExportDefaultExpression();
-      return this.finishNode(node, "ExportDefaultDeclaration");
+      this.parseExportDefaultExpression();
     } else if (this.shouldParseExportDeclaration()) {
       if (this.isContextual("async")) {
         const next = this.lookahead();
@@ -1007,17 +1002,12 @@ export default class StatementParser extends ExpressionParser {
           this.unexpected(next.start, `Unexpected token, expected "function"`);
         }
       }
-
-      node.specifiers = [];
-      node.source = null;
       this.parseExportDeclaration();
     } else {
       // export { x, y as z } [from '...']
-      node.declaration = null;
-      node.specifiers = this.parseExportSpecifiers();
+      this.parseExportSpecifiers();
       this.parseExportFrom();
     }
-    return this.finishNode(node, "ExportNamedDeclaration");
   }
 
   parseExportDefaultExpression(): N.Expression | N.Declaration {
@@ -1062,9 +1052,9 @@ export default class StatementParser extends ExpressionParser {
     );
   }
 
-  parseExportSpecifiersMaybe(node: N.ExportNamedDeclaration): void {
+  parseExportSpecifiersMaybe(): void {
     if (this.eat(tt.comma)) {
-      node.specifiers = node.specifiers.concat(this.parseExportSpecifiers());
+      this.parseExportSpecifiers();
     }
   }
 
@@ -1079,33 +1069,23 @@ export default class StatementParser extends ExpressionParser {
     return this.match(tt.star);
   }
 
-  parseExportStar(node: N.ExportNamedDeclaration): void {
+  parseExportStar(): void {
     this.expect(tt.star);
 
     if (this.isContextual("as")) {
-      this.parseExportNamespace(node);
+      this.parseExportNamespace();
     } else {
       this.parseExportFrom();
-      this.finishNode(node, "ExportAllDeclaration");
     }
   }
 
-  parseExportNamespace(node: N.ExportNamedDeclaration): void {
-    this.expectPlugin("exportNamespaceFrom");
-
-    const specifier = this.startNodeAt<N.ExportSpecifier>(
-      this.state.lastTokStart,
-      this.state.lastTokStartLoc,
-    );
-
+  parseExportNamespace(): void {
     this.next();
     this.state.tokens[this.state.tokens.length - 1].type = tt._as;
 
-    specifier.exported = this.parseIdentifier(true);
+    this.parseIdentifier(true);
 
-    node.specifiers = [this.finishNode(specifier, "ExportNamespaceSpecifier")];
-
-    this.parseExportSpecifiersMaybe(node);
+    this.parseExportSpecifiersMaybe();
     this.parseExportFrom();
   }
 
@@ -1159,47 +1139,42 @@ export default class StatementParser extends ExpressionParser {
 
   // Parses import declaration.
 
-  parseImport(node: N.Node): N.ImportDeclaration | N.TsImportEqualsDeclaration {
+  parseImport(): void {
     // import '...'
     if (this.match(tt.string)) {
-      node.specifiers = [];
-      node.source = this.parseExprAtom();
+      this.parseExprAtom();
     } else {
-      node.specifiers = [];
-      this.parseImportSpecifiers(node as N.ImportDeclaration);
+      this.parseImportSpecifiers();
       this.expectContextual("from");
-      node.source = this.match(tt.string) ? this.parseExprAtom() : this.unexpected();
+      this.parseExprAtom();
     }
     this.semicolon();
-    return this.finishNode(node as N.ImportDeclaration, "ImportDeclaration");
   }
 
   // eslint-disable-next-line no-unused-vars
-  shouldParseDefaultImport(node: N.ImportDeclaration): boolean {
+  shouldParseDefaultImport(): boolean {
     return this.match(tt.name);
   }
 
-  parseImportSpecifierLocal(node: N.ImportDeclaration, specifier: N.Node, type: string): void {
-    specifier.local = this.parseIdentifier();
-    node.specifiers.push(this.finishNode(specifier as N.ImportDefaultSpecifier, type));
+  parseImportSpecifierLocal(): void {
+    this.parseIdentifier();
   }
 
   // Parses a comma-separated list of module imports.
-  parseImportSpecifiers(node: N.ImportDeclaration): void {
+  parseImportSpecifiers(): void {
     let first = true;
-    if (this.shouldParseDefaultImport(node)) {
+    if (this.shouldParseDefaultImport()) {
       // import defaultObj, { x, y as z } from '...'
-      this.parseImportSpecifierLocal(node, this.startNode(), "ImportDefaultSpecifier");
+      this.parseImportSpecifierLocal();
 
       if (!this.eat(tt.comma)) return;
     }
 
     if (this.match(tt.star)) {
-      const specifier = this.startNode();
       this.next();
       this.expectContextual("as");
 
-      this.parseImportSpecifierLocal(node, specifier, "ImportNamespaceSpecifier");
+      this.parseImportSpecifierLocal();
 
       return;
     }
@@ -1221,18 +1196,14 @@ export default class StatementParser extends ExpressionParser {
         if (this.eat(tt.braceR)) break;
       }
 
-      this.parseImportSpecifier(node);
+      this.parseImportSpecifier();
     }
   }
 
-  parseImportSpecifier(node: N.ImportDeclaration): void {
-    const specifier = this.startNode();
-    specifier.imported = this.parseIdentifier(true);
+  parseImportSpecifier(): void {
+    this.parseIdentifier(true);
     if (this.eatContextual("as")) {
-      specifier.local = this.parseIdentifier();
-    } else {
-      specifier.local = specifier.imported.__clone();
+      this.parseIdentifier();
     }
-    node.specifiers.push(this.finishNode(specifier as N.ImportSpecifier, "ImportSpecifier"));
   }
 }

@@ -73,7 +73,7 @@ export default class StatementParser extends ExpressionParser {
 
       case tt._class:
         if (!declaration) this.unexpected();
-        this.parseClass(node as N.Class, true);
+        this.parseClass(true);
         return;
 
       case tt._if:
@@ -669,11 +669,7 @@ export default class StatementParser extends ExpressionParser {
   // Parse a class declaration or literal (depending on the
   // `isStatement` parameter).
 
-  parseClass<T extends N.Class>(
-    node: T,
-    isStatement: /* T === ClassDeclaration */ boolean,
-    optionalId: boolean = false,
-  ): T {
+  parseClass(isStatement: /* T === ClassDeclaration */ boolean, optionalId: boolean = false): void {
     // Put a context ID on the class keyword, the open-brace, and the close-brace, so that later
     // code can easily navigate to meaningful points on the class.
     const contextId = this.nextContextId++;
@@ -688,10 +684,10 @@ export default class StatementParser extends ExpressionParser {
     if (!isStatement) {
       nameScopeStartTokenIndex = this.state.tokens.length;
     }
-    this.parseClassId(node, isStatement, optionalId);
-    this.parseClassSuper(node);
+    this.parseClassId(isStatement, optionalId);
+    this.parseClassSuper();
     const openBraceIndex = this.state.tokens.length;
-    this.parseClassBody(node, contextId);
+    this.parseClassBody(contextId);
     this.state.tokens[openBraceIndex].contextId = contextId;
     this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
     if (nameScopeStartTokenIndex !== null) {
@@ -702,7 +698,6 @@ export default class StatementParser extends ExpressionParser {
         isFunctionScope: false,
       });
     }
-    return this.finishNode(node, isStatement ? "ClassDeclaration" : "ClassExpression");
   }
 
   isClassProperty(): boolean {
@@ -722,7 +717,7 @@ export default class StatementParser extends ExpressionParser {
     );
   }
 
-  parseClassBody(node: N.Class, classContextId: number): void {
+  parseClassBody(classContextId: number): void {
     const state = {hadConstructor: false};
     const classBody: N.ClassBody = this.startNode();
 
@@ -756,8 +751,6 @@ export default class StatementParser extends ExpressionParser {
         );
       }
     }
-
-    node.body = this.finishNode(classBody, "ClassBody");
   }
 
   parseClassMember(
@@ -1041,20 +1034,21 @@ export default class StatementParser extends ExpressionParser {
     return this.finishNode(node, "ClassProperty");
   }
 
-  parseClassId(node: N.Class, isStatement: boolean, optionalId: boolean = false): void {
+  parseClassId(isStatement: boolean, optionalId: boolean = false): void {
     if (this.match(tt.name)) {
-      node.id = this.parseIdentifier();
+      this.parseIdentifier();
       this.state.tokens[this.state.tokens.length - 1].identifierRole =
         IdentifierRole.BlockScopedDeclaration;
-    } else if (optionalId || !isStatement) {
-      node.id = null;
-    } else {
-      this.unexpected(null, "A class name is required");
     }
   }
 
-  parseClassSuper(node: N.Class): void {
-    node.superClass = this.eat(tt._extends) ? this.parseExprSubscripts() : null;
+  // Returns true if there was a superclass.
+  parseClassSuper(): boolean {
+    if (this.eat(tt._extends)) {
+      this.parseExprSubscripts();
+      return true;
+    }
+    return false;
   }
 
   // Parses module export declaration.
@@ -1121,7 +1115,8 @@ export default class StatementParser extends ExpressionParser {
       this.parseFunction(functionStart, true, false, true, true);
       return expr;
     } else if (this.match(tt._class)) {
-      return this.parseClass(expr as N.Class, true, true);
+      this.parseClass(true, true);
+      return this.startNode();
     } else {
       const res = this.parseMaybeAssign();
       this.semicolon();

@@ -383,10 +383,8 @@ export default abstract class ExpressionParser extends LValParser {
         const name = this.state.value;
         this.parseIdentifier();
         if (name === "await") {
-          if (this.state.inAsync || this.inModule) {
-            this.parseAwait();
-            return false;
-          }
+          this.parseAwait();
+          return false;
         } else if (name === "async" && this.match(tt._function) && !this.canInsertSemicolon()) {
           this.next();
           this.parseFunction(functionStart, false, false, true);
@@ -411,10 +409,7 @@ export default abstract class ExpressionParser extends LValParser {
       case tt._do: {
         this.expectPlugin("doExpressions");
         this.next();
-        const oldInFunction = this.state.inFunction;
-        this.state.inFunction = false;
         this.parseBlock(false);
-        this.state.inFunction = oldInFunction;
         return false;
       }
 
@@ -885,9 +880,7 @@ export default abstract class ExpressionParser extends LValParser {
     isAsync: boolean,
     isConstructor: boolean,
   ): void {
-    const oldInFunc = this.state.inFunction;
     const oldInGenerator = this.state.inGenerator;
-    this.state.inFunction = true;
     this.state.inGenerator = isGenerator;
 
     const funcContextId = this.nextContextId++;
@@ -905,7 +898,6 @@ export default abstract class ExpressionParser extends LValParser {
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
 
-    this.state.inFunction = oldInFunc;
     this.state.inGenerator = oldInGenerator;
   }
 
@@ -917,14 +909,10 @@ export default abstract class ExpressionParser extends LValParser {
     startTokenIndex: number,
     isAsync: boolean = false,
   ): void {
-    const oldInFunc = this.state.inFunction;
-    this.state.inFunction = true;
-
     const oldInGenerator = this.state.inGenerator;
     this.state.inGenerator = false;
     this.parseFunctionBody(functionStart, isAsync, false /* isGenerator */, true);
     this.state.inGenerator = oldInGenerator;
-    this.state.inFunction = oldInFunc;
 
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
@@ -950,27 +938,16 @@ export default abstract class ExpressionParser extends LValParser {
   ): void {
     const isExpression = allowExpression && !this.match(tt.braceL);
 
-    const oldInParameters = this.state.inParameters;
-    const oldInAsync = this.state.inAsync;
-    this.state.inParameters = false;
-    this.state.inAsync = isAsync;
-
     if (isExpression) {
       this.parseMaybeAssign();
     } else {
       // Start a new scope with regard to labels and the `inGenerator`
       // flag (restore them to their old value afterwards).
       const oldInGen = this.state.inGenerator;
-      const oldInFunc = this.state.inFunction;
       this.state.inGenerator = isGenerator;
-      this.state.inFunction = true;
       this.parseBlock(true /* allowDirectives */, true /* isFunctionScope */, funcContextId);
-      this.state.inFunction = oldInFunc;
       this.state.inGenerator = oldInGen;
     }
-    this.state.inAsync = oldInAsync;
-
-    this.state.inParameters = oldInParameters;
   }
 
   // Parses a comma-separated list of expressions, and returns them as
@@ -1027,13 +1004,11 @@ export default abstract class ExpressionParser extends LValParser {
   }
 
   // Parses await expression inside async function.
-
   parseAwait(): void {
     this.parseMaybeUnary();
   }
 
   // Parses yield expression inside generator.
-
   parseYield(): void {
     this.next();
     if (

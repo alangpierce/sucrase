@@ -241,8 +241,7 @@ export default class StatementParser extends ExpressionParser {
     this.next();
 
     let forAwait = false;
-    if (this.state.inAsync && this.isContextual("await")) {
-      this.expectPlugin("asyncGenerators");
+    if (this.isContextual("await")) {
       forAwait = true;
       this.next();
     }
@@ -298,10 +297,6 @@ export default class StatementParser extends ExpressionParser {
   }
 
   parseReturnStatement(): void {
-    if (!this.state.inFunction && !this.options.allowReturnOutsideFunction) {
-      this.raise(this.state.start, "'return' outside of function");
-    }
-
     this.next();
 
     // In `return` (and `break`/`continue`), the keywords with
@@ -485,9 +480,7 @@ export default class StatementParser extends ExpressionParser {
     isAsync: boolean = false,
     optionalId?: boolean,
   ): void {
-    const oldInFunc = this.state.inFunction;
     const oldInGenerator = this.state.inGenerator;
-    this.state.inFunction = true;
 
     let isGenerator = false;
     if (this.match(tt.star)) {
@@ -540,14 +533,10 @@ export default class StatementParser extends ExpressionParser {
       });
     }
 
-    this.state.inFunction = oldInFunc;
     this.state.inGenerator = oldInGenerator;
   }
 
   parseFunctionParams(allowModifiers?: boolean, funcContextId?: number): void {
-    const oldInParameters = this.state.inParameters;
-    this.state.inParameters = true;
-
     this.expect(tt.parenL);
     this.state.tokens[this.state.tokens.length - 1].contextId = funcContextId;
     this.parseBindingList(
@@ -557,8 +546,6 @@ export default class StatementParser extends ExpressionParser {
       allowModifiers,
     );
     this.state.tokens[this.state.tokens.length - 1].contextId = funcContextId;
-
-    this.state.inParameters = oldInParameters;
   }
 
   // Parse a class declaration or literal (depending on the
@@ -727,7 +714,6 @@ export default class StatementParser extends ExpressionParser {
   parsePostMemberNameModifiers(): void {}
 
   parseClassProperty(): void {
-    this.state.inClassProperty = true;
     if (this.match(tt.eq)) {
       const equalsTokenIndex = this.state.tokens.length;
       this.next();
@@ -735,7 +721,6 @@ export default class StatementParser extends ExpressionParser {
       this.state.tokens[equalsTokenIndex].rhsEndIndex = this.state.tokens.length;
     }
     this.semicolon();
-    this.state.inClassProperty = false;
   }
 
   parseClassId(isStatement: boolean, optionalId: boolean = false): void {

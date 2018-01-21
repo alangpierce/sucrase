@@ -6,7 +6,7 @@ type SimpleToken = Token & {label?: string};
 type TokenExpectation = {[K in keyof SimpleToken]?: SimpleToken[K]};
 
 function assertTokens(code: string, expectedTokens: Array<TokenExpectation>): void {
-  const tokens: Array<SimpleToken> = parse(code, {tokens: true, sourceType: "module"}).tokens;
+  const tokens: Array<SimpleToken> = parse(code, {tokens: true}).tokens;
   for (const token of tokens) {
     token.label = token.type.label;
   }

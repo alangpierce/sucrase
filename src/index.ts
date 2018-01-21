@@ -70,7 +70,6 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
   }
   const file = parse(code, {
     tokens: true,
-    sourceType: "module",
     plugins: babylonPlugins,
   });
   const tokens = file.tokens;

@@ -2,7 +2,6 @@
 // the parser process. These options are recognized:
 
 export type Options = {
-  sourceType: "script" | "module";
   sourceFilename?: string;
   startLine: number;
   allowReturnOutsideFunction: boolean;
@@ -15,8 +14,7 @@ export type Options = {
 export type InputOptions = {[O in keyof Options]?: Options[O]};
 
 export const defaultOptions: Options = {
-  // Source type ("script" or "module") for different semantics
-  sourceType: "script",
+  // Note that sourceType is missing because assume we're always in a module.
   // Source filename.
   sourceFilename: undefined,
   // Line from which to start counting source. Useful for

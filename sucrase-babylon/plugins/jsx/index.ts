@@ -97,8 +97,6 @@ export default (superClass: ParserClass): ParserClass =>
       } else {
         out = String.fromCharCode(ch);
       }
-      ++this.state.curLine;
-      this.state.lineStart = this.state.pos;
 
       return out;
     }

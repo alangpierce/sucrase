@@ -1062,12 +1062,7 @@ export default (superClass: ParserClass): ParserClass =>
       );
     }
 
-    parseSubscript(
-      startPos: number,
-      startLoc: Position,
-      noCalls: boolean | null,
-      state: {stop: boolean},
-    ): void {
+    parseSubscript(startPos: number, noCalls: boolean | null, state: {stop: boolean}): void {
       if (!this.hasPrecedingLineBreak() && this.eat(tt.bang)) {
         return;
       }
@@ -1089,7 +1084,7 @@ export default (superClass: ParserClass): ParserClass =>
           this.parseCallExpressionArguments(tt.parenR, /* possibleAsync */ false);
         }
       }
-      super.parseSubscript(startPos, startLoc, noCalls, state);
+      super.parseSubscript(startPos, noCalls, state);
     }
 
     parseNewArguments(): void {
@@ -1262,22 +1257,17 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // An apparent conditional expression could actually be an optional parameter in an arrow function.
-    parseConditional(
-      noIn: boolean | null,
-      startPos: number,
-      startLoc: Position,
-      refNeedsArrowPos?: Pos | null,
-    ): void {
+    parseConditional(noIn: boolean | null, startPos: number, refNeedsArrowPos?: Pos | null): void {
       // only do the expensive clone if there is a question mark
       // and if we come from inside parens
       if (!refNeedsArrowPos || !this.match(tt.question)) {
-        super.parseConditional(noIn, startPos, startLoc, refNeedsArrowPos);
+        super.parseConditional(noIn, startPos, refNeedsArrowPos);
         return;
       }
 
       const state = this.state.clone();
       try {
-        super.parseConditional(noIn, startPos, startLoc);
+        super.parseConditional(noIn, startPos);
         return;
       } catch (err) {
         if (!(err instanceof SyntaxError)) {

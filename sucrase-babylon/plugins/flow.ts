@@ -777,18 +777,13 @@ export default (superClass: ParserClass): ParserClass =>
       return super.isExportDefaultSpecifier();
     }
 
-    parseConditional(
-      noIn: boolean | null,
-      startPos: number,
-      startLoc: Position,
-      refNeedsArrowPos?: Pos | null,
-    ): void {
+    parseConditional(noIn: boolean | null, startPos: number, refNeedsArrowPos?: Pos | null): void {
       // only do the expensive clone if there is a question mark
       // and if we come from inside parens
       if (refNeedsArrowPos && this.match(tt.question)) {
         const state = this.state.clone();
         try {
-          super.parseConditional(noIn, startPos, startLoc);
+          super.parseConditional(noIn, startPos);
           return;
         } catch (err) {
           if (err instanceof SyntaxError) {
@@ -802,7 +797,7 @@ export default (superClass: ParserClass): ParserClass =>
           }
         }
       }
-      super.parseConditional(noIn, startPos, startLoc, refNeedsArrowPos);
+      super.parseConditional(noIn, startPos, refNeedsArrowPos);
     }
 
     parseParenItem(): void {
@@ -1183,7 +1178,7 @@ export default (superClass: ParserClass): ParserClass =>
       return this.match(tt.colon) || super.shouldParseArrow();
     }
 
-    parseSubscripts(startPos: number, startLoc: Position, noCalls?: boolean | null): void {
+    parseSubscripts(startPos: number, noCalls?: boolean | null): void {
       if (
         this.state.tokens[this.state.tokens.length - 1].value === "async" &&
         this.isRelational("<")
@@ -1201,14 +1196,14 @@ export default (superClass: ParserClass): ParserClass =>
 
         this.state = state;
         try {
-          super.parseSubscripts(startPos, startLoc, noCalls);
+          super.parseSubscripts(startPos, noCalls);
           return;
         } catch (e) {
           throw error || e;
         }
       }
 
-      super.parseSubscripts(startPos, startLoc, noCalls);
+      super.parseSubscripts(startPos, noCalls);
     }
 
     // Returns true if there was an arrow function here.

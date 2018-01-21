@@ -30,29 +30,18 @@ export default class State {
     this.scopes = [];
 
     this.pos = 0;
-    this.lineStart = 0;
-    this.curLine = options.startLine;
 
     this.type = tt.eof;
     this.value = null;
     this.start = this.pos;
     this.end = this.pos;
-    this.startLoc = this.curPosition();
-    this.endLoc = this.startLoc;
 
     this.isType = false;
 
-    // @ts-ignore
-    this.lastTokEndLoc = null;
-    // @ts-ignore
-    this.lastTokStartLoc = null;
-    this.lastTokStart = this.pos;
     this.lastTokEnd = this.pos;
 
     this.context = [ct.braceStatement];
     this.exprAllowed = true;
-
-    this.containsEsc = false;
   }
 
   // TODO
@@ -79,8 +68,6 @@ export default class State {
 
   // The current position of the tokenizer in the input.
   pos: number;
-  lineStart: number;
-  curLine: number;
 
   // Properties of the current token:
   // Its type
@@ -96,15 +83,7 @@ export default class State {
 
   isType: boolean;
 
-  // And, if locations are used, the {line, column} object
-  // corresponding to those offsets
-  startLoc: Position;
-  endLoc: Position;
-
   // Position information for the previous token
-  lastTokEndLoc: Position;
-  lastTokStartLoc: Position;
-  lastTokStart: number;
   lastTokEnd: number;
 
   // The context stack is used to superficially track syntactic
@@ -112,15 +91,6 @@ export default class State {
   // given position.
   context: Array<TokContext>;
   exprAllowed: boolean;
-
-  // Used to signal to callers of `readWord1` whether the word
-  // contained any escape sequences. This is needed because words with
-  // escape sequences must not be interpreted as keywords.
-  containsEsc: boolean;
-
-  curPosition(): Position {
-    return new Position(this.curLine, this.pos - this.lineStart);
-  }
 
   clone(skipArrays?: boolean): State {
     const state = new State();

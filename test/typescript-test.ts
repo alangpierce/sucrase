@@ -708,4 +708,20 @@ describe("typescript transform", () => {
       ["typescript", "imports"],
     );
   });
+
+  it("properly handles new declarations within interfaces", () => {
+    assertResult(
+      `
+      interface Foo {
+        new(): Foo;
+      }
+    `,
+      `"use strict";
+      
+
+
+    `,
+      ["typescript", "imports"],
+    );
+  });
 });

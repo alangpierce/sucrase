@@ -1062,17 +1062,6 @@ export default (superClass: ParserClass): ParserClass =>
       }
     }
 
-    typeCastToParameter(node: N.Node): N.Node {
-      node.expression.typeAnnotation = node.typeAnnotation;
-
-      return this.finishNodeAt(
-        node.expression,
-        node.expression.type,
-        node.typeAnnotation.end,
-        node.typeAnnotation.loc.end,
-      );
-    }
-
     flowParseVariance(): N.FlowVariance | null {
       let variance: N.FlowVariance | null = null;
       if (this.match(tt.plusMin)) {

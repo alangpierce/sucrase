@@ -735,11 +735,6 @@ export default class StatementParser extends ExpressionParser {
   // Overridden in typescript.js
   parsePostMemberNameModifiers(): void {}
 
-  // Overridden in typescript.js
-  parseAccessModifier(): N.Accessibility | null {
-    return null;
-  }
-
   parseClassProperty(): void {
     this.state.inClassProperty = true;
     if (this.match(tt.eq)) {

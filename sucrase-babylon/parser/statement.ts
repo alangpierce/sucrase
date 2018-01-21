@@ -190,9 +190,9 @@ export default class StatementParser extends ExpressionParser {
     this.expectOnePlugin(["decorators", "decorators2"]);
     this.next();
     if (this.hasPlugin("decorators2")) {
-      this.parseIdentifier(false);
+      this.parseIdentifier();
       while (this.eat(tt.dot)) {
-        this.parseIdentifier(true);
+        this.parseIdentifier();
       }
       if (this.eat(tt.parenL)) {
         this.parseCallExpressionArguments(tt.parenR, false);
@@ -632,26 +632,11 @@ export default class StatementParser extends ExpressionParser {
   parseClassMember(memberStart: number, classContextId: number): void {
     let isStatic = false;
     if (this.match(tt.name) && this.state.value === "static") {
-      const key = this.parseIdentifier(true); // eats 'static'
+      this.parseIdentifier(); // eats 'static'
       if (this.isClassMethod()) {
-        // @ts-ignore
-        const method: N.ClassMethod = member as {};
-
-        // a method named 'static'
-        method.kind = "method";
-        method.computed = false;
-        method.key = key;
-        method.static = false;
         this.parseClassMethod(memberStart, false, false, /* isConstructor */ false);
         return;
       } else if (this.isClassProperty()) {
-        // @ts-ignore
-        const prop: N.ClassProperty = member as {};
-
-        // a property named 'static'
-        prop.computed = false;
-        prop.key = key;
-        prop.static = false;
         this.parseClassProperty();
         return;
       }
@@ -792,7 +777,7 @@ export default class StatementParser extends ExpressionParser {
       this.parseExportStar();
     } else if (this.isExportDefaultSpecifier()) {
       this.expectPlugin("exportDefaultFrom");
-      this.parseIdentifier(true);
+      this.parseIdentifier();
       if (this.match(tt.comma) && this.lookahead().type === tt.star) {
         this.expect(tt.comma);
         this.expect(tt.star);
@@ -889,9 +874,7 @@ export default class StatementParser extends ExpressionParser {
   parseExportNamespace(): void {
     this.next();
     this.state.tokens[this.state.tokens.length - 1].type = tt._as;
-
-    this.parseIdentifier(true);
-
+    this.parseIdentifier();
     this.parseExportSpecifiersMaybe();
     this.parseExportFrom();
   }
@@ -912,7 +895,6 @@ export default class StatementParser extends ExpressionParser {
 
   parseExportSpecifiers(): void {
     let first = true;
-    let needsFrom;
 
     // export { x, y as z } [from '...']
     this.expect(tt.braceL);
@@ -925,19 +907,11 @@ export default class StatementParser extends ExpressionParser {
         if (this.eat(tt.braceR)) break;
       }
 
-      const isDefault = this.match(tt._default);
-      if (isDefault && !needsFrom) needsFrom = true;
-
-      this.parseIdentifier(isDefault);
+      this.parseIdentifier();
       this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.ExportAccess;
       if (this.eatContextual("as")) {
-        this.parseIdentifier(true);
+        this.parseIdentifier();
       }
-    }
-
-    // https://github.com/ember-cli/ember-cli/pull/3739
-    if (needsFrom && !this.isContextual("from")) {
-      this.unexpected();
     }
   }
 
@@ -1005,7 +979,7 @@ export default class StatementParser extends ExpressionParser {
   }
 
   parseImportSpecifier(): void {
-    this.parseIdentifier(true);
+    this.parseIdentifier();
     if (this.eatContextual("as")) {
       this.parseIdentifier();
     }

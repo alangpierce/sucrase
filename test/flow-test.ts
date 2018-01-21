@@ -138,4 +138,28 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("properly parses import aliases with the flow parser", () => {
+    assertFlowResult(
+      `
+      import { a as b } from "c";
+    `,
+      `${PREFIX}
+      var _c = require('c');
+    `,
+    );
+  });
+
+  it("properly parses bounded type parameters", () => {
+    assertFlowResult(
+      `
+      function makeWeakCache<A: B>(): void {
+      }
+    `,
+      `${PREFIX}
+      function makeWeakCache() {
+      }
+    `,
+    );
+  });
 });

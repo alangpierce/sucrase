@@ -244,6 +244,17 @@ export default abstract class Tokenizer extends LocationParser {
     this.state.start = this.state.pos;
     this.state.startLoc = this.state.curPosition();
     if (this.state.pos >= this.input.length) {
+      const tokens = this.state.tokens;
+      // We normally run past the end a bit, but if we're way past the end, avoid an infinite loop.
+      // Also check the token positions rather than the types since sometimes we rewrite the token
+      // type to something else.
+      if (
+        tokens.length >= 2 &&
+        tokens[tokens.length - 1].start >= this.input.length &&
+        tokens[tokens.length - 2].start >= this.input.length
+      ) {
+        this.unexpected(null, "Unexpectedly reached the end of input.");
+      }
       this.finishToken(tt.eof);
       return;
     }

@@ -1,5 +1,4 @@
 import {Options} from "../options";
-import {Position} from "../util/location";
 
 import {TokContext, types as ct} from "./context";
 import {Token} from "./index";

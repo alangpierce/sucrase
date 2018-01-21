@@ -20,7 +20,7 @@
 
 import {IdentifierRole} from "../tokenizer";
 import {TokenType, types as tt} from "../tokenizer/types";
-import {Pos, Position} from "../util/location";
+import {Pos} from "./index";
 import LValParser from "./lval";
 
 export default abstract class ExpressionParser extends LValParser {

@@ -10,6 +10,10 @@ export const plugins: {
   [name: string]: (superClass: ParserClass) => ParserClass;
 } = {};
 
+export type Pos = {
+  start: number;
+};
+
 export default class Parser extends StatementParser {
   constructor(inputOptions: InputOptions | null, input: string) {
     const options = getOptions(inputOptions);

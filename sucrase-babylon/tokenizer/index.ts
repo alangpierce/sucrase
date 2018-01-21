@@ -1,11 +1,10 @@
 /* eslint max-len: 0 */
 
 import {Options} from "../options";
-import LocationParser from "../parser/location";
+import BaseParser from "../parser/base";
 import * as charCodes from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart, isKeyword} from "../util/identifier";
-import {Position, SourceLocation} from "../util/location";
-import {isNewLine, lineBreak, lineBreakG, nonASCIIwhitespace} from "../util/whitespace";
+import {isNewLine, lineBreak, nonASCIIwhitespace} from "../util/whitespace";
 import {TokContext, types as ct} from "./context";
 import State from "./state";
 import {keywords as keywordTypes, TokenType, types as tt} from "./types";
@@ -143,7 +142,7 @@ function codePointToString(code: number): string {
   }
 }
 
-export default abstract class Tokenizer extends LocationParser {
+export default abstract class Tokenizer extends BaseParser {
   // Forward-declarations
   // parser/util.js
   abstract unexpected(pos?: number | null, messageOrType?: string | TokenType): never;

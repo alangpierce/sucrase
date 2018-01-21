@@ -3,35 +3,11 @@
 import {ParserClass} from "../parser";
 import State from "../tokenizer/state";
 import {TokenType, types as tt} from "../tokenizer/types";
-import * as N from "../types";
 import {Pos, Position} from "../util/location";
-
-const primitiveTypes = [
-  "any",
-  "bool",
-  "boolean",
-  "empty",
-  "false",
-  "mixed",
-  "null",
-  "number",
-  "static",
-  "string",
-  "true",
-  "typeof",
-  "void",
-];
 
 function isMaybeDefaultImport(state: State): boolean {
   return (state.type === tt.name || !!state.type.keyword) && state.value !== "from";
 }
-
-const exportSuggestions = {
-  const: "declare export var",
-  let: "declare export var",
-  type: "export type",
-  interface: "export interface",
-};
 
 export default (superClass: ParserClass): ParserClass =>
   class extends superClass {
@@ -941,10 +917,6 @@ export default (superClass: ParserClass): ParserClass =>
     // determine whether or not we're currently in the position where a class property would appear
     isClassProperty(): boolean {
       return this.match(tt.colon) || super.isClassProperty();
-    }
-
-    isNonstaticConstructor(method: N.ClassMethod | N.ClassProperty): boolean {
-      return !this.match(tt.colon) && super.isNonstaticConstructor(method);
     }
 
     // parse type parameters for class methods

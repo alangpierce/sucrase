@@ -20,7 +20,6 @@
 
 import {IdentifierRole} from "../tokenizer";
 import {TokenType, types as tt} from "../tokenizer/types";
-import * as N from "../types";
 import {Pos, Position} from "../util/location";
 import LValParser from "./lval";
 

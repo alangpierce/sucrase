@@ -1,22 +1,9 @@
 import {IdentifierRole} from "../tokenizer";
 import {TokenType, types as tt} from "../tokenizer/types";
-import {
-  ArrayPattern,
-  AssignmentPattern,
-  Expression,
-  Identifier,
-  Node,
-  ObjectExpression,
-  ObjectPattern,
-  Pattern,
-  RestElement,
-  SpreadElement,
-  TSParameterProperty,
-} from "../types";
-import {Pos, Position} from "../util/location";
-import {NodeUtils} from "./node";
+import {Pos} from "../util/location";
+import UtilParser from "./util";
 
-export default abstract class LValParser extends NodeUtils {
+export default abstract class LValParser extends UtilParser {
   // Forward-declaration: defined in expression.js
   abstract parseIdentifier(): void;
   abstract parseMaybeAssign(

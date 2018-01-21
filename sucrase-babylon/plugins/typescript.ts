@@ -1,7 +1,6 @@
-import Parser, {ParserClass} from "../parser";
+import {ParserClass} from "../parser";
 import {types as ct} from "../tokenizer/context";
 import {TokenType, types as tt} from "../tokenizer/types";
-import * as N from "../types";
 import {Pos, Position} from "../util/location";
 
 type TsModifier = "readonly" | "abstract" | "static" | "public" | "private" | "protected";
@@ -28,26 +27,19 @@ type ParsingContext =
   | "TypeParametersOrArguments";
 
 // Doesn't handle "void" or "null" because those are keywords, not identifiers.
-function keywordTypeFromName(value: string): N.TsKeywordTypeType | typeof undefined {
+function isTypeKeyword(value: string): boolean {
   switch (value) {
     case "any":
-      return "TSAnyKeyword";
     case "boolean":
-      return "TSBooleanKeyword";
     case "never":
-      return "TSNeverKeyword";
     case "number":
-      return "TSNumberKeyword";
     case "object":
-      return "TSObjectKeyword";
     case "string":
-      return "TSStringKeyword";
     case "symbol":
-      return "TSSymbolKeyword";
     case "undefined":
-      return "TSUndefinedKeyword";
+      return true;
     default:
-      return undefined;
+      return false;
   }
 }
 
@@ -130,7 +122,7 @@ export default (superClass: ParserClass): ParserClass =>
       throw new Error("Unreachable");
     }
 
-    tsParseList<T extends N.Node>(kind: ParsingContext, parseElement: () => void): void {
+    tsParseList(kind: ParsingContext, parseElement: () => void): void {
       while (!this.tsIsListTerminator(kind)) {
         // Skipping "parseListElement" from the TS source since that's just for error handling.
         parseElement();
@@ -412,13 +404,7 @@ export default (superClass: ParserClass): ParserClass =>
         case tt.name:
         case tt._void:
         case tt._null: {
-          let type;
-          if (this.match(tt._void)) {
-            type = "TSVoidKeyword";
-          } else {
-            type = this.match(tt._null) ? "TSNullKeyword" : keywordTypeFromName(this.state.value);
-          }
-          if (type !== undefined && this.lookahead().type !== tt.dot) {
+          if (this.match(tt._void) || this.match(tt._null) || isTypeKeyword(this.state.value)) {
             this.next();
             return;
           }

@@ -474,18 +474,6 @@ export default abstract class Tokenizer extends BaseParser {
     const next = this.input.charCodeAt(this.state.pos + 1);
 
     if (next === code) {
-      if (
-        next === charCodes.dash &&
-        !this.inModule &&
-        this.input.charCodeAt(this.state.pos + 2) === charCodes.greaterThan &&
-        lineBreak.test(this.input.slice(this.state.lastTokEnd, this.state.pos))
-      ) {
-        // A `-->` line comment
-        this.skipLineComment(3);
-        this.skipSpace();
-        this.nextToken();
-        return;
-      }
       this.finishOp(tt.incDec, 2);
       return;
     }
@@ -513,20 +501,6 @@ export default abstract class Tokenizer extends BaseParser {
         return;
       }
       this.finishOp(tt.bitShift, size);
-      return;
-    }
-
-    if (
-      next === charCodes.exclamationMark &&
-      code === charCodes.lessThan &&
-      !this.inModule &&
-      this.input.charCodeAt(this.state.pos + 2) === charCodes.dash &&
-      this.input.charCodeAt(this.state.pos + 3) === charCodes.dash
-    ) {
-      // `<!--`, an XML-style comment that should be interpreted as a line comment
-      this.skipLineComment(4);
-      this.skipSpace();
-      this.nextToken();
       return;
     }
 

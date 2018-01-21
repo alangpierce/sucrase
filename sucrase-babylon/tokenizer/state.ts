@@ -16,13 +16,9 @@ export default class State {
 
     this.potentialArrowAt = -1;
 
-    this.inFunction = false;
-    this.inParameters = false;
     this.inGenerator = false;
-    this.inAsync = false;
     this.inPropertyName = false;
     this.inType = false;
-    this.inClassProperty = false;
     this.noAnonFunctionType = false;
 
     this.tokens = [];
@@ -49,15 +45,14 @@ export default class State {
   // Used to signify the start of a potential arrow function
   potentialArrowAt: number;
 
-  // Flags to track whether we are in a function, a generator.
-  inFunction: boolean;
-  inParameters: boolean;
+  // yield is treated differently in a generator, and can be a variable name outside a generator.
   inGenerator: boolean;
-  inAsync: boolean;
+  // We need to skip JSX within a type context.
   inType: boolean;
+  // Used by Flow to handle an edge case involving funtion type parsing.
   noAnonFunctionType: boolean;
+  // Used by JSX to skip JSX parsing in property names.
   inPropertyName: boolean;
-  inClassProperty: boolean;
 
   // Token store.
   tokens: Array<Token>;

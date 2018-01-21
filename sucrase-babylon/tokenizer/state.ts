@@ -10,6 +10,26 @@ export type Scope = {
   endTokenIndex: number;
 };
 
+export type StateSnapshot = {
+  potentialArrowAt: number;
+  inGenerator: boolean;
+  inType: boolean;
+  noAnonFunctionType: boolean;
+  inPropertyName: boolean;
+  tokensLength: number;
+  scopesLength: number;
+  pos: number;
+  type: TokenType;
+  // tslint:disable-next-line: no-any
+  value: any;
+  start: number;
+  end: number;
+  isType: boolean;
+  lastTokEnd: number;
+  context: Array<TokContext>;
+  exprAllowed: boolean;
+};
+
 export default class State {
   init(options: Options, input: string): void {
     this.input = input;
@@ -86,19 +106,44 @@ export default class State {
   context: Array<TokContext>;
   exprAllowed: boolean;
 
-  clone(skipArrays?: boolean): State {
-    const state = new State();
-    Object.keys(this).forEach((key) => {
-      // $FlowIgnore
-      let val = this[key];
+  snapshot(): StateSnapshot {
+    return {
+      potentialArrowAt: this.potentialArrowAt,
+      inGenerator: this.inGenerator,
+      inType: this.inType,
+      noAnonFunctionType: this.noAnonFunctionType,
+      inPropertyName: this.inPropertyName,
+      tokensLength: this.tokens.length,
+      scopesLength: this.scopes.length,
+      pos: this.pos,
+      type: this.type,
+      // tslint:disable-next-line: no-any
+      value: this.value,
+      start: this.start,
+      end: this.end,
+      isType: this.isType,
+      lastTokEnd: this.lastTokEnd,
+      context: this.context.slice(),
+      exprAllowed: this.exprAllowed,
+    };
+  }
 
-      if ((!skipArrays || key === "context") && Array.isArray(val)) {
-        val = val.slice();
-      }
-
-      // $FlowIgnore
-      state[key] = val;
-    });
-    return state;
+  restoreFromSnapshot(snapshot: StateSnapshot): void {
+    this.potentialArrowAt = snapshot.potentialArrowAt;
+    this.inGenerator = snapshot.inGenerator;
+    this.inType = snapshot.inType;
+    this.noAnonFunctionType = snapshot.noAnonFunctionType;
+    this.inPropertyName = snapshot.inPropertyName;
+    this.tokens.length = snapshot.tokensLength;
+    this.scopes.length = snapshot.scopesLength;
+    this.pos = snapshot.pos;
+    this.type = snapshot.type;
+    this.value = snapshot.value;
+    this.start = snapshot.start;
+    this.end = snapshot.end;
+    this.isType = snapshot.isType;
+    this.lastTokEnd = snapshot.lastTokEnd;
+    this.context = snapshot.context;
+    this.exprAllowed = snapshot.exprAllowed;
   }
 }

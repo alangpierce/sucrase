@@ -28,7 +28,7 @@ export default class BaseParser {
       loc = {line: 0, column: 0};
     }
     message += ` (${loc.line}:${loc.column})`;
-    // tslint:disable no-any
+    // tslint:disable-next-line no-any
     const err: any = new SyntaxError(message);
     err.pos = pos;
     err.loc = loc;

@@ -38,7 +38,7 @@ export default class UtilParser extends Tokenizer {
   }
 
   isLookaheadContextual(name: string): boolean {
-    const l = this.lookahead();
+    const l = this.lookaheadTypeAndValue();
     return l.type === tt.name && l.value === name;
   }
 

@@ -119,7 +119,6 @@ export default abstract class ExpressionParser extends LValParser {
     refNeedsArrowPos?: Pos | null,
   ): boolean {
     const startPos = this.state.start;
-    const startLoc = this.state.startLoc;
     const wasArrow = this.parseExprOps(noIn, refShorthandDefaultPos);
     if (wasArrow) {
       return true;
@@ -127,14 +126,13 @@ export default abstract class ExpressionParser extends LValParser {
     if (refShorthandDefaultPos && refShorthandDefaultPos.start) {
       return false;
     }
-    this.parseConditional(noIn, startPos, startLoc, refNeedsArrowPos);
+    this.parseConditional(noIn, startPos, refNeedsArrowPos);
     return false;
   }
 
   parseConditional(
     noIn: boolean | null,
     startPos: number,
-    startLoc: Position,
     // FIXME: Disabling this for now since can't seem to get it to play nicely
     // eslint-disable-next-line no-unused-vars
     refNeedsArrowPos?: Pos | null,
@@ -219,7 +217,6 @@ export default abstract class ExpressionParser extends LValParser {
   // Returns true if this was an arrow function.
   parseExprSubscripts(refShorthandDefaultPos: Pos | null = null): boolean {
     const startPos = this.state.start;
-    const startLoc = this.state.startLoc;
     const wasArrow = this.parseExprAtom(refShorthandDefaultPos);
     if (wasArrow) {
       return true;
@@ -229,28 +226,23 @@ export default abstract class ExpressionParser extends LValParser {
       return false;
     }
 
-    this.parseSubscripts(startPos, startLoc);
+    this.parseSubscripts(startPos);
     return false;
   }
 
-  parseSubscripts(startPos: number, startLoc: Position, noCalls: boolean | null = null): void {
+  parseSubscripts(startPos: number, noCalls: boolean | null = null): void {
     const state = {stop: false};
     do {
-      this.parseSubscript(startPos, startLoc, noCalls, state);
+      this.parseSubscript(startPos, noCalls, state);
     } while (!state.stop);
   }
 
   /** Set 'state.stop = true' to indicate that we should stop parsing subscripts. */
-  parseSubscript(
-    startPos: number,
-    startLoc: Position,
-    noCalls: boolean | null,
-    state: {stop: boolean},
-  ): void {
+  parseSubscript(startPos: number, noCalls: boolean | null, state: {stop: boolean}): void {
     if (!noCalls && this.eat(tt.doubleColon)) {
       this.parseNoCallExpr();
       state.stop = true;
-      this.parseSubscripts(startPos, startLoc, noCalls);
+      this.parseSubscripts(startPos, noCalls);
     } else if (this.match(tt.questionDot)) {
       this.expectPlugin("optionalChaining");
 
@@ -354,9 +346,8 @@ export default abstract class ExpressionParser extends LValParser {
 
   parseNoCallExpr(): void {
     const startPos = this.state.start;
-    const startLoc = this.state.startLoc;
     this.parseExprAtom();
-    this.parseSubscripts(startPos, startLoc, true);
+    this.parseSubscripts(startPos, true);
   }
 
   // Parse an atomic expression — either a single token that is an
@@ -587,8 +578,6 @@ export default abstract class ExpressionParser extends LValParser {
       }
     }
 
-    const innerEndPos = this.state.start;
-    const innerEndLoc = this.state.startLoc;
     this.expect(tt.parenR);
 
     if (canBeArrow && this.shouldParseArrow()) {
@@ -607,9 +596,6 @@ export default abstract class ExpressionParser extends LValParser {
       }
     }
 
-    if (!exprList.length) {
-      this.unexpected(this.state.lastTokStart);
-    }
     if (optionalCommaStart) this.unexpected(optionalCommaStart);
     if (spreadStart) this.unexpected(spreadStart);
     if (refShorthandDefaultPos.start) {

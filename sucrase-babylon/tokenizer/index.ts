@@ -114,7 +114,6 @@ export class Token {
     this.start = state.start;
     this.end = state.end;
     this.isType = state.isType;
-    this.loc = new SourceLocation(state.startLoc, state.endLoc);
   }
 
   type: TokenType;
@@ -123,7 +122,6 @@ export class Token {
   start: number;
   end: number;
   isType: boolean;
-  loc: SourceLocation;
   identifierRole?: IdentifierRole;
   shadowsGlobal?: boolean;
   contextId?: number;
@@ -171,9 +169,6 @@ export default abstract class Tokenizer extends LocationParser {
     }
 
     this.state.lastTokEnd = this.state.end;
-    this.state.lastTokStart = this.state.start;
-    this.state.lastTokEndLoc = this.state.endLoc;
-    this.state.lastTokStartLoc = this.state.startLoc;
     this.nextToken();
   }
 
@@ -242,7 +237,6 @@ export default abstract class Tokenizer extends LocationParser {
     if (!curContext || !curContext.preserveSpace) this.skipSpace();
 
     this.state.start = this.state.pos;
-    this.state.startLoc = this.state.curPosition();
     if (this.state.pos >= this.input.length) {
       const tokens = this.state.tokens;
       // We normally run past the end a bit, but if we're way past the end, avoid an infinite loop.
@@ -285,24 +279,14 @@ export default abstract class Tokenizer extends LocationParser {
   }
 
   skipBlockComment(): void {
-    const startLoc = this.state.curPosition();
     const start = this.state.pos;
     const end = this.input.indexOf("*/", (this.state.pos += 2));
     if (end === -1) this.raise(this.state.pos - 2, "Unterminated comment");
 
     this.state.pos = end + 2;
-    lineBreakG.lastIndex = start;
-    let match;
-    // eslint-disable-next-line no-cond-assign
-    while ((match = lineBreakG.exec(this.input)) && match.index < this.state.pos) {
-      ++this.state.curLine;
-      this.state.lineStart = match.index + match[0].length;
-    }
   }
 
   skipLineComment(startSkip: number): void {
-    const start = this.state.pos;
-    const startLoc = this.state.curPosition();
     let ch = this.input.charCodeAt((this.state.pos += startSkip));
     if (this.state.pos < this.input.length) {
       while (
@@ -338,8 +322,6 @@ export default abstract class Tokenizer extends LocationParser {
         case charCodes.lineSeparator:
         case charCodes.paragraphSeparator:
           ++this.state.pos;
-          ++this.state.curLine;
-          this.state.lineStart = this.state.pos;
           break;
 
         case charCodes.slash:
@@ -378,7 +360,6 @@ export default abstract class Tokenizer extends LocationParser {
   // tslint:disable-next-line no-any
   finishToken(type: TokenType, val?: any): void {
     this.state.end = this.state.pos;
-    this.state.endLoc = this.state.curPosition();
     const prevType = this.state.type;
     this.state.type = type;
     this.state.value = val;
@@ -1082,8 +1063,6 @@ export default abstract class Tokenizer extends LocationParser {
             out += String.fromCharCode(ch);
             break;
         }
-        ++this.state.curLine;
-        this.state.lineStart = this.state.pos;
         chunkStart = this.state.pos;
       } else {
         ++this.state.pos;
@@ -1123,8 +1102,6 @@ export default abstract class Tokenizer extends LocationParser {
           ++this.state.pos;
         }
       case charCodes.lineFeed:
-        this.state.lineStart = this.state.pos;
-        ++this.state.curLine;
         return "";
       default:
         // TODO(sucrase): Consider removing all octal parsing.
@@ -1174,7 +1151,6 @@ export default abstract class Tokenizer extends LocationParser {
   // as a micro-optimization.
 
   readWord1(): string {
-    this.state.containsEsc = false;
     let word = "";
     let first = true;
     let chunkStart = this.state.pos;
@@ -1183,8 +1159,6 @@ export default abstract class Tokenizer extends LocationParser {
       if (isIdentifierChar(ch)) {
         this.state.pos += ch <= 0xffff ? 1 : 2;
       } else if (ch === charCodes.backslash) {
-        this.state.containsEsc = true;
-
         word += this.input.slice(chunkStart, this.state.pos);
         const escStart = this.state.pos;
 
@@ -1218,10 +1192,6 @@ export default abstract class Tokenizer extends LocationParser {
     let type = tt.name;
 
     if (this.isKeyword(word)) {
-      if (this.state.containsEsc) {
-        this.raise(this.state.pos, `Escape sequence in keyword ${word}`);
-      }
-
       type = keywordTypes[word];
     }
 

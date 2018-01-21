@@ -35,18 +35,14 @@ export default abstract class LValParser extends NodeUtils {
 
   // Parses spread element.
 
-  parseSpread<T extends RestElement | SpreadElement>(refShorthandDefaultPos: Pos | null): T {
-    const node = this.startNode();
+  parseSpread(refShorthandDefaultPos: Pos | null): void {
     this.next();
     this.parseMaybeAssign(false, refShorthandDefaultPos);
-    return this.finishNode(node as T, "SpreadElement");
   }
 
-  parseRest(isBlockScope: boolean): RestElement {
-    const node = this.startNode();
+  parseRest(isBlockScope: boolean): void {
     this.next();
-    node.argument = this.parseBindingAtom(isBlockScope);
-    return this.finishNode(node as RestElement, "RestElement");
+    this.parseBindingAtom(isBlockScope);
   }
 
   parseBindingIdentifier(): void {
@@ -54,7 +50,7 @@ export default abstract class LValParser extends NodeUtils {
   }
 
   // Parses lvalue (assignable) atom.
-  parseBindingAtom(isBlockScope: boolean): Pattern {
+  parseBindingAtom(isBlockScope: boolean): void {
     switch (this.state.type) {
       case tt._yield:
       case tt.name: {
@@ -63,19 +59,18 @@ export default abstract class LValParser extends NodeUtils {
         this.state.tokens[this.state.tokens.length - 1].identifierRole = isBlockScope
           ? IdentifierRole.BlockScopedDeclaration
           : IdentifierRole.FunctionScopedDeclaration;
-        return this.startNode();
+        return;
       }
 
       case tt.bracketL: {
-        const node = this.startNode();
         this.next();
-        node.elements = this.parseBindingList(tt.bracketR, isBlockScope, true /* allowEmpty */);
-        return this.finishNode(node as ArrayPattern, "ArrayPattern");
+        this.parseBindingList(tt.bracketR, isBlockScope, true /* allowEmpty */);
+        return;
       }
 
       case tt.braceL:
         this.parseObj(true, isBlockScope);
-        return this.startNode();
+        return;
 
       default:
         throw this.unexpected();
@@ -87,8 +82,7 @@ export default abstract class LValParser extends NodeUtils {
     isBlockScope: boolean,
     allowEmpty?: boolean,
     allowModifiers: boolean | null = null,
-  ): ReadonlyArray<Pattern | TSParameterProperty> {
-    const elts: Array<Pattern | TSParameterProperty> = [];
+  ): void {
     let first = true;
 
     let hasRemovedComma = false;
@@ -107,9 +101,7 @@ export default abstract class LValParser extends NodeUtils {
         }
       }
       if (allowEmpty && this.match(tt.comma)) {
-        // $FlowFixMe This method returns `ReadonlyArray<?Pattern>` if `allowEmpty` is set.
-        // @ts-ignore
-        elts.push(null);
+        // Empty item; nothing further to parse for this item.
       } else if (this.eat(close)) {
         break;
       } else if (this.match(tt.ellipsis)) {
@@ -127,7 +119,6 @@ export default abstract class LValParser extends NodeUtils {
         this.parseAssignableListItem(allowModifiers, isBlockScope);
       }
     }
-    return elts;
   }
 
   parseAssignableListItem(allowModifiers: boolean | null, isBlockScope: boolean): void {

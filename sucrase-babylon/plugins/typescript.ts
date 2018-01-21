@@ -300,7 +300,7 @@ export default (superClass: ParserClass): ParserClass =>
       const returnTokenRequired = returnToken === tt.arrow;
       signature.typeParameters = this.tsTryParseTypeParameters();
       this.expect(tt.parenL);
-      signature.parameters = this.tsParseBindingListForSignature(false /* isBlockScope */);
+      this.tsParseBindingListForSignature(false /* isBlockScope */);
       if (returnTokenRequired) {
         signature.typeAnnotation = this.tsParseTypeOrTypePredicateAnnotation(returnToken);
       } else if (this.match(returnToken)) {
@@ -308,17 +308,8 @@ export default (superClass: ParserClass): ParserClass =>
       }
     }
 
-    tsParseBindingListForSignature(
-      isBlockScope: boolean,
-    ): ReadonlyArray<N.Identifier | N.RestElement> {
-      return this.parseBindingList(tt.parenR, isBlockScope).map(
-        (pattern: N.Identifier | N.RestElement) => {
-          if (pattern.type !== "Identifier" && pattern.type !== "RestElement") {
-            throw this.unexpected(pattern.start, "Name in a signature must be an Identifier.");
-          }
-          return pattern;
-        },
-      );
+    tsParseBindingListForSignature(isBlockScope: boolean): void {
+      this.parseBindingList(tt.parenR, isBlockScope);
     }
 
     tsParseTypeMemberSemicolon(): void {
@@ -1697,16 +1688,16 @@ export default (superClass: ParserClass): ParserClass =>
       });
     }
 
-    parseBindingAtom(isBlockScope: boolean): N.Pattern {
+    parseBindingAtom(isBlockScope: boolean): void {
       switch (this.state.type) {
         case tt._this:
           // "this" may be the name of a parameter, so allow it.
           this.runInTypeContext(0, () => {
             this.parseIdentifier();
           });
-          return this.startNode();
+          return;
         default:
-          return super.parseBindingAtom(isBlockScope);
+          super.parseBindingAtom(isBlockScope);
       }
     }
 

@@ -1297,16 +1297,10 @@ export default (superClass: ParserClass): ParserClass =>
       allowEmpty: boolean | null,
       refShorthandDefaultPos: Pos | null,
       refNeedsArrowPos: Pos | null,
-    ): N.Expression | null {
-      const container = this.startNode();
-      const node = super.parseExprListItem(allowEmpty, refShorthandDefaultPos, refNeedsArrowPos);
+    ): void {
+      super.parseExprListItem(allowEmpty, refShorthandDefaultPos, refNeedsArrowPos);
       if (this.match(tt.colon)) {
-        container._exprListItem = true;
-        container.expression = node;
-        container.typeAnnotation = this.flowParseTypeAnnotation();
-        return this.finishNode(container, "TypeCastExpression");
-      } else {
-        return node;
+        this.flowParseTypeAnnotation();
       }
     }
 

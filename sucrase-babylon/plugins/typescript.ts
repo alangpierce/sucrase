@@ -215,20 +215,16 @@ export default (superClass: ParserClass): ParserClass =>
       return result;
     }
 
-    tsParseEntityName(allowReservedWords: boolean): N.TsEntityName {
-      let entity: N.TsEntityName = this.parseIdentifier();
+    tsParseEntityName(): void {
+      this.parseIdentifier();
       while (this.eat(tt.dot)) {
-        const node: N.TsQualifiedName = this.startNodeAtNode(entity);
-        node.left = entity;
-        node.right = this.parseIdentifier(allowReservedWords);
-        entity = this.finishNode(node, "TSQualifiedName");
+        this.parseIdentifier();
       }
-      return entity;
     }
 
     tsParseTypeReference(): N.TsTypeReference {
       const node: N.TsTypeReference = this.startNode();
-      node.typeName = this.tsParseEntityName(/* allowReservedWords */ false);
+      this.tsParseEntityName();
       if (!this.hasPrecedingLineBreak() && this.isRelational("<")) {
         node.typeParameters = this.tsParseTypeArguments();
       }
@@ -252,13 +248,13 @@ export default (superClass: ParserClass): ParserClass =>
     tsParseTypeQuery(): N.TsTypeQuery {
       const node: N.TsTypeQuery = this.startNode();
       this.expect(tt._typeof);
-      node.exprName = this.tsParseEntityName(/* allowReservedWords */ true);
+      this.tsParseEntityName();
       return this.finishNode(node, "TSTypeQuery");
     }
 
     tsParseTypeParameter(): N.TsTypeParameter {
       const node: N.TsTypeParameter = this.startNode();
-      node.name = this.parseIdentifierName(node.start);
+      this.parseIdentifierName();
       if (this.eat(tt._extends)) {
         node.constraint = this.tsParseType();
       }
@@ -361,9 +357,9 @@ export default (superClass: ParserClass): ParserClass =>
       }
 
       this.expect(tt.bracketL);
-      const id = this.parseIdentifier();
+      this.parseIdentifier();
       this.expect(tt.colon);
-      id.typeAnnotation = this.tsParseTypeAnnotation(/* eatColon */ false);
+      this.tsParseTypeAnnotation(/* eatColon */ false);
       this.expect(tt.bracketR);
 
       this.tsTryParseTypeAnnotation();
@@ -451,7 +447,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     tsParseMappedTypeParameter(): N.TsTypeParameter {
       const node: N.TsTypeParameter = this.startNode();
-      node.name = this.parseIdentifierName(node.start);
+      this.parseIdentifierName();
       this.expect(tt._in);
       node.constraint = this.tsParseType();
       return this.finishNode(node, "TSTypeParameter");
@@ -507,24 +503,6 @@ export default (superClass: ParserClass): ParserClass =>
       return this.finishNode(node, type);
     }
 
-    tsParseLiteralTypeNode(): N.TsLiteralType {
-      const node: N.TsLiteralType = this.startNode();
-      node.literal = (() => {
-        switch (this.state.type) {
-          case tt.num:
-            return this.parseLiteral<N.NumericLiteral>(this.state.value, "NumericLiteral");
-          case tt.string:
-            return this.parseLiteral<N.StringLiteral>(this.state.value, "StringLiteral");
-          case tt._true:
-          case tt._false:
-            return this.parseBooleanLiteral();
-          default:
-            throw this.unexpected();
-        }
-      })();
-      return this.finishNode(node, "TSLiteralType");
-    }
-
     tsParseNonArrayType(): N.TsType {
       switch (this.state.type) {
         case tt.name:
@@ -547,21 +525,14 @@ export default (superClass: ParserClass): ParserClass =>
         case tt.num:
         case tt._true:
         case tt._false:
-          return this.tsParseLiteralTypeNode();
+          this.parseLiteral();
+          return this.startNode();
         case tt.plusMin:
+          // Allow negative signs but not plus signs before numbers.
           if (this.state.value === "-") {
-            const node: N.TsLiteralType = this.startNode();
             this.next();
-            if (!this.match(tt.num)) {
-              throw this.unexpected();
-            }
-            node.literal = this.parseLiteral(
-              -this.state.value,
-              "NumericLiteral",
-              node.start,
-              node.loc.start,
-            );
-            return this.finishNode(node, "TSLiteralType");
+            this.parseLiteral();
+            return this.startNode();
           }
           break;
         case tt._this: {
@@ -744,10 +715,10 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsParseTypePredicatePrefix(): N.Identifier | null {
-      const id = this.parseIdentifier();
+      this.parseIdentifier();
       if (this.isContextual("is") && !this.hasPrecedingLineBreak()) {
         this.next();
-        return id;
+        return this.startNode<N.Identifier>();
       }
       return null;
     }
@@ -820,7 +791,7 @@ export default (superClass: ParserClass): ParserClass =>
       const node: N.TsExpressionWithTypeArguments = this.startNode();
       // Note: TS uses parseLeftHandSideExpressionOrHigher,
       // then has grammar errors later if it's not an EntityName.
-      node.expression = this.tsParseEntityName(/* allowReservedWords */ false);
+      this.tsParseEntityName();
       if (this.isRelational("<")) {
         node.typeParameters = this.tsParseTypeArguments();
       }
@@ -829,7 +800,7 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsParseInterfaceDeclaration(node: N.TsInterfaceDeclaration): N.TsInterfaceDeclaration {
-      node.id = this.parseIdentifier();
+      this.parseIdentifier();
       node.typeParameters = this.tsTryParseTypeParameters();
       if (this.eat(tt._extends)) {
         node.extends = this.tsParseHeritageClause();
@@ -841,7 +812,7 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsParseTypeAliasDeclaration(node: N.TsTypeAliasDeclaration): N.TsTypeAliasDeclaration {
-      node.id = this.parseIdentifier();
+      this.parseIdentifier();
       node.typeParameters = this.tsTryParseTypeParameters();
       this.expect(tt.eq);
       node.typeAnnotation = this.tsParseType();
@@ -852,9 +823,9 @@ export default (superClass: ParserClass): ParserClass =>
     tsParseEnumMember(): N.TsEnumMember {
       // Computed property names are grammar errors in an enum, so accept just string literal or identifier.
       if (this.match(tt.string)) {
-        this.parseLiteral<N.StringLiteral>(this.state.value, "StringLiteral");
+        this.parseLiteral();
       } else {
-        this.parseIdentifier(/* liberal */ true);
+        this.parseIdentifier();
       }
       if (this.eat(tt.eq)) {
         const eqIndex = this.state.tokens.length - 1;
@@ -880,7 +851,7 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsParseModuleOrNamespaceDeclaration(node: N.TsModuleDeclaration): N.TsModuleDeclaration {
-      node.id = this.parseIdentifier();
+      this.parseIdentifier();
       if (this.eat(tt.dot)) {
         const inner = this.startNode();
         this.tsParseModuleOrNamespaceDeclaration(inner as N.TsModuleDeclaration);
@@ -918,10 +889,12 @@ export default (superClass: ParserClass): ParserClass =>
       return this.isContextual("require") && this.lookahead().type === tt.parenL;
     }
 
-    tsParseModuleReference(): N.TsModuleReference {
-      return this.tsIsExternalModuleReference()
-        ? this.tsParseExternalModuleReference()
-        : this.tsParseEntityName(/* allowReservedWords */ false);
+    tsParseModuleReference(): void {
+      if (this.tsIsExternalModuleReference()) {
+        this.tsParseExternalModuleReference();
+      } else {
+        this.tsParseEntityName();
+      }
     }
 
     tsParseExternalModuleReference(): N.TsExternalModuleReference {
@@ -931,7 +904,7 @@ export default (superClass: ParserClass): ParserClass =>
       if (!this.match(tt.string)) {
         throw this.unexpected();
       }
-      node.expression = this.parseLiteral(this.state.value, "StringLiteral");
+      this.parseLiteral();
       this.expect(tt.parenR);
       return this.finishNode(node, "TSExternalModuleReference");
     }
@@ -1294,12 +1267,7 @@ export default (superClass: ParserClass): ParserClass =>
       super.parseNewArguments();
     }
 
-    parseExprOp(
-      leftStartPos: number,
-      leftStartLoc: Position,
-      minPrec: number,
-      noIn: boolean | null,
-    ): void {
+    parseExprOp(minPrec: number, noIn: boolean | null): void {
       if (
         nonNull(tt._in.binop) > minPrec &&
         !this.hasPrecedingLineBreak() &&
@@ -1307,11 +1275,11 @@ export default (superClass: ParserClass): ParserClass =>
       ) {
         this.state.tokens[this.state.tokens.length - 1].type = tt._as;
         this.runInTypeContext(1, () => this.tsParseType());
-        this.parseExprOp(leftStartPos, leftStartLoc, minPrec, noIn);
+        this.parseExprOp(minPrec, noIn);
         return;
       }
 
-      super.parseExprOp(leftStartPos, leftStartLoc, minPrec, noIn);
+      super.parseExprOp(minPrec, noIn);
     }
 
     /*
@@ -1555,9 +1523,6 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     parseObjPropValue(
-      prop: N.Node,
-      startPos: number | null,
-      startLoc: Position | null,
       isGenerator: boolean,
       isAsync: boolean,
       isPattern: boolean,
@@ -1568,11 +1533,7 @@ export default (superClass: ParserClass): ParserClass =>
       if (this.isRelational("<")) {
         throw new Error("TODO");
       }
-
       super.parseObjPropValue(
-        prop,
-        startPos,
-        startLoc,
         isGenerator,
         isAsync,
         isPattern,
@@ -1740,7 +1701,10 @@ export default (superClass: ParserClass): ParserClass =>
       switch (this.state.type) {
         case tt._this:
           // "this" may be the name of a parameter, so allow it.
-          return this.runInTypeContext(0, () => this.parseIdentifier(/* liberal */ true));
+          this.runInTypeContext(0, () => {
+            this.parseIdentifier();
+          });
+          return this.startNode();
         default:
           return super.parseBindingAtom(isBlockScope);
       }

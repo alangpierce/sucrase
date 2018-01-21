@@ -18,18 +18,18 @@ import {NodeUtils} from "./node";
 
 export default abstract class LValParser extends NodeUtils {
   // Forward-declaration: defined in expression.js
-  abstract parseIdentifier(liberal?: boolean): Identifier;
+  abstract parseIdentifier(): void;
   abstract parseMaybeAssign(
     noIn?: boolean | null,
     refShorthandDefaultPos?: Pos | null,
     afterLeftParse?: Function,
     refNeedsArrowPos?: Pos | null,
   ): void;
-  abstract parseObj<T extends ObjectPattern | ObjectExpression>(
+  abstract parseObj(
     isPattern: boolean,
     isBlockScope: boolean,
     refShorthandDefaultPos?: Pos | null,
-  ): T;
+  ): void;
   // Forward-declaration: defined in statement.js
   abstract parseDecorator(): void;
 
@@ -49,8 +49,8 @@ export default abstract class LValParser extends NodeUtils {
     return this.finishNode(node as RestElement, "RestElement");
   }
 
-  parseBindingIdentifier(): Identifier {
-    return this.parseIdentifier();
+  parseBindingIdentifier(): void {
+    this.parseIdentifier();
   }
 
   // Parses lvalue (assignable) atom.
@@ -59,11 +59,11 @@ export default abstract class LValParser extends NodeUtils {
       case tt._yield:
       case tt.name: {
         this.state.type = tt.name;
-        const result = this.parseBindingIdentifier();
+        this.parseBindingIdentifier();
         this.state.tokens[this.state.tokens.length - 1].identifierRole = isBlockScope
           ? IdentifierRole.BlockScopedDeclaration
           : IdentifierRole.FunctionScopedDeclaration;
-        return result;
+        return this.startNode();
       }
 
       case tt.bracketL: {
@@ -74,7 +74,8 @@ export default abstract class LValParser extends NodeUtils {
       }
 
       case tt.braceL:
-        return this.parseObj<ObjectPattern>(true, isBlockScope);
+        this.parseObj(true, isBlockScope);
+        return this.startNode();
 
       default:
         throw this.unexpected();

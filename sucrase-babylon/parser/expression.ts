@@ -323,11 +323,8 @@ export default abstract class ExpressionParser extends LValParser {
     close: TokenType,
     possibleAsyncArrow: boolean,
     refTrailingCommaPos?: Pos,
-  ): Array<N.Expression | null> {
-    const elts = [];
-    let innerParenStart;
+  ): void {
     let first = true;
-
     while (!this.eat(close)) {
       if (first) {
         first = false;
@@ -336,27 +333,13 @@ export default abstract class ExpressionParser extends LValParser {
         if (this.eat(close)) break;
       }
 
-      // we need to make sure that if this is an async arrow functions, that we don't allow inner parens inside the params
-      if (this.match(tt.parenL) && !innerParenStart) {
-        innerParenStart = this.state.start;
-      }
-
-      elts.push(
-        this.parseExprListItem(
-          false,
-          possibleAsyncArrow ? {start: 0} : null,
-          possibleAsyncArrow ? {start: 0} : null,
-          possibleAsyncArrow ? refTrailingCommaPos : null,
-        ),
+      this.parseExprListItem(
+        false,
+        possibleAsyncArrow ? {start: 0} : null,
+        possibleAsyncArrow ? {start: 0} : null,
+        possibleAsyncArrow ? refTrailingCommaPos : null,
       );
     }
-
-    // we found an async arrow function so let's not allow any inner parens
-    if (possibleAsyncArrow && innerParenStart && this.shouldParseAsyncArrow()) {
-      this.unexpected();
-    }
-
-    return elts;
   }
 
   shouldParseAsyncArrow(): boolean {
@@ -1015,10 +998,8 @@ export default abstract class ExpressionParser extends LValParser {
     close: TokenType,
     allowEmpty: boolean | null = null,
     refShorthandDefaultPos: Pos | null = null,
-  ): ReadonlyArray<N.Expression | null> {
-    const elts = [];
+  ): void {
     let first = true;
-
     while (!this.eat(close)) {
       if (first) {
         first = false;
@@ -1026,10 +1007,8 @@ export default abstract class ExpressionParser extends LValParser {
         this.expect(tt.comma);
         if (this.eat(close)) break;
       }
-
-      elts.push(this.parseExprListItem(allowEmpty, refShorthandDefaultPos));
+      this.parseExprListItem(allowEmpty, refShorthandDefaultPos);
     }
-    return elts;
   }
 
   parseExprListItem(
@@ -1037,25 +1016,17 @@ export default abstract class ExpressionParser extends LValParser {
     refShorthandDefaultPos: Pos | null,
     refNeedsArrowPos: Pos | null = null,
     refTrailingCommaPos: Pos | null = null,
-  ): N.Expression | null {
-    let elt;
+  ): void {
     if (allowEmpty && this.match(tt.comma)) {
-      elt = null;
+      // Empty item; nothing more to parse for this item.
     } else if (this.match(tt.ellipsis)) {
-      elt = this.parseSpread(refShorthandDefaultPos);
-
+      this.parseSpread(refShorthandDefaultPos);
       if (refTrailingCommaPos && this.match(tt.comma)) {
         refTrailingCommaPos.start = this.state.start;
       }
     } else {
-      elt = this.parseMaybeAssign(
-        false,
-        refShorthandDefaultPos,
-        this.parseParenItem,
-        refNeedsArrowPos,
-      );
+      this.parseMaybeAssign(false, refShorthandDefaultPos, this.parseParenItem, refNeedsArrowPos);
     }
-    return elt;
   }
 
   // Parse the next token as an identifier. If `liberal` is true (used

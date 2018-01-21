@@ -1,21 +1,10 @@
 import Tokenizer from "../tokenizer";
 import {TokenType, types as tt} from "../tokenizer/types";
-import {Node} from "../types";
 import {lineBreak} from "../util/whitespace";
 
 // ## Parser utilities
 
 export default class UtilParser extends Tokenizer {
-  // TODO
-
-  addExtra(node: Node, key: string, val: {}): void {
-    if (!node) return;
-
-    const extra = {};
-    node.extra = extra;
-    extra[key] = val;
-  }
-
   // TODO
 
   isRelational(op: "<" | ">"): boolean {

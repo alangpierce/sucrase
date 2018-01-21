@@ -1,14 +1,14 @@
 /* eslint max-len: 0 */
 
+import {File} from "../index";
 import {IdentifierRole} from "../tokenizer";
 import {TokenType, types as tt} from "../tokenizer/types";
-import * as N from "../types";
 import ExpressionParser from "./expression";
 
 export default class StatementParser extends ExpressionParser {
   // ### Statement parsing
 
-  parseTopLevel(): N.File {
+  parseTopLevel(): File {
     this.parseBlockBody(true, tt.eof);
 
     this.state.scopes.push({
@@ -601,15 +601,6 @@ export default class StatementParser extends ExpressionParser {
 
   isClassMethod(): boolean {
     return this.match(tt.parenL);
-  }
-
-  isNonstaticConstructor(method: N.ClassMethod | N.ClassProperty): boolean {
-    return (
-      !method.computed &&
-      !method.static &&
-      (method.key.name === "constructor" || // Identifier
-        method.key.value === "constructor") // String literal
-    );
   }
 
   parseClassBody(classContextId: number): void {

@@ -3,15 +3,20 @@ import Parser, {ParserClass, plugins} from "./parser";
 
 import "./tokenizer/context";
 
-import {File} from "./types";
-
 import flowPlugin from "./plugins/flow";
 import jsxPlugin from "./plugins/jsx";
 import typescriptPlugin from "./plugins/typescript";
+import {Token} from "./tokenizer";
+import {Scope} from "./tokenizer/state";
 
 plugins.flow = flowPlugin;
 plugins.jsx = jsxPlugin;
 plugins.typescript = typescriptPlugin;
+
+export type File = {
+  tokens: Array<Token>;
+  scopes: Array<Scope>;
+};
 
 export function parse(input: string, options?: InputOptions): File {
   return getParser(options, input).parse();

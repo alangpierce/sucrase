@@ -1,10 +1,9 @@
-import Parser, {ParserClass} from "../../parser";
+import {ParserClass, Pos} from "../../parser";
 import {IdentifierRole} from "../../tokenizer";
 import {TokContext, types as tc} from "../../tokenizer/context";
 import {TokenType, types as tt} from "../../tokenizer/types";
 import * as charCodes from "../../util/charcodes";
 import {isIdentifierChar, isIdentifierStart} from "../../util/identifier";
-import {Pos} from "../../util/location";
 import {isNewLine} from "../../util/whitespace";
 import XHTMLEntities from "./xhtml";
 

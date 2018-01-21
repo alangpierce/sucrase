@@ -1,7 +1,6 @@
-import {ParserClass} from "../parser";
+import {ParserClass, Pos} from "../parser";
 import {types as ct} from "../tokenizer/context";
 import {TokenType, types as tt} from "../tokenizer/types";
-import {Pos, Position} from "../util/location";
 
 type TsModifier = "readonly" | "abstract" | "static" | "public" | "private" | "protected";
 

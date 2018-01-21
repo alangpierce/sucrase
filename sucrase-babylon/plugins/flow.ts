@@ -1,9 +1,8 @@
 /* eslint max-len: 0 */
 
-import {ParserClass} from "../parser";
+import {ParserClass, Pos} from "../parser";
 import State from "../tokenizer/state";
 import {TokenType, types as tt} from "../tokenizer/types";
-import {Pos, Position} from "../util/location";
 
 function isMaybeDefaultImport(state: State): boolean {
   return (state.type === tt.name || !!state.type.keyword) && state.value !== "from";

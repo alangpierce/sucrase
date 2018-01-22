@@ -6223,8 +6223,8 @@ style-loader@0.18.2:
     schema-utils "^0.3.0"
 
 sucrase@^1.8.0:
-  version "1.9.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.9.0.tgz#5078661ebc4a9fed2a8fda055745b9fcdc074c38"
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.10.0.tgz#7cd0926f5804a15569279ca59ae905403f10acec"
   dependencies:
     "@types/mz" "^0.0.32"
     commander "^2.12.2"
@@ -6435,8 +6435,8 @@ tryit@^1.0.1:
   resolved "https://registry.yarnpkg.com/tryit/-/tryit-1.0.3.tgz#393be730a9446fd1ead6da59a014308f36c289cb"
 
 tslib@^1.7.1:
-  version "1.8.1"
-  resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.8.1.tgz#6946af2d1d651a7b1863b531d6e5afa41aa44eac"
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.9.0.tgz#e37a86fda8cbbaf23a057f473c9f4dc64e5fc2e8"
 
 tty-browserify@0.0.0:
   version "0.0.0"

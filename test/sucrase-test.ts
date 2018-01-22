@@ -402,4 +402,22 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("handles async object methods", () => {
+    assertResult(
+      `
+      const o = {
+        async f() {
+        }
+      };
+    `,
+      `"use strict";
+      const o = {
+        async f() {
+        }
+      };
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

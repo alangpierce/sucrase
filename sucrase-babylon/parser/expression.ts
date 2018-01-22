@@ -36,7 +36,6 @@ export default abstract class ExpressionParser extends LValParser {
     functionStart: number,
     isStatement: boolean,
     allowExpressionBody?: boolean,
-    isAsync?: boolean,
     optionalId?: boolean,
   ): void;
   abstract parseFunctionParams(allowModifiers?: boolean, funcContextId?: number): void;
@@ -332,7 +331,7 @@ export default abstract class ExpressionParser extends LValParser {
 
   parseAsyncArrowFromCallExpression(functionStart: number, startTokenIndex: number): void {
     this.expect(tt.arrow);
-    this.parseArrowExpression(functionStart, startTokenIndex, true);
+    this.parseArrowExpression(functionStart, startTokenIndex);
   }
 
   // Parse a no-call expression (like argument of `new` or `::` operators).
@@ -384,13 +383,13 @@ export default abstract class ExpressionParser extends LValParser {
           return false;
         } else if (name === "async" && this.match(tt._function) && !this.canInsertSemicolon()) {
           this.next();
-          this.parseFunction(functionStart, false, false, true);
+          this.parseFunction(functionStart, false, false);
           return false;
         } else if (canBeArrow && name === "async" && this.match(tt.name)) {
           this.parseIdentifier();
           this.expect(tt.arrow);
           // let foo = bar => {};
-          this.parseArrowExpression(functionStart, startTokenIndex, true);
+          this.parseArrowExpression(functionStart, startTokenIndex);
           return true;
         }
 
@@ -654,8 +653,6 @@ export default abstract class ExpressionParser extends LValParser {
       }
 
       let isGenerator = false;
-      let isAsync = false;
-
       if (this.match(tt.ellipsis)) {
         // Note that this is labeled as an access on the token even though it might be an
         // assignment.
@@ -697,7 +694,6 @@ export default abstract class ExpressionParser extends LValParser {
         ) {
           // This is a key called "async" rather than an async function.
         } else {
-          isAsync = true;
           if (this.match(tt.star)) {
             this.next();
             isGenerator = true;
@@ -710,7 +706,6 @@ export default abstract class ExpressionParser extends LValParser {
 
       this.parseObjPropValue(
         isGenerator,
-        isAsync,
         isPattern,
         isBlockScope,
         refShorthandDefaultPos,
@@ -735,30 +730,19 @@ export default abstract class ExpressionParser extends LValParser {
   }
 
   // Returns true if this was a method.
-  parseObjectMethod(
-    isGenerator: boolean,
-    isAsync: boolean,
-    isPattern: boolean,
-    objectContextId: number,
-  ): boolean {
+  parseObjectMethod(isGenerator: boolean, isPattern: boolean, objectContextId: number): boolean {
     // We don't need to worry about modifiers because object methods can't have optional bodies, so
     // the start will never be used.
     const functionStart = this.state.start;
-    if (isAsync || isGenerator || this.match(tt.parenL)) {
+    if (this.match(tt.parenL)) {
       if (isPattern) this.unexpected();
-      this.parseMethod(functionStart, isGenerator, isAsync, /* isConstructor */ false);
+      this.parseMethod(functionStart, isGenerator, /* isConstructor */ false);
       return true;
     }
 
     if (this.isGetterOrSetterMethod(isPattern)) {
-      if (isGenerator || isAsync) this.unexpected();
       this.parsePropertyName(objectContextId);
-      this.parseMethod(
-        functionStart,
-        /* isGenerator */ false,
-        /* isAsync */ false,
-        /* isConstructor */ false,
-      );
+      this.parseMethod(functionStart, /* isGenerator */ false, /* isConstructor */ false);
       return true;
     }
     return false;
@@ -804,13 +788,12 @@ export default abstract class ExpressionParser extends LValParser {
 
   parseObjPropValue(
     isGenerator: boolean,
-    isAsync: boolean,
     isPattern: boolean,
     isBlockScope: boolean,
     refShorthandDefaultPos: Pos | null,
     objectContextId: number,
   ): void {
-    const wasMethod = this.parseObjectMethod(isGenerator, isAsync, isPattern, objectContextId);
+    const wasMethod = this.parseObjectMethod(isGenerator, isPattern, objectContextId);
     if (!wasMethod) {
       this.parseObjectProperty(isPattern, isBlockScope, refShorthandDefaultPos);
     }
@@ -840,12 +823,7 @@ export default abstract class ExpressionParser extends LValParser {
 
   // Parse object or class method.
 
-  parseMethod(
-    functionStart: number,
-    isGenerator: boolean,
-    isAsync: boolean,
-    isConstructor: boolean,
-  ): void {
+  parseMethod(functionStart: number, isGenerator: boolean, isConstructor: boolean): void {
     const oldInGenerator = this.state.inGenerator;
     this.state.inGenerator = isGenerator;
 
@@ -869,11 +847,7 @@ export default abstract class ExpressionParser extends LValParser {
   // Parse arrow function expression.
   // If the parameters are provided, they will be converted to an
   // assignable list.
-  parseArrowExpression(
-    functionStart: number,
-    startTokenIndex: number,
-    isAsync: boolean = false,
-  ): void {
+  parseArrowExpression(functionStart: number, startTokenIndex: number): void {
     const oldInGenerator = this.state.inGenerator;
     this.state.inGenerator = false;
     this.parseFunctionBody(functionStart, false /* isGenerator */, true);

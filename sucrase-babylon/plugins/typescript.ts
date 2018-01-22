@@ -1330,14 +1330,9 @@ export default (superClass: ParserClass): ParserClass =>
       super.parseClassProperty();
     }
 
-    parseClassMethod(
-      functionStart: number,
-      isGenerator: boolean,
-      isAsync: boolean,
-      isConstructor: boolean,
-    ): void {
+    parseClassMethod(functionStart: number, isGenerator: boolean, isConstructor: boolean): void {
       this.tsTryParseTypeParameters();
-      super.parseClassMethod(functionStart, isGenerator, isAsync, isConstructor);
+      super.parseClassMethod(functionStart, isGenerator, isConstructor);
     }
 
     parseClassSuper(): boolean {
@@ -1356,7 +1351,6 @@ export default (superClass: ParserClass): ParserClass =>
 
     parseObjPropValue(
       isGenerator: boolean,
-      isAsync: boolean,
       isPattern: boolean,
       isBlockScope: boolean,
       refShorthandDefaultPos: Pos | null,
@@ -1367,7 +1361,6 @@ export default (superClass: ParserClass): ParserClass =>
       }
       super.parseObjPropValue(
         isGenerator,
-        isAsync,
         isPattern,
         isBlockScope,
         refShorthandDefaultPos,

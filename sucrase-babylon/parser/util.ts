@@ -5,28 +5,6 @@ import {lineBreak} from "../util/whitespace";
 // ## Parser utilities
 
 export default class UtilParser extends Tokenizer {
-  isRelational(op: "<" | ">"): boolean {
-    return this.match(tt.relational) && this.state.value === op;
-  }
-
-  expectRelational(op: "<" | ">"): void {
-    if (this.isRelational(op)) {
-      this.next();
-    } else {
-      this.unexpected(null, tt.relational);
-    }
-  }
-
-  // eat() for relational operators.
-
-  eatRelational(op: "<" | ">"): boolean {
-    if (this.isRelational(op)) {
-      this.next();
-      return true;
-    }
-    return false;
-  }
-
   // Tests whether parsed token is a contextual keyword.
   isContextual(name: string): boolean {
     return this.match(tt.name) && this.state.value === name;

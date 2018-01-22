@@ -478,10 +478,9 @@ export default abstract class Tokenizer extends BaseParser {
   readToken_lt_gt(code: number): void {
     // '<>'
     const next = this.input.charCodeAt(this.state.pos + 1);
-    let size = 1;
 
     if (next === code) {
-      size =
+      const size =
         code === charCodes.greaterThan &&
         this.input.charCodeAt(this.state.pos + 2) === charCodes.greaterThan
           ? 3
@@ -496,10 +495,12 @@ export default abstract class Tokenizer extends BaseParser {
 
     if (next === charCodes.equalsTo) {
       // <= | >=
-      size = 2;
+      this.finishOp(tt.relationalOrEqual, 2);
+    } else if (code === charCodes.lessThan) {
+      this.finishOp(tt.lessThan, 1);
+    } else {
+      this.finishOp(tt.greaterThan, 1);
     }
-
-    this.finishOp(tt.relational, size);
   }
 
   readToken_eq_excl(code: number): void {
@@ -1178,7 +1179,7 @@ export default abstract class Tokenizer extends BaseParser {
       return this.curContext() === ct.braceStatement;
     }
 
-    if (prevType === tt.relational) {
+    if (prevType === tt.greaterThan) {
       // `class C<T> { ... }`
       return true;
     }

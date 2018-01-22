@@ -1,6 +1,7 @@
-import {ParserClass, Pos} from "../parser";
+import {ParserClass} from "../parser";
 import {types as ct} from "../tokenizer/context";
 import {TokenType, types as tt} from "../tokenizer/types";
+import * as charCodes from "../util/charcodes";
 
 type TsModifier = "readonly" | "abstract" | "static" | "public" | "private" | "protected";
 
@@ -113,7 +114,7 @@ export default (superClass: ParserClass): ParserClass =>
         case "TupleElementTypes":
           return this.match(tt.bracketR);
         case "TypeParametersOrArguments":
-          return this.isRelational(">");
+          return this.match(tt.greaterThan);
         default:
           break;
       }
@@ -163,14 +164,14 @@ export default (superClass: ParserClass): ParserClass =>
         if (bracket) {
           this.expect(tt.bracketL);
         } else {
-          this.expectRelational("<");
+          this.expect(tt.lessThan);
         }
       }
       this.tsParseDelimitedList(kind, parseElement);
       if (bracket) {
         this.expect(tt.bracketR);
       } else {
-        this.expectRelational(">");
+        this.expect(tt.greaterThan);
       }
     }
 
@@ -183,7 +184,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     tsParseTypeReference(): void {
       this.tsParseEntityName();
-      if (!this.hasPrecedingLineBreak() && this.isRelational("<")) {
+      if (!this.hasPrecedingLineBreak() && this.match(tt.lessThan)) {
         this.tsParseTypeArguments();
       }
     }
@@ -213,14 +214,14 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsTryParseTypeParameters(): void {
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.tsParseTypeParameters();
       }
     }
 
     tsParseTypeParameters(): void {
       this.runInTypeContext(0, () => {
-        if (this.isRelational("<") || this.match(tt.typeParameterStart)) {
+        if (this.match(tt.lessThan) || this.match(tt.typeParameterStart)) {
           this.next();
         } else {
           this.unexpected();
@@ -300,7 +301,7 @@ export default (superClass: ParserClass): ParserClass =>
       this.parsePropertyName(-1 /* Types don't need context IDs. */);
       this.eat(tt.question);
 
-      if (!readonly && (this.match(tt.parenL) || this.isRelational("<"))) {
+      if (!readonly && (this.match(tt.parenL) || this.match(tt.lessThan))) {
         this.tsFillSignature(tt.colon);
         this.tsParseTypeMemberSemicolon();
       } else {
@@ -310,7 +311,7 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsParseTypeMember(): void {
-      if (this.match(tt.parenL) || this.isRelational("<")) {
+      if (this.match(tt.parenL) || this.match(tt.lessThan)) {
         this.tsParseSignatureMember("TSCallSignatureDeclaration");
         return;
       }
@@ -329,7 +330,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     tsIsStartOfConstructSignature(): boolean {
       this.next();
-      return this.match(tt.parenL) || this.isRelational("<");
+      return this.match(tt.parenL) || this.match(tt.lessThan);
     }
 
     tsParseTypeLiteral(): void {
@@ -509,7 +510,7 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsIsStartOfFunctionType(): boolean {
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         return true;
       }
       return (
@@ -626,7 +627,7 @@ export default (superClass: ParserClass): ParserClass =>
     tsParseTypeAssertion(): void {
       this.runInTypeContext(1, () => {
         this.tsParseType();
-        this.expectRelational(">");
+        this.expect(tt.greaterThan);
       });
       this.parseMaybeUnary();
     }
@@ -635,10 +636,10 @@ export default (superClass: ParserClass): ParserClass =>
     tsTryParseTypeArgumentsInExpression(): boolean {
       return this.tsTryParseAndCatch(() => {
         this.runInTypeContext(0, () => {
-          this.expectRelational("<");
+          this.expect(tt.lessThan);
           this.state.tokens[this.state.tokens.length - 1].type = tt.typeParameterStart;
           this.tsParseDelimitedList("TypeParametersOrArguments", this.tsParseType.bind(this));
-          this.expectRelational(">");
+          this.expect(tt.greaterThan);
         });
         this.expect(tt.parenL);
       });
@@ -655,7 +656,7 @@ export default (superClass: ParserClass): ParserClass =>
       // Note: TS uses parseLeftHandSideExpressionOrHigher,
       // then has grammar errors later if it's not an EntityName.
       this.tsParseEntityName();
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.tsParseTypeArguments();
       }
     }
@@ -977,9 +978,9 @@ export default (superClass: ParserClass): ParserClass =>
 
     tsParseTypeArguments(): void {
       this.runInTypeContext(0, () => {
-        this.expectRelational("<");
+        this.expect(tt.lessThan);
         this.tsParseDelimitedList("TypeParametersOrArguments", this.tsParseType.bind(this));
-        this.expectRelational(">");
+        this.expect(tt.greaterThan);
       });
     }
 
@@ -1064,7 +1065,7 @@ export default (superClass: ParserClass): ParserClass =>
         return;
       }
 
-      if (!noCalls && this.isRelational("<")) {
+      if (!noCalls && this.match(tt.lessThan)) {
         if (this.atPossibleAsync()) {
           // Almost certainly this is a generic async function `async <T>() => ...
           // But it might be a call with a type argument `async<T>();`
@@ -1078,14 +1079,14 @@ export default (superClass: ParserClass): ParserClass =>
         const typeArguments = this.tsTryParseTypeArgumentsInExpression(); // Also eats the "("
         if (typeArguments) {
           // possibleAsync always false here, because we would have handled it above.
-          this.parseCallExpressionArguments(tt.parenR, /* possibleAsync */ false);
+          this.parseCallExpressionArguments(tt.parenR);
         }
       }
       super.parseSubscript(startPos, noCalls, state);
     }
 
     parseNewArguments(): void {
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         // tsTryParseAndCatch is expensive, so avoid if not necessary.
         // 99% certain this is `new C<T>();`. But may be `new C < T;`, which is also legal.
         this.tsTryParseAndCatch(() => {
@@ -1334,7 +1335,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     parseClassSuper(): boolean {
       const hasSuper = super.parseClassSuper();
-      if (hasSuper && this.isRelational("<")) {
+      if (hasSuper && this.match(tt.lessThan)) {
         this.tsParseTypeArguments();
       }
       if (this.eatContextual("implements")) {
@@ -1352,7 +1353,7 @@ export default (superClass: ParserClass): ParserClass =>
       isBlockScope: boolean,
       objectContextId: number,
     ): void {
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         throw new Error("TODO");
       }
       super.parseObjPropValue(isGenerator, isPattern, isBlockScope, objectContextId);
@@ -1410,7 +1411,7 @@ export default (superClass: ParserClass): ParserClass =>
         }
       }
 
-      if (jsxError === null && !this.isRelational("<")) {
+      if (jsxError === null && !this.match(tt.lessThan)) {
         return super.parseMaybeAssign(noIn, afterLeftParse);
       }
 
@@ -1452,7 +1453,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     // Handle type assertions
     parseMaybeUnary(): boolean {
-      if (!this.hasPlugin("jsx") && this.eatRelational("<")) {
+      if (!this.hasPlugin("jsx") && this.eat(tt.lessThan)) {
         this.tsParseTypeAssertion();
         return false;
       } else {
@@ -1508,7 +1509,7 @@ export default (superClass: ParserClass): ParserClass =>
     // === === === === === === === === === === === === === === === ===
 
     isClassMethod(): boolean {
-      return this.isRelational("<") || super.isClassMethod();
+      return this.match(tt.lessThan) || super.isClassMethod();
     }
 
     isClassProperty(): boolean {
@@ -1517,8 +1518,8 @@ export default (superClass: ParserClass): ParserClass =>
 
     // ensure that inside types, we bypass the jsx parser plugin
     readToken(code: number): void {
-      if (this.state.inType && (code === 62 || code === 60)) {
-        this.finishOp(tt.relational, 1);
+      if (this.state.inType && (code === charCodes.lessThan || code === charCodes.greaterThan)) {
+        this.finishOp(code === charCodes.lessThan ? tt.lessThan : tt.greaterThan, 1);
       } else {
         super.readToken(code);
       }

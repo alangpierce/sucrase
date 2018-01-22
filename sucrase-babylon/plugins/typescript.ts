@@ -737,7 +737,7 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsIsExternalModuleReference(): boolean {
-      return this.isContextual("require") && this.lookahead().type === tt.parenL;
+      return this.isContextual("require") && this.lookaheadType() === tt.parenL;
     }
 
     tsParseModuleReference(): void {
@@ -761,21 +761,21 @@ export default (superClass: ParserClass): ParserClass =>
     // Utilities
 
     tsLookAhead<T>(f: () => T): T {
-      const state = this.state.clone();
+      const snapshot = this.state.snapshot();
       const res = f();
-      this.state = state;
+      this.state.restoreFromSnapshot(snapshot);
       return res;
     }
 
     // Returns true if parsing was successful.
     tsTryParseAndCatch<T>(f: () => void): boolean {
-      const state = this.state.clone();
+      const snapshot = this.state.snapshot();
       try {
         f();
         return true;
       } catch (e) {
         if (e instanceof SyntaxError) {
-          this.state = state;
+          this.state.restoreFromSnapshot(snapshot);
           return false;
         }
         throw e;
@@ -785,12 +785,12 @@ export default (superClass: ParserClass): ParserClass =>
     // The function should return true if the parse was successful. If not, we revert the state to
     // before we started parsing.
     tsTryParse<T>(f: () => boolean): boolean {
-      const state = this.state.clone();
+      const snapshot = this.state.snapshot();
       const wasSuccessful = f();
       if (wasSuccessful) {
         return true;
       } else {
-        this.state = state;
+        this.state.restoreFromSnapshot(snapshot);
         return false;
       }
     }
@@ -1131,7 +1131,7 @@ export default (superClass: ParserClass): ParserClass =>
     checkDuplicateExports(): void {}
 
     parseImport(): void {
-      if (this.match(tt.name) && this.lookahead().type === tt.eq) {
+      if (this.match(tt.name) && this.lookaheadType() === tt.eq) {
         this.tsParseImportEqualsDeclaration();
         return;
       }
@@ -1159,7 +1159,7 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     parseExportDefaultExpression(): void {
-      if (this.isContextual("abstract") && this.lookahead().type === tt._class) {
+      if (this.isContextual("abstract") && this.lookaheadType() === tt._class) {
         this.state.type = tt._abstract;
         this.next(); // Skip "abstract"
         this.parseClass(true, true);
@@ -1170,7 +1170,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     parseStatementContent(declaration: boolean, topLevel: boolean = false): void {
       if (this.state.type === tt._const) {
-        const ahead = this.lookahead();
+        const ahead = this.lookaheadTypeAndValue();
         if (ahead.type === tt.name && ahead.value === "enum") {
           this.expect(tt._const);
           this.expectContextual("enum");
@@ -1264,7 +1264,7 @@ export default (superClass: ParserClass): ParserClass =>
         return;
       }
 
-      const state = this.state.clone();
+      const snapshot = this.state.snapshot();
       try {
         super.parseConditional(noIn, startPos);
         return;
@@ -1274,7 +1274,7 @@ export default (superClass: ParserClass): ParserClass =>
           throw err;
         }
 
-        this.state = state;
+        this.state.restoreFromSnapshot(snapshot);
         // @ts-ignore
         refNeedsArrowPos.start = err.pos || this.state.start;
       }
@@ -1414,7 +1414,7 @@ export default (superClass: ParserClass): ParserClass =>
         assert(this.state.context[this.state.context.length - 2] === ct.j_expr);
 
         // Prefer to parse JSX if possible. But may be an arrow fn.
-        const state = this.state.clone();
+        const snapshot = this.state.snapshot();
         try {
           return super.parseMaybeAssign(
             noIn,
@@ -1428,7 +1428,7 @@ export default (superClass: ParserClass): ParserClass =>
             throw err;
           }
 
-          this.state = state;
+          this.state.restoreFromSnapshot(snapshot);
           this.state.type = tt.typeParameterStart;
           // Pop the context added by the jsxTagStart.
           assert(this.curContext() === ct.j_oTag);
@@ -1451,7 +1451,7 @@ export default (superClass: ParserClass): ParserClass =>
       // Either way, we're looking at a '<': tt.typeParameterStart or relational.
 
       let wasArrow = false;
-      const state = this.state.clone();
+      const snapshot = this.state.snapshot();
       try {
         // This is similar to TypeScript's `tryParseParenthesizedArrowFunctionExpression`.
         this.runInTypeContext(0, () => {
@@ -1481,7 +1481,7 @@ export default (superClass: ParserClass): ParserClass =>
         // (Because in JSX the '<' should be a jsxTagStart and not a relational.
         assert(!this.hasPlugin("jsx"));
         // Parsing an arrow function failed, so try a type cast.
-        this.state = state;
+        this.state.restoreFromSnapshot(snapshot);
         // This will start with a type assertion (via parseMaybeUnary).
         // But don't directly call `this.tsParseTypeAssertion` because we want to handle any binary after it.
         return super.parseMaybeAssign(
@@ -1508,14 +1508,14 @@ export default (superClass: ParserClass): ParserClass =>
       if (this.match(tt.colon)) {
         // This is different from how the TS parser does it.
         // TS uses lookahead. Babylon parses it as a parenthesized expression and converts.
-        const state = this.state.clone();
+        const snapshot = this.state.snapshot();
         try {
           this.tsParseTypeOrTypePredicateAnnotation(tt.colon);
           if (this.canInsertSemicolon()) this.unexpected();
           if (!this.match(tt.arrow)) this.unexpected();
         } catch (err) {
           if (err instanceof SyntaxError) {
-            this.state = state;
+            this.state.restoreFromSnapshot(snapshot);
           } else {
             // istanbul ignore next: no such error is expected
             throw err;

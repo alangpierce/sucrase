@@ -211,17 +211,26 @@ export default abstract class Tokenizer extends BaseParser {
 
   // TODO
 
-  lookahead(): State {
-    const old = this.state;
-    this.state = old.clone(true);
-
+  lookaheadType(): TokenType {
+    const snapshot = this.state.snapshot();
     this.isLookahead = true;
     this.next();
+    const type = this.state.type;
     this.isLookahead = false;
+    this.state.restoreFromSnapshot(snapshot);
+    return type;
+  }
 
-    const curr = this.state;
-    this.state = old;
-    return curr;
+  // tslint:disable-next-line no-any
+  lookaheadTypeAndValue(): {type: TokenType; value: any} {
+    const snapshot = this.state.snapshot();
+    this.isLookahead = true;
+    this.next();
+    const type = this.state.type;
+    const value = this.state.value;
+    this.isLookahead = false;
+    this.state.restoreFromSnapshot(snapshot);
+    return {type, value};
   }
 
   curContext(): TokContext {

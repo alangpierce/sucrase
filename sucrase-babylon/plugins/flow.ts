@@ -1,11 +1,11 @@
 /* eslint max-len: 0 */
 
 import {ParserClass, Pos} from "../parser";
-import State from "../tokenizer/state";
 import {TokenType, types as tt} from "../tokenizer/types";
 
-function isMaybeDefaultImport(state: State): boolean {
-  return (state.type === tt.name || !!state.type.keyword) && state.value !== "from";
+// tslint:disable-next-line no-any
+function isMaybeDefaultImport(lookahead: {type: TokenType; value: any}): boolean {
+  return (lookahead.type === tt.name || !!lookahead.type.keyword) && lookahead.value !== "from";
 }
 
 export default (superClass: ParserClass): ParserClass =>
@@ -78,7 +78,7 @@ export default (superClass: ParserClass): ParserClass =>
       } else if (this.match(tt._var)) {
         this.flowParseDeclareVariable();
       } else if (this.isContextual("module")) {
-        if (this.lookahead().type === tt.dot) {
+        if (this.lookaheadType() === tt.dot) {
           this.flowParseDeclareModuleExports();
         } else {
           this.flowParseDeclareModule();
@@ -311,7 +311,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     flowParseObjectTypeIndexer(): void {
       this.expect(tt.bracketL);
-      if (this.lookahead().type === tt.colon) {
+      if (this.lookaheadType() === tt.colon) {
         this.flowParseObjectPropertyKey();
         this.flowParseTypeInitialiser();
       } else {
@@ -360,7 +360,7 @@ export default (superClass: ParserClass): ParserClass =>
 
       while (!this.match(endDelim)) {
         let isStatic = false;
-        if (allowStatic && this.isContextual("static") && this.lookahead().type !== tt.colon) {
+        if (allowStatic && this.isContextual("static") && this.lookaheadType() !== tt.colon) {
           this.next();
           isStatic = true;
         }
@@ -373,11 +373,11 @@ export default (superClass: ParserClass): ParserClass =>
           this.flowParseObjectTypeCallProperty();
         } else {
           if (this.isContextual("get") || this.isContextual("set")) {
-            const lookahead = this.lookahead();
+            const lookaheadType = this.lookaheadType();
             if (
-              lookahead.type === tt.name ||
-              lookahead.type === tt.string ||
-              lookahead.type === tt.num
+              lookaheadType === tt.name ||
+              lookaheadType === tt.string ||
+              lookaheadType === tt.num
             ) {
               this.next();
             }
@@ -455,8 +455,8 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     flowParseFunctionTypeParam(): void {
-      const lh = this.lookahead();
-      if (lh.type === tt.colon || lh.type === tt.question) {
+      const lookaheadType = this.lookaheadType();
+      if (lookaheadType === tt.colon || lookaheadType === tt.question) {
         this.parseIdentifier();
         this.eat(tt.question);
         this.flowParseTypeInitialiser();
@@ -539,7 +539,7 @@ export default (superClass: ParserClass): ParserClass =>
           // Check to see if this is actually a grouped type
           if (!this.match(tt.parenR) && !this.match(tt.ellipsis)) {
             if (this.match(tt.name)) {
-              const token = this.lookahead().type;
+              const token = this.lookaheadType();
               isGroupedType = token !== tt.question && token !== tt.colon;
             } else {
               isGroupedType = true;
@@ -556,7 +556,7 @@ export default (superClass: ParserClass): ParserClass =>
               this.state.noAnonFunctionType ||
               !(
                 this.match(tt.comma) ||
-                (this.match(tt.parenR) && this.lookahead().type === tt.arrow)
+                (this.match(tt.parenR) && this.lookaheadType() === tt.arrow)
               )
             ) {
               this.expect(tt.parenR);
@@ -780,13 +780,13 @@ export default (superClass: ParserClass): ParserClass =>
       // only do the expensive clone if there is a question mark
       // and if we come from inside parens
       if (refNeedsArrowPos && this.match(tt.question)) {
-        const state = this.state.clone();
+        const snapshot = this.state.snapshot();
         try {
           super.parseConditional(noIn, startPos);
           return;
         } catch (err) {
           if (err instanceof SyntaxError) {
-            this.state = state;
+            this.state.restoreFromSnapshot(snapshot);
             // @ts-ignore
             refNeedsArrowPos.start = err.pos || this.state.start;
             return;
@@ -842,7 +842,7 @@ export default (superClass: ParserClass): ParserClass =>
     shouldParseExportStar(): boolean {
       return (
         super.shouldParseExportStar() ||
-        (this.isContextual("type") && this.lookahead().type === tt.star)
+        (this.isContextual("type") && this.lookaheadType() === tt.star)
       );
     }
 
@@ -995,13 +995,7 @@ export default (superClass: ParserClass): ParserClass =>
         kind = "type";
       }
       if (kind) {
-        const lh = this.lookahead();
-
-        // import type * is not allowed
-        if (kind === "type" && lh.type === tt.star) {
-          this.unexpected(lh.start);
-        }
-
+        const lh = this.lookaheadTypeAndValue();
         if (isMaybeDefaultImport(lh) || lh.type === tt.braceL || lh.type === tt.star) {
           this.next();
         }
@@ -1095,7 +1089,7 @@ export default (superClass: ParserClass): ParserClass =>
     ): boolean {
       let jsxError = null;
       if (tt.jsxTagStart && this.match(tt.jsxTagStart)) {
-        const state = this.state.clone();
+        const snapshot = this.state.snapshot();
         try {
           return super.parseMaybeAssign(
             noIn,
@@ -1105,7 +1099,7 @@ export default (superClass: ParserClass): ParserClass =>
           );
         } catch (err) {
           if (err instanceof SyntaxError) {
-            this.state = state;
+            this.state.restoreFromSnapshot(snapshot);
 
             // Remove `tc.j_expr` and `tc.j_oTag` from context added
             // by parsing `jsxTagStart` to stop the JSX plugin from
@@ -1150,7 +1144,7 @@ export default (superClass: ParserClass): ParserClass =>
     parseArrow(): boolean {
       if (this.match(tt.colon)) {
         this.runInTypeContext(0, () => {
-          const state = this.state.clone();
+          const snapshot = this.state.snapshot();
           try {
             const oldNoAnonFunctionType = this.state.noAnonFunctionType;
             this.state.noAnonFunctionType = true;
@@ -1161,7 +1155,7 @@ export default (superClass: ParserClass): ParserClass =>
             if (!this.match(tt.arrow)) this.unexpected();
           } catch (err) {
             if (err instanceof SyntaxError) {
-              this.state = state;
+              this.state.restoreFromSnapshot(snapshot);
             } else {
               // istanbul ignore next: no such error is expected
               throw err;
@@ -1182,7 +1176,7 @@ export default (superClass: ParserClass): ParserClass =>
         this.state.tokens[this.state.tokens.length - 1].value === "async" &&
         this.isRelational("<")
       ) {
-        const state = this.state.clone();
+        const snapshot = this.state.snapshot();
         let error;
         try {
           const wasArrow = this.parseAsyncArrowWithTypeParameters(startPos);
@@ -1193,7 +1187,7 @@ export default (superClass: ParserClass): ParserClass =>
           error = e;
         }
 
-        this.state = state;
+        this.state.restoreFromSnapshot(snapshot);
         try {
           super.parseSubscripts(startPos, noCalls);
           return;

@@ -307,7 +307,7 @@ export default (superClass: ParserClass): ParserClass =>
               break;
 
             case tt.braceL:
-              if (this.lookahead().type === tt.ellipsis) {
+              if (this.lookaheadType() === tt.ellipsis) {
                 this.jsxParseSpreadChild();
               } else {
                 this.jsxParseExpressionContainer();

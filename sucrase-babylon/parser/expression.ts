@@ -246,7 +246,7 @@ export default abstract class ExpressionParser extends LValParser {
     } else if (this.match(tt.questionDot)) {
       this.expectPlugin("optionalChaining");
 
-      if (noCalls && this.lookahead().type === tt.parenL) {
+      if (noCalls && this.lookaheadType() === tt.parenL) {
         state.stop = true;
         return;
       }
@@ -270,7 +270,7 @@ export default abstract class ExpressionParser extends LValParser {
       const possibleAsync = this.atPossibleAsync();
       // We see "async", but it's possible it's a usage of the name "async". Parse as if it's a
       // function call, and if we see an arrow later, backtrack and re-parse as a parameter list.
-      const initialStateForAsyncArrow = possibleAsync ? this.state.clone() : null;
+      const snapshotForAsyncArrow = possibleAsync ? this.state.snapshot() : null;
       const startTokenIndex = this.state.tokens.length;
       this.next();
 
@@ -287,7 +287,7 @@ export default abstract class ExpressionParser extends LValParser {
 
       if (possibleAsync && this.shouldParseAsyncArrow()) {
         // We hit an arrow, so backtrack and start again parsing function parameters.
-        this.state = initialStateForAsyncArrow!;
+        this.state.restoreFromSnapshot(snapshotForAsyncArrow!);
         state.stop = true;
 
         this.parseFunctionParams();
@@ -363,7 +363,7 @@ export default abstract class ExpressionParser extends LValParser {
         return false;
 
       case tt._import:
-        if (this.lookahead().type === tt.dot) {
+        if (this.lookaheadType() === tt.dot) {
           this.parseImportMetaProperty();
           return false;
         }
@@ -528,7 +528,7 @@ export default abstract class ExpressionParser extends LValParser {
   parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
     // Assume this is a normal parenthesized expression, but if we see an arrow, we'll bail and
     // start over as a parameter list.
-    const initialState = this.state.clone();
+    const snapshot = this.state.snapshot();
 
     const startTokenIndex = this.state.tokens.length;
     this.expect(tt.parenL);
@@ -556,7 +556,7 @@ export default abstract class ExpressionParser extends LValParser {
         this.parseRest(false /* isBlockScope */);
         this.parseParenItem();
 
-        if (this.match(tt.comma) && this.lookahead().type === tt.parenR) {
+        if (this.match(tt.comma) && this.lookaheadType() === tt.parenR) {
           this.raise(this.state.start, "A trailing comma is not permitted after the rest element");
         }
 
@@ -580,7 +580,7 @@ export default abstract class ExpressionParser extends LValParser {
       if (wasArrow) {
         // It was an arrow function this whole time, so start over and parse it as params so that we
         // get proper token annotations.
-        this.state = initialState;
+        this.state.restoreFromSnapshot(snapshot);
         // We don't need to worry about functionStart for arrow functions, so just use something.
         const functionStart = this.state.start;
         // Don't specify a context ID because arrow function don't need a context ID.
@@ -703,7 +703,7 @@ export default abstract class ExpressionParser extends LValParser {
             );
           } else if (this.eat(tt.braceR)) {
             break;
-          } else if (this.match(tt.comma) && this.lookahead().type === tt.braceR) {
+          } else if (this.match(tt.comma) && this.lookaheadType() === tt.braceR) {
             this.unexpected(position, "A trailing comma is not permitted after the rest element");
           } else {
             firstRestLocation = position;

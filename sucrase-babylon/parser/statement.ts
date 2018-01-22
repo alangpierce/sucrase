@@ -59,7 +59,7 @@ export default class StatementParser extends ExpressionParser {
         this.parseForStatement();
         return;
       case tt._function:
-        if (this.lookahead().type === tt.dot) break;
+        if (this.lookaheadType() === tt.dot) break;
         if (!declaration) this.unexpected();
         this.parseFunctionStatement();
         return;
@@ -104,8 +104,8 @@ export default class StatementParser extends ExpressionParser {
         return;
       case tt._export:
       case tt._import: {
-        const nextToken = this.lookahead();
-        if (nextToken.type === tt.parenL || nextToken.type === tt.dot) {
+        const nextType = this.lookaheadType();
+        if (nextType === tt.parenL || nextType === tt.dot) {
           break;
         }
         this.next();
@@ -120,14 +120,14 @@ export default class StatementParser extends ExpressionParser {
         if (this.state.value === "async") {
           const functionStart = this.state.start;
           // peek ahead and see if next token is a function
-          const state = this.state.clone();
+          const snapshot = this.state.snapshot();
           this.next();
           if (this.match(tt._function) && !this.canInsertSemicolon()) {
             this.expect(tt._function);
             this.parseFunction(functionStart, true, false, true);
             return;
           } else {
-            this.state = state;
+            this.state.restoreFromSnapshot(snapshot);
           }
         }
       default:
@@ -749,7 +749,7 @@ export default class StatementParser extends ExpressionParser {
     } else if (this.isExportDefaultSpecifier()) {
       this.expectPlugin("exportDefaultFrom");
       this.parseIdentifier();
-      if (this.match(tt.comma) && this.lookahead().type === tt.star) {
+      if (this.match(tt.comma) && this.lookaheadType() === tt.star) {
         this.expect(tt.comma);
         this.expect(tt.star);
         this.expectContextual("as");
@@ -762,14 +762,6 @@ export default class StatementParser extends ExpressionParser {
       // export default ...
       this.parseExportDefaultExpression();
     } else if (this.shouldParseExportDeclaration()) {
-      if (this.isContextual("async")) {
-        const next = this.lookahead();
-
-        // export async;
-        if (next.type !== tt._function) {
-          this.unexpected(next.start, `Unexpected token, expected "function"`);
-        }
-      }
       this.parseExportDeclaration();
     } else {
       // export { x, y as z } [from '...']
@@ -782,7 +774,7 @@ export default class StatementParser extends ExpressionParser {
     const functionStart = this.state.start;
     if (this.eat(tt._function)) {
       this.parseFunction(functionStart, true, false, false, true);
-    } else if (this.isContextual("async") && this.lookahead().type === tt._function) {
+    } else if (this.isContextual("async") && this.lookaheadType() === tt._function) {
       // async function declaration
       this.eatContextual("async");
       this.eat(tt._function);
@@ -809,7 +801,7 @@ export default class StatementParser extends ExpressionParser {
       return false;
     }
 
-    const lookahead = this.lookahead();
+    const lookahead = this.lookaheadTypeAndValue();
     return (
       lookahead.type === tt.comma || (lookahead.type === tt.name && lookahead.value === "from")
     );

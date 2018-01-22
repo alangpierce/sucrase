@@ -32,7 +32,7 @@ export default class StatementParser extends ExpressionParser {
 
   parseStatement(declaration: boolean, topLevel: boolean = false): void {
     if (this.match(tt.at)) {
-      this.parseDecorators(true);
+      this.parseDecorators();
     }
     this.parseStatementContent(declaration, topLevel);
   }
@@ -161,44 +161,20 @@ export default class StatementParser extends ExpressionParser {
     }
   }
 
-  parseDecorators(allowExport?: boolean): void {
-    if (this.hasPlugin("decorators2")) {
-      allowExport = false;
-    }
-
+  parseDecorators(): void {
     while (this.match(tt.at)) {
       this.parseDecorator();
-    }
-
-    if (this.match(tt._export)) {
-      if (allowExport) {
-        return;
-      } else {
-        this.raise(
-          this.state.start,
-          "Using the export keyword between a decorator and a class is not allowed. Please use `export @dec class` instead",
-        );
-      }
-    }
-
-    if (!this.match(tt._class)) {
-      this.raise(this.state.start, "Leading decorators must be attached to a class declaration");
     }
   }
 
   parseDecorator(): void {
-    this.expectOnePlugin(["decorators", "decorators2"]);
     this.next();
-    if (this.hasPlugin("decorators2")) {
+    this.parseIdentifier();
+    while (this.eat(tt.dot)) {
       this.parseIdentifier();
-      while (this.eat(tt.dot)) {
-        this.parseIdentifier();
-      }
-      if (this.eat(tt.parenL)) {
-        this.parseCallExpressionArguments(tt.parenR, false);
-      }
-    } else {
-      this.parseMaybeAssign();
+    }
+    if (this.eat(tt.parenL)) {
+      this.parseCallExpressionArguments(tt.parenR, false);
     }
   }
 
@@ -484,9 +460,6 @@ export default class StatementParser extends ExpressionParser {
 
     let isGenerator = false;
     if (this.match(tt.star)) {
-      if (isAsync) {
-        this.expectPlugin("asyncGenerators");
-      }
       isGenerator = true;
       this.next();
     }
@@ -520,7 +493,7 @@ export default class StatementParser extends ExpressionParser {
 
     const startTokenIndex = this.state.tokens.length;
     this.parseFunctionParams();
-    this.parseFunctionBodyAndFinish(functionStart, isAsync, isGenerator, allowExpressionBody);
+    this.parseFunctionBodyAndFinish(functionStart, isGenerator, allowExpressionBody);
     const endTokenIndex = this.state.tokens.length;
     // In addition to the block scope of the function body, we need a separate function-style scope
     // that includes the params.
@@ -662,7 +635,6 @@ export default class StatementParser extends ExpressionParser {
       // an async method
       const isGenerator = this.match(tt.star);
       if (isGenerator) {
-        this.expectPlugin("asyncGenerators");
         this.next();
       }
 
@@ -747,7 +719,7 @@ export default class StatementParser extends ExpressionParser {
     if (this.shouldParseExportStar()) {
       this.parseExportStar();
     } else if (this.isExportDefaultSpecifier()) {
-      this.expectPlugin("exportDefaultFrom");
+      // export default from
       this.parseIdentifier();
       if (this.match(tt.comma) && this.lookaheadType() === tt.star) {
         this.expect(tt.comma);
@@ -850,12 +822,11 @@ export default class StatementParser extends ExpressionParser {
       this.state.type.keyword === "function" ||
       this.state.type.keyword === "class" ||
       this.isContextual("async") ||
-      (this.match(tt.at) && this.expectPlugin("decorators2"))
+      this.match(tt.at)
     );
   }
 
   // Parses a comma-separated list of module exports.
-
   parseExportSpecifiers(): void {
     let first = true;
 

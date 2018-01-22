@@ -203,7 +203,7 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsParseTypeParameter(): void {
-      this.parseIdentifierName();
+      this.parseIdentifier();
       if (this.eat(tt._extends)) {
         this.tsParseType();
       }
@@ -359,7 +359,7 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     tsParseMappedTypeParameter(): void {
-      this.parseIdentifierName();
+      this.parseIdentifier();
       this.expect(tt._in);
       this.tsParseType();
     }
@@ -971,7 +971,7 @@ export default (superClass: ParserClass): ParserClass =>
       // We don't need to be precise about the function start since it's only used if this is a
       // bodiless function, which isn't valid here.
       const functionStart = this.state.start;
-      this.parseFunctionBody(functionStart, true /* isAsync */, false /* isGenerator */, true);
+      this.parseFunctionBody(functionStart, false /* isGenerator */, true);
       return true;
     }
 
@@ -1024,7 +1024,6 @@ export default (superClass: ParserClass): ParserClass =>
 
     parseFunctionBodyAndFinish(
       functionStart: number,
-      isAsync: boolean,
       isGenerator: boolean,
       allowExpressionBody?: boolean,
       funcContextId?: number,
@@ -1054,7 +1053,6 @@ export default (superClass: ParserClass): ParserClass =>
 
       super.parseFunctionBodyAndFinish(
         functionStart,
-        isAsync,
         isGenerator,
         allowExpressionBody,
         funcContextId,

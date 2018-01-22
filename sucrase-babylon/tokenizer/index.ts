@@ -76,23 +76,6 @@ allowedNumericSeparatorSiblings.hex = [
   charCodes.lowercaseF,
 ];
 
-export type TokenContext =
-  | "block"
-  | "parens"
-  | "brackets"
-  | "object"
-  | "class"
-  | "classFieldExpression"
-  | "jsxTag"
-  | "jsxChild"
-  | "jsxExpression"
-  | "templateExpr"
-  | "switchCaseCondition"
-  | "type"
-  | "typeParameter"
-  | "import"
-  | "namedExport";
-
 export enum IdentifierRole {
   Access,
   ExportAccess,
@@ -287,7 +270,6 @@ export default abstract class Tokenizer extends BaseParser {
   }
 
   skipBlockComment(): void {
-    const start = this.state.pos;
     const end = this.input.indexOf("*/", (this.state.pos += 2));
     if (end === -1) this.raise(this.state.pos - 2, "Unterminated comment");
 
@@ -310,8 +292,7 @@ export default abstract class Tokenizer extends BaseParser {
   }
 
   // Called at the start of the parse and after every token. Skips
-  // whitespace and comments, and.
-
+  // whitespace and comments.
   skipSpace(): void {
     loop: while (this.state.pos < this.input.length) {
       const ch = this.input.charCodeAt(this.state.pos);
@@ -618,10 +599,7 @@ export default abstract class Tokenizer extends BaseParser {
         return;
 
       case charCodes.colon:
-        if (
-          this.hasPlugin("functionBind") &&
-          this.input.charCodeAt(this.state.pos + 1) === charCodes.colon
-        ) {
+        if (this.input.charCodeAt(this.state.pos + 1) === charCodes.colon) {
           this.finishOp(tt.doubleColon, 2);
         } else {
           ++this.state.pos;
@@ -804,26 +782,25 @@ export default abstract class Tokenizer extends BaseParser {
       const code = this.input.charCodeAt(this.state.pos);
       let val;
 
-      if (this.hasPlugin("numericSeparator")) {
-        const prev = this.input.charCodeAt(this.state.pos - 1);
-        const next = this.input.charCodeAt(this.state.pos + 1);
-        if (code === charCodes.underscore) {
-          if (allowedSiblings.indexOf(next) === -1) {
-            this.raise(this.state.pos, "Invalid or unexpected token");
-          }
-
-          if (
-            forbiddenSiblings.indexOf(prev) > -1 ||
-            forbiddenSiblings.indexOf(next) > -1 ||
-            Number.isNaN(next)
-          ) {
-            this.raise(this.state.pos, "Invalid or unexpected token");
-          }
-
-          // Ignore this _ character
-          ++this.state.pos;
-          continue;
+      // Handle numeric separators.
+      const prev = this.input.charCodeAt(this.state.pos - 1);
+      const next = this.input.charCodeAt(this.state.pos + 1);
+      if (code === charCodes.underscore) {
+        if (allowedSiblings.indexOf(next) === -1) {
+          this.raise(this.state.pos, "Invalid or unexpected token");
         }
+
+        if (
+          forbiddenSiblings.indexOf(prev) > -1 ||
+          forbiddenSiblings.indexOf(next) > -1 ||
+          Number.isNaN(next)
+        ) {
+          this.raise(this.state.pos, "Invalid or unexpected token");
+        }
+
+        // Ignore this _ character
+        ++this.state.pos;
+        continue;
       }
 
       if (code >= charCodes.lowercaseA) {
@@ -856,11 +833,9 @@ export default abstract class Tokenizer extends BaseParser {
       this.raise(this.state.start + 2, `Expected number in radix ${radix}`);
     }
 
-    if (this.hasPlugin("bigInt")) {
-      if (this.input.charCodeAt(this.state.pos) === charCodes.lowercaseN) {
-        ++this.state.pos;
-        isBigInt = true;
-      }
+    if (this.input.charCodeAt(this.state.pos) === charCodes.lowercaseN) {
+      ++this.state.pos;
+      isBigInt = true;
     }
 
     if (isIdentifierStart(this.fullCharCodeAtPos())) {
@@ -907,13 +882,11 @@ export default abstract class Tokenizer extends BaseParser {
       next = this.input.charCodeAt(this.state.pos);
     }
 
-    if (this.hasPlugin("bigInt")) {
-      if (next === charCodes.lowercaseN) {
-        // disallow floats and legacy octal syntax, new style octal ("0o") is handled in this.readRadixNumber
-        if (isFloat || octal) this.raise(start, "Invalid BigIntLiteral");
-        ++this.state.pos;
-        isBigInt = true;
-      }
+    if (next === charCodes.lowercaseN) {
+      // disallow floats and legacy octal syntax, new style octal ("0o") is handled in this.readRadixNumber
+      if (isFloat || octal) this.raise(start, "Invalid BigIntLiteral");
+      ++this.state.pos;
+      isBigInt = true;
     }
 
     if (isIdentifierStart(this.fullCharCodeAtPos())) {

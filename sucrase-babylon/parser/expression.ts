@@ -172,13 +172,8 @@ export default abstract class ExpressionParser extends LValParser {
         this.next();
 
         if (operator === "|>") {
-          this.expectPlugin("pipelineOperator");
           // Support syntax such as 10 |> x => x + 1
           this.state.potentialArrowAt = this.state.start;
-        }
-
-        if (operator === "??") {
-          this.expectPlugin("nullishCoalescingOperator");
         }
 
         this.parseMaybeUnary();
@@ -244,8 +239,6 @@ export default abstract class ExpressionParser extends LValParser {
       state.stop = true;
       this.parseSubscripts(startPos, noCalls);
     } else if (this.match(tt.questionDot)) {
-      this.expectPlugin("optionalChaining");
-
       if (noCalls && this.lookaheadType() === tt.parenL) {
         state.stop = true;
         return;
@@ -359,6 +352,14 @@ export default abstract class ExpressionParser extends LValParser {
     const canBeArrow = this.state.potentialArrowAt === this.state.start;
     switch (this.state.type) {
       case tt._super:
+      case tt._this:
+      case tt.regexp:
+      case tt.num:
+      case tt.bigint:
+      case tt.string:
+      case tt._null:
+      case tt._true:
+      case tt._false:
         this.next();
         return false;
 
@@ -367,10 +368,6 @@ export default abstract class ExpressionParser extends LValParser {
           this.parseImportMetaProperty();
           return false;
         }
-        this.next();
-        return false;
-
-      case tt._this:
         this.next();
         return false;
 
@@ -407,37 +404,10 @@ export default abstract class ExpressionParser extends LValParser {
       }
 
       case tt._do: {
-        this.expectPlugin("doExpressions");
         this.next();
         this.parseBlock(false);
         return false;
       }
-
-      case tt.regexp: {
-        this.parseLiteral();
-        return false;
-      }
-
-      case tt.num:
-        this.parseLiteral();
-        return false;
-
-      case tt.bigint:
-        this.parseLiteral();
-        return false;
-
-      case tt.string:
-        this.parseLiteral();
-        return false;
-
-      case tt._null:
-        this.next();
-        return false;
-
-      case tt._true:
-      case tt._false:
-        this.parseBooleanLiteral();
-        return false;
 
       case tt.parenL: {
         const wasArrow = this.parseParenAndDistinguishExpression(canBeArrow);
@@ -482,10 +452,6 @@ export default abstract class ExpressionParser extends LValParser {
       default:
         throw this.unexpected();
     }
-  }
-
-  parseBooleanLiteral(): void {
-    this.next();
   }
 
   parseMaybePrivateName(): void {
@@ -890,7 +856,6 @@ export default abstract class ExpressionParser extends LValParser {
     this.parseFunctionParams(allowModifiers, funcContextId);
     this.parseFunctionBodyAndFinish(
       functionStart,
-      isAsync,
       isGenerator,
       null /* allowExpressionBody */,
       funcContextId,
@@ -911,7 +876,7 @@ export default abstract class ExpressionParser extends LValParser {
   ): void {
     const oldInGenerator = this.state.inGenerator;
     this.state.inGenerator = false;
-    this.parseFunctionBody(functionStart, isAsync, false /* isGenerator */, true);
+    this.parseFunctionBody(functionStart, false /* isGenerator */, true);
     this.state.inGenerator = oldInGenerator;
 
     const endTokenIndex = this.state.tokens.length;
@@ -920,18 +885,16 @@ export default abstract class ExpressionParser extends LValParser {
 
   parseFunctionBodyAndFinish(
     functionStart: number,
-    isAsync: boolean,
     isGenerator: boolean,
     allowExpressionBody: boolean | null = null,
     funcContextId?: number,
   ): void {
-    this.parseFunctionBody(functionStart, isAsync, isGenerator, allowExpressionBody, funcContextId);
+    this.parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);
   }
 
   // Parse function body and check parameters.
   parseFunctionBody(
     functionStart: number,
-    isAsync: boolean,
     isGenerator: boolean,
     allowExpression: boolean | null,
     funcContextId?: number,
@@ -995,12 +958,8 @@ export default abstract class ExpressionParser extends LValParser {
   // when parsing properties), it will also convert keywords into
   // identifiers.
   parseIdentifier(): void {
-    this.parseIdentifierName();
-    this.state.tokens[this.state.tokens.length - 1].type = tt.name;
-  }
-
-  parseIdentifierName(): void {
     this.next();
+    this.state.tokens[this.state.tokens.length - 1].type = tt.name;
   }
 
   // Parses await expression inside async function.

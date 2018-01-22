@@ -7,8 +7,6 @@ import TokenProcessor from "./TokenProcessor";
 import RootTransformer from "./transformers/RootTransformer";
 import formatTokens from "./util/formatTokens";
 
-const DEFAULT_BABYLON_PLUGINS = ["classProperties", "numericSeparator"];
-
 export type Transform =
   | "jsx"
   | "imports"
@@ -19,7 +17,6 @@ export type Transform =
 
 export type Options = {
   transforms: Array<Transform>;
-  babylonPlugins?: Array<string>;
 };
 
 export type SucraseContext = {
@@ -58,15 +55,15 @@ export function getFormattedTokens(code: string, options: Options): string {
  * being done.
  */
 function getSucraseContext(code: string, options: Options): SucraseContext {
-  let babylonPlugins = options.babylonPlugins || DEFAULT_BABYLON_PLUGINS;
+  const babylonPlugins = [];
   if (options.transforms.includes("jsx")) {
-    babylonPlugins = [...babylonPlugins, "jsx"];
+    babylonPlugins.push("jsx");
   }
   if (options.transforms.includes("flow")) {
-    babylonPlugins = [...babylonPlugins, "flow"];
+    babylonPlugins.push("flow");
   }
   if (options.transforms.includes("typescript")) {
-    babylonPlugins = [...babylonPlugins, "typescript"];
+    babylonPlugins.push("typescript");
   }
   const file = parse(code, {
     tokens: true,

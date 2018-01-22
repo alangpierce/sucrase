@@ -124,7 +124,7 @@ export default class StatementParser extends ExpressionParser {
           this.next();
           if (this.match(tt._function) && !this.canInsertSemicolon()) {
             this.expect(tt._function);
-            this.parseFunction(functionStart, true, false, true);
+            this.parseFunction(functionStart, true, false);
             return;
           } else {
             this.state.restoreFromSnapshot(snapshot);
@@ -453,7 +453,6 @@ export default class StatementParser extends ExpressionParser {
     functionStart: number,
     isStatement: boolean,
     allowExpressionBody?: boolean,
-    isAsync: boolean = false,
     optionalId?: boolean,
   ): void {
     const oldInGenerator = this.state.inGenerator;
@@ -585,7 +584,7 @@ export default class StatementParser extends ExpressionParser {
     if (this.match(tt.name) && this.state.value === "static") {
       this.parseIdentifier(); // eats 'static'
       if (this.isClassMethod()) {
-        this.parseClassMethod(memberStart, false, false, /* isConstructor */ false);
+        this.parseClassMethod(memberStart, false, /* isConstructor */ false);
         return;
       } else if (this.isClassProperty()) {
         this.parseClassProperty();
@@ -607,7 +606,7 @@ export default class StatementParser extends ExpressionParser {
     if (this.eat(tt.star)) {
       // a generator
       this.parseClassPropertyName(classContextId);
-      this.parseClassMethod(memberStart, true, false, /* isConstructor */ false);
+      this.parseClassMethod(memberStart, true, /* isConstructor */ false);
       return;
     }
 
@@ -627,7 +626,7 @@ export default class StatementParser extends ExpressionParser {
     this.parsePostMemberNameModifiers();
 
     if (this.isClassMethod()) {
-      this.parseClassMethod(memberStart, false, false, isConstructor);
+      this.parseClassMethod(memberStart, false, isConstructor);
     } else if (this.isClassProperty()) {
       this.parseClassProperty();
     } else if (simpleName === "async" && !this.isLineTerminator()) {
@@ -640,12 +639,7 @@ export default class StatementParser extends ExpressionParser {
 
       // The so-called parsed name would have been "async": get the real name.
       this.parseClassPropertyName(classContextId);
-      this.parseClassMethod(
-        memberStart,
-        isGenerator,
-        true /* isAsync */,
-        false /* isConstructor */,
-      );
+      this.parseClassMethod(memberStart, isGenerator, false /* isConstructor */);
     } else if (
       (simpleName === "get" || simpleName === "set") &&
       !(this.isLineTerminator() && this.match(tt.star))
@@ -659,7 +653,7 @@ export default class StatementParser extends ExpressionParser {
       // a getter or setter
       // The so-called parsed name would have been "get/set": get the real name.
       this.parseClassPropertyName(classContextId);
-      this.parseClassMethod(memberStart, false, false, /* isConstructor */ false);
+      this.parseClassMethod(memberStart, false, /* isConstructor */ false);
     } else if (this.isLineTerminator()) {
       // an uninitialized class property (due to ASI, since we don't otherwise recognize the next token)
       this.parseClassProperty();
@@ -668,13 +662,8 @@ export default class StatementParser extends ExpressionParser {
     }
   }
 
-  parseClassMethod(
-    functionStart: number,
-    isGenerator: boolean,
-    isAsync: boolean,
-    isConstructor: boolean,
-  ): void {
-    this.parseMethod(functionStart, isGenerator, isAsync, isConstructor);
+  parseClassMethod(functionStart: number, isGenerator: boolean, isConstructor: boolean): void {
+    this.parseMethod(functionStart, isGenerator, isConstructor);
   }
 
   // Return the name of the class property, if it is a simple identifier.
@@ -745,12 +734,12 @@ export default class StatementParser extends ExpressionParser {
   parseExportDefaultExpression(): void {
     const functionStart = this.state.start;
     if (this.eat(tt._function)) {
-      this.parseFunction(functionStart, true, false, false, true);
+      this.parseFunction(functionStart, true, false, true);
     } else if (this.isContextual("async") && this.lookaheadType() === tt._function) {
       // async function declaration
       this.eatContextual("async");
       this.eat(tt._function);
-      this.parseFunction(functionStart, true, false, true, true);
+      this.parseFunction(functionStart, true, false, true);
     } else if (this.match(tt._class)) {
       this.parseClass(true, true);
     } else {

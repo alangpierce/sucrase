@@ -897,16 +897,11 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     // parse type parameters for class methods
-    parseClassMethod(
-      functionStart: number,
-      isGenerator: boolean,
-      isAsync: boolean,
-      isConstructor: boolean,
-    ): void {
+    parseClassMethod(functionStart: number, isGenerator: boolean, isConstructor: boolean): void {
       if (this.isRelational("<")) {
         this.flowParseTypeParameterDeclaration();
       }
-      super.parseClassMethod(functionStart, isGenerator, isAsync, isConstructor);
+      super.parseClassMethod(functionStart, isGenerator, isConstructor);
     }
 
     // parse a the super class type parameters and implements
@@ -938,7 +933,6 @@ export default (superClass: ParserClass): ParserClass =>
     // parse type parameters for object method shorthand
     parseObjPropValue(
       isGenerator: boolean,
-      isAsync: boolean,
       isPattern: boolean,
       isBlockScope: boolean,
       refShorthandDefaultPos: Pos | null,
@@ -952,7 +946,6 @@ export default (superClass: ParserClass): ParserClass =>
 
       super.parseObjPropValue(
         isGenerator,
-        isAsync,
         isPattern,
         isBlockScope,
         refShorthandDefaultPos,
@@ -1189,7 +1182,7 @@ export default (superClass: ParserClass): ParserClass =>
       if (!this.parseArrow()) {
         return false;
       }
-      this.parseArrowExpression(startPos, startTokenIndex, /* isAsync */ true);
+      this.parseArrowExpression(startPos, startTokenIndex);
       return true;
     }
   } as ParserClass;

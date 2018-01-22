@@ -12,8 +12,8 @@ focuses on compiling non-standard language extensions: JSX, TypeScript, and
 Flow. Because of this smaller scope, Sucrase can get away with an architecture
 that is much more performant but less extensible and maintainable.
 
-**Current state:** The project is in active development. It is about 5x faster
-than Babel and about 2x faster than TypeScript, and it has been tested on
+**Current state:** The project is in active development. It is about 10x faster
+than Babel and about 3.5x faster than TypeScript, and it has been tested on
 hundreds of thousands of lines of code. You may still find bugs when running on
 your code, though. You probably shouldn't use it in production, but you may find
 it useful in development. Feel free to file issues!
@@ -135,15 +135,15 @@ case, it is much faster than Babel.
 
 ## Performance
 
-Currently, Sucrase runs about 5x faster than Babel (even when Babel only runs
-the relevant transforms) and 2x faster than TypeScript. Here's the output of one
-run of `npm run benchmark`:
+Currently, Sucrase runs about 10x faster than Babel (even when Babel only runs
+the relevant transforms) and 3.5x faster than TypeScript. Here's the output of
+one run of `npm run benchmark`:
 
 ```
 Simulating transpilation of 100,000 lines of code:
-Sucrase: 1911.509ms
-TypeScript: 4041.119ms
-Babel: 10722.465ms
+Sucrase: 982.935ms
+TypeScript: 3681.905ms
+Babel: 9898.800ms
 ```
 
 Previous iterations have been 15-20x faster, and hopefully additional
@@ -153,12 +153,9 @@ performance work will bring it back to that speed.
 
 ### Performance improvements
 
-* Further trim down and optimize the Babylon fork so that it is a minimal
-  parser/lexer focused on the essentials that are needed for this project.
-* Rewrite the code to be valid
-  [AssemblyScript](https://github.com/AssemblyScript/assemblyscript),
-  which will allow it to be compiled to wasm and hopefully improve performance
-  even more.
+* Rewrite the code to run in WebAssembly, either by changing it to be valid
+  [AssemblyScript](https://github.com/AssemblyScript/assemblyscript) or by
+  rewriting it in Rust.
 * Explore the idea of a JIT to optimize the various token patterns that need to
   be matched as part of code transformation.
 

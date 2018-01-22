@@ -6,11 +6,7 @@ import UtilParser from "./util";
 export default abstract class LValParser extends UtilParser {
   // Forward-declaration: defined in expression.js
   abstract parseIdentifier(): void;
-  abstract parseMaybeAssign(
-    noIn?: boolean | null,
-    afterLeftParse?: Function,
-    refNeedsArrowPos?: Pos | null,
-  ): void;
+  abstract parseMaybeAssign(noIn?: boolean | null, afterLeftParse?: Function): void;
   abstract parseObj(isPattern: boolean, isBlockScope: boolean): void;
   // Forward-declaration: defined in statement.js
   abstract parseDecorator(): void;

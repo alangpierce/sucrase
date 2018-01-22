@@ -67,11 +67,7 @@ export default abstract class ExpressionParser extends LValParser {
   // Parse an assignment expression. This includes applications of
   // operators like `+=`.
   // Returns true if the expression was an arrow function.
-  parseMaybeAssign(
-    noIn: boolean | null = null,
-    afterLeftParse?: Function,
-    refNeedsArrowPos?: Pos | null,
-  ): boolean {
+  parseMaybeAssign(noIn: boolean | null = null, afterLeftParse?: Function): boolean {
     if (this.match(tt._yield) && this.state.inGenerator) {
       this.parseYield();
       if (afterLeftParse) {
@@ -84,7 +80,7 @@ export default abstract class ExpressionParser extends LValParser {
       this.state.potentialArrowAt = this.state.start;
     }
 
-    const wasArrow = this.parseMaybeConditional(noIn, refNeedsArrowPos);
+    const wasArrow = this.parseMaybeConditional(noIn);
     if (afterLeftParse) {
       afterLeftParse.call(this);
     }
@@ -98,23 +94,17 @@ export default abstract class ExpressionParser extends LValParser {
 
   // Parse a ternary conditional (`?:`) operator.
   // Returns true if the expression was an arrow function.
-  parseMaybeConditional(noIn: boolean | null, refNeedsArrowPos?: Pos | null): boolean {
+  parseMaybeConditional(noIn: boolean | null): boolean {
     const startPos = this.state.start;
     const wasArrow = this.parseExprOps(noIn);
     if (wasArrow) {
       return true;
     }
-    this.parseConditional(noIn, startPos, refNeedsArrowPos);
+    this.parseConditional(noIn, startPos);
     return false;
   }
 
-  parseConditional(
-    noIn: boolean | null,
-    startPos: number,
-    // FIXME: Disabling this for now since can't seem to get it to play nicely
-    // eslint-disable-next-line no-unused-vars
-    refNeedsArrowPos?: Pos | null,
-  ): void {
+  parseConditional(noIn: boolean | null, startPos: number): void {
     if (this.eat(tt.question)) {
       this.parseMaybeAssign();
       this.expect(tt.colon);
@@ -233,8 +223,7 @@ export default abstract class ExpressionParser extends LValParser {
 
       const callContextId = this.nextContextId++;
 
-      // TODO: Clean up/merge this into `this.state` or a class like acorn's
-      // `DestructuringErrors` alongside refNeedsArrowPos.
+      // TODO: Clean up/merge this into `this.state` or a class like acorn's `DestructuringErrors`.
       const refTrailingCommaPos: Pos = {start: -1};
 
       this.state.tokens[this.state.tokens.length - 1].contextId = callContextId;
@@ -280,11 +269,7 @@ export default abstract class ExpressionParser extends LValParser {
         if (this.eat(close)) break;
       }
 
-      this.parseExprListItem(
-        false,
-        possibleAsyncArrow ? {start: 0} : null,
-        possibleAsyncArrow ? refTrailingCommaPos : null,
-      );
+      this.parseExprListItem(false, possibleAsyncArrow ? refTrailingCommaPos : null);
     }
   }
 
@@ -462,7 +447,6 @@ export default abstract class ExpressionParser extends LValParser {
     this.expect(tt.parenL);
 
     const exprList = [];
-    const refNeedsArrowPos = {start: 0};
     let first = true;
     let spreadStart;
     let optionalCommaStart;
@@ -471,7 +455,7 @@ export default abstract class ExpressionParser extends LValParser {
       if (first) {
         first = false;
       } else {
-        this.expect(tt.comma, refNeedsArrowPos.start || null);
+        this.expect(tt.comma);
         if (this.match(tt.parenR)) {
           optionalCommaStart = this.state.start;
           break;
@@ -489,7 +473,7 @@ export default abstract class ExpressionParser extends LValParser {
 
         break;
       } else {
-        exprList.push(this.parseMaybeAssign(false, this.parseParenItem, refNeedsArrowPos));
+        exprList.push(this.parseMaybeAssign(false, this.parseParenItem));
       }
     }
 
@@ -513,10 +497,6 @@ export default abstract class ExpressionParser extends LValParser {
 
     if (optionalCommaStart) this.unexpected(optionalCommaStart);
     if (spreadStart) this.unexpected(spreadStart);
-    if (refNeedsArrowPos.start) {
-      this.unexpected(refNeedsArrowPos.start);
-    }
-
     return false;
   }
 
@@ -838,11 +818,7 @@ export default abstract class ExpressionParser extends LValParser {
     }
   }
 
-  parseExprListItem(
-    allowEmpty: boolean | null,
-    refNeedsArrowPos: Pos | null = null,
-    refTrailingCommaPos: Pos | null = null,
-  ): void {
+  parseExprListItem(allowEmpty: boolean | null, refTrailingCommaPos: Pos | null = null): void {
     if (allowEmpty && this.match(tt.comma)) {
       // Empty item; nothing more to parse for this item.
     } else if (this.match(tt.ellipsis)) {
@@ -851,7 +827,7 @@ export default abstract class ExpressionParser extends LValParser {
         refTrailingCommaPos.start = this.state.start;
       }
     } else {
-      this.parseMaybeAssign(false, this.parseParenItem, refNeedsArrowPos);
+      this.parseMaybeAssign(false, this.parseParenItem);
     }
   }
 

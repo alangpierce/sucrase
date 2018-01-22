@@ -759,10 +759,9 @@ export default (superClass: ParserClass): ParserClass =>
       return super.isExportDefaultSpecifier();
     }
 
-    parseConditional(noIn: boolean | null, startPos: number, refNeedsArrowPos?: Pos | null): void {
+    parseConditional(noIn: boolean | null, startPos: number): void {
       // only do the expensive clone if there is a question mark
-      // and if we come from inside parens
-      if (refNeedsArrowPos && this.match(tt.question)) {
+      if (this.match(tt.question)) {
         const snapshot = this.state.snapshot();
         try {
           super.parseConditional(noIn, startPos);
@@ -770,8 +769,6 @@ export default (superClass: ParserClass): ParserClass =>
         } catch (err) {
           if (err instanceof SyntaxError) {
             this.state.restoreFromSnapshot(snapshot);
-            // @ts-ignore
-            refNeedsArrowPos.start = err.pos || this.state.start;
             return;
           } else {
             // istanbul ignore next: no such error is expected
@@ -779,7 +776,7 @@ export default (superClass: ParserClass): ParserClass =>
           }
         }
       }
-      super.parseConditional(noIn, startPos, refNeedsArrowPos);
+      super.parseConditional(noIn, startPos);
     }
 
     parseParenItem(): void {
@@ -867,8 +864,8 @@ export default (superClass: ParserClass): ParserClass =>
 
     // parse an item inside a expression list eg. `(NODE, NODE)` where NODE represents
     // the position where this function is called
-    parseExprListItem(allowEmpty: boolean | null, refNeedsArrowPos: Pos | null): void {
-      super.parseExprListItem(allowEmpty, refNeedsArrowPos);
+    parseExprListItem(allowEmpty: boolean | null): void {
+      super.parseExprListItem(allowEmpty);
       if (this.match(tt.colon)) {
         this.flowParseTypeAnnotation();
       }
@@ -1046,16 +1043,12 @@ export default (superClass: ParserClass): ParserClass =>
     //    parse the rest, make sure the rest is an arrow function, and go from
     //    there
     // 3. This is neither. Just call the super method
-    parseMaybeAssign(
-      noIn?: boolean | null,
-      afterLeftParse?: Function,
-      refNeedsArrowPos?: Pos | null,
-    ): boolean {
+    parseMaybeAssign(noIn?: boolean | null, afterLeftParse?: Function): boolean {
       let jsxError = null;
       if (tt.jsxTagStart && this.match(tt.jsxTagStart)) {
         const snapshot = this.state.snapshot();
         try {
-          return super.parseMaybeAssign(noIn, afterLeftParse, refNeedsArrowPos);
+          return super.parseMaybeAssign(noIn, afterLeftParse);
         } catch (err) {
           if (err instanceof SyntaxError) {
             this.state.restoreFromSnapshot(snapshot);
@@ -1080,7 +1073,7 @@ export default (superClass: ParserClass): ParserClass =>
           this.runInTypeContext(0, () => {
             this.flowParseTypeParameterDeclaration();
           });
-          wasArrow = super.parseMaybeAssign(noIn, afterLeftParse, refNeedsArrowPos);
+          wasArrow = super.parseMaybeAssign(noIn, afterLeftParse);
         } catch (err) {
           throw jsxError || err;
         }
@@ -1091,7 +1084,7 @@ export default (superClass: ParserClass): ParserClass =>
         this.unexpected();
       }
 
-      return super.parseMaybeAssign(noIn, afterLeftParse, refNeedsArrowPos);
+      return super.parseMaybeAssign(noIn, afterLeftParse);
     }
 
     // handle return types for arrow functions

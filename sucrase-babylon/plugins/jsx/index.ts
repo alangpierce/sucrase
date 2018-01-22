@@ -334,7 +334,7 @@ export default (superClass: ParserClass): ParserClass =>
     // ==================================
 
     // Returns true if this was an arrow function.
-    parseExprAtom(refShortHandDefaultPos: Pos | null = null): boolean {
+    parseExprAtom(): boolean {
       if (this.match(tt.jsxText)) {
         this.parseLiteral();
         return false;
@@ -342,7 +342,7 @@ export default (superClass: ParserClass): ParserClass =>
         this.jsxParseElement();
         return false;
       } else {
-        return super.parseExprAtom(refShortHandDefaultPos);
+        return super.parseExprAtom();
       }
     }
 

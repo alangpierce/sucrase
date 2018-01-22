@@ -1353,19 +1353,12 @@ export default (superClass: ParserClass): ParserClass =>
       isGenerator: boolean,
       isPattern: boolean,
       isBlockScope: boolean,
-      refShorthandDefaultPos: Pos | null,
       objectContextId: number,
     ): void {
       if (this.isRelational("<")) {
         throw new Error("TODO");
       }
-      super.parseObjPropValue(
-        isGenerator,
-        isPattern,
-        isBlockScope,
-        refShorthandDefaultPos,
-        objectContextId,
-      );
+      super.parseObjPropValue(isGenerator, isPattern, isBlockScope, objectContextId);
     }
 
     parseFunctionParams(allowModifiers?: boolean, contextId?: number): void {
@@ -1390,7 +1383,6 @@ export default (superClass: ParserClass): ParserClass =>
     // Returns true if the expression was an arrow function.
     parseMaybeAssign(
       noIn: boolean | null = null,
-      refShorthandDefaultPos?: Pos | null,
       afterLeftParse?: Function,
       refNeedsArrowPos?: Pos | null,
     ): boolean {
@@ -1407,12 +1399,7 @@ export default (superClass: ParserClass): ParserClass =>
         // Prefer to parse JSX if possible. But may be an arrow fn.
         const snapshot = this.state.snapshot();
         try {
-          return super.parseMaybeAssign(
-            noIn,
-            refShorthandDefaultPos,
-            afterLeftParse,
-            refNeedsArrowPos,
-          );
+          return super.parseMaybeAssign(noIn, afterLeftParse, refNeedsArrowPos);
         } catch (err) {
           if (!(err instanceof SyntaxError)) {
             // istanbul ignore next: no such error is expected
@@ -1431,12 +1418,7 @@ export default (superClass: ParserClass): ParserClass =>
       }
 
       if (jsxError === null && !this.isRelational("<")) {
-        return super.parseMaybeAssign(
-          noIn,
-          refShorthandDefaultPos,
-          afterLeftParse,
-          refNeedsArrowPos,
-        );
+        return super.parseMaybeAssign(noIn, afterLeftParse, refNeedsArrowPos);
       }
 
       // Either way, we're looking at a '<': tt.typeParameterStart or relational.
@@ -1448,12 +1430,7 @@ export default (superClass: ParserClass): ParserClass =>
         this.runInTypeContext(0, () => {
           this.tsParseTypeParameters();
         });
-        wasArrow = super.parseMaybeAssign(
-          noIn,
-          refShorthandDefaultPos,
-          afterLeftParse,
-          refNeedsArrowPos,
-        );
+        wasArrow = super.parseMaybeAssign(noIn, afterLeftParse, refNeedsArrowPos);
         if (!wasArrow) {
           this.unexpected(); // Go to the catch block (needs a SyntaxError).
         }
@@ -1475,23 +1452,18 @@ export default (superClass: ParserClass): ParserClass =>
         this.state.restoreFromSnapshot(snapshot);
         // This will start with a type assertion (via parseMaybeUnary).
         // But don't directly call `this.tsParseTypeAssertion` because we want to handle any binary after it.
-        return super.parseMaybeAssign(
-          noIn,
-          refShorthandDefaultPos,
-          afterLeftParse,
-          refNeedsArrowPos,
-        );
+        return super.parseMaybeAssign(noIn, afterLeftParse, refNeedsArrowPos);
       }
       return wasArrow;
     }
 
     // Handle type assertions
-    parseMaybeUnary(refShorthandDefaultPos?: Pos | null): boolean {
+    parseMaybeUnary(): boolean {
       if (!this.hasPlugin("jsx") && this.eatRelational("<")) {
         this.tsParseTypeAssertion();
         return false;
       } else {
-        return super.parseMaybeUnary(refShorthandDefaultPos);
+        return super.parseMaybeUnary();
       }
     }
 

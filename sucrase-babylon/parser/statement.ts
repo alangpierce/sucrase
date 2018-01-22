@@ -174,7 +174,7 @@ export default class StatementParser extends ExpressionParser {
       this.parseIdentifier();
     }
     if (this.eat(tt.parenL)) {
-      this.parseCallExpressionArguments(tt.parenR, false);
+      this.parseCallExpressionArguments(tt.parenR);
     }
   }
 

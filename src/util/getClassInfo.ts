@@ -66,7 +66,7 @@ export default function getClassInfo(
         continue;
       }
       const nameCode = getNameCode(tokens);
-      if (tokens.matches(["</>"]) || tokens.matches(["("])) {
+      if (tokens.matches(["<"]) || tokens.matches(["("])) {
         // This is a method, so just skip to the next method/field. To do that, we seek forward to
         // the next start of a class name (either an open bracket or an identifier, or the closing
         // curly brace), then seek backward to include any access modifiers.

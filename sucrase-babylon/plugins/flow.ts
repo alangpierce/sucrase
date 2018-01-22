@@ -1,7 +1,8 @@
 /* eslint max-len: 0 */
 
-import {ParserClass, Pos} from "../parser";
+import {ParserClass} from "../parser";
 import {TokenType, types as tt} from "../tokenizer/types";
+import * as charCodes from "../util/charcodes";
 
 // tslint:disable-next-line no-any
 function isMaybeDefaultImport(lookahead: {type: TokenType; value: any}): boolean {
@@ -57,7 +58,7 @@ export default (superClass: ParserClass): ParserClass =>
       this.next();
       this.parseIdentifier();
 
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.flowParseTypeParameterDeclaration();
       }
 
@@ -182,7 +183,7 @@ export default (superClass: ParserClass): ParserClass =>
     flowParseInterfaceish(isClass?: boolean): void {
       this.flowParseRestrictedIdentifier();
 
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.flowParseTypeParameterDeclaration();
       }
 
@@ -204,7 +205,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     flowParseInterfaceExtends(): void {
       this.flowParseQualifiedTypeIdentifier(false);
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.flowParseTypeParameterInstantiation();
       }
     }
@@ -222,7 +223,7 @@ export default (superClass: ParserClass): ParserClass =>
     flowParseTypeAlias(): void {
       this.flowParseRestrictedIdentifier();
 
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.flowParseTypeParameterDeclaration();
       }
 
@@ -234,7 +235,7 @@ export default (superClass: ParserClass): ParserClass =>
       this.expectContextual("type");
       this.flowParseRestrictedIdentifier();
 
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.flowParseTypeParameterDeclaration();
       }
 
@@ -266,7 +267,7 @@ export default (superClass: ParserClass): ParserClass =>
         this.state.inType = true;
 
         // istanbul ignore else: this condition is already checked at all call sites
-        if (this.isRelational("<") || this.match(tt.typeParameterStart)) {
+        if (this.match(tt.lessThan) || this.match(tt.typeParameterStart)) {
           this.next();
         } else {
           this.unexpected();
@@ -274,11 +275,11 @@ export default (superClass: ParserClass): ParserClass =>
 
         do {
           this.flowParseTypeParameter();
-          if (!this.isRelational(">")) {
+          if (!this.match(tt.greaterThan)) {
             this.expect(tt.comma);
           }
-        } while (!this.isRelational(">"));
-        this.expectRelational(">");
+        } while (!this.match(tt.greaterThan));
+        this.expect(tt.greaterThan);
 
         this.state.inType = oldInType;
       });
@@ -289,14 +290,14 @@ export default (superClass: ParserClass): ParserClass =>
 
       this.state.inType = true;
 
-      this.expectRelational("<");
-      while (!this.isRelational(">")) {
+      this.expect(tt.lessThan);
+      while (!this.match(tt.greaterThan)) {
         this.flowParseType();
-        if (!this.isRelational(">")) {
+        if (!this.match(tt.greaterThan)) {
           this.expect(tt.comma);
         }
       }
-      this.expectRelational(">");
+      this.expect(tt.greaterThan);
 
       this.state.inType = oldInType;
     }
@@ -322,7 +323,7 @@ export default (superClass: ParserClass): ParserClass =>
     }
 
     flowParseObjectTypeMethodish(): void {
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.flowParseTypeParameterDeclaration();
       }
 
@@ -369,7 +370,7 @@ export default (superClass: ParserClass): ParserClass =>
 
         if (this.match(tt.bracketL)) {
           this.flowParseObjectTypeIndexer();
-        } else if (this.match(tt.parenL) || this.isRelational("<")) {
+        } else if (this.match(tt.parenL) || this.match(tt.lessThan)) {
           this.flowParseObjectTypeCallProperty();
         } else {
           if (this.isContextual("get") || this.isContextual("set")) {
@@ -399,7 +400,7 @@ export default (superClass: ParserClass): ParserClass =>
         this.flowParseType();
       } else {
         this.flowParseObjectPropertyKey();
-        if (this.isRelational("<") || this.match(tt.parenL)) {
+        if (this.match(tt.lessThan) || this.match(tt.parenL)) {
           // This is a method property
           this.flowParseObjectTypeMethodish();
         } else {
@@ -431,7 +432,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     flowParseGenericType(): void {
       this.flowParseQualifiedTypeIdentifier(true);
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.flowParseTypeParameterInstantiation();
       }
     }
@@ -521,17 +522,14 @@ export default (superClass: ParserClass): ParserClass =>
           this.flowParseTupleType();
           return;
 
-        case tt.relational:
-          if (this.state.value === "<") {
-            this.flowParseTypeParameterDeclaration();
-            this.expect(tt.parenL);
-            this.flowParseFunctionTypeParams();
-            this.expect(tt.parenR);
-            this.expect(tt.arrow);
-            this.flowParseType();
-            return;
-          }
-          break;
+        case tt.lessThan:
+          this.flowParseTypeParameterDeclaration();
+          this.expect(tt.parenL);
+          this.flowParseFunctionTypeParams();
+          this.expect(tt.parenR);
+          this.expect(tt.arrow);
+          this.flowParseType();
+          return;
 
         case tt.parenL:
           this.next();
@@ -838,7 +836,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     parseClassId(isStatement: boolean, optionalId: boolean = false): void {
       super.parseClassId(isStatement, optionalId);
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.flowParseTypeParameterDeclaration();
       }
     }
@@ -855,8 +853,8 @@ export default (superClass: ParserClass): ParserClass =>
 
     // ensure that inside flow types, we bypass the jsx parser plugin
     readToken(code: number): void {
-      if (this.state.inType && (code === 62 || code === 60)) {
-        this.finishOp(tt.relational, 1);
+      if (this.state.inType && (code === charCodes.lessThan || code === charCodes.greaterThan)) {
+        this.finishOp(code === charCodes.lessThan ? tt.lessThan : tt.greaterThan, 1);
       } else {
         super.readToken(code);
       }
@@ -881,7 +879,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     // determine whether or not we're currently in the position where a class method would appear
     isClassMethod(): boolean {
-      return this.isRelational("<") || super.isClassMethod();
+      return this.match(tt.lessThan) || super.isClassMethod();
     }
 
     // determine whether or not we're currently in the position where a class property would appear
@@ -891,7 +889,7 @@ export default (superClass: ParserClass): ParserClass =>
 
     // parse type parameters for class methods
     parseClassMethod(functionStart: number, isGenerator: boolean, isConstructor: boolean): void {
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.flowParseTypeParameterDeclaration();
       }
       super.parseClassMethod(functionStart, isGenerator, isConstructor);
@@ -900,7 +898,7 @@ export default (superClass: ParserClass): ParserClass =>
     // parse a the super class type parameters and implements
     parseClassSuper(): boolean {
       const hadSuper = super.parseClassSuper();
-      if (hadSuper && this.isRelational("<")) {
+      if (hadSuper && this.match(tt.lessThan)) {
         this.flowParseTypeParameterInstantiation();
       }
       if (this.isContextual("implements")) {
@@ -909,7 +907,7 @@ export default (superClass: ParserClass): ParserClass =>
           this.next();
           do {
             this.flowParseRestrictedIdentifier();
-            if (this.isRelational("<")) {
+            if (this.match(tt.lessThan)) {
               this.flowParseTypeParameterInstantiation();
             }
           } while (this.eat(tt.comma));
@@ -931,7 +929,7 @@ export default (superClass: ParserClass): ParserClass =>
       objectContextId: number,
     ): void {
       // method shorthand
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.flowParseTypeParameterDeclaration();
         if (!this.match(tt.parenL)) this.unexpected();
       }
@@ -1001,7 +999,7 @@ export default (superClass: ParserClass): ParserClass =>
     parseFunctionParams(allowModifiers?: boolean, contextId?: number): void {
       // Originally this checked if the method is a getter/setter, but if it was, we'd crash soon
       // anyway, so don't try to propagate that information.
-      if (this.isRelational("<")) {
+      if (this.match(tt.lessThan)) {
         this.runInTypeContext(0, () => {
           this.flowParseTypeParameterDeclaration();
         });
@@ -1067,7 +1065,7 @@ export default (superClass: ParserClass): ParserClass =>
         }
       }
 
-      if (jsxError != null || this.isRelational("<")) {
+      if (jsxError != null || this.match(tt.lessThan)) {
         let wasArrow = false;
         try {
           this.runInTypeContext(0, () => {
@@ -1121,7 +1119,7 @@ export default (superClass: ParserClass): ParserClass =>
     parseSubscripts(startPos: number, noCalls?: boolean | null): void {
       if (
         this.state.tokens[this.state.tokens.length - 1].value === "async" &&
-        this.isRelational("<")
+        this.match(tt.lessThan)
       ) {
         const snapshot = this.state.snapshot();
         let error;

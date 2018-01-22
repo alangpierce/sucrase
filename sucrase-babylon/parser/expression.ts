@@ -203,8 +203,7 @@ export default abstract class ExpressionParser extends LValParser {
         this.parseExpression();
         this.expect(tt.bracketR);
       } else if (this.eat(tt.parenL)) {
-        const possibleAsync = this.atPossibleAsync();
-        this.parseCallExpressionArguments(tt.parenR, possibleAsync);
+        this.parseCallExpressionArguments(tt.parenR);
       } else {
         this.parseIdentifier();
       }
@@ -223,11 +222,8 @@ export default abstract class ExpressionParser extends LValParser {
 
       const callContextId = this.nextContextId++;
 
-      // TODO: Clean up/merge this into `this.state` or a class like acorn's `DestructuringErrors`.
-      const refTrailingCommaPos: Pos = {start: -1};
-
       this.state.tokens[this.state.tokens.length - 1].contextId = callContextId;
-      this.parseCallExpressionArguments(tt.parenR, possibleAsync, refTrailingCommaPos);
+      this.parseCallExpressionArguments(tt.parenR);
       this.state.tokens[this.state.tokens.length - 1].contextId = callContextId;
 
       if (possibleAsync && this.shouldParseAsyncArrow()) {
@@ -255,11 +251,7 @@ export default abstract class ExpressionParser extends LValParser {
     );
   }
 
-  parseCallExpressionArguments(
-    close: TokenType,
-    possibleAsyncArrow: boolean,
-    refTrailingCommaPos?: Pos,
-  ): void {
+  parseCallExpressionArguments(close: TokenType): void {
     let first = true;
     while (!this.eat(close)) {
       if (first) {
@@ -269,7 +261,7 @@ export default abstract class ExpressionParser extends LValParser {
         if (this.eat(close)) break;
       }
 
-      this.parseExprListItem(false, possibleAsyncArrow ? refTrailingCommaPos : null);
+      this.parseExprListItem(false);
     }
   }
 
@@ -818,14 +810,11 @@ export default abstract class ExpressionParser extends LValParser {
     }
   }
 
-  parseExprListItem(allowEmpty: boolean | null, refTrailingCommaPos: Pos | null = null): void {
+  parseExprListItem(allowEmpty: boolean | null): void {
     if (allowEmpty && this.match(tt.comma)) {
       // Empty item; nothing more to parse for this item.
     } else if (this.match(tt.ellipsis)) {
       this.parseSpread();
-      if (refTrailingCommaPos && this.match(tt.comma)) {
-        refTrailingCommaPos.start = this.state.start;
-      }
     } else {
       this.parseMaybeAssign(false, this.parseParenItem);
     }

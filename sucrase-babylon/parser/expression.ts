@@ -55,11 +55,11 @@ export default abstract class ExpressionParser extends LValParser {
   // and object pattern might appear (so it's possible to raise
   // delayed syntax error at correct position).
 
-  parseExpression(noIn?: boolean, refShorthandDefaultPos?: Pos): void {
-    this.parseMaybeAssign(noIn, refShorthandDefaultPos);
+  parseExpression(noIn?: boolean): void {
+    this.parseMaybeAssign(noIn);
     if (this.match(tt.comma)) {
       while (this.eat(tt.comma)) {
-        this.parseMaybeAssign(noIn, refShorthandDefaultPos);
+        this.parseMaybeAssign(noIn);
       }
     }
   }
@@ -69,7 +69,6 @@ export default abstract class ExpressionParser extends LValParser {
   // Returns true if the expression was an arrow function.
   parseMaybeAssign(
     noIn: boolean | null = null,
-    refShorthandDefaultPos?: Pos | null,
     afterLeftParse?: Function,
     refNeedsArrowPos?: Pos | null,
   ): boolean {
@@ -81,49 +80,29 @@ export default abstract class ExpressionParser extends LValParser {
       return false;
     }
 
-    let failOnShorthandAssign;
-    if (refShorthandDefaultPos) {
-      failOnShorthandAssign = false;
-    } else {
-      refShorthandDefaultPos = {start: 0};
-      failOnShorthandAssign = true;
-    }
-
     if (this.match(tt.parenL) || this.match(tt.name) || this.match(tt._yield)) {
       this.state.potentialArrowAt = this.state.start;
     }
 
-    const wasArrow = this.parseMaybeConditional(noIn, refShorthandDefaultPos, refNeedsArrowPos);
+    const wasArrow = this.parseMaybeConditional(noIn, refNeedsArrowPos);
     if (afterLeftParse) {
       afterLeftParse.call(this);
     }
     if (this.state.type.isAssign) {
-      // Note that we keep the LHS tokens as accesses for now.
-      refShorthandDefaultPos.start = 0; // reset because shorthand default was used correctly
-
       this.next();
       this.parseMaybeAssign(noIn);
       return false;
-    } else if (failOnShorthandAssign && refShorthandDefaultPos.start) {
-      this.unexpected(refShorthandDefaultPos.start);
     }
     return wasArrow;
   }
 
   // Parse a ternary conditional (`?:`) operator.
   // Returns true if the expression was an arrow function.
-  parseMaybeConditional(
-    noIn: boolean | null,
-    refShorthandDefaultPos: Pos,
-    refNeedsArrowPos?: Pos | null,
-  ): boolean {
+  parseMaybeConditional(noIn: boolean | null, refNeedsArrowPos?: Pos | null): boolean {
     const startPos = this.state.start;
-    const wasArrow = this.parseExprOps(noIn, refShorthandDefaultPos);
+    const wasArrow = this.parseExprOps(noIn);
     if (wasArrow) {
       return true;
-    }
-    if (refShorthandDefaultPos && refShorthandDefaultPos.start) {
-      return false;
     }
     this.parseConditional(noIn, startPos, refNeedsArrowPos);
     return false;
@@ -145,13 +124,10 @@ export default abstract class ExpressionParser extends LValParser {
 
   // Start the precedence parser.
   // Returns true if this was an arrow function
-  parseExprOps(noIn: boolean | null, refShorthandDefaultPos: Pos): boolean {
-    const wasArrow = this.parseMaybeUnary(refShorthandDefaultPos);
+  parseExprOps(noIn: boolean | null): boolean {
+    const wasArrow = this.parseMaybeUnary();
     if (wasArrow) {
       return true;
-    }
-    if (refShorthandDefaultPos && refShorthandDefaultPos.start) {
-      return false;
     }
     this.parseExprOp(-1, noIn);
     return false;
@@ -184,22 +160,16 @@ export default abstract class ExpressionParser extends LValParser {
 
   // Parse unary operators, both prefix and postfix.
   // Returns true if this was an arrow function.
-  parseMaybeUnary(refShorthandDefaultPos: Pos | null = null): boolean {
+  parseMaybeUnary(): boolean {
     if (this.state.type.prefix) {
       this.next();
       this.parseMaybeUnary();
-      if (refShorthandDefaultPos && refShorthandDefaultPos.start) {
-        this.unexpected(refShorthandDefaultPos.start);
-      }
       return false;
     }
 
-    const wasArrow = this.parseExprSubscripts(refShorthandDefaultPos);
+    const wasArrow = this.parseExprSubscripts();
     if (wasArrow) {
       return true;
-    }
-    if (refShorthandDefaultPos && refShorthandDefaultPos.start) {
-      return false;
     }
     while (this.state.type.postfix && !this.canInsertSemicolon()) {
       this.next();
@@ -209,17 +179,12 @@ export default abstract class ExpressionParser extends LValParser {
 
   // Parse call, dot, and `[]`-subscript expressions.
   // Returns true if this was an arrow function.
-  parseExprSubscripts(refShorthandDefaultPos: Pos | null = null): boolean {
+  parseExprSubscripts(): boolean {
     const startPos = this.state.start;
-    const wasArrow = this.parseExprAtom(refShorthandDefaultPos);
+    const wasArrow = this.parseExprAtom();
     if (wasArrow) {
       return true;
     }
-
-    if (refShorthandDefaultPos && refShorthandDefaultPos.start) {
-      return false;
-    }
-
     this.parseSubscripts(startPos);
     return false;
   }
@@ -269,8 +234,7 @@ export default abstract class ExpressionParser extends LValParser {
       const callContextId = this.nextContextId++;
 
       // TODO: Clean up/merge this into `this.state` or a class like acorn's
-      // `DestructuringErrors` alongside refShorthandDefaultPos and
-      // refNeedsArrowPos.
+      // `DestructuringErrors` alongside refNeedsArrowPos.
       const refTrailingCommaPos: Pos = {start: -1};
 
       this.state.tokens[this.state.tokens.length - 1].contextId = callContextId;
@@ -319,7 +283,6 @@ export default abstract class ExpressionParser extends LValParser {
       this.parseExprListItem(
         false,
         possibleAsyncArrow ? {start: 0} : null,
-        possibleAsyncArrow ? {start: 0} : null,
         possibleAsyncArrow ? refTrailingCommaPos : null,
       );
     }
@@ -347,7 +310,7 @@ export default abstract class ExpressionParser extends LValParser {
   // `new`, or an expression wrapped in punctuation like `()`, `[]`,
   // or `{}`.
   // Returns true if the parsed expression was an arrow function.
-  parseExprAtom(refShorthandDefaultPos?: Pos | null): boolean {
+  parseExprAtom(): boolean {
     const canBeArrow = this.state.potentialArrowAt === this.state.start;
     switch (this.state.type) {
       case tt._super:
@@ -415,11 +378,11 @@ export default abstract class ExpressionParser extends LValParser {
 
       case tt.bracketL:
         this.next();
-        this.parseExprList(tt.bracketR, true, refShorthandDefaultPos);
+        this.parseExprList(tt.bracketR, true);
         return false;
 
       case tt.braceL:
-        this.parseObj(false, false, refShorthandDefaultPos);
+        this.parseObj(false, false);
         return false;
 
       case tt._function:
@@ -499,7 +462,6 @@ export default abstract class ExpressionParser extends LValParser {
     this.expect(tt.parenL);
 
     const exprList = [];
-    const refShorthandDefaultPos = {start: 0};
     const refNeedsArrowPos = {start: 0};
     let first = true;
     let spreadStart;
@@ -527,14 +489,7 @@ export default abstract class ExpressionParser extends LValParser {
 
         break;
       } else {
-        exprList.push(
-          this.parseMaybeAssign(
-            false,
-            refShorthandDefaultPos,
-            this.parseParenItem,
-            refNeedsArrowPos,
-          ),
-        );
+        exprList.push(this.parseMaybeAssign(false, this.parseParenItem, refNeedsArrowPos));
       }
     }
 
@@ -558,9 +513,6 @@ export default abstract class ExpressionParser extends LValParser {
 
     if (optionalCommaStart) this.unexpected(optionalCommaStart);
     if (spreadStart) this.unexpected(spreadStart);
-    if (refShorthandDefaultPos.start) {
-      this.unexpected(refShorthandDefaultPos.start);
-    }
     if (refNeedsArrowPos.start) {
       this.unexpected(refNeedsArrowPos.start);
     }
@@ -629,11 +581,7 @@ export default abstract class ExpressionParser extends LValParser {
   }
 
   // Parse an object literal or binding pattern.
-  parseObj(
-    isPattern: boolean,
-    isBlockScope: boolean,
-    refShorthandDefaultPos: Pos | null = null,
-  ): void {
+  parseObj(isPattern: boolean, isBlockScope: boolean): void {
     // Attach a context ID to the object open and close brace and each object key.
     const contextId = this.nextContextId++;
     let first = true;
@@ -656,7 +604,7 @@ export default abstract class ExpressionParser extends LValParser {
       if (this.match(tt.ellipsis)) {
         // Note that this is labeled as an access on the token even though it might be an
         // assignment.
-        this.parseSpread(isPattern ? {start: 0} : null);
+        this.parseSpread();
         if (isPattern) {
           const position = this.state.start;
           if (firstRestLocation !== null) {
@@ -704,13 +652,7 @@ export default abstract class ExpressionParser extends LValParser {
         this.parsePropertyName(contextId);
       }
 
-      this.parseObjPropValue(
-        isGenerator,
-        isPattern,
-        isBlockScope,
-        refShorthandDefaultPos,
-        contextId,
-      );
+      this.parseObjPropValue(isGenerator, isPattern, isBlockScope, contextId);
     }
 
     this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
@@ -748,16 +690,12 @@ export default abstract class ExpressionParser extends LValParser {
     return false;
   }
 
-  parseObjectProperty(
-    isPattern: boolean,
-    isBlockScope: boolean,
-    refShorthandDefaultPos: Pos | null,
-  ): void {
+  parseObjectProperty(isPattern: boolean, isBlockScope: boolean): void {
     if (this.eat(tt.colon)) {
       if (isPattern) {
         this.parseMaybeDefault(isBlockScope);
       } else {
-        this.parseMaybeAssign(false, refShorthandDefaultPos);
+        this.parseMaybeAssign(false);
       }
       return;
     }
@@ -776,26 +714,20 @@ export default abstract class ExpressionParser extends LValParser {
         IdentifierRole.ObjectShorthand;
     }
 
-    if (isPattern) {
-      this.parseMaybeDefault(isBlockScope, true);
-    } else if (this.match(tt.eq) && refShorthandDefaultPos) {
-      if (!refShorthandDefaultPos.start) {
-        refShorthandDefaultPos.start = this.state.start;
-      }
-      this.parseMaybeDefault(isBlockScope, true);
-    }
+    // Regardless of whether we know this to be a pattern or if we're in an ambiguous context, allow
+    // parsing as if there's a default value.
+    this.parseMaybeDefault(isBlockScope, true);
   }
 
   parseObjPropValue(
     isGenerator: boolean,
     isPattern: boolean,
     isBlockScope: boolean,
-    refShorthandDefaultPos: Pos | null,
     objectContextId: number,
   ): void {
     const wasMethod = this.parseObjectMethod(isGenerator, isPattern, objectContextId);
     if (!wasMethod) {
-      this.parseObjectProperty(isPattern, isBlockScope, refShorthandDefaultPos);
+      this.parseObjectProperty(isPattern, isBlockScope);
     }
   }
 
@@ -893,11 +825,7 @@ export default abstract class ExpressionParser extends LValParser {
   // nothing in between them to be parsed as `null` (which is needed
   // for array literals).
 
-  parseExprList(
-    close: TokenType,
-    allowEmpty: boolean | null = null,
-    refShorthandDefaultPos: Pos | null = null,
-  ): void {
+  parseExprList(close: TokenType, allowEmpty: boolean | null = null): void {
     let first = true;
     while (!this.eat(close)) {
       if (first) {
@@ -906,25 +834,24 @@ export default abstract class ExpressionParser extends LValParser {
         this.expect(tt.comma);
         if (this.eat(close)) break;
       }
-      this.parseExprListItem(allowEmpty, refShorthandDefaultPos);
+      this.parseExprListItem(allowEmpty);
     }
   }
 
   parseExprListItem(
     allowEmpty: boolean | null,
-    refShorthandDefaultPos: Pos | null,
     refNeedsArrowPos: Pos | null = null,
     refTrailingCommaPos: Pos | null = null,
   ): void {
     if (allowEmpty && this.match(tt.comma)) {
       // Empty item; nothing more to parse for this item.
     } else if (this.match(tt.ellipsis)) {
-      this.parseSpread(refShorthandDefaultPos);
+      this.parseSpread();
       if (refTrailingCommaPos && this.match(tt.comma)) {
         refTrailingCommaPos.start = this.state.start;
       }
     } else {
-      this.parseMaybeAssign(false, refShorthandDefaultPos, this.parseParenItem, refNeedsArrowPos);
+      this.parseMaybeAssign(false, this.parseParenItem, refNeedsArrowPos);
     }
   }
 

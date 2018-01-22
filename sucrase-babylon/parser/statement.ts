@@ -243,13 +243,10 @@ export default class StatementParser extends ExpressionParser {
       return;
     }
 
-    const refShorthandDefaultPos = {start: 0};
-    this.parseExpression(true, refShorthandDefaultPos);
+    this.parseExpression(true);
     if (this.match(tt._in) || this.isContextual("of")) {
       this.parseForIn(forAwait);
       return;
-    } else if (refShorthandDefaultPos.start) {
-      this.unexpected(refShorthandDefaultPos.start);
     }
     if (forAwait) {
       this.unexpected();

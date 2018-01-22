@@ -8,23 +8,18 @@ export default abstract class LValParser extends UtilParser {
   abstract parseIdentifier(): void;
   abstract parseMaybeAssign(
     noIn?: boolean | null,
-    refShorthandDefaultPos?: Pos | null,
     afterLeftParse?: Function,
     refNeedsArrowPos?: Pos | null,
   ): void;
-  abstract parseObj(
-    isPattern: boolean,
-    isBlockScope: boolean,
-    refShorthandDefaultPos?: Pos | null,
-  ): void;
+  abstract parseObj(isPattern: boolean, isBlockScope: boolean): void;
   // Forward-declaration: defined in statement.js
   abstract parseDecorator(): void;
 
   // Parses spread element.
 
-  parseSpread(refShorthandDefaultPos: Pos | null): void {
+  parseSpread(): void {
     this.next();
-    this.parseMaybeAssign(false, refShorthandDefaultPos);
+    this.parseMaybeAssign(false);
   }
 
   parseRest(isBlockScope: boolean): void {

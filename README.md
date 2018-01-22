@@ -1,7 +1,9 @@
 # Sucrase
 
+[![Build Status](https://travis-ci.org/alangpierce/sucrase.svg?branch=master)](https://travis-ci.org/alangpierce/sucrase)
 [![npm version](https://badge.fury.io/js/sucrase.svg)](https://www.npmjs.com/package/sucrase)
 [![MIT License](https://img.shields.io/npm/l/express.svg?maxAge=2592000)](LICENSE)
+
 
 ### [Try it out](https://sucrase.io)
 
@@ -98,7 +100,7 @@ const compiledCode = transform(code, {transforms: ["typescript", "imports"]});
 
 There are also some integrations for
 [Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin)
-and [Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin)
+and [Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin).
 
 ## Motivation
 

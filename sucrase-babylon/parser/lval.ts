@@ -97,12 +97,6 @@ export default abstract class LValParser extends UtilParser {
         this.expect(close);
         break;
       } else {
-        if (this.match(tt.at) && this.hasPlugin("decorators2")) {
-          this.raise(this.state.start, "Stage 2 decorators cannot be used to decorate parameters");
-        }
-        while (this.match(tt.at)) {
-          this.parseDecorator();
-        }
         this.parseAssignableListItem(allowModifiers, isBlockScope);
       }
     }

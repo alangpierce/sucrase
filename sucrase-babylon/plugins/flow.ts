@@ -574,15 +574,6 @@ export default (superClass: ParserClass): ParserClass =>
           this.flowParseType();
           return;
 
-        case tt.string:
-          this.parseLiteral();
-          return;
-
-        case tt._true:
-        case tt._false:
-          this.next();
-          return;
-
         case tt.plusMin:
           // Only allow negative signs, not plus signs.
           if (this.state.value === "-") {
@@ -592,18 +583,12 @@ export default (superClass: ParserClass): ParserClass =>
           }
           throw this.unexpected();
 
+        case tt.string:
         case tt.num:
-          this.parseLiteral();
-          return;
-
+        case tt._true:
+        case tt._false:
         case tt._null:
-          this.next();
-          return;
-
         case tt._this:
-          this.next();
-          return;
-
         case tt.star:
           this.next();
           return;
@@ -690,7 +675,6 @@ export default (superClass: ParserClass): ParserClass =>
 
     parseFunctionBodyAndFinish(
       functionStart: number,
-      isAsync: boolean,
       isGenerator: boolean,
       allowExpressionBody?: boolean,
       funcContextId?: number,
@@ -702,7 +686,6 @@ export default (superClass: ParserClass): ParserClass =>
 
       super.parseFunctionBodyAndFinish(
         functionStart,
-        isAsync,
         isGenerator,
         allowExpressionBody,
         funcContextId,

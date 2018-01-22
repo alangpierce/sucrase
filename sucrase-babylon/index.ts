@@ -31,13 +31,6 @@ const parserClassCache: {[key: string]: ParserClass} = {};
 
 /** Get a Parser class with plugins applied. */
 function getParserClass(pluginsFromOptions: ReadonlyArray<string>): ParserClass {
-  if (
-    pluginsFromOptions.indexOf("decorators") >= 0 &&
-    pluginsFromOptions.indexOf("decorators2") >= 0
-  ) {
-    throw new Error("Cannot use decorators and decorators2 plugin together");
-  }
-
   // Filter out just the plugins that have an actual mixin associated with them.
   let pluginList = pluginsFromOptions.filter(
     (p) => p === "flow" || p === "jsx" || p === "typescript",

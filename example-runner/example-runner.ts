@@ -12,6 +12,13 @@ const EXAMPLES = {
   "apollo-client": "https://github.com/apollographql/apollo-client.git",
 };
 
+const INTEGRATIONS = [
+  "gulp-plugin",
+  "jest-plugin",
+  "webpack-loader",
+  "webpack-object-rest-spread-plugin",
+];
+
 async function main(): Promise<void> {
   let projects: Array<string> = [];
   let shouldSave = false;
@@ -29,14 +36,12 @@ async function main(): Promise<void> {
   }
   const originalCwd = process.cwd();
   await run("yarn link");
-  process.chdir("./integrations/gulp-plugin");
-  await run("yarn link sucrase");
-  await run("yarn link");
-  process.chdir(originalCwd);
-  process.chdir("./integrations/jest-plugin");
-  await run("yarn link sucrase");
-  await run("yarn link");
-  process.chdir(originalCwd);
+  for (const integration of INTEGRATIONS) {
+    process.chdir(`./integrations/${integration}`);
+    await run("yarn link sucrase");
+    await run("yarn link");
+    process.chdir(originalCwd);
+  }
 
   const results: Array<string> = [];
   for (const projectName of projects) {
@@ -82,8 +87,9 @@ async function runProject(project: string, shouldSave: boolean): Promise<boolean
 
   await run("yarn");
   await run("yarn link sucrase");
-  await run("yarn link @sucrase/gulp-plugin");
-  await run("yarn link @sucrase/jest-plugin");
+  for (const integration of INTEGRATIONS) {
+    await run(`yarn link @sucrase/${integration}`);
+  }
 
   let passed = true;
   try {

@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "target": "es2017",
+    "module": "commonjs",
+    "typeRoots": ["node_modules/@types"],
+    "declaration": true,
+    "experimentalDecorators": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "downlevelIteration": true,
+    "noEmitHelpers": true,
+    "importHelpers": true,
+    "plugins": [
+      {
+        "name": "tslint-language-service",
+        "ignoreDefinitionFiles": true
+      }
+    ]
+  },
+  "exclude": [
+    "node_modules",
+    "dist/**/*",
+  ]
+}

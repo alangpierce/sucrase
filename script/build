@@ -41,6 +41,28 @@ cd ../..
   --module commonjs \
   --moduleResolution node
 
+echo 'Building @sucrase/webpack-loader'
+cd ./integrations/webpack-loader
+yarn
+cd ../..
+
+"${TSC}" \
+  --project ./integrations/webpack-loader \
+  --outDir ./integrations/webpack-loader/dist \
+  --module commonjs \
+  --moduleResolution node
+
+echo 'Building @sucrase/webpack-object-rest-spread-plugin'
+cd ./integrations/webpack-object-rest-spread-plugin
+yarn
+cd ../..
+
+"${TSC}" \
+  --project ./integrations/webpack-object-rest-spread-plugin \
+  --outDir ./integrations/webpack-object-rest-spread-plugin/dist \
+  --module commonjs \
+  --moduleResolution node
+
 echo 'Building @sucrase/jest-plugin'
 cd ./integrations/jest-plugin
 yarn

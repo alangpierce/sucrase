@@ -1,7 +1,7 @@
 import {types as ct} from "../tokenizer/context";
 import {TokenType, types as tt} from "../tokenizer/types";
 import * as charCodes from "../util/charcodes";
-import JSXParser from "./jsx";
+import TypeParser from "./types";
 
 export type TsModifier = "readonly" | "abstract" | "static" | "public" | "private" | "protected";
 
@@ -43,7 +43,7 @@ function isTypeKeyword(value: string): boolean {
   }
 }
 
-export default class TypeScriptParser extends JSXParser {
+export default class TypeScriptParser extends TypeParser {
   tsIsIdentifier(): boolean {
     // TODO: actually a bit more complex in TypeScript, but shouldn't matter.
     // See https://github.com/Microsoft/TypeScript/issues/15008
@@ -190,7 +190,7 @@ export default class TypeScriptParser extends JSXParser {
 
   tsParseThisTypePredicate(): void {
     this.next();
-    this.tsParseTypeAnnotation(/* eatColon */ false);
+    this.parseTypeAnnotation();
   }
 
   tsParseThisTypeNode(): void {
@@ -286,8 +286,7 @@ export default class TypeScriptParser extends JSXParser {
 
     this.expect(tt.bracketL);
     this.parseIdentifier();
-    this.expect(tt.colon);
-    this.tsParseTypeAnnotation(/* eatColon */ false);
+    this.parseTypeAnnotation();
     this.expect(tt.bracketR);
 
     this.tsTryParseTypeAnnotation();
@@ -562,7 +561,7 @@ export default class TypeScriptParser extends JSXParser {
       this.tsTryParse(() => this.tsParseTypePredicatePrefix());
       // Regardless of whether we found an "is" token, there's now just a regular type in front of
       // us.
-      this.tsParseTypeAnnotation(/* eatColon */ false);
+      this.tsParseType();
     });
   }
 
@@ -574,7 +573,7 @@ export default class TypeScriptParser extends JSXParser {
 
   tsTryParseTypeAnnotation(): void {
     if (this.match(tt.colon)) {
-      this.tsParseTypeAnnotation();
+      this.parseTypeAnnotation();
     }
   }
 
@@ -593,11 +592,9 @@ export default class TypeScriptParser extends JSXParser {
     return false;
   }
 
-  tsParseTypeAnnotation(eatColon: boolean = true): void {
+  parseTypeAnnotation(): void {
     this.runInTypeContext(0, () => {
-      if (eatColon) {
-        this.expect(tt.colon);
-      }
+      this.expect(tt.colon);
       this.tsParseType();
     });
   }
@@ -1252,40 +1249,6 @@ export default class TypeScriptParser extends JSXParser {
     return super.shouldParseExportDeclaration();
   }
 
-  // An apparent conditional expression could actually be an optional parameter in an arrow function.
-  parseConditional(noIn: boolean | null, startPos: number): void {
-    // only do the expensive clone if there is a question mark
-    // and if we come from inside parens
-    if (!this.match(tt.question)) {
-      super.parseConditional(noIn, startPos);
-      return;
-    }
-
-    const snapshot = this.state.snapshot();
-    try {
-      super.parseConditional(noIn, startPos);
-      return;
-    } catch (err) {
-      if (!(err instanceof SyntaxError)) {
-        // istanbul ignore next: no such error is expected
-        throw err;
-      }
-      this.state.restoreFromSnapshot(snapshot);
-    }
-  }
-
-  // Note: These "type casts" are *not* valid TS expressions.
-  // But we parse them here and change them when completing the arrow function.
-  parseParenItem(): void {
-    super.parseParenItem();
-    if (this.eat(tt.question)) {
-      this.state.tokens[this.state.tokens.length - 1].isType = true;
-    }
-    if (this.match(tt.colon)) {
-      this.tsParseTypeAnnotation();
-    }
-  }
-
   parseExportDeclaration(): void {
     // "export declare" is equivalent to just "export".
     const isDeclare = this.eatContextual("declare");
@@ -1371,7 +1334,7 @@ export default class TypeScriptParser extends JSXParser {
   // parse the return type of an async arrow function - let foo = (async (): number => {});
   parseAsyncArrowFromCallExpression(functionStart: number, startTokenIndex: number): void {
     if (this.match(tt.colon)) {
-      this.tsParseTypeAnnotation();
+      this.parseTypeAnnotation();
     }
     super.parseAsyncArrowFromCallExpression(functionStart, startTokenIndex);
   }
@@ -1499,35 +1462,5 @@ export default class TypeScriptParser extends JSXParser {
       default:
         super.parseBindingAtom(isBlockScope);
     }
-  }
-
-  // === === === === === === === === === === === === === === === ===
-  // Note: All below methods are duplicates of something in flow.js.
-  // Not sure what the best way to combine these is.
-  // === === === === === === === === === === === === === === === ===
-
-  isClassMethod(): boolean {
-    return this.match(tt.lessThan) || super.isClassMethod();
-  }
-
-  isClassProperty(): boolean {
-    return this.match(tt.colon) || super.isClassProperty();
-  }
-
-  // ensure that inside types, we bypass the jsx parser plugin
-  readToken(code: number): void {
-    if (this.state.inType && (code === charCodes.lessThan || code === charCodes.greaterThan)) {
-      this.finishOp(code === charCodes.lessThan ? tt.lessThan : tt.greaterThan, 1);
-    } else {
-      super.readToken(code);
-    }
-  }
-
-  shouldParseArrow(): boolean {
-    return this.match(tt.colon) || super.shouldParseArrow();
-  }
-
-  shouldParseAsyncArrow(): boolean {
-    return this.match(tt.colon) || super.shouldParseAsyncArrow();
   }
 }

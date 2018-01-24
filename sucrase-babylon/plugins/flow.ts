@@ -2,14 +2,14 @@
 
 import {TokenType, types as tt} from "../tokenizer/types";
 import * as charCodes from "../util/charcodes";
-import JSXParser from "./jsx";
+import TypeParser from "./types";
 
 // tslint:disable-next-line no-any
 function isMaybeDefaultImport(lookahead: {type: TokenType; value: any}): boolean {
   return (lookahead.type === tt.name || !!lookahead.type.keyword) && lookahead.value !== "from";
 }
 
-export default class FlowParser extends JSXParser {
+export default class FlowParser extends TypeParser {
   flowParseTypeInitialiser(tok?: TokenType): void {
     this.runInTypeContext(0, () => {
       const oldInType = this.state.inType;
@@ -158,7 +158,7 @@ export default class FlowParser extends JSXParser {
     this.expectContextual("module");
     this.expect(tt.dot);
     this.expectContextual("exports");
-    this.flowParseTypeAnnotation();
+    this.parseTypeAnnotation();
     this.semicolon();
   }
 
@@ -646,14 +646,14 @@ export default class FlowParser extends JSXParser {
     this.state.exprAllowed = this.state.exprAllowed || this.state.noAnonFunctionType;
   }
 
-  flowParseTypeAnnotation(): void {
+  parseTypeAnnotation(): void {
     this.flowParseTypeInitialiser();
   }
 
   flowParseTypeAnnotatableIdentifier(): void {
     this.parseIdentifier();
     if (this.match(tt.colon)) {
-      this.flowParseTypeAnnotation();
+      this.parseTypeAnnotation();
     }
   }
 
@@ -753,36 +753,6 @@ export default class FlowParser extends JSXParser {
     return super.isExportDefaultSpecifier();
   }
 
-  parseConditional(noIn: boolean | null, startPos: number): void {
-    // only do the expensive clone if there is a question mark
-    if (this.match(tt.question)) {
-      const snapshot = this.state.snapshot();
-      try {
-        super.parseConditional(noIn, startPos);
-        return;
-      } catch (err) {
-        if (err instanceof SyntaxError) {
-          this.state.restoreFromSnapshot(snapshot);
-          return;
-        } else {
-          // istanbul ignore next: no such error is expected
-          throw err;
-        }
-      }
-    }
-    super.parseConditional(noIn, startPos);
-  }
-
-  parseParenItem(): void {
-    super.parseParenItem();
-    if (this.eat(tt.question)) {
-      this.state.tokens[this.state.tokens.length - 1].isType = true;
-    }
-    if (this.match(tt.colon)) {
-      this.flowParseTypeAnnotation();
-    }
-  }
-
   parseExportDeclaration(): void {
     if (this.isContextual("type")) {
       this.runInTypeContext(1, () => {
@@ -847,40 +817,21 @@ export default class FlowParser extends JSXParser {
     }
   }
 
-  // ensure that inside flow types, we bypass the jsx parser plugin
-  readToken(code: number): void {
-    if (this.state.inType && (code === charCodes.lessThan || code === charCodes.greaterThan)) {
-      this.finishOp(code === charCodes.lessThan ? tt.lessThan : tt.greaterThan, 1);
-    } else {
-      super.readToken(code);
-    }
-  }
-
   // parse an item inside a expression list eg. `(NODE, NODE)` where NODE represents
   // the position where this function is called
   parseExprListItem(allowEmpty: boolean | null): void {
     super.parseExprListItem(allowEmpty);
     if (this.match(tt.colon)) {
-      this.flowParseTypeAnnotation();
+      this.parseTypeAnnotation();
     }
   }
 
   // parse class property type annotations
   parseClassProperty(): void {
     if (this.match(tt.colon)) {
-      this.flowParseTypeAnnotation();
+      this.parseTypeAnnotation();
     }
     super.parseClassProperty();
-  }
-
-  // determine whether or not we're currently in the position where a class method would appear
-  isClassMethod(): boolean {
-    return this.match(tt.lessThan) || super.isClassMethod();
-  }
-
-  // determine whether or not we're currently in the position where a class property would appear
-  isClassProperty(): boolean {
-    return this.match(tt.colon) || super.isClassProperty();
   }
 
   // parse type parameters for class methods
@@ -937,7 +888,7 @@ export default class FlowParser extends JSXParser {
     this.runInTypeContext(0, () => {
       this.eat(tt.question);
       if (this.match(tt.colon)) {
-        this.flowParseTypeAnnotation();
+        this.parseTypeAnnotation();
       }
     });
   }
@@ -1007,7 +958,7 @@ export default class FlowParser extends JSXParser {
   parseVarHead(isBlockScope: boolean): void {
     super.parseVarHead(isBlockScope);
     if (this.match(tt.colon)) {
-      this.flowParseTypeAnnotation();
+      this.parseTypeAnnotation();
     }
   }
 
@@ -1016,15 +967,10 @@ export default class FlowParser extends JSXParser {
     if (this.match(tt.colon)) {
       const oldNoAnonFunctionType = this.state.noAnonFunctionType;
       this.state.noAnonFunctionType = true;
-      this.flowParseTypeAnnotation();
+      this.parseTypeAnnotation();
       this.state.noAnonFunctionType = oldNoAnonFunctionType;
     }
     super.parseAsyncArrowFromCallExpression(functionStart, startTokenIndex);
-  }
-
-  // todo description
-  shouldParseAsyncArrow(): boolean {
-    return this.match(tt.colon) || super.shouldParseAsyncArrow();
   }
 
   // We need to support type parameter declarations for arrow functions. This
@@ -1104,12 +1050,7 @@ export default class FlowParser extends JSXParser {
         }
       });
     }
-
     return super.parseArrow();
-  }
-
-  shouldParseArrow(): boolean {
-    return this.match(tt.colon) || super.shouldParseArrow();
   }
 
   parseSubscripts(startPos: number, noCalls?: boolean | null): void {

@@ -66,18 +66,62 @@ index 9f07ae0e2..64cd4c94e 100644
  	make build
  	cd packages/babel-runtime; \
 diff --git a/scripts/gulp-tasks.js b/scripts/gulp-tasks.js
-index 2e4891efb..192267df5 100644
+index 2e4891efb..5c4d51602 100644
 --- a/scripts/gulp-tasks.js
 +++ b/scripts/gulp-tasks.js
-@@ -52,6 +52,7 @@ function webpackBuild(opts) {
-                   exclude: ["transform-typeof-symbol"],
-                 },
-               ],
-+              "@babel/flow",
-             ],
-           },
+@@ -19,6 +19,7 @@ const RootMostResolvePlugin = require("webpack-dependency-suite")
+ const webpack = require("webpack");
+ const webpackStream = require("webpack-stream");
+ const uglify = require("gulp-uglify");
++const ObjectRestSpreadPlugin = require("@sucrase/webpack-object-rest-spread-plugin");
+ 
+ function webpackBuild(opts) {
+   const plugins = opts.plugins || [];
+@@ -38,47 +39,18 @@ function webpackBuild(opts) {
+         {
+           test: /\.js$/,
+           include: /node_modules/,
+-          loader: "babel-loader",
+-          options: {
+-            // Some of the node_modules may have their own "babel" section in
+-            // their project.json (or a ".babelrc" file). We need to ignore
+-            // those as we're using our own Babel options.
+-            babelrc: false,
+-            presets: [
+-              [
+-                "@babel/env",
+-                {
+-                  loose: true,
+-                  exclude: ["transform-typeof-symbol"],
+-                },
+-              ],
+-            ],
+-          },
++          loader: "@sucrase/webpack-loader",
++          options: {transforms: ["imports", "flow"]},
          },
-@@ -78,7 +79,7 @@ function webpackBuild(opts) {
+         {
+           test: /\.js$/,
+           exclude: /node_modules/,
+-          loader: "babel-loader",
+-          options: {
+-            // Some of the node_modules may have their own "babel" section in
+-            // their project.json (or a ".babelrc" file). We need to ignore
+-            // those as we're using our own Babel options.
+-            babelrc: false,
+-            presets: [
+-              [
+-                "@babel/env",
+-                {
+-                  loose: true,
+-                  exclude: ["transform-typeof-symbol"],
+-                },
+-              ],
+-              ["@babel/stage-0", { loose: true }],
+-            ],
+-          },
++          loader: "@sucrase/webpack-loader",
++          options: {transforms: ["imports", "flow"]},
          },
        ],
        // babylon is already bundled and does not require parsing
@@ -86,6 +130,23 @@ index 2e4891efb..192267df5 100644
      },
      node: {
        // Mock Node.js modules that Babel require()s but that we don't
+@@ -93,6 +65,7 @@ function webpackBuild(opts) {
+       libraryTarget: "umd",
+     },
+     plugins: [
++      new ObjectRestSpreadPlugin(),
+       new webpack.DefinePlugin({
+         "process.env.NODE_ENV": '"production"',
+         "process.env": JSON.stringify({ NODE_ENV: "production" }),
+@@ -149,7 +122,7 @@ function registerStandalonePackageTask(
+           plugins,
+         }),
+         gulp.dest(standalonePath),
+-        uglify(),
++        // uglify(),
+         rename({ extname: ".min.js" }),
+         gulp.dest(standalonePath),
+       ],
 diff --git a/test/mocha.opts b/test/mocha.opts
 index 939595b1b..20955e894 100644
 --- a/test/mocha.opts

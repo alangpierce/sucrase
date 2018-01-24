@@ -98,8 +98,9 @@ import {transform} from "sucrase";
 const compiledCode = transform(code, {transforms: ["typescript", "imports"]});
 ```
 
-There are also some integrations for
-[Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin)
+There are also integrations for
+[Webpack](https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-loader),
+[Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin),
 and [Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin).
 
 ## Motivation

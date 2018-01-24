@@ -1,6 +1,5 @@
 /* eslint max-len: 0 */
 
-import {Options} from "../options";
 import BaseParser from "../parser/base";
 import * as charCodes from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart, isKeyword} from "../util/identifier";
@@ -135,10 +134,10 @@ export default abstract class Tokenizer extends BaseParser {
   input: string;
   nextContextId: number;
 
-  constructor(options: Options, input: string) {
+  constructor(input: string) {
     super();
     this.state = new State();
-    this.state.init(options, input);
+    this.state.init(input);
     this.isLookahead = false;
     this.nextContextId = 1;
   }
@@ -146,7 +145,7 @@ export default abstract class Tokenizer extends BaseParser {
   // Move to the next token
 
   next(): void {
-    if (this.options.tokens && !this.isLookahead) {
+    if (!this.isLookahead) {
       this.state.tokens.push(new Token(this.state));
     }
 

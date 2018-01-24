@@ -1,5 +1,3 @@
-import {Options} from "../options";
-
 import {TokContext, types as ct} from "./context";
 import {Token} from "./index";
 import {TokenType, types as tt} from "./types";
@@ -31,7 +29,7 @@ export type StateSnapshot = {
 };
 
 export default class State {
-  init(options: Options, input: string): void {
+  init(input: string): void {
     this.input = input;
 
     this.potentialArrowAt = -1;

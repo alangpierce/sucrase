@@ -55,20 +55,10 @@ export function getFormattedTokens(code: string, options: Options): string {
  * being done.
  */
 function getSucraseContext(code: string, options: Options): SucraseContext {
-  const babylonPlugins = [];
-  if (options.transforms.includes("jsx")) {
-    babylonPlugins.push("jsx");
-  }
-  if (options.transforms.includes("flow")) {
-    babylonPlugins.push("flow");
-  }
-  if (options.transforms.includes("typescript")) {
-    babylonPlugins.push("typescript");
-  }
-  const file = parse(code, {
-    tokens: true,
-    plugins: babylonPlugins,
-  });
+  const babylonPlugins = options.transforms.filter((t) =>
+    ["jsx", "typescript", "flow"].includes(t),
+  );
+  const file = parse(code, babylonPlugins);
   const tokens = file.tokens;
   const scopes = file.scopes;
 

@@ -2,7 +2,6 @@
 // given point in the program is loosely based on sweet.js' approach.
 // See https://github.com/mozilla/sweet.js/wiki/design
 
-import Parser from "../parser";
 import {lineBreak} from "../util/whitespace";
 import {TokenType, types as tt} from "./types";
 
@@ -16,7 +15,6 @@ export class TokContext {
     this.token = token;
     this.isExpr = !!isExpr;
     this.preserveSpace = !!preserveSpace;
-    this.override = override;
   }
 
   token: string;
@@ -33,9 +31,7 @@ export const types: {
   templateQuasi: new TokContext("${", true),
   parenStatement: new TokContext("(", false),
   parenExpression: new TokContext("(", true),
-  template: new TokContext("`", true, true, (p: Parser) => {
-    p.readTmplToken();
-  }),
+  template: new TokContext("`", true, true),
   functionExpression: new TokContext("function", true),
 };
 

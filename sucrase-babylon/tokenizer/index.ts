@@ -153,6 +153,17 @@ export default abstract class Tokenizer extends BaseParser {
     this.nextToken();
   }
 
+  // Call instead of next when inside a template, since that needs to be handled differently.
+  nextTemplateToken(): void {
+    if (!this.isLookahead) {
+      this.state.tokens.push(new Token(this.state));
+    }
+
+    this.state.lastTokEnd = this.state.end;
+    this.state.start = this.state.pos;
+    this.readTmplToken();
+  }
+
   runInTypeContext<T>(existingTokensInType: number, func: () => T): T {
     for (
       let i = this.state.tokens.length - existingTokensInType;
@@ -221,7 +232,6 @@ export default abstract class Tokenizer extends BaseParser {
 
   // Read a single token, updating the parser object's token-related
   // properties.
-
   nextToken(): void {
     const curContext = this.curContext();
     if (!curContext || !curContext.preserveSpace) this.skipSpace();
@@ -242,12 +252,7 @@ export default abstract class Tokenizer extends BaseParser {
       this.finishToken(tt.eof);
       return;
     }
-
-    if (curContext.override) {
-      curContext.override(this);
-    } else {
-      this.readToken(this.fullCharCodeAtPos());
-    }
+    this.readToken(this.fullCharCodeAtPos());
   }
 
   readToken(code: number): void {

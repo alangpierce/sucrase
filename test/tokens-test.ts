@@ -116,4 +116,60 @@ describe("tokens", () => {
       ],
     );
   });
+
+  it("does not get confused by a regex-like sequence of divisions", () => {
+    assertTokens(
+      `
+      5/3/1
+    `,
+      [{label: "num"}, {label: "/"}, {label: "num"}, {label: "/"}, {label: "num"}, {label: "eof"}],
+    );
+  });
+
+  it("properly recognizes regexes that look like divisions", () => {
+    assertTokens(
+      `
+      5 + /3/
+    `,
+      [{label: "num"}, {label: "+/-"}, {label: "regexp"}, {label: "eof"}],
+    );
+  });
+
+  it("properly recognizes less than and greater than that look like JSX", () => {
+    assertTokens(
+      `
+      x<Hello>2
+    `,
+      [
+        {label: "name"},
+        {label: "<"},
+        {label: "name"},
+        {label: ">"},
+        {label: "num"},
+        {label: "eof"},
+      ],
+    );
+  });
+
+  it("properly recognizes template strings", () => {
+    assertTokens(
+      `
+      \`Hello, \${name} \${surname}\`
+    `,
+      [
+        {label: "`"},
+        {label: "template"},
+        {label: "${"},
+        {label: "name"},
+        {label: "}"},
+        {label: "template"},
+        {label: "${"},
+        {label: "name"},
+        {label: "}"},
+        {label: "template"},
+        {label: "`"},
+        {label: "eof"},
+      ],
+    );
+  });
 });

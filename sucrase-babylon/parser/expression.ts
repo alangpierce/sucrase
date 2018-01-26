@@ -236,7 +236,7 @@ export default abstract class ExpressionParser extends LValParser {
       }
     } else if (this.match(tt.backQuote)) {
       // Tagged template expression.
-      this.parseTemplate(true);
+      this.parseTemplate();
     } else {
       state.stop = true;
     }
@@ -379,7 +379,7 @@ export default abstract class ExpressionParser extends LValParser {
         return false;
 
       case tt.backQuote:
-        this.parseTemplate(false);
+        this.parseTemplate();
         return false;
 
       case tt.doubleColon: {
@@ -529,25 +529,18 @@ export default abstract class ExpressionParser extends LValParser {
     }
   }
 
-  // Parse template expression.
-  parseTemplateElement(isTagged: boolean): void {
-    if (this.state.value === null) {
-      if (!isTagged) {
-        // TODO: fix this
-        this.raise(this.state.pos, "Invalid escape sequence in template");
-      }
-    }
-    this.next();
-  }
-
-  parseTemplate(isTagged: boolean): void {
-    this.next();
-    this.parseTemplateElement(isTagged);
+  parseTemplate(): void {
+    // Finish `, read quasi
+    this.nextTemplateToken();
+    // Finish quasi, read ${
+    this.nextTemplateToken();
     while (!this.match(tt.backQuote)) {
       this.expect(tt.dollarBraceL);
       this.parseExpression();
-      this.expect(tt.braceR);
-      this.parseTemplateElement(isTagged);
+      // Finish }, read quasi
+      this.nextTemplateToken();
+      // Finish quasi, read either ${ or `
+      this.nextTemplateToken();
     }
     this.next();
   }

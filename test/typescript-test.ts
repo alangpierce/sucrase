@@ -724,4 +724,22 @@ describe("typescript transform", () => {
       ["typescript", "imports"],
     );
   });
+
+  it("handles code with an index signature", () => {
+    assertResult(
+      `
+      const o: {[k: string]: number} = {
+        a: 1,
+        b: 2,
+      }
+    `,
+      `"use strict";
+      const o = {
+        a: 1,
+        b: 2,
+      }
+    `,
+      ["typescript", "imports"],
+    );
+  });
 });

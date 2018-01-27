@@ -162,4 +162,15 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("properly handles star as an arrow type param", () => {
+    assertFlowResult(
+      `
+      const x: *=>3 = null;
+    `,
+      `${PREFIX}
+      const x = null;
+    `,
+    );
+  });
 });

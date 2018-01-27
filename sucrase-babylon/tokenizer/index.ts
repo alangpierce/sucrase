@@ -4,7 +4,6 @@ import BaseParser from "../parser/base";
 import * as charCodes from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart, isKeyword} from "../util/identifier";
 import {isNewLine, lineBreak, nonASCIIwhitespace} from "../util/whitespace";
-import {TokContext, types as ct} from "./context";
 import State from "./state";
 import {keywords as keywordTypes, TokenType, types as tt} from "./types";
 
@@ -164,6 +163,15 @@ export default abstract class Tokenizer extends BaseParser {
     this.readTmplToken();
   }
 
+  // The tokenizer never parses regexes by default. Instead, the parser is responsible for
+  // instructing it to parse a regex when we see a slash at the start of an expression.
+  retokenizeSlashAsRegex(): void {
+    if (this.state.type === tt.assign) {
+      --this.state.pos;
+    }
+    this.readRegexp();
+  }
+
   runInTypeContext<T>(existingTokensInType: number, func: () => T): T {
     for (
       let i = this.state.tokens.length - existingTokensInType;
@@ -226,16 +234,10 @@ export default abstract class Tokenizer extends BaseParser {
     return {type, value};
   }
 
-  curContext(): TokContext {
-    return this.state.context[this.state.context.length - 1];
-  }
-
   // Read a single token, updating the parser object's token-related
   // properties.
   nextToken(): void {
-    const curContext = this.curContext();
-    if (!curContext || !curContext.preserveSpace) this.skipSpace();
-
+    this.skipSpace();
     this.state.start = this.state.pos;
     if (this.state.pos >= this.input.length) {
       const tokens = this.state.tokens;
@@ -356,8 +358,6 @@ export default abstract class Tokenizer extends BaseParser {
     const prevType = this.state.type;
     this.state.type = type;
     this.state.value = val;
-
-    this.updateContext(prevType);
   }
 
   // ### Token reading
@@ -387,13 +387,6 @@ export default abstract class Tokenizer extends BaseParser {
   }
 
   readToken_slash(): void {
-    // '/'
-    if (this.state.exprAllowed) {
-      ++this.state.pos;
-      this.readRegexp();
-      return;
-    }
-
     const next = this.input.charCodeAt(this.state.pos + 1);
     if (next === charCodes.equalsTo) {
       this.finishOp(tt.assign, 2);
@@ -1159,52 +1152,5 @@ export default abstract class Tokenizer extends BaseParser {
     }
 
     this.finishToken(type, word);
-  }
-
-  braceIsBlock(prevType: TokenType): boolean {
-    if (prevType === tt.colon) {
-      const parent = this.curContext();
-      if (parent === ct.braceStatement || parent === ct.braceExpression) {
-        return !parent.isExpr;
-      }
-    }
-
-    if (prevType === tt._return) {
-      return lineBreak.test(this.input.slice(this.state.lastTokEnd, this.state.start));
-    }
-
-    if (
-      prevType === tt._else ||
-      prevType === tt.semi ||
-      prevType === tt.eof ||
-      prevType === tt.parenR
-    ) {
-      return true;
-    }
-
-    if (prevType === tt.braceL) {
-      return this.curContext() === ct.braceStatement;
-    }
-
-    if (prevType === tt.greaterThan) {
-      // `class C<T> { ... }`
-      return true;
-    }
-
-    return !this.state.exprAllowed;
-  }
-
-  updateContext(prevType: TokenType): void {
-    const type = this.state.type;
-    let update;
-
-    if (type.keyword && (prevType === tt.dot || prevType === tt.questionDot)) {
-      this.state.exprAllowed = false;
-      // eslint-disable-next-line no-cond-assign
-    } else if ((update = type.updateContext)) {
-      update.call(this, prevType);
-    } else {
-      this.state.exprAllowed = type.beforeExpr;
-    }
   }
 }

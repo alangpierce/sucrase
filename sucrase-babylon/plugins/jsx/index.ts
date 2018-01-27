@@ -1,6 +1,5 @@
 import Parser from "../../parser";
 import {IdentifierRole, Token} from "../../tokenizer";
-import {TokContext, types as tc} from "../../tokenizer/context";
 import {TokenType, types as tt} from "../../tokenizer/types";
 import * as charCodes from "../../util/charcodes";
 import {isIdentifierChar, isIdentifierStart} from "../../util/identifier";
@@ -10,30 +9,10 @@ import XHTMLEntities from "./xhtml";
 const HEX_NUMBER = /^[\da-fA-F]+$/;
 const DECIMAL_NUMBER = /^\d+$/;
 
-tc.j_oTag = new TokContext("<tag", false);
-tc.j_cTag = new TokContext("</tag", false);
-tc.j_expr = new TokContext("<tag>...</tag>", true, true);
-
 tt.jsxName = new TokenType("jsxName");
 tt.jsxText = new TokenType("jsxText", {beforeExpr: true});
 tt.jsxTagStart = new TokenType("jsxTagStart", {startsExpr: true});
 tt.jsxTagEnd = new TokenType("jsxTagEnd");
-
-tt.jsxTagStart.updateContext = function(): void {
-  this.state.context.push(tc.j_expr); // treat as beginning of JSX expression
-  this.state.context.push(tc.j_oTag); // start opening tag context
-  this.state.exprAllowed = false;
-};
-
-tt.jsxTagEnd.updateContext = function(prevType: TokenType): void {
-  const out = this.state.context.pop();
-  if ((out === tc.j_oTag && prevType === tt.slash) || out === tc.j_cTag) {
-    this.state.context.pop();
-    this.state.exprAllowed = this.curContext() === tc.j_expr;
-  } else {
-    this.state.exprAllowed = true;
-  }
-};
 
 export default class JSXParser extends Parser {
   // Reads inline JSX contents token.
@@ -52,7 +31,7 @@ export default class JSXParser extends Parser {
         case charCodes.lessThan:
         case charCodes.leftCurlyBrace:
           if (this.state.pos === this.state.start) {
-            if (ch === charCodes.lessThan && this.state.exprAllowed) {
+            if (ch === charCodes.lessThan) {
               ++this.state.pos;
               this.finishToken(tt.jsxTagStart);
               return;
@@ -355,7 +334,8 @@ export default class JSXParser extends Parser {
     if (this.match(tt.jsxText)) {
       this.parseLiteral();
       return false;
-    } else if (this.match(tt.jsxTagStart)) {
+    } else if (this.match(tt.lessThan) && this.hasPlugin("jsx")) {
+      this.state.type = tt.jsxTagStart;
       this.jsxParseElement();
       this.next();
       return false;
@@ -414,45 +394,5 @@ export default class JSXParser extends Parser {
     this.state.lastTokEnd = this.state.end;
     this.state.start = this.state.pos;
     this.jsxReadToken();
-  }
-
-  readToken(code: number): void {
-    if (!this.hasPlugin("jsx")) {
-      super.readToken(code);
-      return;
-    }
-
-    if (this.state.inPropertyName) {
-      super.readToken(code);
-      return;
-    }
-
-    if (code === charCodes.lessThan && this.state.exprAllowed) {
-      ++this.state.pos;
-      this.finishToken(tt.jsxTagStart);
-      return;
-    }
-
-    super.readToken(code);
-  }
-
-  updateContext(prevType: TokenType): void {
-    if (this.match(tt.braceL)) {
-      const curContext = this.curContext();
-      if (curContext === tc.j_oTag) {
-        this.state.context.push(tc.braceExpression);
-      } else if (curContext === tc.j_expr) {
-        this.state.context.push(tc.templateQuasi);
-      } else {
-        super.updateContext(prevType);
-      }
-      this.state.exprAllowed = true;
-    } else if (this.match(tt.slash) && prevType === tt.jsxTagStart) {
-      this.state.context.length -= 2; // do not consider JSX expr -> JSX open tag -> ... anymore
-      this.state.context.push(tc.j_cTag); // reconsider as closing tag context
-      this.state.exprAllowed = false;
-    } else {
-      super.updateContext(prevType);
-    }
   }
 }

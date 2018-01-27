@@ -9,9 +9,7 @@ export default function formatTokens(code: string, tokens: Array<Token>): string
   const tokenKeys = Object.keys(tokens[0]).filter(
     (k) => k !== "type" && k !== "value" && k !== "start" && k !== "end" && k !== "loc",
   );
-  const typeKeys = Object.keys(tokens[0].type).filter(
-    (k) => k !== "updateContext" && k !== "label" && k !== "keyword",
-  );
+  const typeKeys = Object.keys(tokens[0].type).filter((k) => k !== "label" && k !== "keyword");
 
   const headings = ["Location", "Label", "Value", ...tokenKeys, ...typeKeys];
 

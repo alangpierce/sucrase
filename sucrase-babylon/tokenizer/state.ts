@@ -10,9 +10,7 @@ export type Scope = {
 export type StateSnapshot = {
   potentialArrowAt: number;
   inGenerator: boolean;
-  inType: boolean;
   noAnonFunctionType: boolean;
-  inPropertyName: boolean;
   tokensLength: number;
   scopesLength: number;
   pos: number;
@@ -22,7 +20,6 @@ export type StateSnapshot = {
   start: number;
   end: number;
   isType: boolean;
-  lastTokEnd: number;
 };
 
 export default class State {
@@ -32,8 +29,6 @@ export default class State {
     this.potentialArrowAt = -1;
 
     this.inGenerator = false;
-    this.inPropertyName = false;
-    this.inType = false;
     this.noAnonFunctionType = false;
 
     this.tokens = [];
@@ -47,11 +42,8 @@ export default class State {
     this.end = this.pos;
 
     this.isType = false;
-
-    this.lastTokEnd = this.pos;
   }
 
-  // TODO
   input: string;
 
   // Used to signify the start of a potential arrow function
@@ -59,12 +51,8 @@ export default class State {
 
   // yield is treated differently in a generator, and can be a variable name outside a generator.
   inGenerator: boolean;
-  // We need to skip JSX within a type context.
-  inType: boolean;
-  // Used by Flow to handle an edge case involving funtion type parsing.
+  // Used by Flow to handle an edge case involving function type parsing.
   noAnonFunctionType: boolean;
-  // Used by JSX to skip JSX parsing in property names.
-  inPropertyName: boolean;
 
   // Token store.
   tokens: Array<Token>;
@@ -75,30 +63,20 @@ export default class State {
   // The current position of the tokenizer in the input.
   pos: number;
 
-  // Properties of the current token:
-  // Its type
+  // Information about the current token.
   type: TokenType;
-
-  // For tokens that include more information than their type, the value
   // tslint:disable-next-line no-any
   value: any;
-
-  // Its start and end offset
   start: number;
   end: number;
 
   isType: boolean;
 
-  // Position information for the previous token
-  lastTokEnd: number;
-
   snapshot(): StateSnapshot {
     return {
       potentialArrowAt: this.potentialArrowAt,
       inGenerator: this.inGenerator,
-      inType: this.inType,
       noAnonFunctionType: this.noAnonFunctionType,
-      inPropertyName: this.inPropertyName,
       tokensLength: this.tokens.length,
       scopesLength: this.scopes.length,
       pos: this.pos,
@@ -108,16 +86,13 @@ export default class State {
       start: this.start,
       end: this.end,
       isType: this.isType,
-      lastTokEnd: this.lastTokEnd,
     };
   }
 
   restoreFromSnapshot(snapshot: StateSnapshot): void {
     this.potentialArrowAt = snapshot.potentialArrowAt;
     this.inGenerator = snapshot.inGenerator;
-    this.inType = snapshot.inType;
     this.noAnonFunctionType = snapshot.noAnonFunctionType;
-    this.inPropertyName = snapshot.inPropertyName;
     this.tokens.length = snapshot.tokensLength;
     this.scopes.length = snapshot.scopesLength;
     this.pos = snapshot.pos;
@@ -126,6 +101,5 @@ export default class State {
     this.start = snapshot.start;
     this.end = snapshot.end;
     this.isType = snapshot.isType;
-    this.lastTokEnd = snapshot.lastTokEnd;
   }
 }

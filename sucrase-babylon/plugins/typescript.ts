@@ -598,23 +598,16 @@ export default class TypeScriptParser extends TypeParser {
   }
 
   tsParseType(): void {
-    // Need to set `state.inType` so that we don't parse JSX in a type context.
-    const oldInType = this.state.inType;
-    this.state.inType = true;
-    try {
-      if (this.tsIsStartOfFunctionType()) {
-        this.tsParseFunctionOrConstructorType("TSFunctionType");
-        return;
-      }
-      if (this.match(tt._new)) {
-        // As in `new () => Date`
-        this.tsParseFunctionOrConstructorType("TSConstructorType");
-        return;
-      }
-      this.tsParseUnionTypeOrHigher();
-    } finally {
-      this.state.inType = oldInType;
+    if (this.tsIsStartOfFunctionType()) {
+      this.tsParseFunctionOrConstructorType("TSFunctionType");
+      return;
     }
+    if (this.match(tt._new)) {
+      // As in `new () => Date`
+      this.tsParseFunctionOrConstructorType("TSConstructorType");
+      return;
+    }
+    this.tsParseUnionTypeOrHigher();
   }
 
   tsParseTypeAssertion(): void {

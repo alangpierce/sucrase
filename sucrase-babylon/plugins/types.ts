@@ -42,15 +42,6 @@ export default abstract class TypeParser extends JSXParser {
     }
   }
 
-  // ensure that inside types, we bypass the jsx parser plugin
-  readToken(code: number): void {
-    if (this.state.inType && (code === charCodes.lessThan || code === charCodes.greaterThan)) {
-      this.finishOp(code === charCodes.lessThan ? tt.lessThan : tt.greaterThan, 1);
-    } else {
-      super.readToken(code);
-    }
-  }
-
   isClassMethod(): boolean {
     return this.match(tt.lessThan) || super.isClassMethod();
   }

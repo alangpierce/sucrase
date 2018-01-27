@@ -128,7 +128,6 @@ export default abstract class Tokenizer extends BaseParser {
   // parser/util.js
   abstract unexpected(pos?: number | null, messageOrType?: string | TokenType): never;
 
-  isLookahead: boolean;
   state: State;
   input: string;
   nextContextId: number;
@@ -137,28 +136,19 @@ export default abstract class Tokenizer extends BaseParser {
     super();
     this.state = new State();
     this.state.init(input);
-    this.isLookahead = false;
     this.nextContextId = 1;
   }
 
   // Move to the next token
 
   next(): void {
-    if (!this.isLookahead) {
-      this.state.tokens.push(new Token(this.state));
-    }
-
-    this.state.lastTokEnd = this.state.end;
+    this.state.tokens.push(new Token(this.state));
     this.nextToken();
   }
 
   // Call instead of next when inside a template, since that needs to be handled differently.
   nextTemplateToken(): void {
-    if (!this.isLookahead) {
-      this.state.tokens.push(new Token(this.state));
-    }
-
-    this.state.lastTokEnd = this.state.end;
+    this.state.tokens.push(new Token(this.state));
     this.state.start = this.state.pos;
     this.readTmplToken();
   }
@@ -214,10 +204,8 @@ export default abstract class Tokenizer extends BaseParser {
 
   lookaheadType(): TokenType {
     const snapshot = this.state.snapshot();
-    this.isLookahead = true;
     this.next();
     const type = this.state.type;
-    this.isLookahead = false;
     this.state.restoreFromSnapshot(snapshot);
     return type;
   }
@@ -225,11 +213,9 @@ export default abstract class Tokenizer extends BaseParser {
   // tslint:disable-next-line no-any
   lookaheadTypeAndValue(): {type: TokenType; value: any} {
     const snapshot = this.state.snapshot();
-    this.isLookahead = true;
     this.next();
     const type = this.state.type;
     const value = this.state.value;
-    this.isLookahead = false;
     this.state.restoreFromSnapshot(snapshot);
     return {type, value};
   }
@@ -475,8 +461,13 @@ export default abstract class Tokenizer extends BaseParser {
     }
   }
 
+  // '<>'
   readToken_lt_gt(code: number): void {
-    // '<>'
+    // Avoid right-shift for things like Array<Array<string>>.
+    if (code === charCodes.greaterThan && this.state.isType) {
+      this.finishOp(tt.greaterThan, 1);
+      return;
+    }
     const next = this.input.charCodeAt(this.state.pos + 1);
 
     if (next === code) {

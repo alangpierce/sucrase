@@ -94,6 +94,11 @@ export class Token {
     this.start = state.start;
     this.end = state.end;
     this.isType = state.isType;
+    this.identifierRole = null;
+    this.shadowsGlobal = null;
+    this.contextId = null;
+    this.rhsEndIndex = null;
+    this.isExpression = null;
   }
 
   type: TokenType;
@@ -102,11 +107,11 @@ export class Token {
   start: number;
   end: number;
   isType: boolean;
-  identifierRole?: IdentifierRole;
-  shadowsGlobal?: boolean;
-  contextId?: number;
-  rhsEndIndex?: number;
-  isExpression?: boolean;
+  identifierRole: IdentifierRole | null;
+  shadowsGlobal: boolean | null;
+  contextId: number | null;
+  rhsEndIndex: number | null;
+  isExpression: boolean | null;
 }
 
 // ## Tokenizer

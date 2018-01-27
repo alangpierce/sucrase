@@ -382,9 +382,13 @@ export default class StatementParser extends ExpressionParser {
   ): void {
     const startTokenIndex = this.state.tokens.length;
     this.expect(tt.braceL);
-    this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
+    if (contextId) {
+      this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
+    }
     this.parseBlockBody(false, tt.braceR);
-    this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
+    if (contextId) {
+      this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
+    }
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope});
   }
@@ -493,14 +497,18 @@ export default class StatementParser extends ExpressionParser {
 
   parseFunctionParams(allowModifiers?: boolean, funcContextId?: number): void {
     this.expect(tt.parenL);
-    this.state.tokens[this.state.tokens.length - 1].contextId = funcContextId;
+    if (funcContextId) {
+      this.state.tokens[this.state.tokens.length - 1].contextId = funcContextId;
+    }
     this.parseBindingList(
       tt.parenR,
       false /* isBlockScope */,
       false /* allowEmpty */,
       allowModifiers,
     );
-    this.state.tokens[this.state.tokens.length - 1].contextId = funcContextId;
+    if (funcContextId) {
+      this.state.tokens[this.state.tokens.length - 1].contextId = funcContextId;
+    }
   }
 
   // Parse a class declaration or literal (depending on the

@@ -641,9 +641,6 @@ export default class FlowParser extends TypeParser {
     this.state.inType = true;
     this.flowParseUnionType();
     this.state.inType = oldInType;
-    // Ensure that a brace after a function generic type annotation is a
-    // statement, except in arrow functions (noAnonFunctionType)
-    this.state.exprAllowed = this.state.exprAllowed || this.state.noAnonFunctionType;
   }
 
   parseTypeAnnotation(): void {
@@ -992,13 +989,7 @@ export default class FlowParser extends TypeParser {
       } catch (err) {
         if (err instanceof SyntaxError) {
           this.state.restoreFromSnapshot(snapshot);
-
-          // Remove `tc.j_expr` and `tc.j_oTag` from context added
-          // by parsing `jsxTagStart` to stop the JSX plugin from
-          // messing with the tokens
-          this.state.context.length -= 2;
           this.state.type = tt.typeParameterStart;
-
           jsxError = err;
         } else {
           // istanbul ignore next: no such error is expected

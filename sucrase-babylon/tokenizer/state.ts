@@ -1,4 +1,3 @@
-import {TokContext, types as ct} from "./context";
 import {Token} from "./index";
 import {TokenType, types as tt} from "./types";
 
@@ -24,8 +23,6 @@ export type StateSnapshot = {
   end: number;
   isType: boolean;
   lastTokEnd: number;
-  context: Array<TokContext>;
-  exprAllowed: boolean;
 };
 
 export default class State {
@@ -52,9 +49,6 @@ export default class State {
     this.isType = false;
 
     this.lastTokEnd = this.pos;
-
-    this.context = [ct.braceStatement];
-    this.exprAllowed = true;
   }
 
   // TODO
@@ -98,12 +92,6 @@ export default class State {
   // Position information for the previous token
   lastTokEnd: number;
 
-  // The context stack is used to superficially track syntactic
-  // context to predict whether a regular expression is allowed in a
-  // given position.
-  context: Array<TokContext>;
-  exprAllowed: boolean;
-
   snapshot(): StateSnapshot {
     return {
       potentialArrowAt: this.potentialArrowAt,
@@ -121,8 +109,6 @@ export default class State {
       end: this.end,
       isType: this.isType,
       lastTokEnd: this.lastTokEnd,
-      context: this.context.slice(),
-      exprAllowed: this.exprAllowed,
     };
   }
 
@@ -141,7 +127,5 @@ export default class State {
     this.end = snapshot.end;
     this.isType = snapshot.isType;
     this.lastTokEnd = snapshot.lastTokEnd;
-    this.context = snapshot.context;
-    this.exprAllowed = snapshot.exprAllowed;
   }
 }

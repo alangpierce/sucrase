@@ -1,6 +1,4 @@
-import {types as ct} from "../tokenizer/context";
 import {TokenType, types as tt} from "../tokenizer/types";
-import * as charCodes from "../util/charcodes";
 import TypeParser from "./types";
 
 export type TsModifier = "readonly" | "abstract" | "static" | "public" | "private" | "protected";
@@ -1345,12 +1343,7 @@ export default class TypeScriptParser extends TypeParser {
 
     let jsxError: SyntaxError | null = null;
 
-    if (this.match(tt.jsxTagStart)) {
-      const context = this.curContext();
-      assert(context === ct.j_oTag);
-      // Only time j_oTag is pushed is right after j_expr.
-      assert(this.state.context[this.state.context.length - 2] === ct.j_expr);
-
+    if (this.match(tt.lessThan) && this.hasPlugin("jsx")) {
       // Prefer to parse JSX if possible. But may be an arrow fn.
       const snapshot = this.state.snapshot();
       try {
@@ -1363,11 +1356,6 @@ export default class TypeScriptParser extends TypeParser {
 
         this.state.restoreFromSnapshot(snapshot);
         this.state.type = tt.typeParameterStart;
-        // Pop the context added by the jsxTagStart.
-        assert(this.curContext() === ct.j_oTag);
-        this.state.context.pop();
-        assert(this.curContext() === ct.j_expr);
-        this.state.context.pop();
         jsxError = err;
       }
     }

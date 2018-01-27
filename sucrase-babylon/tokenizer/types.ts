@@ -47,7 +47,6 @@ export class TokenType {
   prefix: boolean;
   postfix: boolean;
   binop: number | null;
-  updateContext?: ((prevType: TokenType) => void) | null;
 
   constructor(label: string, conf: TokenOptions = {}) {
     this.label = label;
@@ -60,7 +59,6 @@ export class TokenType {
     this.prefix = !!conf.prefix;
     this.postfix = !!conf.postfix;
     this.binop = conf.binop === 0 ? 0 : conf.binop || null;
-    this.updateContext = null;
   }
 }
 

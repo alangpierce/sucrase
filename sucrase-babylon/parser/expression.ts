@@ -290,6 +290,11 @@ export default abstract class ExpressionParser extends LValParser {
   parseExprAtom(): boolean {
     const canBeArrow = this.state.potentialArrowAt === this.state.start;
     switch (this.state.type) {
+      case tt.slash:
+      case tt.assign:
+        this.retokenizeSlashAsRegex();
+      // Fall through.
+
       case tt._super:
       case tt._this:
       case tt.regexp:

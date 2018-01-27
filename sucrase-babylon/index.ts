@@ -1,7 +1,4 @@
 import Parser from "./parser";
-
-import "./tokenizer/context";
-
 import FlowParser from "./plugins/flow";
 import JSXParser from "./plugins/jsx";
 import TypeScriptParser from "./plugins/typescript";

@@ -407,7 +407,6 @@ export default abstract class Tokenizer extends BaseParser {
     let type = code === charCodes.asterisk ? tt.star : tt.modulo;
     let width = 1;
     let next = this.input.charCodeAt(this.state.pos + 1);
-    const exprAllowed = this.state.exprAllowed;
 
     // Exponentiation operator **
     if (code === charCodes.asterisk && next === charCodes.asterisk) {
@@ -416,7 +415,11 @@ export default abstract class Tokenizer extends BaseParser {
       type = tt.exponent;
     }
 
-    if (next === charCodes.equalsTo && !exprAllowed) {
+    // Match *= or %=, disallowing *=> which can be valid in flow.
+    if (
+      next === charCodes.equalsTo &&
+      this.input.charCodeAt(this.state.pos + 2) !== charCodes.greaterThan
+    ) {
       width++;
       type = tt.assign;
     }

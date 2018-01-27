@@ -10,8 +10,8 @@ const HEX_NUMBER = /^[\da-fA-F]+$/;
 const DECIMAL_NUMBER = /^\d+$/;
 
 tt.jsxName = new TokenType("jsxName");
-tt.jsxText = new TokenType("jsxText", {beforeExpr: true});
-tt.jsxTagStart = new TokenType("jsxTagStart", {startsExpr: true});
+tt.jsxText = new TokenType("jsxText");
+tt.jsxTagStart = new TokenType("jsxTagStart");
 tt.jsxTagEnd = new TokenType("jsxTagEnd");
 
 export default class JSXParser extends Parser {

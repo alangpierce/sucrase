@@ -813,11 +813,7 @@ export default abstract class ExpressionParser extends LValParser {
   // Parses yield expression inside generator.
   parseYield(): void {
     this.next();
-    if (
-      !this.match(tt.semi) &&
-      !this.canInsertSemicolon() &&
-      (this.match(tt.star) || this.state.type.startsExpr)
-    ) {
+    if (!this.match(tt.semi) && !this.canInsertSemicolon()) {
       this.eat(tt.star);
       this.parseMaybeAssign();
     }

@@ -376,13 +376,33 @@ export default class JSXParser extends Parser {
 
     if (isIdentifierStart(code)) {
       this.jsxReadWord();
-    } else if (code === charCodes.greaterThan) {
-      ++this.state.pos;
-      this.finishToken(tt.jsxTagEnd);
     } else if (code === charCodes.quotationMark || code === charCodes.apostrophe) {
       this.jsxReadString(code);
     } else {
-      this.readToken(code);
+      // The following tokens are just one character each.
+      ++this.state.pos;
+      switch (code) {
+        case charCodes.greaterThan:
+          this.finishToken(tt.jsxTagEnd);
+          break;
+        case charCodes.slash:
+          this.finishToken(tt.slash);
+          break;
+        case charCodes.equalsTo:
+          this.finishToken(tt.eq);
+          break;
+        case charCodes.leftCurlyBrace:
+          this.finishToken(tt.braceL);
+          break;
+        case charCodes.dot:
+          this.finishToken(tt.dot);
+          break;
+        case charCodes.colon:
+          this.finishToken(tt.colon);
+          break;
+        default:
+          this.unexpected();
+      }
     }
   }
 

@@ -6,7 +6,7 @@ type SimpleToken = Token & {label?: string};
 type TokenExpectation = {[K in keyof SimpleToken]?: SimpleToken[K]};
 
 function assertTokens(code: string, expectedTokens: Array<TokenExpectation>): void {
-  const tokens: Array<SimpleToken> = parse(code, []).tokens;
+  const tokens: Array<SimpleToken> = parse(code, ["jsx"]).tokens;
   for (const token of tokens) {
     token.label = token.type.label;
   }
@@ -146,6 +146,58 @@ describe("tokens", () => {
         {label: "name"},
         {label: ">"},
         {label: "num"},
+        {label: "eof"},
+      ],
+    );
+  });
+
+  it("properly recognizes JSX in a normal expression context", () => {
+    assertTokens(
+      `
+      x + < Hello / >
+    `,
+      [
+        {label: "name"},
+        {label: "+/-"},
+        {label: "jsxTagStart"},
+        {label: "jsxName"},
+        {label: "/"},
+        {label: "jsxTagEnd"},
+        {label: "eof"},
+      ],
+    );
+  });
+
+  it("properly recognizes nested JSX content", () => {
+    assertTokens(
+      `
+      <div className="foo">
+        Hello, world!
+        <span className={bar} />
+      </div>
+    `,
+      [
+        {label: "jsxTagStart"},
+        {label: "jsxName"},
+        {label: "jsxName"},
+        {label: "="},
+        {label: "string"},
+        {label: "jsxTagEnd"},
+        {label: "jsxText"},
+        {label: "jsxTagStart"},
+        {label: "jsxName"},
+        {label: "jsxName"},
+        {label: "="},
+        {label: "{"},
+        {label: "name"},
+        {label: "}"},
+        {label: "/"},
+        {label: "jsxTagEnd"},
+        {label: "jsxText"},
+        {label: "jsxTagStart"},
+        {label: "/"},
+        {label: "jsxName"},
+        {label: "jsxTagEnd"},
         {label: "eof"},
       ],
     );

@@ -31,7 +31,9 @@ export default class UtilParser extends Tokenizer {
   }
 
   hasPrecedingLineBreak(): boolean {
-    return lineBreak.test(this.input.slice(this.state.lastTokEnd, this.state.start));
+    const prevToken = this.state.tokens[this.state.tokens.length - 1];
+    const lastTokEnd = prevToken ? prevToken.end : 0;
+    return lineBreak.test(this.input.slice(lastTokEnd, this.state.start));
   }
 
   isLineTerminator(): boolean {

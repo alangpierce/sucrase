@@ -12,12 +12,8 @@ function isMaybeDefaultImport(lookahead: {type: TokenType; value: any}): boolean
 export default class FlowParser extends TypeParser {
   flowParseTypeInitialiser(tok?: TokenType): void {
     this.runInTypeContext(0, () => {
-      const oldInType = this.state.inType;
-      this.state.inType = true;
       this.expect(tok || tt.colon);
-
       this.flowParseType();
-      this.state.inType = oldInType;
     });
   }
 
@@ -32,15 +28,11 @@ export default class FlowParser extends TypeParser {
 
   flowParseTypeAndPredicateInitialiser(): void {
     this.runInTypeContext(0, () => {
-      const oldInType = this.state.inType;
-      this.state.inType = true;
       this.expect(tt.colon);
       if (this.match(tt.modulo)) {
-        this.state.inType = oldInType;
         this.flowParsePredicate();
       } else {
         this.flowParseType();
-        this.state.inType = oldInType;
         if (this.match(tt.modulo)) {
           this.flowParsePredicate();
         }
@@ -262,9 +254,6 @@ export default class FlowParser extends TypeParser {
 
   flowParseTypeParameterDeclaration(): void {
     this.runInTypeContext(0, () => {
-      const oldInType = this.state.inType;
-      this.state.inType = true;
-
       // istanbul ignore else: this condition is already checked at all call sites
       if (this.match(tt.lessThan) || this.match(tt.typeParameterStart)) {
         this.next();
@@ -279,16 +268,10 @@ export default class FlowParser extends TypeParser {
         }
       } while (!this.match(tt.greaterThan));
       this.expect(tt.greaterThan);
-
-      this.state.inType = oldInType;
     });
   }
 
   flowParseTypeParameterInstantiation(): void {
-    const oldInType = this.state.inType;
-
-    this.state.inType = true;
-
     this.expect(tt.lessThan);
     while (!this.match(tt.greaterThan)) {
       this.flowParseType();
@@ -297,8 +280,6 @@ export default class FlowParser extends TypeParser {
       }
     }
     this.expect(tt.greaterThan);
-
-    this.state.inType = oldInType;
   }
 
   flowParseObjectPropertyKey(): void {
@@ -346,9 +327,6 @@ export default class FlowParser extends TypeParser {
   }
 
   flowParseObjectType(allowStatic: boolean, allowExact: boolean): void {
-    const oldInType = this.state.inType;
-    this.state.inType = true;
-
     let endDelim;
     if (allowExact && this.match(tt.braceBarL)) {
       this.expect(tt.braceBarL);
@@ -390,7 +368,6 @@ export default class FlowParser extends TypeParser {
     }
 
     this.expect(endDelim);
-    this.state.inType = oldInType;
   }
 
   flowParseObjectTypeProperty(): void {
@@ -583,6 +560,7 @@ export default class FlowParser extends TypeParser {
       case tt._false:
       case tt._null:
       case tt._this:
+      case tt._void:
       case tt.star:
         this.next();
         return;
@@ -637,10 +615,7 @@ export default class FlowParser extends TypeParser {
   }
 
   flowParseType(): void {
-    const oldInType = this.state.inType;
-    this.state.inType = true;
     this.flowParseUnionType();
-    this.state.inType = oldInType;
   }
 
   parseTypeAnnotation(): void {
@@ -801,16 +776,6 @@ export default class FlowParser extends TypeParser {
     super.parseClassId(isStatement, optionalId);
     if (this.match(tt.lessThan)) {
       this.flowParseTypeParameterDeclaration();
-    }
-  }
-
-  // don't consider `void` to be a keyword as then it'll use the void token type
-  // and set startExpr
-  isKeyword(name: string): boolean {
-    if (this.state.inType && name === "void") {
-      return false;
-    } else {
-      return super.isKeyword(name);
     }
   }
 

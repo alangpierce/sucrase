@@ -708,8 +708,6 @@ export default abstract class ExpressionParser extends LValParser {
       this.expect(tt.bracketR);
       this.state.tokens[this.state.tokens.length - 1].contextId = objectContextId;
     } else {
-      const oldInPropertyName = this.state.inPropertyName;
-      this.state.inPropertyName = true;
       if (this.match(tt.num) || this.match(tt.string)) {
         this.parseExprAtom();
       } else {
@@ -718,8 +716,6 @@ export default abstract class ExpressionParser extends LValParser {
 
       this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.ObjectKey;
       this.state.tokens[this.state.tokens.length - 1].contextId = objectContextId;
-
-      this.state.inPropertyName = oldInPropertyName;
     }
   }
 

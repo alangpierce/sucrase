@@ -345,11 +345,7 @@ export default class JSXParser extends Parser {
   }
 
   nextJSXTagToken(): void {
-    if (!this.isLookahead) {
-      this.state.tokens.push(new Token(this.state));
-    }
-
-    this.state.lastTokEnd = this.state.end;
+    this.state.tokens.push(new Token(this.state));
     this.skipSpace();
     this.state.start = this.state.pos;
     const code = this.fullCharCodeAtPos();
@@ -387,11 +383,7 @@ export default class JSXParser extends Parser {
   }
 
   nextJSXExprToken(): void {
-    if (!this.isLookahead) {
-      this.state.tokens.push(new Token(this.state));
-    }
-
-    this.state.lastTokEnd = this.state.end;
+    this.state.tokens.push(new Token(this.state));
     this.state.start = this.state.pos;
     this.jsxReadToken();
   }

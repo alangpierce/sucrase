@@ -9,7 +9,6 @@ export type Scope = {
 
 export type StateSnapshot = {
   potentialArrowAt: number;
-  inGenerator: boolean;
   noAnonFunctionType: boolean;
   tokensLength: number;
   scopesLength: number;
@@ -28,7 +27,6 @@ export default class State {
 
     this.potentialArrowAt = -1;
 
-    this.inGenerator = false;
     this.noAnonFunctionType = false;
 
     this.tokens = [];
@@ -49,8 +47,6 @@ export default class State {
   // Used to signify the start of a potential arrow function
   potentialArrowAt: number;
 
-  // yield is treated differently in a generator, and can be a variable name outside a generator.
-  inGenerator: boolean;
   // Used by Flow to handle an edge case involving function type parsing.
   noAnonFunctionType: boolean;
 
@@ -75,7 +71,6 @@ export default class State {
   snapshot(): StateSnapshot {
     return {
       potentialArrowAt: this.potentialArrowAt,
-      inGenerator: this.inGenerator,
       noAnonFunctionType: this.noAnonFunctionType,
       tokensLength: this.tokens.length,
       scopesLength: this.scopes.length,
@@ -91,7 +86,6 @@ export default class State {
 
   restoreFromSnapshot(snapshot: StateSnapshot): void {
     this.potentialArrowAt = snapshot.potentialArrowAt;
-    this.inGenerator = snapshot.inGenerator;
     this.noAnonFunctionType = snapshot.noAnonFunctionType;
     this.tokens.length = snapshot.tokensLength;
     this.scopes.length = snapshot.scopesLength;

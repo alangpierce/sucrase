@@ -452,8 +452,6 @@ export default class StatementParser extends ExpressionParser {
     allowExpressionBody?: boolean,
     optionalId?: boolean,
   ): void {
-    const oldInGenerator = this.state.inGenerator;
-
     let isGenerator = false;
     if (this.match(tt.star)) {
       isGenerator = true;
@@ -466,16 +464,7 @@ export default class StatementParser extends ExpressionParser {
 
     let nameScopeStartTokenIndex = null;
 
-    // When parsing function expression, the binding identifier is parsed
-    // according to the rules inside the function.
-    // e.g. (function* yield() {}) is invalid because "yield" is disallowed in
-    // generators.
-    // This isn't the case with function declarations: function* yield() {} is
-    // valid because yield is parsed as if it was outside the generator.
-    // Therefore, this.state.inGenerator is set before or after parsing the
-    // function id according to the "isStatement" parameter.
-    if (!isStatement) this.state.inGenerator = isGenerator;
-    if (this.match(tt.name) || this.match(tt._yield)) {
+    if (this.match(tt.name)) {
       // Expression-style functions should limit their name's scope to the function body, so we make
       // a new function scope to enforce that.
       if (!isStatement) {
@@ -485,7 +474,6 @@ export default class StatementParser extends ExpressionParser {
       this.state.tokens[this.state.tokens.length - 1].identifierRole =
         IdentifierRole.FunctionScopedDeclaration;
     }
-    if (isStatement) this.state.inGenerator = isGenerator;
 
     const startTokenIndex = this.state.tokens.length;
     this.parseFunctionParams();
@@ -501,8 +489,6 @@ export default class StatementParser extends ExpressionParser {
         isFunctionScope: true,
       });
     }
-
-    this.state.inGenerator = oldInGenerator;
   }
 
   parseFunctionParams(allowModifiers?: boolean, funcContextId?: number): void {

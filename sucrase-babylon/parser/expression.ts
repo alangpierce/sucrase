@@ -68,7 +68,7 @@ export default abstract class ExpressionParser extends LValParser {
   // operators like `+=`.
   // Returns true if the expression was an arrow function.
   parseMaybeAssign(noIn: boolean | null = null, afterLeftParse?: Function): boolean {
-    if (this.match(tt._yield) && this.state.inGenerator) {
+    if (this.match(tt._yield)) {
       this.parseYield();
       if (afterLeftParse) {
         afterLeftParse.call(this);
@@ -315,9 +315,6 @@ export default abstract class ExpressionParser extends LValParser {
         this.next();
         return false;
 
-      case tt._yield:
-        if (this.state.inGenerator) this.unexpected();
-
       case tt.name: {
         const startTokenIndex = this.state.tokens.length;
         const functionStart = this.state.start;
@@ -406,7 +403,7 @@ export default abstract class ExpressionParser extends LValParser {
   parseFunctionExpression(): void {
     const functionStart = this.state.start;
     this.parseIdentifier();
-    if (this.state.inGenerator && this.eat(tt.dot)) {
+    if (this.eat(tt.dot)) {
       // function.sent
       this.parseMetaProperty();
     }
@@ -722,9 +719,6 @@ export default abstract class ExpressionParser extends LValParser {
   // Parse object or class method.
 
   parseMethod(functionStart: number, isGenerator: boolean, isConstructor: boolean): void {
-    const oldInGenerator = this.state.inGenerator;
-    this.state.inGenerator = isGenerator;
-
     const funcContextId = this.nextContextId++;
 
     const startTokenIndex = this.state.tokens.length;
@@ -738,19 +732,13 @@ export default abstract class ExpressionParser extends LValParser {
     );
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
-
-    this.state.inGenerator = oldInGenerator;
   }
 
   // Parse arrow function expression.
   // If the parameters are provided, they will be converted to an
   // assignable list.
   parseArrowExpression(functionStart: number, startTokenIndex: number): void {
-    const oldInGenerator = this.state.inGenerator;
-    this.state.inGenerator = false;
     this.parseFunctionBody(functionStart, false /* isGenerator */, true);
-    this.state.inGenerator = oldInGenerator;
-
     const endTokenIndex = this.state.tokens.length;
     this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
   }
@@ -776,12 +764,7 @@ export default abstract class ExpressionParser extends LValParser {
     if (isExpression) {
       this.parseMaybeAssign();
     } else {
-      // Start a new scope with regard to labels and the `inGenerator`
-      // flag (restore them to their old value afterwards).
-      const oldInGen = this.state.inGenerator;
-      this.state.inGenerator = isGenerator;
       this.parseBlock(true /* allowDirectives */, true /* isFunctionScope */, funcContextId);
-      this.state.inGenerator = oldInGen;
     }
   }
 

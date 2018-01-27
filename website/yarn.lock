@@ -23,8 +23,8 @@
     "@types/node" "*"
 
 "@types/node@*":
-  version "9.3.0"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-9.3.0.tgz#3a129cda7c4e5df2409702626892cb4b96546dd5"
+  version "9.4.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-9.4.0.tgz#b85a0bcf1e1cc84eb4901b7e96966aedc6f078d1"
 
 abab@^1.0.3:
   version "1.0.4"
@@ -6223,8 +6223,8 @@ style-loader@0.18.2:
     schema-utils "^0.3.0"
 
 sucrase@^1.8.0:
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.10.0.tgz#7cd0926f5804a15569279ca59ae905403f10acec"
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.11.0.tgz#acf39b4991fe4f00db79d246eb32f8ded70dff71"
   dependencies:
     "@types/mz" "^0.0.32"
     commander "^2.12.2"

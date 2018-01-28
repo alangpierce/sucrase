@@ -1,4 +1,5 @@
 import {IdentifierRole} from "../../sucrase-babylon/tokenizer";
+import {types as tt} from "../../sucrase-babylon/tokenizer/types";
 import ImportProcessor from "../ImportProcessor";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
@@ -35,26 +36,26 @@ export default class ImportTransformer extends Transformer {
   }
 
   process(): boolean {
-    if (this.tokens.matches(["import", "name", "="])) {
+    if (this.tokens.matches3(tt._import, tt.name, tt.eq)) {
       this.tokens.replaceToken("const");
       return true;
     }
-    if (this.tokens.matches(["import"])) {
+    if (this.tokens.matches1(tt._import)) {
       this.processImport();
       return true;
     }
-    if (this.tokens.matches(["export", "="])) {
+    if (this.tokens.matches2(tt._export, tt.eq)) {
       this.tokens.replaceToken("module.exports");
       return true;
     }
-    if (this.tokens.matches(["export"]) && !this.tokens.currentToken().isType) {
+    if (this.tokens.matches1(tt._export) && !this.tokens.currentToken().isType) {
       this.hadExport = true;
       return this.processExport();
     }
-    if (this.tokens.matches(["name"]) || this.tokens.matches(["jsxName"])) {
+    if (this.tokens.matches1(tt.name) || this.tokens.matches1(tt.jsxName)) {
       return this.processIdentifier();
     }
-    if (this.tokens.matches(["="])) {
+    if (this.tokens.matches1(tt.eq)) {
       return this.processAssignment();
     }
     return false;
@@ -70,14 +71,14 @@ export default class ImportTransformer extends Transformer {
    * we just need to look it up.
    */
   private processImport(): void {
-    if (this.tokens.matches(["import", "("])) {
+    if (this.tokens.matches2(tt._import, tt.parenL)) {
       this.tokens.replaceToken("Promise.resolve().then(() => require");
       const contextId = this.tokens.currentToken().contextId;
       if (contextId == null) {
         throw new Error("Expected context ID on dynamic import invocation.");
       }
       this.tokens.copyToken();
-      while (!this.tokens.matchesContextIdAndLabel(")", contextId)) {
+      while (!this.tokens.matchesContextIdAndLabel(tt.parenR, contextId)) {
         this.rootTransformer.processToken();
       }
       this.tokens.replaceToken("))");
@@ -93,15 +94,14 @@ export default class ImportTransformer extends Transformer {
       this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
       this.tokens.appendCode(this.importProcessor.claimImportCode(path));
     }
-    if (this.tokens.matches([";"])) {
+    if (this.tokens.matches1(tt.semi)) {
       this.tokens.removeToken();
     }
   }
 
   /**
-   * Erase this import, and if it was either of the form "import type" or
-   * contained only "type". Such imports should not even do a side-effect
-   * import.
+   * Erase this import, and return true if it was either of the form "import type" or contained only
+   * "type" named imports. Such imports should not even do a side-effect import.
    *
    * The position should end at the import string.
    */
@@ -117,29 +117,29 @@ export default class ImportTransformer extends Transformer {
       return true;
     }
 
-    if (this.tokens.matches(["name"]) || this.tokens.matches(["*"])) {
+    if (this.tokens.matches1(tt.name) || this.tokens.matches1(tt.star)) {
       // We have a default import or namespace import, so there must be some
       // non-type import.
       this.removeRemainingImport();
       return false;
     }
 
-    if (this.tokens.matches(["string"])) {
+    if (this.tokens.matches1(tt.string)) {
       // This is a bare import, so we should proceed with the import.
       return false;
     }
 
     let foundNonType = false;
-    while (!this.tokens.matches(["string"])) {
+    while (!this.tokens.matches1(tt.string)) {
       // Check if any named imports are of the form "foo" or "foo as bar", with
       // no leading "type".
-      if ((!foundNonType && this.tokens.matches(["{"])) || this.tokens.matches([","])) {
+      if ((!foundNonType && this.tokens.matches1(tt.braceL)) || this.tokens.matches1(tt.comma)) {
         this.tokens.removeToken();
         if (
-          this.tokens.matches(["name", ","]) ||
-          this.tokens.matches(["name", "}"]) ||
-          this.tokens.matches(["name", "name", "name", ","]) ||
-          this.tokens.matches(["name", "name", "name", "}"])
+          this.tokens.matches2(tt.name, tt.comma) ||
+          this.tokens.matches2(tt.name, tt.braceR) ||
+          this.tokens.matches4(tt.name, tt.name, tt.name, tt.comma) ||
+          this.tokens.matches4(tt.name, tt.name, tt.name, tt.braceR)
         ) {
           foundNonType = true;
         }
@@ -150,7 +150,7 @@ export default class ImportTransformer extends Transformer {
   }
 
   private removeRemainingImport(): void {
-    while (!this.tokens.matches(["string"])) {
+    while (!this.tokens.matches1(tt.string)) {
       this.tokens.removeToken();
     }
   }
@@ -190,41 +190,41 @@ export default class ImportTransformer extends Transformer {
 
   processExport(): boolean {
     if (
-      this.tokens.matches(["export", "enum"]) ||
-      this.tokens.matches(["export", "const", "enum"])
+      this.tokens.matches2(tt._export, tt._enum) ||
+      this.tokens.matches3(tt._export, tt._const, tt._enum)
     ) {
       // Let the TypeScript transform handle it.
       return false;
     }
-    if (this.tokens.matches(["export", "default"])) {
+    if (this.tokens.matches2(tt._export, tt._default)) {
       this.processExportDefault();
       this.hadDefaultExport = true;
       return true;
     }
     this.hadNamedExport = true;
     if (
-      this.tokens.matches(["export", "var"]) ||
-      this.tokens.matches(["export", "let"]) ||
-      this.tokens.matches(["export", "const"])
+      this.tokens.matches2(tt._export, tt._var) ||
+      this.tokens.matches2(tt._export, tt._let) ||
+      this.tokens.matches2(tt._export, tt._const)
     ) {
       this.processExportVar();
       return true;
     } else if (
-      this.tokens.matches(["export", "function"]) ||
-      this.tokens.matches(["export", "name", "function"])
+      this.tokens.matches2(tt._export, tt._function) ||
+      this.tokens.matches3(tt._export, tt.name, tt._function)
     ) {
       this.processExportFunction();
       return true;
     } else if (
-      this.tokens.matches(["export", "class"]) ||
-      this.tokens.matches(["export", "abstract", "class"])
+      this.tokens.matches2(tt._export, tt._class) ||
+      this.tokens.matches3(tt._export, tt._abstract, tt._class)
     ) {
       this.processExportClass();
       return true;
-    } else if (this.tokens.matches(["export", "{"])) {
+    } else if (this.tokens.matches2(tt._export, tt.braceL)) {
       this.processExportBindings();
       return true;
-    } else if (this.tokens.matches(["export", "*"])) {
+    } else if (this.tokens.matches2(tt._export, tt.star)) {
       this.processExportStar();
       return true;
     } else {
@@ -261,9 +261,9 @@ export default class ImportTransformer extends Transformer {
 
   private processExportDefault(): void {
     if (
-      this.tokens.matches(["export", "default", "function", "name"]) ||
+      this.tokens.matches4(tt._export, tt._default, tt._function, tt.name) ||
       // export default aysnc function
-      this.tokens.matches(["export", "default", "name", "function", "name"])
+      this.tokens.matches5(tt._export, tt._default, tt.name, tt._function, tt.name)
     ) {
       this.tokens.removeInitialToken();
       this.tokens.removeToken();
@@ -272,12 +272,12 @@ export default class ImportTransformer extends Transformer {
       const name = this.processNamedFunction();
       this.tokens.appendCode(` exports.default = ${name};`);
     } else if (
-      this.tokens.matches(["export", "default", "class", "name"]) ||
-      this.tokens.matches(["export", "default", "abstract", "class", "name"])
+      this.tokens.matches4(tt._export, tt._default, tt._class, tt.name) ||
+      this.tokens.matches5(tt._export, tt._default, tt._abstract, tt._class, tt.name)
     ) {
       this.tokens.removeInitialToken();
       this.tokens.removeToken();
-      if (this.tokens.matches(["abstract"])) {
+      if (this.tokens.matches1(tt._abstract)) {
         this.tokens.removeToken();
       }
       const name = this.rootTransformer.processNamedClass();
@@ -298,7 +298,7 @@ export default class ImportTransformer extends Transformer {
   private processExportVar(): void {
     this.tokens.replaceToken("");
     this.tokens.copyToken();
-    if (!this.tokens.matches(["name"])) {
+    if (!this.tokens.matches1(tt.name)) {
       throw new Error("Expected a regular identifier after export var/let/const.");
     }
     const name = this.tokens.currentToken().value;
@@ -322,16 +322,16 @@ export default class ImportTransformer extends Transformer {
    * Skip past a function with a name and return that name.
    */
   private processNamedFunction(): string {
-    if (this.tokens.matches(["function"])) {
+    if (this.tokens.matches1(tt._function)) {
       this.tokens.copyToken();
-    } else if (this.tokens.matches(["name", "function"])) {
+    } else if (this.tokens.matches2(tt.name, tt._function)) {
       if (this.tokens.currentToken().value !== "async") {
         throw new Error("Expected async keyword in function export.");
       }
       this.tokens.copyToken();
       this.tokens.copyToken();
     }
-    if (!this.tokens.matches(["name"])) {
+    if (!this.tokens.matches1(tt.name)) {
       throw new Error("Expected identifier for exported function name.");
     }
     const name = this.tokens.currentToken().value;
@@ -360,7 +360,7 @@ export default class ImportTransformer extends Transformer {
    */
   private processExportClass(): void {
     this.tokens.removeInitialToken();
-    if (this.tokens.matches(["abstract"])) {
+    if (this.tokens.matches1(tt._abstract)) {
       this.tokens.removeToken();
     }
     const name = this.rootTransformer.processNamedClass();
@@ -398,15 +398,15 @@ export default class ImportTransformer extends Transformer {
       const newLocalName = this.importProcessor.getIdentifierReplacement(localName);
       exportStatements.push(`exports.${exportedName} = ${newLocalName || localName};`);
 
-      if (this.tokens.matches(["}"])) {
+      if (this.tokens.matches1(tt.braceR)) {
         this.tokens.removeToken();
         break;
       }
-      if (this.tokens.matches([",", "}"])) {
+      if (this.tokens.matches2(tt.comma, tt.braceR)) {
         this.tokens.removeToken();
         this.tokens.removeToken();
         break;
-      } else if (this.tokens.matches([","])) {
+      } else if (this.tokens.matches1(tt.comma)) {
         this.tokens.removeToken();
       } else {
         throw new Error(`Unexpected token: ${JSON.stringify(this.tokens.currentToken())}`);
@@ -424,19 +424,19 @@ export default class ImportTransformer extends Transformer {
       this.tokens.appendCode(exportStatements.join(" "));
     }
 
-    if (this.tokens.matches([";"])) {
+    if (this.tokens.matches1(tt.semi)) {
       this.tokens.removeToken();
     }
   }
 
   private processExportStar(): void {
     this.tokens.removeInitialToken();
-    while (!this.tokens.matches(["string"])) {
+    while (!this.tokens.matches1(tt.string)) {
       this.tokens.removeToken();
     }
     const path = this.tokens.currentToken().value;
     this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
-    if (this.tokens.matches([";"])) {
+    if (this.tokens.matches1(tt.semi)) {
       this.tokens.removeToken();
     }
   }

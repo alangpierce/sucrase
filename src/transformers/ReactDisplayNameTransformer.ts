@@ -1,4 +1,5 @@
 import {IdentifierRole} from "../../sucrase-babylon/tokenizer";
+import {types as tt} from "../../sucrase-babylon/tokenizer/types";
 import ImportProcessor from "../ImportProcessor";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
@@ -34,7 +35,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
       return true;
     }
     if (
-      this.tokens.matches(["name", ".", "name"]) &&
+      this.tokens.matches3(tt.name, tt.dot, tt.name) &&
       this.tokens.matchesName("React") &&
       this.tokens.matchesNameAtIndex(this.tokens.currentIndex() + 2, "createClass")
     ) {
@@ -96,7 +97,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
    */
   private classNeedsDisplayName(): boolean {
     let index = this.tokens.currentIndex();
-    if (!this.tokens.matches(["(", "{"])) {
+    if (!this.tokens.matches2(tt.parenL, tt.braceL)) {
       return false;
     }
     // The block starts on the {, and we expect any displayName key to be in

@@ -1,3 +1,4 @@
+import {types as tt} from "../../sucrase-babylon/tokenizer/types";
 import {SucraseContext, Transform} from "../index";
 import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
@@ -85,17 +86,17 @@ export default class RootTransformer {
     let braceDepth = 0;
     let parenDepth = 0;
     while (!this.tokens.isAtEnd()) {
-      if (this.tokens.matches(["{"]) || this.tokens.matches(["${"])) {
+      if (this.tokens.matches1(tt.braceL) || this.tokens.matches1(tt.dollarBraceL)) {
         braceDepth++;
-      } else if (this.tokens.matches(["}"])) {
+      } else if (this.tokens.matches1(tt.braceR)) {
         if (braceDepth === 0) {
           return;
         }
         braceDepth--;
       }
-      if (this.tokens.matches(["("])) {
+      if (this.tokens.matches1(tt.parenL)) {
         parenDepth++;
-      } else if (this.tokens.matches([")"])) {
+      } else if (this.tokens.matches1(tt.parenR)) {
         if (parenDepth === 0) {
           return;
         }
@@ -106,7 +107,7 @@ export default class RootTransformer {
   }
 
   processToken(): void {
-    if (this.tokens.matches(["class"])) {
+    if (this.tokens.matches1(tt._class)) {
       this.processClass();
       return;
     }
@@ -123,7 +124,7 @@ export default class RootTransformer {
    * Skip past a class with a name and return that name.
    */
   processNamedClass(): string {
-    if (!this.tokens.matches(["class", "name"])) {
+    if (!this.tokens.matches2(tt._class, tt.name)) {
       throw new Error("Expected identifier for exported class name.");
     }
     const name = this.tokens.tokens[this.tokens.currentIndex() + 1].value;
@@ -150,7 +151,7 @@ export default class RootTransformer {
       throw new Error("Expected class to have a context ID.");
     }
     this.tokens.copyExpectedToken("class");
-    while (!this.tokens.matchesContextIdAndLabel("{", contextId)) {
+    while (!this.tokens.matchesContextIdAndLabel(tt.braceL, contextId)) {
       this.processToken();
     }
 
@@ -191,7 +192,7 @@ export default class RootTransformer {
       }
     }
 
-    while (!this.tokens.matchesContextIdAndLabel("}", classContextId)) {
+    while (!this.tokens.matchesContextIdAndLabel(tt.braceR, classContextId)) {
       if (
         fieldIndex < fieldRanges.length &&
         this.tokens.currentIndex() === fieldRanges[fieldIndex].start

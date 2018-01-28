@@ -1,4 +1,5 @@
 import {Token} from "../../sucrase-babylon/tokenizer";
+import {types as tt} from "../../sucrase-babylon/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "../transformers/RootTransformer";
 
@@ -46,17 +47,17 @@ export default function getClassInfo(
   }
 
   tokens.nextToken();
-  while (!tokens.matchesContextIdAndLabel("}", classContextId)) {
+  while (!tokens.matchesContextIdAndLabel(tt.braceR, classContextId)) {
     if (tokens.matchesName("constructor")) {
       ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
-    } else if (tokens.matches([";"])) {
+    } else if (tokens.matches1(tt.semi)) {
       tokens.nextToken();
     } else {
       // Either a method or a field. Skip to the identifier part.
       const statementStartIndex = tokens.currentIndex();
       let isStatic = false;
       while (isAccessModifier(tokens.currentToken())) {
-        if (tokens.matches(["static"])) {
+        if (tokens.matches1(tt._static)) {
           isStatic = true;
         }
         tokens.nextToken();
@@ -66,7 +67,7 @@ export default function getClassInfo(
         continue;
       }
       const nameCode = getNameCode(tokens);
-      if (tokens.matches(["<"]) || tokens.matches(["("])) {
+      if (tokens.matches1(tt.lessThan) || tokens.matches1(tt.parenL)) {
         // This is a method, so just skip to the next method/field. To do that, we seek forward to
         // the next start of a class name (either an open bracket or an identifier, or the closing
         // curly brace), then seek backward to include any access modifiers.
@@ -82,7 +83,7 @@ export default function getClassInfo(
       while (tokens.currentToken().isType) {
         tokens.nextToken();
       }
-      if (tokens.matches(["="])) {
+      if (tokens.matches1(tt.eq)) {
         const valueEnd = tokens.currentToken().rhsEndIndex;
         if (valueEnd == null) {
           throw new Error("Expected rhsEndIndex on class field assignment.");
@@ -131,11 +132,11 @@ function processClassHeader(tokens: TokenProcessor): ClassHeaderInfo {
   let className = null;
   let hasSuperclass = false;
   tokens.nextToken();
-  if (tokens.matches(["name"])) {
+  if (tokens.matches1(tt.name)) {
     className = tokens.currentToken().value;
   }
-  while (!tokens.matchesContextIdAndLabel("{", contextId)) {
-    if (tokens.matches(["extends"])) {
+  while (!tokens.matchesContextIdAndLabel(tt.braceL, contextId)) {
+    if (tokens.matches1(tt._extends)) {
       hasSuperclass = true;
     }
     tokens.nextToken();
@@ -158,7 +159,7 @@ function processConstructor(
   }
   tokens.nextToken();
   // Advance through parameters looking for access modifiers.
-  while (!tokens.matchesContextIdAndLabel(")", constructorContextId)) {
+  while (!tokens.matchesContextIdAndLabel(tt.parenR, constructorContextId)) {
     if (isAccessModifier(tokens.currentToken())) {
       tokens.nextToken();
       while (isAccessModifier(tokens.currentToken())) {
@@ -178,14 +179,14 @@ function processConstructor(
   let constructorInsertPos = tokens.currentIndex();
 
   // Advance through body looking for a super call.
-  while (!tokens.matchesContextIdAndLabel("}", constructorContextId)) {
-    if (tokens.matches(["super"])) {
+  while (!tokens.matchesContextIdAndLabel(tt.braceR, constructorContextId)) {
+    if (tokens.matches1(tt._super)) {
       tokens.nextToken();
       const superCallContextId = tokens.currentToken().contextId;
       if (superCallContextId == null) {
         throw new Error("Expected a context ID on the super call");
       }
-      while (!tokens.matchesContextIdAndLabel(")", superCallContextId)) {
+      while (!tokens.matchesContextIdAndLabel(tt.parenR, superCallContextId)) {
         tokens.nextToken();
       }
       constructorInsertPos = tokens.currentIndex();
@@ -223,13 +224,13 @@ function isAccessModifier(token: Token): boolean {
  * and TypeScript doesn't do it, so we won't either.
  */
 function getNameCode(tokens: TokenProcessor): string {
-  if (tokens.matches(["["])) {
+  if (tokens.matches1(tt.bracketL)) {
     const startToken = tokens.currentToken();
     const classContextId = startToken.contextId;
     if (classContextId == null) {
       throw new Error("Expected class context ID on computed name open bracket.");
     }
-    while (!tokens.matchesContextIdAndLabel("]", classContextId)) {
+    while (!tokens.matchesContextIdAndLabel(tt.bracketR, classContextId)) {
       tokens.nextToken();
     }
     const endToken = tokens.currentToken();

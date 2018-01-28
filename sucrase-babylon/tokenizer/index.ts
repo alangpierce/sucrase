@@ -182,8 +182,6 @@ export default abstract class Tokenizer extends BaseParser {
     return result;
   }
 
-  // TODO
-
   eat(type: TokenType): boolean {
     if (this.match(type)) {
       this.next();
@@ -193,19 +191,13 @@ export default abstract class Tokenizer extends BaseParser {
     }
   }
 
-  // TODO
-
   match(type: TokenType): boolean {
     return this.state.type === type;
   }
 
-  // TODO
-
   isKeyword(word: string): boolean {
     return isKeyword(word);
   }
-
-  // TODO
 
   lookaheadType(): TokenType {
     const snapshot = this.state.snapshot();

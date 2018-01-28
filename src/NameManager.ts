@@ -1,4 +1,3 @@
-import {Token} from "../sucrase-babylon/tokenizer";
 import TokenProcessor from "./TokenProcessor";
 
 export default class NameManager {

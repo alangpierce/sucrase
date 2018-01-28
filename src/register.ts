@@ -4,15 +4,7 @@ import {Transform, transform} from "./index";
 
 export function addHook(extension: string, transforms: Array<Transform>): void {
   pirates.addHook(
-    (code: string, filename: string): string => {
-      try {
-        return transform(code, {transforms});
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(`Error processing file ${filename}`);
-        throw e;
-      }
-    },
+    (code: string, filePath: string): string => transform(code, {filePath, transforms}),
     {exts: [extension]},
   );
 }

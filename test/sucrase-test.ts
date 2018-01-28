@@ -1,4 +1,4 @@
-import {ESMODULE_PREFIX, PREFIX} from "./prefixes";
+import {ESMODULE_PREFIX, IMPORT_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
 /**
@@ -48,7 +48,7 @@ describe("sucrase", () => {
         delete: new KeywordTokenType("delete", { beforeExpr, prefix, startsExpr }),
       };
     `,
-      `${PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
        const keywords = exports.keywords = {
         break: new KeywordTokenType("break"),
         case: new KeywordTokenType("case", { beforeExpr }),
@@ -99,7 +99,7 @@ describe("sucrase", () => {
         function: 3,
       };
     `,
-      `${PREFIX}
+      `"use strict";${IMPORT_PREFIX}
       const o = {
         function: 3,
       };

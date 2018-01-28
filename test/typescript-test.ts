@@ -1,4 +1,4 @@
-import {ESMODULE_PREFIX, PREFIX} from "./prefixes";
+import {ESMODULE_PREFIX, IMPORT_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
 function assertTypeScriptResult(code: string, expectedResult: string): void {

@@ -39,7 +39,9 @@ Sucrase can convert the following codebases with all tests passing:
 The main configuration option in Sucrase is an array of transform names. There
 are four main transforms that you may want to enable:
 * **jsx**: Converts JSX syntax to `React.createElement`, e.g. `<div a={b} />`
-  becomes `React.createElement('div', {a: b})`.
+  becomes `React.createElement('div', {a: b})`. Behaves like Babel 7's
+  [babel-preset-react](https://github.com/babel/babel/tree/master/packages/babel-preset-react),
+  including adding `createReactClass` display names and JSX context information.
 * **typescript**: Compiles TypeScript code to JavaScript, removing type
   annotations and handling features like enums. Does not check types.
 * **flow**:  Removes Flow types, e.g. `const f = (x: number): string => "hi";`
@@ -61,8 +63,6 @@ The following proposed JS features are built-in and always transformed:
   `try { doThing(); } catch { }`.
 
 There are some additional opt-in transforms that are useful in legacy situations:
-* **react-display-name**: Detect and add display name to React components created
-  using `React.createClass` or `createReactClass`.
 * **add-module-exports**: Mimic the Babel 5 approach to CommonJS interop, so that
   you can run `require('./MyModule')` instead of `require('./MyModule').default`.
   Analogous to

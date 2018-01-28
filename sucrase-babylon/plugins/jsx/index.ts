@@ -172,7 +172,8 @@ export default class JSXParser extends Parser {
   // or single identifier.
   jsxParseElementName(): void {
     this.jsxParseNamespacedName();
-    while (this.eat(tt.dot)) {
+    while (this.match(tt.dot)) {
+      this.nextJSXTagToken();
       this.jsxParseIdentifier();
     }
   }

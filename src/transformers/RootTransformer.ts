@@ -18,7 +18,11 @@ export default class RootTransformer {
   private tokens: TokenProcessor;
   private generatedVariables: Array<string> = [];
 
-  constructor(sucraseContext: SucraseContext, transforms: Array<Transform>) {
+  constructor(
+    sucraseContext: SucraseContext,
+    transforms: Array<Transform>,
+    filePath: string | null,
+  ) {
     this.nameManager = sucraseContext.nameManager;
     const {tokenProcessor, importProcessor} = sucraseContext;
     this.tokens = tokenProcessor;
@@ -26,12 +30,9 @@ export default class RootTransformer {
     this.transformers.push(new NumericSeparatorTransformer(tokenProcessor));
     this.transformers.push(new OptionalCatchBindingTransformer(tokenProcessor, this.nameManager));
     if (transforms.includes("jsx")) {
-      this.transformers.push(new JSXTransformer(this, tokenProcessor, importProcessor));
-    }
-
-    // react-display-name must come before imports since otherwise imports will
-    // claim a normal `React` name token.
-    if (transforms.includes("react-display-name")) {
+      this.transformers.push(
+        new JSXTransformer(this, tokenProcessor, importProcessor, this.nameManager, filePath),
+      );
       this.transformers.push(
         new ReactDisplayNameTransformer(this, tokenProcessor, importProcessor),
       );
@@ -60,7 +61,9 @@ export default class RootTransformer {
   transform(): string {
     this.tokens.reset();
     this.processBalancedCode();
-    let prefix = "";
+    const shouldAddUseStrict = this.transformers.some((t) => t instanceof ImportTransformer);
+    // "use strict" always needs to be first, so override the normal transformer order.
+    let prefix = shouldAddUseStrict ? '"use strict";' : "";
     for (const transformer of this.transformers) {
       prefix += transformer.getPrefixCode();
     }

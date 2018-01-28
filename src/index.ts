@@ -7,16 +7,11 @@ import TokenProcessor from "./TokenProcessor";
 import RootTransformer from "./transformers/RootTransformer";
 import formatTokens from "./util/formatTokens";
 
-export type Transform =
-  | "jsx"
-  | "imports"
-  | "flow"
-  | "typescript"
-  | "add-module-exports"
-  | "react-display-name";
+export type Transform = "jsx" | "imports" | "flow" | "typescript" | "add-module-exports";
 
 export type Options = {
   transforms: Array<Transform>;
+  filePath?: string;
 };
 
 export type SucraseContext = {
@@ -32,8 +27,19 @@ export function getVersion(): string {
 }
 
 export function transform(code: string, options: Options): string {
-  const sucraseContext = getSucraseContext(code, options);
-  return new RootTransformer(sucraseContext, options.transforms).transform();
+  try {
+    const sucraseContext = getSucraseContext(code, options);
+    return new RootTransformer(
+      sucraseContext,
+      options.transforms,
+      options.filePath || null,
+    ).transform();
+  } catch (e) {
+    if (options.filePath) {
+      e.message = `Error transforming ${options.filePath}: ${e.message}`;
+    }
+    throw e;
+  }
 }
 
 /**

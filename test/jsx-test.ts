@@ -1,7 +1,11 @@
+import {JSX_PREFIX} from "./prefixes";
 import * as util from "./util";
+
+const {devProps} = util;
 
 function assertResult(code: string, expectedResult: string): void {
   util.assertResult(code, expectedResult, ["jsx"]);
+  util.assertResult(code, expectedResult, ["jsx", "flow"]);
 }
 
 describe("transform JSX", () => {
@@ -10,8 +14,8 @@ describe("transform JSX", () => {
       `
       <Foo />
     `,
-      `
-      React.createElement(Foo, null )
+      `${JSX_PREFIX}
+      React.createElement(Foo, {${devProps(2)}} )
     `,
     );
   });
@@ -21,8 +25,8 @@ describe("transform JSX", () => {
       `
       <div><span></span></div>
     `,
-      `
-      React.createElement('div', null, React.createElement('span', null))
+      `${JSX_PREFIX}
+      React.createElement('div', {${devProps(2)}}, React.createElement('span', {${devProps(2)}}))
     `,
     );
   });
@@ -32,8 +36,8 @@ describe("transform JSX", () => {
       `
       <div>{x}</div>
     `,
-      `
-      React.createElement('div', null, x)
+      `${JSX_PREFIX}
+      React.createElement('div', {${devProps(2)}}, x)
     `,
     );
   });
@@ -43,8 +47,8 @@ describe("transform JSX", () => {
       `
       <A foo='bar' />
     `,
-      `
-      React.createElement(A, { foo: "bar",} )
+      `${JSX_PREFIX}
+      React.createElement(A, { foo: "bar", ${devProps(2)}} )
     `,
     );
   });
@@ -57,10 +61,10 @@ describe("transform JSX", () => {
         d='e' /* Another comment */
       />
     `,
-      `
+      `${JSX_PREFIX}
       React.createElement(A, {
         b: "c", // A comment
-        d: "e",} /* Another comment */
+        d: "e", ${devProps(2)}} /* Another comment */
       )
     `,
     );
@@ -76,9 +80,9 @@ describe("transform JSX", () => {
         </div>
       );
     `,
-      `
+      `${JSX_PREFIX}
       const x = (
-        React.createElement('div', null, "foo  bar baz"
+        React.createElement('div', {${devProps(3)}}, "foo  bar baz"
 
 
         )
@@ -96,10 +100,10 @@ describe("transform JSX", () => {
         </div>
       );
     `,
-      `
+      `${JSX_PREFIX}
       const x = (
-        React.createElement('div', null
-          , React.createElement(Span, null )
+        React.createElement('div', {${devProps(3)}}
+          , React.createElement(Span, {${devProps(4)}} )
         )
       );
     `,
@@ -111,8 +115,8 @@ describe("transform JSX", () => {
       `
       <a.b c='d' />
     `,
-      `
-      React.createElement(a.b, { c: "d",} )
+      `${JSX_PREFIX}
+      React.createElement(a.b, { c: "d", ${devProps(2)}} )
     `,
     );
   });
@@ -122,8 +126,8 @@ describe("transform JSX", () => {
       `
       <a {...b} c='d' />
     `,
-      `
-      React.createElement('a', { ...b, c: "d",} )
+      `${JSX_PREFIX}
+      React.createElement('a', { ...b, c: "d", ${devProps(2)}} )
     `,
     );
   });
@@ -133,8 +137,8 @@ describe("transform JSX", () => {
       `
       <span>a&gt;b</span>
     `,
-      `
-      React.createElement('span', null, "a>b")
+      `${JSX_PREFIX}
+      React.createElement('span', {${devProps(2)}}, "a>b")
     `,
     );
   });
@@ -147,8 +151,8 @@ describe("transform JSX", () => {
         a&nbsp;
       </span>
     `,
-      `
-      React.createElement('span', null, "a "
+      `${JSX_PREFIX}
+      React.createElement('span', {${devProps(2)}}, "a "
 
       )
     `,
@@ -165,11 +169,11 @@ describe("transform JSX", () => {
         <span />
       </div>;
     `,
-      `
-      React.createElement('div', null
-        , React.createElement('span', null )
+      `${JSX_PREFIX}
+      React.createElement('div', {${devProps(2)}}
+        , React.createElement('span', {${devProps(3)}} )
          /* foo */ 
-        , React.createElement('span', null )
+        , React.createElement('span', {${devProps(5)}} )
       );
     `,
     );
@@ -183,10 +187,10 @@ describe("transform JSX", () => {
         baz: <Baz />,
       };
     `,
-      `
+      `${JSX_PREFIX}
       const foo = {
         ...bar,
-        baz: React.createElement(Baz, null ),
+        baz: React.createElement(Baz, {${devProps(4)}} ),
       };
     `,
     );
@@ -200,10 +204,10 @@ describe("transform JSX", () => {
         data-id={2}
       />
     `,
-      `
+      `${JSX_PREFIX}
       React.createElement('div', {
         a: 1,
-        'data-id': 2,}
+        'data-id': 2, ${devProps(2)}}
       )
     `,
     );
@@ -217,10 +221,10 @@ describe("transform JSX", () => {
                multi-line string.'
       />
     `,
-      `
+      `${JSX_PREFIX}
       React.createElement('div', {
         value: "This is a multi-line string."
-                ,}
+                , ${devProps(2)}}
       )
     `,
     );
@@ -236,12 +240,12 @@ describe("transform JSX", () => {
                   '
       />
     `,
-      `
+      `${JSX_PREFIX}
       React.createElement('div', {
         value: "    This is a longer multi-line string. "
 
 
-                  ,}
+                  , ${devProps(2)}}
       )
     `,
     );
@@ -254,10 +258,21 @@ describe("transform JSX", () => {
         value='a&gt;b'
       />
     `,
-      `
+      `${JSX_PREFIX}
       React.createElement('div', {
-        value: "a>b",}
+        value: "a>b", ${devProps(2)}}
       )
+    `,
+    );
+  });
+
+  it("handles handles boolean prop values", () => {
+    assertResult(
+      `
+      const e = <div a />;
+    `,
+      `${JSX_PREFIX}
+      const e = React.createElement('div', { a: true, ${devProps(2)}} );
     `,
     );
   });

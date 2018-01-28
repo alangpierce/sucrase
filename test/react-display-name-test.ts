@@ -1,5 +1,5 @@
-import {ESMODULE_PREFIX, PREFIX} from "./prefixes";
-import {assertResult} from "./util";
+import {ESMODULE_PREFIX, IMPORT_PREFIX, JSX_PREFIX} from "./prefixes";
+import {assertResult, devProps} from "./util";
 
 describe("transform react-display-name", () => {
   it("adds displayName to a React.createClass usage", () => {
@@ -13,12 +13,12 @@ describe("transform react-display-name", () => {
         }
       });
     `,
-      `${PREFIX}
+      `"use strict";${JSX_PREFIX}${IMPORT_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
 
       const C = _react2.default.createClass({displayName: 'C',
         render() {
-          return _react2.default.createElement('div', null );
+          return _react2.default.createElement('div', {${devProps(6)}} );
         }
       });
     `,
@@ -37,13 +37,13 @@ describe("transform react-display-name", () => {
         }
       });
     `,
-      `${PREFIX}
+      `"use strict";${JSX_PREFIX}${IMPORT_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
       var _createreactclass = require('create-react-class'); var _createreactclass2 = _interopRequireDefault(_createreactclass);
 
       const C = (0, _createreactclass2.default)({displayName: 'C',
         render() {
-          return _react2.default.createElement('div', null );
+          return _react2.default.createElement('div', {${devProps(7)}} );
         }
       });
     `,
@@ -63,14 +63,14 @@ describe("transform react-display-name", () => {
         }
       });
     `,
-      `${PREFIX}
+      `"use strict";${JSX_PREFIX}${IMPORT_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
 
       const C = _react2.default.createClass({
         displayName: 'Foo',
         
         render() {
-          return _react2.default.createElement('div', null );
+          return _react2.default.createElement('div', {${devProps(8)}} );
         }
       });
     `,
@@ -88,12 +88,12 @@ describe("transform react-display-name", () => {
         }
       });
     `,
-      `${PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${JSX_PREFIX}${IMPORT_PREFIX}${ESMODULE_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
 
       exports. default = _react2.default.createClass({
         render() {
-          return _react2.default.createElement('div', null );
+          return _react2.default.createElement('div', {${devProps(6)}} );
         }
       });
     `,
@@ -113,7 +113,7 @@ describe("transform react-display-name", () => {
         })
       };
     `,
-      `${PREFIX}
+      `"use strict";${IMPORT_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
 
       const o = {
@@ -139,7 +139,7 @@ describe("transform react-display-name", () => {
         }
       });
     `,
-      `${PREFIX}
+      `"use strict";${IMPORT_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
 
       const C = _react2.default.createClass({displayName: 'C',

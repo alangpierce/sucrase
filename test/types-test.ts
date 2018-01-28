@@ -1,9 +1,9 @@
-import {ESMODULE_PREFIX, PREFIX} from "./prefixes";
+import {ESMODULE_PREFIX, IMPORT_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
 function assertTypeScriptAndFlowResult(code: string, expectedResult: string): void {
   assertResult(code, `"use strict";${expectedResult}`, ["jsx", "imports", "typescript"]);
-  assertResult(code, PREFIX + expectedResult, ["jsx", "imports", "flow"]);
+  assertResult(code, `"use strict";${IMPORT_PREFIX}${expectedResult}`, ["jsx", "imports", "flow"]);
 }
 
 /**
@@ -401,6 +401,17 @@ describe("type transforms", () => {
     `,
       `
       const f = (x) => x + 1;
+    `,
+    );
+  });
+
+  it("handles classes extending classes with parameterized types", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      class A extends B<C> {}
+    `,
+      `
+      class A extends B {}
     `,
     );
   });

@@ -1,3 +1,4 @@
+import {types as tt} from "../../sucrase-babylon/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import isIdentifier from "../util/isIdentifier";
 import RootTransformer from "./RootTransformer";
@@ -14,23 +15,23 @@ export default class TypeScriptTransformer extends Transformer {
       return true;
     }
     if (
-      this.tokens.matches(["public"]) ||
-      this.tokens.matches(["protected"]) ||
-      this.tokens.matches(["private"]) ||
-      this.tokens.matches(["abstract"]) ||
-      this.tokens.matches(["readonly"]) ||
-      this.tokens.matches(["nonNullAssertion"])
+      this.tokens.matches1(tt._public) ||
+      this.tokens.matches1(tt._protected) ||
+      this.tokens.matches1(tt._private) ||
+      this.tokens.matches1(tt._abstract) ||
+      this.tokens.matches1(tt._readonly) ||
+      this.tokens.matches1(tt.nonNullAssertion)
     ) {
       this.tokens.removeInitialToken();
       return true;
     }
-    if (this.tokens.matches(["enum"]) || this.tokens.matches(["const", "enum"])) {
+    if (this.tokens.matches1(tt._enum) || this.tokens.matches2(tt._const, tt._enum)) {
       this.processEnum();
       return true;
     }
     if (
-      this.tokens.matches(["export", "enum"]) ||
-      this.tokens.matches(["export", "const", "enum"])
+      this.tokens.matches2(tt._export, tt._enum) ||
+      this.tokens.matches3(tt._export, tt._const, tt._enum)
     ) {
       this.processEnum(true);
       return true;
@@ -41,7 +42,7 @@ export default class TypeScriptTransformer extends Transformer {
   processEnum(isExport: boolean = false): void {
     // We might have "export const enum", so just remove all relevant tokens.
     this.tokens.removeInitialToken();
-    while (this.tokens.matches(["const"]) || this.tokens.matches(["enum"])) {
+    while (this.tokens.matches1(tt._const) || this.tokens.matches1(tt._enum)) {
       this.tokens.removeToken();
     }
     const enumName = this.tokens.currentToken().value;
@@ -66,7 +67,7 @@ export default class TypeScriptTransformer extends Transformer {
     let isPreviousValidIdentifier = false;
     let lastValueReference = null;
     while (true) {
-      if (this.tokens.matches(["}"])) {
+      if (this.tokens.matches1(tt.braceR)) {
         break;
       }
       const nameToken = this.tokens.currentToken();
@@ -89,13 +90,16 @@ export default class TypeScriptTransformer extends Transformer {
       let valueIsString;
       let valueCode;
 
-      if (this.tokens.matches(["="])) {
+      if (this.tokens.matches1(tt.eq)) {
         const rhsEndIndex = this.tokens.currentToken().rhsEndIndex!;
         if (rhsEndIndex == null) {
           throw new Error("Expected rhsEndIndex on enum assign.");
         }
         this.tokens.removeToken();
-        if (this.tokens.matches(["string", ","]) || this.tokens.matches(["string", "}"])) {
+        if (
+          this.tokens.matches2(tt.string, tt.comma) ||
+          this.tokens.matches2(tt.string, tt.braceR)
+        ) {
           valueIsString = true;
         }
         const startToken = this.tokens.currentToken();
@@ -118,7 +122,7 @@ export default class TypeScriptTransformer extends Transformer {
           valueCode = "0";
         }
       }
-      if (this.tokens.matches([","])) {
+      if (this.tokens.matches1(tt.comma)) {
         this.tokens.removeToken();
       }
 

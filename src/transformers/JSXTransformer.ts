@@ -1,3 +1,4 @@
+import {types as tt} from "../../sucrase-babylon/tokenizer/types";
 import ImportProcessor from "../ImportProcessor";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
@@ -13,7 +14,7 @@ export default class JSXTransformer extends Transformer {
   }
 
   process(): boolean {
-    if (this.tokens.matches(["jsxTagStart"])) {
+    if (this.tokens.matches1(tt.jsxTagStart)) {
       this.processJSXTag();
       return true;
     }
@@ -25,30 +26,30 @@ export default class JSXTransformer extends Transformer {
    * props, if any.
    */
   processProps(): void {
-    if (!this.tokens.matches(["jsxName"]) && !this.tokens.matches(["{"])) {
+    if (!this.tokens.matches1(tt.jsxName) && !this.tokens.matches1(tt.braceL)) {
       this.tokens.appendCode(", null");
       return;
     }
     this.tokens.appendCode(", {");
     while (true) {
-      if (this.tokens.matches(["jsxName", "="])) {
+      if (this.tokens.matches2(tt.jsxName, tt.eq)) {
         if (this.tokens.currentToken().value.includes("-")) {
           this.tokens.replaceToken(`'${this.tokens.currentToken().value}'`);
         } else {
           this.tokens.copyToken();
         }
         this.tokens.replaceToken(": ");
-        if (this.tokens.matches(["{"])) {
+        if (this.tokens.matches1(tt.braceL)) {
           this.tokens.replaceToken("");
           this.rootTransformer.processBalancedCode();
           this.tokens.replaceToken("");
         } else {
           this.processStringPropValue();
         }
-      } else if (this.tokens.matches(["jsxName"])) {
+      } else if (this.tokens.matches1(tt.jsxName)) {
         this.tokens.copyToken();
         this.tokens.appendCode(": true");
-      } else if (this.tokens.matches(["{"])) {
+      } else if (this.tokens.matches1(tt.braceL)) {
         this.tokens.replaceToken("");
         this.rootTransformer.processBalancedCode();
         this.tokens.replaceToken("");
@@ -98,12 +99,12 @@ export default class JSXTransformer extends Transformer {
 
   processChildren(): void {
     while (true) {
-      if (this.tokens.matches(["jsxTagStart", "/"])) {
+      if (this.tokens.matches2(tt.jsxTagStart, tt.slash)) {
         // Closing tag, so no more children.
         return;
       }
-      if (this.tokens.matches(["{"])) {
-        if (this.tokens.matches(["{", "}"])) {
+      if (this.tokens.matches1(tt.braceL)) {
+        if (this.tokens.matches2(tt.braceL, tt.braceR)) {
           // Empty interpolations and comment-only interpolations are allowed
           // and don't create an extra child arg.
           this.tokens.replaceToken("");
@@ -114,11 +115,11 @@ export default class JSXTransformer extends Transformer {
           this.rootTransformer.processBalancedCode();
           this.tokens.replaceToken("");
         }
-      } else if (this.tokens.matches(["jsxTagStart"])) {
+      } else if (this.tokens.matches1(tt.jsxTagStart)) {
         // Child JSX element
         this.tokens.appendCode(", ");
         this.processJSXTag();
-      } else if (this.tokens.matches(["jsxText"])) {
+      } else if (this.tokens.matches1(tt.jsxText)) {
         this.processChildTextElement();
       } else {
         throw new Error("Unexpected token when processing JSX children.");
@@ -144,15 +145,15 @@ export default class JSXTransformer extends Transformer {
     this.processTagIntro();
     this.processProps();
 
-    if (this.tokens.matches(["/", "jsxTagEnd"])) {
+    if (this.tokens.matches2(tt.slash, tt.jsxTagEnd)) {
       // Self-closing tag.
       this.tokens.replaceToken("");
       this.tokens.replaceToken(")");
-    } else if (this.tokens.matches(["jsxTagEnd"])) {
+    } else if (this.tokens.matches1(tt.jsxTagEnd)) {
       this.tokens.replaceToken("");
       // Tag with children.
       this.processChildren();
-      while (!this.tokens.matches(["jsxTagEnd"])) {
+      while (!this.tokens.matches1(tt.jsxTagEnd)) {
         this.tokens.replaceToken("");
       }
       this.tokens.replaceToken(")");

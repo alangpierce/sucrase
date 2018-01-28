@@ -1,4 +1,5 @@
 import {Token} from "../sucrase-babylon/tokenizer";
+import {TokenType} from "../sucrase-babylon/tokenizer/types";
 
 export type TokenProcessorSnapshot = {
   resultCode: string;
@@ -55,16 +56,47 @@ export default class TokenProcessor {
     return this.matchesAtIndex(index, ["name"]) && this.tokens[index].value === name;
   }
 
-  matches(tagLabels: Array<string>): boolean {
-    return this.matchesAtIndex(this.tokenIndex, tagLabels);
+  matches1(t1: TokenType): boolean {
+    return this.tokens[this.tokenIndex].type === t1;
+  }
+
+  matches2(t1: TokenType, t2: TokenType): boolean {
+    return this.tokens[this.tokenIndex].type === t1 && this.tokens[this.tokenIndex + 1].type === t2;
+  }
+
+  matches3(t1: TokenType, t2: TokenType, t3: TokenType): boolean {
+    return (
+      this.tokens[this.tokenIndex].type === t1 &&
+      this.tokens[this.tokenIndex + 1].type === t2 &&
+      this.tokens[this.tokenIndex + 2].type === t3
+    );
+  }
+
+  matches4(t1: TokenType, t2: TokenType, t3: TokenType, t4: TokenType): boolean {
+    return (
+      this.tokens[this.tokenIndex].type === t1 &&
+      this.tokens[this.tokenIndex + 1].type === t2 &&
+      this.tokens[this.tokenIndex + 2].type === t3 &&
+      this.tokens[this.tokenIndex + 3].type === t4
+    );
+  }
+
+  matches5(t1: TokenType, t2: TokenType, t3: TokenType, t4: TokenType, t5: TokenType): boolean {
+    return (
+      this.tokens[this.tokenIndex].type === t1 &&
+      this.tokens[this.tokenIndex + 1].type === t2 &&
+      this.tokens[this.tokenIndex + 2].type === t3 &&
+      this.tokens[this.tokenIndex + 3].type === t4 &&
+      this.tokens[this.tokenIndex + 4].type === t5
+    );
   }
 
   matchesName(name: string): boolean {
     return this.matchesNameAtIndex(this.tokenIndex, name);
   }
 
-  matchesContextIdAndLabel(label: string, contextId: number): boolean {
-    return this.matches([label]) && this.currentToken().contextId === contextId;
+  matchesContextIdAndLabel(type: TokenType, contextId: number): boolean {
+    return this.matches1(type) && this.currentToken().contextId === contextId;
   }
 
   previousWhitespace(): string {

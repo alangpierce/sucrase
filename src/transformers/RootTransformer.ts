@@ -85,36 +85,31 @@ export default class RootTransformer {
     let braceDepth = 0;
     let parenDepth = 0;
     while (!this.tokens.isAtEnd()) {
-      let wasProcessed = false;
-      for (const transformer of this.transformers) {
-        wasProcessed = transformer.process();
-        if (wasProcessed) {
-          break;
+      if (this.tokens.matches(["{"]) || this.tokens.matches(["${"])) {
+        braceDepth++;
+      } else if (this.tokens.matches(["}"])) {
+        if (braceDepth === 0) {
+          return;
         }
+        braceDepth--;
       }
-      if (!wasProcessed) {
-        if (this.tokens.matches(["{"]) || this.tokens.matches(["${"])) {
-          braceDepth++;
-        } else if (this.tokens.matches(["}"])) {
-          if (braceDepth === 0) {
-            return;
-          }
-          braceDepth--;
+      if (this.tokens.matches(["("])) {
+        parenDepth++;
+      } else if (this.tokens.matches([")"])) {
+        if (parenDepth === 0) {
+          return;
         }
-        if (this.tokens.matches(["("])) {
-          parenDepth++;
-        } else if (this.tokens.matches([")"])) {
-          if (parenDepth === 0) {
-            return;
-          }
-          parenDepth--;
-        }
-        this.tokens.copyToken();
+        parenDepth--;
       }
+      this.processToken();
     }
   }
 
   processToken(): void {
+    if (this.tokens.matches(["class"])) {
+      this.processClass();
+      return;
+    }
     for (const transformer of this.transformers) {
       const wasProcessed = transformer.process();
       if (wasProcessed) {

@@ -11,6 +11,7 @@ export default class OptionalCatchBindingTransformer extends Transformer {
     if (this.tokens.matches(["catch", "{"])) {
       this.tokens.copyToken();
       this.tokens.appendCode(` (${this.nameManager.claimFreeName("e")})`);
+      return true;
     }
     return false;
   }

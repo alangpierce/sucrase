@@ -125,6 +125,7 @@ export const types: {[name: string]: TokenType} = {
   exponent: new TokenType("**", {binop: 11, rightAssociative: true}),
 
   typeParameterStart: new TokenType("typeParameterStart"),
+  nonNullAssertion: new TokenType("nonNullAssertion"),
 };
 
 export const keywords = {

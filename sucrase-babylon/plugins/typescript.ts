@@ -1048,6 +1048,7 @@ export default class TypeScriptParser extends TypeParser {
 
   parseSubscript(startPos: number, noCalls: boolean | null, state: {stop: boolean}): void {
     if (!this.hasPrecedingLineBreak() && this.eat(tt.bang)) {
+      this.state.tokens[this.state.tokens.length - 1].type = tt.nonNullAssertion;
       return;
     }
 

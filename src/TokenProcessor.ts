@@ -1,4 +1,4 @@
-import {IdentifierRole, Token} from "../sucrase-babylon/tokenizer";
+import {Token} from "../sucrase-babylon/tokenizer";
 
 export type TokenProcessorSnapshot = {
   resultCode: string;
@@ -55,35 +55,12 @@ export default class TokenProcessor {
     return this.matchesAtIndex(index, ["name"]) && this.tokens[index].value === name;
   }
 
-  matchesNameAtRelativeIndex(relativeIndex: number, name: string): boolean {
-    const index = this.currentIndex() + relativeIndex;
-    return this.matchesAtIndex(index, ["name"]) && this.tokens[index].value === name;
-  }
-
-  matchesAtRelativeIndex(relativeIndex: number, tagLabels: Array<string>): boolean {
-    return this.matchesAtIndex(this.currentIndex() + relativeIndex, tagLabels);
-  }
-
   matches(tagLabels: Array<string>): boolean {
     return this.matchesAtIndex(this.tokenIndex, tagLabels);
   }
 
   matchesName(name: string): boolean {
     return this.matchesNameAtIndex(this.tokenIndex, name);
-  }
-
-  /**
-   * Check if this is a "real" instance of the keyword rather than an object key or property access.
-   */
-  matchesKeyword(name: string): boolean {
-    const token = this.currentToken();
-    if (this.matchesAtRelativeIndex(-1, ["."])) {
-      return false;
-    }
-    if (token.identifierRole === IdentifierRole.ObjectKey) {
-      return false;
-    }
-    return token.type.label === name || (token.type.label === "name" && token.value === name);
   }
 
   matchesContextIdAndLabel(label: string, contextId: number): boolean {
@@ -166,12 +143,6 @@ export default class TokenProcessor {
 
   previousToken(): void {
     this.tokenIndex--;
-  }
-
-  expectToken(label: string): void {
-    if (this.tokens[this.tokenIndex].type.label !== label) {
-      throw new Error(`Expected token ${label}`);
-    }
   }
 
   finish(): string {

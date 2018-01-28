@@ -1,5 +1,5 @@
 diff --git a/package.json b/package.json
-index e12b9ccd9..e38a05432 100644
+index e12b9ccd9..60ab40224 100644
 --- a/package.json
 +++ b/package.json
 @@ -108,7 +108,7 @@
@@ -7,7 +7,7 @@ index e12b9ccd9..e38a05432 100644
      "postinstall": "node node_modules/fbjs-scripts/node/check-dev-engines.js package.json",
      "debug-test": "cross-env NODE_ENV=development node --inspect-brk node_modules/.bin/jest --config ./scripts/jest/config.source.js --runInBand",
 -    "test": "cross-env NODE_ENV=development jest --config ./scripts/jest/config.source.js",
-+    "test": "cross-env NODE_ENV=development jest --config ./scripts/jest/config.source.js --no-cache",
++    "test": "cross-env NODE_ENV=development jest --config ./scripts/jest/config.source.js --no-cache --runInBand",
      "test-prod": "cross-env NODE_ENV=production jest --config ./scripts/jest/config.source.js",
      "test-prod-build": "yarn test-build-prod",
      "test-build": "cross-env NODE_ENV=development jest --config ./scripts/jest/config.build.js",

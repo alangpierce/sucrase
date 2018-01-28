@@ -272,14 +272,16 @@ export default class FlowParser extends TypeParser {
   }
 
   flowParseTypeParameterInstantiation(): void {
-    this.expect(tt.lessThan);
-    while (!this.match(tt.greaterThan)) {
-      this.flowParseType();
-      if (!this.match(tt.greaterThan)) {
-        this.expect(tt.comma);
+    this.runInTypeContext(0, () => {
+      this.expect(tt.lessThan);
+      while (!this.match(tt.greaterThan)) {
+        this.flowParseType();
+        if (!this.match(tt.greaterThan)) {
+          this.expect(tt.comma);
+        }
       }
-    }
-    this.expect(tt.greaterThan);
+      this.expect(tt.greaterThan);
+    });
   }
 
   flowParseObjectPropertyKey(): void {
@@ -947,7 +949,7 @@ export default class FlowParser extends TypeParser {
   // 3. This is neither. Just call the super method
   parseMaybeAssign(noIn?: boolean | null, afterLeftParse?: Function): boolean {
     let jsxError = null;
-    if (tt.jsxTagStart && this.match(tt.jsxTagStart)) {
+    if (this.match(tt.lessThan)) {
       const snapshot = this.state.snapshot();
       try {
         return super.parseMaybeAssign(noIn, afterLeftParse);

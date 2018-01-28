@@ -18,11 +18,11 @@ export function addHook(extension: string, transforms: Array<Transform>): void {
 }
 
 export function registerJS(): void {
-  addHook(".js", ["imports", "flow", "jsx", "react-display-name"]);
+  addHook(".js", ["imports", "flow", "jsx"]);
 }
 
 export function registerJSX(): void {
-  addHook(".jsx", ["imports", "flow", "jsx", "react-display-name"]);
+  addHook(".jsx", ["imports", "flow", "jsx"]);
 }
 
 export function registerTS(): void {

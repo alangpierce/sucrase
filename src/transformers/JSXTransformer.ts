@@ -1,14 +1,21 @@
 import {types as tt} from "../../sucrase-babylon/tokenizer/types";
 import ImportProcessor from "../ImportProcessor";
+import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
 export default class JSXTransformer extends Transformer {
+  lastLineNumber: number = 1;
+  lastIndex: number = 0;
+  filenameVarName: string | null = null;
+
   constructor(
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
     readonly importProcessor: ImportProcessor,
+    readonly nameManager: NameManager,
+    readonly filePath: string | null,
   ) {
     super();
   }
@@ -21,16 +28,44 @@ export default class JSXTransformer extends Transformer {
     return false;
   }
 
+  getPrefixCode(): string {
+    if (this.filenameVarName) {
+      return `const ${this.filenameVarName} = ${JSON.stringify(this.filePath || "")};`;
+    } else {
+      return "";
+    }
+  }
+
   /**
-   * Produce the props arg to createElement, starting at the first token of the
-   * props, if any.
+   * Lazily calculate line numbers to avoid unneeded work. We assume this is always called in
+   * increasing order by index.
    */
-  processProps(): void {
+  getLineNumberForIndex(index: number): number {
+    const code = this.tokens.code;
+    while (this.lastIndex < index && this.lastIndex < code.length) {
+      if (code[this.lastIndex] === "\n") {
+        this.lastLineNumber++;
+      }
+      this.lastIndex++;
+    }
+    return this.lastLineNumber;
+  }
+
+  getFilenameVarName(): string {
+    if (!this.filenameVarName) {
+      this.filenameVarName = this.nameManager.claimFreeName("_jsxFileName");
+    }
+    return this.filenameVarName;
+  }
+
+  processProps(firstTokenStart: number): void {
+    const lineNumber = this.getLineNumberForIndex(firstTokenStart);
+    const devProps = `__self: this, __source: {fileName: ${this.getFilenameVarName()}, lineNumber: ${lineNumber}}`;
     if (!this.tokens.matches1(tt.jsxName) && !this.tokens.matches1(tt.braceL)) {
-      this.tokens.appendCode(", null");
+      this.tokens.appendCode(`, {${devProps}}`);
       return;
     }
-    this.tokens.appendCode(", {");
+    this.tokens.appendCode(`, {`);
     while (true) {
       if (this.tokens.matches2(tt.jsxName, tt.eq)) {
         if (this.tokens.currentToken().value.includes("-")) {
@@ -58,7 +93,7 @@ export default class JSXTransformer extends Transformer {
       }
       this.tokens.appendCode(",");
     }
-    this.tokens.appendCode("}");
+    this.tokens.appendCode(` ${devProps}}`);
   }
 
   processStringPropValue(): void {
@@ -73,13 +108,13 @@ export default class JSXTransformer extends Transformer {
    */
   processTagIntro(): void {
     // Walk forward until we see one of these patterns:
-    // [jsxIdentifer, equals] to start the first prop.
+    // jsxName to start the first prop, preceded by another jsxName to end the tag name.
     // [open brace] to start the first prop.
     // [jsxTagEnd] to end the open-tag.
     // [slash, jsxTagEnd] to end the self-closing tag.
     let introEnd = this.tokens.currentIndex() + 1;
     while (
-      !this.tokens.matchesAtIndex(introEnd, ["jsxName", "="]) &&
+      !this.tokens.matchesAtIndex(introEnd - 1, ["jsxName", "jsxName"]) &&
       !this.tokens.matchesAtIndex(introEnd, ["{"]) &&
       !this.tokens.matchesAtIndex(introEnd, ["jsxTagEnd"]) &&
       !this.tokens.matchesAtIndex(introEnd, ["/", "jsxTagEnd"])
@@ -140,10 +175,11 @@ export default class JSXTransformer extends Transformer {
 
   processJSXTag(): void {
     const resolvedReactName = this.importProcessor.getIdentifierReplacement("React") || "React";
+    const firstTokenStart = this.tokens.currentToken().start;
     // First tag is always jsxTagStart.
     this.tokens.replaceToken(`${resolvedReactName}.createElement(`);
     this.processTagIntro();
-    this.processProps();
+    this.processProps(firstTokenStart);
 
     if (this.tokens.matches2(tt.slash, tt.jsxTagEnd)) {
       // Self-closing tag.

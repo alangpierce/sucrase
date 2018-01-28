@@ -17,6 +17,9 @@ matrix:
         - yarn run-examples babel
     - script:
         - yarn build
+        - yarn run-examples react
+    - script:
+        - yarn build
         - yarn run-examples tslint apollo-client
     - script:
         - yarn test

@@ -8,6 +8,7 @@ const EXAMPLES = {
   "decaffeinate-parser": "https://github.com/decaffeinate/decaffeinate-parser.git",
   "coffee-lex": "https://github.com/decaffeinate/coffee-lex.git",
   babel: "https://github.com/babel/babel.git",
+  react: "https://github.com/facebook/react.git",
   tslint: "https://github.com/palantir/tslint.git",
   "apollo-client": "https://github.com/apollographql/apollo-client.git",
 };

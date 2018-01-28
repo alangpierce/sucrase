@@ -50,8 +50,22 @@ function getSelectedTransforms() {
   return TRANSFORMS.map(({name}) => name).filter((name) => config.selectedTransforms[name]);
 }
 
+function getFilePath() {
+  if (config.selectedTransforms.typescript) {
+    if (config.selectedTransforms.jsx) {
+      return "sample.tsx";
+    } else {
+      return "sample.ts";
+    }
+  } else {
+    return "sample.js";
+  }
+}
+
 function runSucrase() {
-  return runAndProfile(() => Sucrase.transform(config.code, {transforms: getSelectedTransforms()}));
+  return runAndProfile(() =>
+    Sucrase.transform(config.code, {transforms: getSelectedTransforms(), filePath: getFilePath()}),
+  );
 }
 
 function runBabel() {
@@ -70,6 +84,7 @@ function runBabel() {
   return runAndProfile(
     () =>
       Babel.transform(config.code, {
+        filename: getFilePath(),
         presets: babelPresets,
         plugins: [
           ...babelPlugins,

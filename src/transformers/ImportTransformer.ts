@@ -20,8 +20,7 @@ export default class ImportTransformer extends Transformer {
   }
 
   getPrefixCode(): string {
-    let prefix = '"use strict";';
-    prefix += this.importProcessor.getPrefixCode();
+    let prefix = this.importProcessor.getPrefixCode();
     if (this.hadExport) {
       prefix += 'Object.defineProperty(exports, "__esModule", {value: true});';
     }

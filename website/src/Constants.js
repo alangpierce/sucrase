@@ -29,11 +29,10 @@ export default App;
 `;
 
 export const TRANSFORMS = [
-  {name: "jsx", babelName: "transform-react-jsx"},
+  {name: "jsx", presetName: ["react", {development: true}]},
   {name: "typescript", presetName: "typescript"},
   {name: "flow", presetName: "flow"},
   {name: "imports", babelName: "transform-modules-commonjs"},
-  {name: "react-display-name", babelName: "transform-react-display-name", hideByDefault: true},
   {name: "add-module-exports", babelName: "add-module-exports", hideByDefault: true},
 ];
 

@@ -1,4 +1,4 @@
-import {types as tt} from "../../sucrase-babylon/tokenizer/types";
+import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import isIdentifier from "../util/isIdentifier";
 import RootTransformer from "./RootTransformer";
@@ -48,9 +48,9 @@ export default class TypeScriptTransformer extends Transformer {
     const enumName = this.tokens.currentToken().value;
     this.tokens.removeToken();
     this.tokens.appendCode(`var ${enumName}; (function (${enumName})`);
-    this.tokens.copyExpectedToken("{");
+    this.tokens.copyExpectedToken(tt.braceL);
     this.processEnumBody(enumName);
-    this.tokens.copyExpectedToken("}");
+    this.tokens.copyExpectedToken(tt.braceR);
     if (isExport) {
       this.tokens.appendCode(`)(${enumName} || (exports.${enumName} = ${enumName} = {}));`);
     } else {
@@ -74,11 +74,11 @@ export default class TypeScriptTransformer extends Transformer {
       let name;
       let isValidIdentifier;
       let nameStringCode;
-      if (nameToken.type.label === "name") {
+      if (nameToken.type === tt.name) {
         name = nameToken.value;
         isValidIdentifier = true;
         nameStringCode = `"${name}"`;
-      } else if (nameToken.type.label === "string") {
+      } else if (nameToken.type === tt.string) {
         name = nameToken.value;
         isValidIdentifier = isIdentifier(name);
         nameStringCode = this.tokens.code.slice(nameToken.start, nameToken.end);

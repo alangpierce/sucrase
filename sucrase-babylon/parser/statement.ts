@@ -2,7 +2,7 @@
 
 import {File} from "../index";
 import {IdentifierRole} from "../tokenizer";
-import {TokenType, types as tt} from "../tokenizer/types";
+import {TokenType, TokenType as tt} from "../tokenizer/types";
 import ExpressionParser from "./expression";
 
 export default class StatementParser extends ExpressionParser {
@@ -796,11 +796,11 @@ export default class StatementParser extends ExpressionParser {
 
   shouldParseExportDeclaration(): boolean {
     return (
-      this.state.type.keyword === "var" ||
-      this.state.type.keyword === "const" ||
-      this.state.type.keyword === "let" ||
-      this.state.type.keyword === "function" ||
-      this.state.type.keyword === "class" ||
+      this.state.type === tt._var ||
+      this.state.type === tt._const ||
+      this.state.type === tt._let ||
+      this.state.type === tt._function ||
+      this.state.type === tt._class ||
       this.isContextual("async") ||
       this.match(tt.at)
     );

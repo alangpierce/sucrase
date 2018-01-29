@@ -1,7 +1,7 @@
 import Parser from "../../parser";
 import {IdentifierRole, Token} from "../../tokenizer";
-import {TokenType, types as tt} from "../../tokenizer/types";
-import * as charCodes from "../../util/charcodes";
+import {TokenType, TokenType as tt} from "../../tokenizer/types";
+import {charCodes} from "../../util/charcodes";
 import {isIdentifierChar, isIdentifierStart} from "../../util/identifier";
 import {isNewLine} from "../../util/whitespace";
 import XHTMLEntities from "./xhtml";

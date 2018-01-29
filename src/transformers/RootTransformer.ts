@@ -1,4 +1,4 @@
-import {types as tt} from "../../sucrase-babylon/tokenizer/types";
+import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import {SucraseContext, Transform} from "../index";
 import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
@@ -153,7 +153,7 @@ export default class RootTransformer {
     if (contextId == null) {
       throw new Error("Expected class to have a context ID.");
     }
-    this.tokens.copyExpectedToken("class");
+    this.tokens.copyExpectedToken(tt._class);
     while (!this.tokens.matchesContextIdAndLabel(tt.braceL, contextId)) {
       this.processToken();
     }
@@ -181,7 +181,7 @@ export default class RootTransformer {
     if (classContextId == null) {
       throw new Error("Expected non-null context ID on class.");
     }
-    this.tokens.copyExpectedToken("{");
+    this.tokens.copyExpectedToken(tt.braceL);
 
     if (constructorInsertPos === null && initializerStatements.length > 0) {
       const initializersCode = initializerStatements.join(";");
@@ -215,7 +215,7 @@ export default class RootTransformer {
         this.processToken();
       }
     }
-    this.tokens.copyExpectedToken("}");
+    this.tokens.copyExpectedToken(tt.braceR);
   }
 
   processPossibleTypeRange(): boolean {

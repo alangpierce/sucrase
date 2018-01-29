@@ -1,5 +1,5 @@
 import {Token} from "../sucrase-babylon/tokenizer";
-import {TokenType, types as tt} from "../sucrase-babylon/tokenizer/types";
+import {TokenType, TokenType as tt} from "../sucrase-babylon/tokenizer/types";
 
 export type TokenProcessorSnapshot = {
   resultCode: string;
@@ -126,9 +126,9 @@ export default class TokenProcessor {
     this.replaceTokenTrimmingLeftWhitespace("");
   }
 
-  copyExpectedToken(label: string): void {
-    if (this.tokens[this.tokenIndex].type.label !== label) {
-      throw new Error(`Expected token ${label}`);
+  copyExpectedToken(tokenType: TokenType): void {
+    if (this.tokens[this.tokenIndex].type !== tokenType) {
+      throw new Error(`Expected token ${tokenType}`);
     }
     this.copyToken();
   }

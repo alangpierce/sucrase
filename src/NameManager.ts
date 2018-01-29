@@ -1,3 +1,4 @@
+import {TokenType as tt} from "../sucrase-babylon/tokenizer/types";
 import TokenProcessor from "./TokenProcessor";
 
 export default class NameManager {
@@ -7,7 +8,7 @@ export default class NameManager {
 
   preprocessNames(): void {
     for (const token of this.tokens.tokens) {
-      if (token.type.label === "name") {
+      if (token.type === tt.name) {
         this.usedNames.add(token.value);
       }
     }

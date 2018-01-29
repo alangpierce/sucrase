@@ -1,5 +1,6 @@
 import LinesAndColumns from "lines-and-columns";
 import {Token} from "../../sucrase-babylon/tokenizer";
+import {formatTokenType} from "../../sucrase-babylon/tokenizer/types";
 
 export default function formatTokens(code: string, tokens: Array<Token>): string {
   if (tokens.length === 0) {
@@ -28,7 +29,7 @@ export default function formatTokens(code: string, tokens: Array<Token>): string
   function getTokenComponents(token: Token): Array<string> {
     return [
       formatRange(token.start, token.end),
-      token.type.label,
+      formatTokenType(token.type),
       token.value != null ? truncate(String(token.value), 14) : "",
       ...tokenKeys.map((key) => formatValue(token[key], key)),
       ...typeKeys.map((key) => formatValue(token.type[key], key)),

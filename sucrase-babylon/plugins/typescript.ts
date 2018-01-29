@@ -1,4 +1,4 @@
-import {TokenType, types as tt} from "../tokenizer/types";
+import {TokenType, TokenType as tt} from "../tokenizer/types";
 import TypeParser from "./types";
 
 export type TsModifier = "readonly" | "abstract" | "static" | "public" | "private" | "protected";
@@ -1090,7 +1090,7 @@ export default class TypeScriptParser extends TypeParser {
 
   parseExprOp(minPrec: number, noIn: boolean | null): void {
     if (
-      nonNull(tt._in.binop) > minPrec &&
+      (tt._in & TokenType.PRECEDENCE_MASK) > minPrec &&
       !this.hasPrecedingLineBreak() &&
       this.eatContextual("as")
     ) {

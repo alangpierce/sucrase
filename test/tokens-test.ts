@@ -1,15 +1,13 @@
 import * as assert from "assert";
 import {parse} from "../sucrase-babylon";
 import {IdentifierRole, Token} from "../sucrase-babylon/tokenizer";
+import {TokenType as tt} from "../sucrase-babylon/tokenizer/types";
 
 type SimpleToken = Token & {label?: string};
 type TokenExpectation = {[K in keyof SimpleToken]?: SimpleToken[K]};
 
 function assertTokens(code: string, expectedTokens: Array<TokenExpectation>): void {
   const tokens: Array<SimpleToken> = parse(code, ["jsx"]).tokens;
-  for (const token of tokens) {
-    token.label = token.type.label;
-  }
   assert.equal(tokens.length, expectedTokens.length);
   const projectedTokens = tokens.map((token, i) => {
     const result = {};
@@ -30,22 +28,22 @@ describe("tokens", () => {
       var z = 3;
     `,
       [
-        {label: "const"},
-        {label: "name", identifierRole: IdentifierRole.BlockScopedDeclaration},
-        {label: "="},
-        {label: "num"},
-        {label: ";"},
-        {label: "let"},
-        {label: "name", identifierRole: IdentifierRole.BlockScopedDeclaration},
-        {label: "="},
-        {label: "num"},
-        {label: ";"},
-        {label: "var"},
-        {label: "name", identifierRole: IdentifierRole.FunctionScopedDeclaration},
-        {label: "="},
-        {label: "num"},
-        {label: ";"},
-        {label: "eof"},
+        {type: tt._const},
+        {type: tt.name, identifierRole: IdentifierRole.BlockScopedDeclaration},
+        {type: tt.eq},
+        {type: tt.num},
+        {type: tt.semi},
+        {type: tt._let},
+        {type: tt.name, identifierRole: IdentifierRole.BlockScopedDeclaration},
+        {type: tt.eq},
+        {type: tt.num},
+        {type: tt.semi},
+        {type: tt._var},
+        {type: tt.name, identifierRole: IdentifierRole.FunctionScopedDeclaration},
+        {type: tt.eq},
+        {type: tt.num},
+        {type: tt.semi},
+        {type: tt.eof},
       ],
     );
   });
@@ -57,16 +55,16 @@ describe("tokens", () => {
       }
     `,
       [
-        {label: "function"},
-        {label: "name"},
-        {label: "("},
-        {label: "name", identifierRole: IdentifierRole.FunctionScopedDeclaration},
-        {label: ","},
-        {label: "name", identifierRole: IdentifierRole.FunctionScopedDeclaration},
-        {label: ")"},
-        {label: "{"},
-        {label: "}"},
-        {label: "eof"},
+        {type: tt._function},
+        {type: tt.name},
+        {type: tt.parenL},
+        {type: tt.name, identifierRole: IdentifierRole.FunctionScopedDeclaration},
+        {type: tt.comma},
+        {type: tt.name, identifierRole: IdentifierRole.FunctionScopedDeclaration},
+        {type: tt.parenR},
+        {type: tt.braceL},
+        {type: tt.braceR},
+        {type: tt.eof},
       ],
     );
   });
@@ -79,16 +77,16 @@ describe("tokens", () => {
       }
     `,
       [
-        {label: "try"},
-        {label: "{"},
-        {label: "}"},
-        {label: "catch"},
-        {label: "("},
-        {label: "name", identifierRole: IdentifierRole.BlockScopedDeclaration},
-        {label: ")"},
-        {label: "{"},
-        {label: "}"},
-        {label: "eof"},
+        {type: tt._try},
+        {type: tt.braceL},
+        {type: tt.braceR},
+        {type: tt._catch},
+        {type: tt.parenL},
+        {type: tt.name, identifierRole: IdentifierRole.BlockScopedDeclaration},
+        {type: tt.parenR},
+        {type: tt.braceL},
+        {type: tt.braceR},
+        {type: tt.eof},
       ],
     );
   });
@@ -102,17 +100,17 @@ describe("tokens", () => {
       }
     `,
       [
-        {label: "function"},
-        {label: "name", identifierRole: IdentifierRole.FunctionScopedDeclaration},
-        {label: "("},
-        {label: ")"},
-        {label: "{"},
-        {label: "}"},
-        {label: "class"},
-        {label: "name", identifierRole: IdentifierRole.BlockScopedDeclaration},
-        {label: "{"},
-        {label: "}"},
-        {label: "eof"},
+        {type: tt._function},
+        {type: tt.name, identifierRole: IdentifierRole.FunctionScopedDeclaration},
+        {type: tt.parenL},
+        {type: tt.parenR},
+        {type: tt.braceL},
+        {type: tt.braceR},
+        {type: tt._class},
+        {type: tt.name, identifierRole: IdentifierRole.BlockScopedDeclaration},
+        {type: tt.braceL},
+        {type: tt.braceR},
+        {type: tt.eof},
       ],
     );
   });
@@ -122,7 +120,14 @@ describe("tokens", () => {
       `
       5/3/1
     `,
-      [{label: "num"}, {label: "/"}, {label: "num"}, {label: "/"}, {label: "num"}, {label: "eof"}],
+      [
+        {type: tt.num},
+        {type: tt.slash},
+        {type: tt.num},
+        {type: tt.slash},
+        {type: tt.num},
+        {type: tt.eof},
+      ],
     );
   });
 
@@ -131,7 +136,7 @@ describe("tokens", () => {
       `
       5 + /3/
     `,
-      [{label: "num"}, {label: "+/-"}, {label: "regexp"}, {label: "eof"}],
+      [{type: tt.num}, {type: tt.plusMin}, {type: tt.regexp}, {type: tt.eof}],
     );
   });
 
@@ -141,12 +146,12 @@ describe("tokens", () => {
       x<Hello>2
     `,
       [
-        {label: "name"},
-        {label: "<"},
-        {label: "name"},
-        {label: ">"},
-        {label: "num"},
-        {label: "eof"},
+        {type: tt.name},
+        {type: tt.lessThan},
+        {type: tt.name},
+        {type: tt.greaterThan},
+        {type: tt.num},
+        {type: tt.eof},
       ],
     );
   });
@@ -157,13 +162,13 @@ describe("tokens", () => {
       x + < Hello / >
     `,
       [
-        {label: "name"},
-        {label: "+/-"},
-        {label: "jsxTagStart"},
-        {label: "jsxName"},
-        {label: "/"},
-        {label: "jsxTagEnd"},
-        {label: "eof"},
+        {type: tt.name},
+        {type: tt.plusMin},
+        {type: tt.jsxTagStart},
+        {type: tt.jsxName},
+        {type: tt.slash},
+        {type: tt.jsxTagEnd},
+        {type: tt.eof},
       ],
     );
   });
@@ -177,28 +182,28 @@ describe("tokens", () => {
       </div>
     `,
       [
-        {label: "jsxTagStart"},
-        {label: "jsxName"},
-        {label: "jsxName"},
-        {label: "="},
-        {label: "string"},
-        {label: "jsxTagEnd"},
-        {label: "jsxText"},
-        {label: "jsxTagStart"},
-        {label: "jsxName"},
-        {label: "jsxName"},
-        {label: "="},
-        {label: "{"},
-        {label: "name"},
-        {label: "}"},
-        {label: "/"},
-        {label: "jsxTagEnd"},
-        {label: "jsxText"},
-        {label: "jsxTagStart"},
-        {label: "/"},
-        {label: "jsxName"},
-        {label: "jsxTagEnd"},
-        {label: "eof"},
+        {type: tt.jsxTagStart},
+        {type: tt.jsxName},
+        {type: tt.jsxName},
+        {type: tt.eq},
+        {type: tt.string},
+        {type: tt.jsxTagEnd},
+        {type: tt.jsxText},
+        {type: tt.jsxTagStart},
+        {type: tt.jsxName},
+        {type: tt.jsxName},
+        {type: tt.eq},
+        {type: tt.braceL},
+        {type: tt.name},
+        {type: tt.braceR},
+        {type: tt.slash},
+        {type: tt.jsxTagEnd},
+        {type: tt.jsxText},
+        {type: tt.jsxTagStart},
+        {type: tt.slash},
+        {type: tt.jsxName},
+        {type: tt.jsxTagEnd},
+        {type: tt.eof},
       ],
     );
   });
@@ -209,18 +214,18 @@ describe("tokens", () => {
       \`Hello, \${name} \${surname}\`
     `,
       [
-        {label: "`"},
-        {label: "template"},
-        {label: "${"},
-        {label: "name"},
-        {label: "}"},
-        {label: "template"},
-        {label: "${"},
-        {label: "name"},
-        {label: "}"},
-        {label: "template"},
-        {label: "`"},
-        {label: "eof"},
+        {type: tt.backQuote},
+        {type: tt.template},
+        {type: tt.dollarBraceL},
+        {type: tt.name},
+        {type: tt.braceR},
+        {type: tt.template},
+        {type: tt.dollarBraceL},
+        {type: tt.name},
+        {type: tt.braceR},
+        {type: tt.template},
+        {type: tt.backQuote},
+        {type: tt.eof},
       ],
     );
   });

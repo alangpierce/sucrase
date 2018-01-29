@@ -1,5 +1,6 @@
 import {IdentifierRole, Token} from "../sucrase-babylon/tokenizer";
 import {Scope} from "../sucrase-babylon/tokenizer/state";
+import {TokenType as tt} from "../sucrase-babylon/tokenizer/types";
 
 /**
  * Traverse the given tokens and modify them if necessary to indicate that some names shadow global
@@ -23,7 +24,7 @@ export default function identifyShadowedGlobals(
 function hasShadowedGlobals(tokens: Array<Token>, globalNames: Set<string>): boolean {
   for (const token of tokens) {
     if (
-      token.type.label === "name" &&
+      token.type === tt.name &&
       (token.identifierRole === IdentifierRole.FunctionScopedDeclaration ||
         token.identifierRole === IdentifierRole.BlockScopedDeclaration) &&
       globalNames.has(token.value)
@@ -57,7 +58,7 @@ function markShadowedGlobals(
     }
 
     const token = tokens[i];
-    if (scopeStack.length > 1 && token.type.label === "name" && globalNames.has(token.value)) {
+    if (scopeStack.length > 1 && token.type === tt.name && globalNames.has(token.value)) {
       if (token.identifierRole === IdentifierRole.BlockScopedDeclaration) {
         markShadowedForScope(scopeStack[scopeStack.length - 1], tokens, token.value);
       } else if (token.identifierRole === IdentifierRole.FunctionScopedDeclaration) {
@@ -80,7 +81,7 @@ function markShadowedGlobals(
 function markShadowedForScope(scope: Scope, tokens: Array<Token>, name: string): void {
   for (let i = scope.startTokenIndex; i < scope.endTokenIndex; i++) {
     const token = tokens[i];
-    if (token.type.label === "name" && token.value === name) {
+    if (token.type === tt.name && token.value === name) {
       token.shadowsGlobal = true;
     }
   }

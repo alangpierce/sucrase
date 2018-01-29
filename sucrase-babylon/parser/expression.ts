@@ -19,8 +19,7 @@
 // [opp]: http://en.wikipedia.org/wiki/Operator-precedence_parser
 
 import {IdentifierRole} from "../tokenizer";
-import {TokenType, types as tt} from "../tokenizer/types";
-import {Pos} from "./index";
+import {TokenType, TokenType as tt} from "../tokenizer/types";
 import LValParser from "./lval";
 
 export default abstract class ExpressionParser extends LValParser {
@@ -84,7 +83,7 @@ export default abstract class ExpressionParser extends LValParser {
     if (afterLeftParse) {
       afterLeftParse.call(this);
     }
-    if (this.state.type.isAssign) {
+    if (this.state.type & TokenType.IS_ASSIGN) {
       this.next();
       this.parseMaybeAssign(noIn);
       return false;
@@ -129,8 +128,8 @@ export default abstract class ExpressionParser extends LValParser {
   // defer further parser to one of its callers when it encounters an
   // operator that has a lower precedence than the set it is parsing.
   parseExprOp(minPrec: number, noIn: boolean | null): void {
-    const prec = this.state.type.binop;
-    if (prec != null && (!noIn || !this.match(tt._in))) {
+    const prec = this.state.type & TokenType.PRECEDENCE_MASK;
+    if (prec > 0 && (!noIn || !this.match(tt._in))) {
       if (prec > minPrec) {
         const operator = this.state.value;
         const op = this.state.type;
@@ -142,7 +141,7 @@ export default abstract class ExpressionParser extends LValParser {
         }
 
         this.parseMaybeUnary();
-        this.parseExprOp(op.rightAssociative ? prec - 1 : prec, noIn);
+        this.parseExprOp(op & TokenType.IS_RIGHT_ASSOCIATIVE ? prec - 1 : prec, noIn);
         this.parseExprOp(minPrec, noIn);
       }
     }
@@ -151,7 +150,7 @@ export default abstract class ExpressionParser extends LValParser {
   // Parse unary operators, both prefix and postfix.
   // Returns true if this was an arrow function.
   parseMaybeUnary(): boolean {
-    if (this.state.type.prefix) {
+    if (this.state.type & TokenType.IS_PREFIX) {
       this.next();
       this.parseMaybeUnary();
       return false;
@@ -161,7 +160,7 @@ export default abstract class ExpressionParser extends LValParser {
     if (wasArrow) {
       return true;
     }
-    while (this.state.type.postfix && !this.canInsertSemicolon()) {
+    while (this.state.type & TokenType.IS_POSTFIX && !this.canInsertSemicolon()) {
       this.next();
     }
     return false;
@@ -634,7 +633,7 @@ export default abstract class ExpressionParser extends LValParser {
       this.match(tt.num) || // get 1() {}
       this.match(tt.bracketL) || // get ["string"]() {}
       this.match(tt.name) || // get foo() {}
-        !!this.state.type.keyword) // get debugger() {}
+        !!(this.state.type & TokenType.IS_KEYWORD)) // get debugger() {}
     );
   }
 
@@ -717,7 +716,6 @@ export default abstract class ExpressionParser extends LValParser {
   }
 
   // Parse object or class method.
-
   parseMethod(functionStart: number, isGenerator: boolean, isConstructor: boolean): void {
     const funcContextId = this.nextContextId++;
 

@@ -1,5 +1,5 @@
 import {IdentifierRole} from "../../sucrase-babylon/tokenizer";
-import {types as tt} from "../../sucrase-babylon/tokenizer/types";
+import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import ImportProcessor from "../ImportProcessor";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
@@ -65,12 +65,12 @@ export default class ReactDisplayNameTransformer extends Transformer {
     }
 
     if (this.classNeedsDisplayName()) {
-      this.tokens.copyExpectedToken("(");
-      this.tokens.copyExpectedToken("{");
+      this.tokens.copyExpectedToken(tt.parenL);
+      this.tokens.copyExpectedToken(tt.braceL);
       this.tokens.appendCode(`displayName: '${displayName}',`);
       this.rootTransformer.processBalancedCode();
-      this.tokens.copyExpectedToken("}");
-      this.tokens.copyExpectedToken(")");
+      this.tokens.copyExpectedToken(tt.braceR);
+      this.tokens.copyExpectedToken(tt.parenR);
     }
   }
 
@@ -111,7 +111,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
 
     for (; index < this.tokens.tokens.length; index++) {
       const token = this.tokens.tokens[index];
-      if (token.type.label === "}" && token.contextId === objectContextId) {
+      if (token.type === tt.braceR && token.contextId === objectContextId) {
         index++;
         break;
       }

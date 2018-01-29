@@ -1,12 +1,14 @@
 /* eslint max-len: 0 */
 
-import {TokenType, types as tt} from "../tokenizer/types";
-import * as charCodes from "../util/charcodes";
+import {TokenType, TokenType as tt} from "../tokenizer/types";
 import TypeParser from "./types";
 
 // tslint:disable-next-line no-any
 function isMaybeDefaultImport(lookahead: {type: TokenType; value: any}): boolean {
-  return (lookahead.type === tt.name || !!lookahead.type.keyword) && lookahead.value !== "from";
+  return (
+    (lookahead.type === tt.name || !!(lookahead.type && TokenType.IS_KEYWORD)) &&
+    lookahead.value !== "from"
+  );
 }
 
 export default class FlowParser extends TypeParser {
@@ -568,7 +570,7 @@ export default class FlowParser extends TypeParser {
         return;
 
       default:
-        if (this.state.type.keyword === "typeof") {
+        if (this.state.type === tt._typeof) {
           this.flowParseTypeofType();
           return;
         }
@@ -891,13 +893,20 @@ export default class FlowParser extends TypeParser {
 
     if (this.isContextual("as") && !this.isLookaheadContextual("as")) {
       this.parseIdentifier();
-      if (specifierTypeKind !== null && !this.match(tt.name) && !this.state.type.keyword) {
+      if (
+        specifierTypeKind !== null &&
+        !this.match(tt.name) &&
+        !(this.state.type & TokenType.IS_KEYWORD)
+      ) {
         // `import {type as ,` or `import {type as }`
       } else {
         // `import {type as foo`
         this.parseIdentifier();
       }
-    } else if (specifierTypeKind !== null && (this.match(tt.name) || this.state.type.keyword)) {
+    } else if (
+      specifierTypeKind !== null &&
+      (this.match(tt.name) || !!(this.state.type & TokenType.IS_KEYWORD))
+    ) {
       // `import {type foo`
       this.parseIdentifier();
       if (this.eatContextual("as")) {

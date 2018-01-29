@@ -1,6 +1,5 @@
 import {IdentifierRole} from "../tokenizer";
-import {TokenType, types as tt} from "../tokenizer/types";
-import {Pos} from "./index";
+import {TokenType, TokenType as tt} from "../tokenizer/types";
 import UtilParser from "./util";
 
 export default abstract class LValParser extends UtilParser {

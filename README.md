@@ -14,17 +14,18 @@ focuses on compiling non-standard language extensions: JSX, TypeScript, and
 Flow. Because of this smaller scope, Sucrase can get away with an architecture
 that is much more performant but less extensible and maintainable.
 
-**Current state:** The project is in active development. It is about 13x faster
-than Babel and about 5x faster than TypeScript, and it has been tested on
-hundreds of thousands of lines of code. You may still find bugs when running on
-your code, though. You probably shouldn't use it in production, but you may find
-it useful in development. Feel free to file issues!
+**Current state:** The project is in active development. It is about 15x faster
+than Babel and about 6x faster than TypeScript, and it has been tested on
+hundreds of thousands of lines of code. Still, you may find correctness issues
+when running on a large codebase. Feel free to file issues!
 
 Sucrase can convert the following codebases with all tests passing:
 * Sucrase itself (6K lines of code excluding Babylon fork, typescript, imports).
 * The [Benchling](https://benchling.com/) frontend codebase
   (500K lines of code, JSX, imports).
 * [Babel](https://github.com/babel/babel) (63K lines of code, flow, imports).
+* [React](https://github.com/facebook/react) (86K lines of code, JSX, flow,
+  imports).
 * [TSLint](https://github.com/palantir/tslint) (20K lines of code, typescript,
   imports).
 * [Apollo client](https://github.com/apollographql/apollo-client) (34K lines of
@@ -138,15 +139,15 @@ case, it is much faster than Babel.
 
 ## Performance
 
-Currently, Sucrase runs about 13x faster than Babel (even when Babel only runs
-the relevant transforms) and 5x faster than TypeScript. Here's the output of
+Currently, Sucrase runs about 15x faster than Babel (even when Babel only runs
+the relevant transforms) and 6x faster than TypeScript. Here's the output of
 one run of `npm run benchmark`:
 
 ```
 Simulating transpilation of 100,000 lines of code:
-Sucrase: 777.638ms
-TypeScript: 3820.914ms
-Babel: 10041.368ms
+Sucrase: 670.313ms
+TypeScript: 3988.560ms
+Babel: 10060.157ms
 ```
 
 ## Project vision and future work
@@ -161,7 +162,7 @@ Babel: 10041.368ms
 
 ### New features
 
-* Implement more integrations, like for Webpack and Rollup.
+* Implement more integrations, like a Rollup plugin.
 * Emit proper source maps. (The line numbers already match up, but this would
   help with debuggers and other tools.)
 * Rethink configuration and try to simplify it as much as possible, and allow
@@ -181,9 +182,8 @@ Babel: 10041.368ms
 * Add integrity checks to compare intermediate Sucrase results (like tokens and
   the role of each identifier and pair of curly braces) with the equivalent
   information from Babel.
-* Fix some known correctness loose ends, like import hoisting, export assignment
-  detection for complex assignments, and fully replicating the small differences
-  between Babel and the TypeScript compiler.
+* Fix some known correctness loose ends, like import hoisting and fully
+  replicating the small differences between Babel and the TypeScript compiler.
 
 ## License and attribution
 

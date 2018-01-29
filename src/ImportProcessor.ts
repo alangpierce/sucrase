@@ -277,7 +277,11 @@ get: () => ${primaryImportName}[key]}); });`;
     if (
       this.tokens.matchesAtIndex(index, ["export", "var"]) ||
       this.tokens.matchesAtIndex(index, ["export", "let"]) ||
-      this.tokens.matchesAtIndex(index, ["export", "const"]) ||
+      this.tokens.matchesAtIndex(index, ["export", "const"])
+    ) {
+      const exportName = this.tokens.tokens[index + 2].value;
+      this.identifierReplacements.set(exportName, `exports.${exportName}`);
+    } else if (
       this.tokens.matchesAtIndex(index, ["export", "function"]) ||
       this.tokens.matchesAtIndex(index, ["export", "class"])
     ) {

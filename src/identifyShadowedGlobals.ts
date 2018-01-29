@@ -57,7 +57,7 @@ function markShadowedGlobals(
     }
 
     const token = tokens[i];
-    if (token.type.label === "name" && globalNames.has(token.value)) {
+    if (scopeStack.length > 1 && token.type.label === "name" && globalNames.has(token.value)) {
       if (token.identifierRole === IdentifierRole.BlockScopedDeclaration) {
         markShadowedForScope(scopeStack[scopeStack.length - 1], tokens, token.value);
       } else if (token.identifierRole === IdentifierRole.FunctionScopedDeclaration) {

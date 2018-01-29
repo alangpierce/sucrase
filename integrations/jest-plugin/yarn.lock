@@ -46,9 +46,9 @@ pirates@^3.0.2:
   dependencies:
     node-modules-regexp "^1.0.0"
 
-sucrase@^1.9.0:
-  version "1.9.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.9.0.tgz#5078661ebc4a9fed2a8fda055745b9fcdc074c38"
+sucrase@^1.12.1:
+  version "1.12.1"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.12.1.tgz#97a92597432d2af03887bfab11614da5efef0998"
   dependencies:
     "@types/mz" "^0.0.32"
     commander "^2.12.2"

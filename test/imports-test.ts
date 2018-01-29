@@ -73,9 +73,9 @@ describe("transform imports", () => {
       export const z = 3;
     `,
       `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
-       var x = exports.x = 1;
-       let y = exports.y = 2;
-       const z = exports.z = 3;
+       exports.x = 1;
+       exports.y = 2;
+       exports.z = 3;
     `,
     );
   });
@@ -319,7 +319,7 @@ return obj && obj.__esModule ? obj : { default: obj }; }
 
 
 var _moduleName = require('moduleName');
-      console.log((0, _moduleName.a) + (0, _moduleName.b));
+      console.log(_moduleName.a + _moduleName.b);
     `,
     );
   });
@@ -363,7 +363,7 @@ var _moduleName = require('moduleName');
       `"use strict";${IMPORT_PREFIX}
       var _mymodule = require('my-module'); var _mymodule2 = _interopRequireDefault(_mymodule);
       
-      (0, _mymodule2.default).test();
+      _mymodule2.default.test();
       test.foo();
     `,
     );
@@ -394,7 +394,7 @@ var _moduleName = require('moduleName');
       `"use strict";${IMPORT_PREFIX}
       var _mymodule = require('my-module'); var wildcardName = _interopRequireWildcard(_mymodule);
       
-      (0, wildcardName.default).methodName();
+      wildcardName.default.methodName();
     `,
     );
   });
@@ -472,7 +472,7 @@ var _moduleName = require('moduleName');
       };
       
       function f() {
-        return true ? (0, _foo2.default) : 3;
+        return true ? _foo2.default : 3;
       }
     `,
     );
@@ -500,12 +500,12 @@ var _moduleName = require('moduleName');
       const o = {
         foo: _foo2.default,
         bar,
-        baz: (0, _foo2.default),
+        baz: _foo2.default,
         for: 4,
       };
       
       function f() {
-        (0, _foo2.default)
+        _foo2.default
       }
     `,
     );
@@ -522,7 +522,7 @@ var _moduleName = require('moduleName');
       `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
       var _superclass = require('./superclass'); var _superclass2 = _interopRequireDefault(_superclass);
       
-       class Subclass extends (0, _superclass2.default) {
+       class Subclass extends _superclass2.default {
       } exports.Subclass = Subclass;
     `,
     );
@@ -540,7 +540,7 @@ var _moduleName = require('moduleName');
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
       var _Foo = require('./Foo'); var _Foo2 = _interopRequireDefault(_Foo);
       
-      const elem = _react2.default.createElement((0, _Foo2.default), {${devProps(5)}} );
+      const elem = _react2.default.createElement(_Foo2.default, {${devProps(5)}} );
     `,
     );
   });
@@ -557,7 +557,7 @@ var _moduleName = require('moduleName');
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
       var _value = require('./value'); var _value2 = _interopRequireDefault(_value);
       
-      _react2.default.createElement('div', { a: (0, _value2.default), ${devProps(5)}} );
+      _react2.default.createElement('div', { a: _value2.default, ${devProps(5)}} );
     `,
     );
   });
@@ -585,7 +585,7 @@ var _moduleName = require('moduleName');
         _react2.default.createElement('div', {${devProps(6)}}
           , _react2.default.createElement('span', {${devProps(7)}}
             , _react2.default.createElement('span', {${devProps(8)}} )
-            , (0, _value2.default)
+            , _value2.default
           )
         )
       );
@@ -614,7 +614,7 @@ module.exports = exports.default;
       export default 4;
     `,
       `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
-       const x = exports.x = 1;
+       exports.x = 1;
       exports. default = 4;
     `,
       ["imports", "add-module-exports"],
@@ -870,7 +870,7 @@ module.exports = exports.default;
     `,
       `"use strict";${IMPORT_PREFIX}
       var _a = require('a'); var _a2 = _interopRequireDefault(_a);
-      console.log((0, _a2.default));
+      console.log(_a2.default);
       function f() {
         let a = 3;
         a = 7;
@@ -935,7 +935,7 @@ module.exports = exports.default;
     `,
       `"use strict";${IMPORT_PREFIX}
       var _a = require('a'); var _a2 = _interopRequireDefault(_a);
-      const {b = (0, _a2.default)} = {};
+      const {b = _a2.default} = {};
       if (true) {
         const {a} = {};
         console.log(a);
@@ -955,10 +955,27 @@ module.exports = exports.default;
     `,
       `"use strict";${IMPORT_PREFIX}
       var _a = require('a'); var _a2 = _interopRequireDefault(_a);
-      const f = ((0, _a2.default), b);
+      const f = (_a2.default, b);
       const g = (a, b) => c;
       const h = a => c;
       const f2 = async (a) => c;
+    `,
+    );
+  });
+
+  it("properly handles complex assignments to exported values", () => {
+    assertResult(
+      `
+      export let a = 1;
+      ({a} = 2);
+      a = 3;
+      console.log(a);
+    `,
+      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+       exports.a = 1;
+      ({a: exports.a} = 2);
+      exports.a = 3;
+      console.log(exports.a);
     `,
     );
   });

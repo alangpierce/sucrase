@@ -279,7 +279,7 @@ describe("typescript transform", () => {
       
       
       function f(a) {
-        return a instanceof (0, _a.default);
+        return a instanceof _a.default;
       }
       function g(b) {
         return true;

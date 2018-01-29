@@ -65,10 +65,6 @@ array-slice@^0.2.3:
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/array-slice/-/array-slice-0.2.3.tgz#dd3cfb80ed7973a75117cdac69b0b99ec86186f5"
 
-charcodes@0.0.10:
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/charcodes/-/charcodes-0.0.10.tgz#98d67a7a1e17ce154d1faafd01e72e9a6cff54f5"
-
 commander@^2.12.2:
   version "2.13.0"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.13.0.tgz#6964bca67685df7c1f1430c584f07d7597885b9c"
@@ -161,12 +157,11 @@ string_decoder@~1.0.3:
   dependencies:
     safe-buffer "~5.1.0"
 
-sucrase@^1.8.1:
-  version "1.8.1"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.8.1.tgz#9caa8cc08832c44e225ac2affcea9468038886bd"
+sucrase@^1.12.1:
+  version "1.12.1"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.12.1.tgz#97a92597432d2af03887bfab11614da5efef0998"
   dependencies:
     "@types/mz" "^0.0.32"
-    charcodes "0.0.10"
     commander "^2.12.2"
     lines-and-columns "^1.1.6"
     mz "^2.7.0"

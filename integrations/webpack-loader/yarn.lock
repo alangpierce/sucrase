@@ -95,9 +95,9 @@ source-map@^0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.6.1.tgz#74722af32e9614e9c287a8d0bbde48b5e2f1a263"
 
-sucrase@^1.10.0:
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.10.0.tgz#7cd0926f5804a15569279ca59ae905403f10acec"
+sucrase@^1.12.1:
+  version "1.12.1"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.12.1.tgz#97a92597432d2af03887bfab11614da5efef0998"
   dependencies:
     "@types/mz" "^0.0.32"
     commander "^2.12.2"

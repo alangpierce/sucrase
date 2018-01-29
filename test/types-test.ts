@@ -208,7 +208,7 @@ describe("type transforms", () => {
     `,
       `${ESMODULE_PREFIX}
       
-       const x = exports.x = 1;
+       exports.x = 1;
     `,
     );
   });

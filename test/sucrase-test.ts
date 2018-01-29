@@ -49,7 +49,7 @@ describe("sucrase", () => {
       };
     `,
       `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
-       const keywords = exports.keywords = {
+       exports.keywords = {
         break: new KeywordTokenType("break"),
         case: new KeywordTokenType("case", { beforeExpr }),
         catch: new KeywordTokenType("catch"),
@@ -336,10 +336,10 @@ describe("sucrase", () => {
       `"use strict";
       var _A = require('A');
       var _B = require('B');
-      class C {constructor() { this.a = (0, _A.default); }
+      class C {constructor() { this.a = _A.default; }
         
         
-      } C.b = (0, _B.default);
+      } C.b = _B.default;
     `,
       ["jsx", "imports", "typescript"],
     );

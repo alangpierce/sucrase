@@ -171,9 +171,23 @@ export default class ImportTransformer extends Transformer {
     if (!replacement) {
       return false;
     }
-    // For now, always use the (0, a) syntax so that non-expression replacements
-    // are more likely to become syntax errors.
-    this.tokens.replaceToken(`(0, ${replacement})`);
+    // We need to change to (0, f) if this is a function call, so that it won't be interpreted as a
+    // method access. This can also happen in situations like (f)(), so a following close-paren
+    // should trigger this behavior as well if it eventually has an open-paren. In some cases, like
+    // export assignees, we must NOT turn the identifier into a normal expression, so we need to
+    // just to the regular replacement.
+    let possibleOpenParenIndex = this.tokens.currentIndex() + 1;
+    while (
+      possibleOpenParenIndex < this.tokens.tokens.length &&
+      this.tokens.tokens[possibleOpenParenIndex].type === tt.parenR
+    ) {
+      possibleOpenParenIndex++;
+    }
+    if (this.tokens.tokens[possibleOpenParenIndex].type === tt.parenL) {
+      this.tokens.replaceToken(`(0, ${replacement})`);
+    } else {
+      this.tokens.replaceToken(replacement);
+    }
     return true;
   }
 
@@ -292,17 +306,20 @@ export default class ImportTransformer extends Transformer {
    * Transform this:
    * export const x = 1;
    * into this:
-   * const x = exports.x = 1;
+   * exports.x = 1;
    */
   private processExportVar(): void {
-    this.tokens.replaceToken("");
-    this.tokens.copyToken();
+    this.tokens.removeInitialToken();
+    this.tokens.removeToken();
     if (!this.tokens.matches1(tt.name)) {
       throw new Error("Expected a regular identifier after export var/let/const.");
     }
     const name = this.tokens.currentToken().value;
-    this.tokens.copyToken();
-    this.tokens.appendCode(` = exports.${name}`);
+    const replacement = this.importProcessor.getIdentifierReplacement(name);
+    if (replacement === null) {
+      throw new Error("Expected a replacement for `export var` syntax..");
+    }
+    this.tokens.replaceToken(replacement);
   }
 
   /**

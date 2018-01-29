@@ -1,5 +1,5 @@
 import Tokenizer from "../tokenizer";
-import {TokenType, types as tt} from "../tokenizer/types";
+import {formatTokenType, TokenType, TokenType as tt} from "../tokenizer/types";
 import {lineBreak} from "../util/whitespace";
 
 // ## Parser utilities
@@ -62,7 +62,7 @@ export default class UtilParser extends Tokenizer {
     messageOrType: string | TokenType = "Unexpected token",
   ): never {
     if (typeof messageOrType !== "string") {
-      messageOrType = `Unexpected token, expected "${messageOrType.label}"`;
+      messageOrType = `Unexpected token, expected "${formatTokenType(messageOrType)}"`;
     }
     throw this.raise(pos != null ? pos : this.state.start, messageOrType);
   }

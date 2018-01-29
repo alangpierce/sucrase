@@ -1,4 +1,4 @@
-import {types as tt} from "../../sucrase-babylon/tokenizer/types";
+import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import ImportProcessor from "../ImportProcessor";
 import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";

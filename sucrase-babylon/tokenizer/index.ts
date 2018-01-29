@@ -1,11 +1,11 @@
 /* eslint max-len: 0 */
 
 import BaseParser from "../parser/base";
-import * as charCodes from "../util/charcodes";
+import {charCodes, isDigit} from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart, isKeyword} from "../util/identifier";
 import {isNewLine, lineBreak, nonASCIIwhitespace} from "../util/whitespace";
 import State from "./state";
-import {keywords as keywordTypes, TokenType, types as tt} from "./types";
+import {keywords as keywordTypes, TokenType, TokenType as tt} from "./types";
 
 // The following character codes are forbidden from being
 // an immediate sibling of NumericLiteralSeparator _
@@ -796,7 +796,7 @@ export default abstract class Tokenizer extends BaseParser {
         val = code - charCodes.lowercaseA + charCodes.lineFeed;
       } else if (code >= charCodes.uppercaseA) {
         val = code - charCodes.uppercaseA + charCodes.lineFeed;
-      } else if (charCodes.isDigit(code)) {
+      } else if (isDigit(code)) {
         val = code - charCodes.digit0; // 0-9
       } else {
         val = Infinity;

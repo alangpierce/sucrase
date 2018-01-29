@@ -1,5 +1,5 @@
 import {Token} from "./index";
-import {TokenType, types as tt} from "./types";
+import {TokenType, TokenType as tt} from "./types";
 
 export type Scope = {
   isFunctionScope: boolean;

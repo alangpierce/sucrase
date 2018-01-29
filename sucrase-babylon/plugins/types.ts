@@ -1,5 +1,4 @@
-import {types as tt} from "../tokenizer/types";
-import * as charCodes from "../util/charcodes";
+import {TokenType as tt} from "../tokenizer/types";
 import JSXParser from "./jsx";
 
 /**

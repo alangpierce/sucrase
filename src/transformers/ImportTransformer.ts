@@ -1,5 +1,5 @@
 import {IdentifierRole} from "../../sucrase-babylon/tokenizer";
-import {types as tt} from "../../sucrase-babylon/tokenizer/types";
+import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import ImportProcessor from "../ImportProcessor";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
@@ -248,7 +248,7 @@ export default class ImportTransformer extends Transformer {
   private processAssignment(): boolean {
     const index = this.tokens.currentIndex();
     const identifierToken = this.tokens.tokens[index - 1];
-    if (identifierToken.type.label !== "name") {
+    if (identifierToken.type !== tt.name) {
       return false;
     }
     if (this.tokens.matchesAtIndex(index - 2, [tt.dot])) {
@@ -256,7 +256,7 @@ export default class ImportTransformer extends Transformer {
     }
     if (
       index - 2 >= 0 &&
-      ["var", "let", "const"].includes(this.tokens.tokens[index - 2].type.label)
+      [tt._var, tt._let, tt._const].includes(this.tokens.tokens[index - 2].type)
     ) {
       // Declarations don't need an extra assignment. This doesn't avoid the
       // assignment for comma-separated declarations, but it's still correct
@@ -358,13 +358,13 @@ export default class ImportTransformer extends Transformer {
         this.tokens.removeToken();
       }
     }
-    this.tokens.copyExpectedToken("(");
+    this.tokens.copyExpectedToken(tt.parenL);
     this.rootTransformer.processBalancedCode();
-    this.tokens.copyExpectedToken(")");
+    this.tokens.copyExpectedToken(tt.parenR);
     this.rootTransformer.processPossibleTypeRange();
-    this.tokens.copyExpectedToken("{");
+    this.tokens.copyExpectedToken(tt.braceL);
     this.rootTransformer.processBalancedCode();
-    this.tokens.copyExpectedToken("}");
+    this.tokens.copyExpectedToken(tt.braceR);
     return name;
   }
 

@@ -1,5 +1,5 @@
 import {Token} from "../../sucrase-babylon/tokenizer";
-import {types as tt} from "../../sucrase-babylon/tokenizer/types";
+import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "../transformers/RootTransformer";
 
@@ -166,7 +166,7 @@ function processConstructor(
         tokens.nextToken();
       }
       const token = tokens.currentToken();
-      if (token.type.label !== "name") {
+      if (token.type !== tt.name) {
         throw new Error("Expected identifier after access modifiers in constructor arg.");
       }
       const name = token.value;
@@ -204,17 +204,17 @@ function processConstructor(
  */
 function isAccessModifier(token: Token): boolean {
   return [
-    "async",
-    "get",
-    "set",
-    "+/-",
-    "readonly",
-    "static",
-    "public",
-    "private",
-    "protected",
-    "abstract",
-  ].includes(token.type.label);
+    tt._async,
+    tt._get,
+    tt._set,
+    tt.plusMin,
+    tt._readonly,
+    tt._static,
+    tt._public,
+    tt._private,
+    tt._protected,
+    tt._abstract,
+  ].includes(token.type);
 }
 
 /**
@@ -239,7 +239,7 @@ function getNameCode(tokens: TokenProcessor): string {
   } else {
     const nameToken = tokens.currentToken();
     tokens.nextToken();
-    if (nameToken.type.label === "string" || nameToken.type.label === "num") {
+    if (nameToken.type === tt.string || nameToken.type === tt.num) {
       return `[${tokens.code.slice(nameToken.start, nameToken.end)}]`;
     } else {
       return `.${nameToken.value}`;

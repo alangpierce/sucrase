@@ -108,7 +108,7 @@ export default class ImportTransformer extends Transformer {
     this.tokens.removeInitialToken();
     if (
       this.tokens.matchesName("type") &&
-      !this.tokens.matchesAtIndex(this.tokens.currentIndex() + 1, [","]) &&
+      !this.tokens.matchesAtIndex(this.tokens.currentIndex() + 1, [tt.comma]) &&
       !this.tokens.matchesNameAtIndex(this.tokens.currentIndex() + 1, "from")
     ) {
       // This is an "import type" statement, so exit early.
@@ -251,7 +251,7 @@ export default class ImportTransformer extends Transformer {
     if (identifierToken.type.label !== "name") {
       return false;
     }
-    if (this.tokens.matchesAtIndex(index - 2, ["."])) {
+    if (this.tokens.matchesAtIndex(index - 2, [tt.dot])) {
       return false;
     }
     if (

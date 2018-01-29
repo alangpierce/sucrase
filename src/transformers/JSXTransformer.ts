@@ -114,10 +114,10 @@ export default class JSXTransformer extends Transformer {
     // [slash, jsxTagEnd] to end the self-closing tag.
     let introEnd = this.tokens.currentIndex() + 1;
     while (
-      !this.tokens.matchesAtIndex(introEnd - 1, ["jsxName", "jsxName"]) &&
-      !this.tokens.matchesAtIndex(introEnd, ["{"]) &&
-      !this.tokens.matchesAtIndex(introEnd, ["jsxTagEnd"]) &&
-      !this.tokens.matchesAtIndex(introEnd, ["/", "jsxTagEnd"])
+      !this.tokens.matchesAtIndex(introEnd - 1, [tt.jsxName, tt.jsxName]) &&
+      !this.tokens.matchesAtIndex(introEnd, [tt.braceL]) &&
+      !this.tokens.matchesAtIndex(introEnd, [tt.jsxTagEnd]) &&
+      !this.tokens.matchesAtIndex(introEnd, [tt.slash, tt.jsxTagEnd])
     ) {
       introEnd++;
     }

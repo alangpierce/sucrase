@@ -1,5 +1,5 @@
 import {Token} from "../sucrase-babylon/tokenizer";
-import {TokenType} from "../sucrase-babylon/tokenizer/types";
+import {TokenType, types as tt} from "../sucrase-babylon/tokenizer/types";
 
 export type TokenProcessorSnapshot = {
   resultCode: string;
@@ -37,15 +37,15 @@ export default class TokenProcessor {
     this.tokenIndex = 0;
   }
 
-  matchesAtIndex(index: number, tagLabels: Array<string>): boolean {
+  matchesAtIndex(index: number, types: Array<TokenType>): boolean {
     if (index < 0) {
       return false;
     }
-    for (let i = 0; i < tagLabels.length; i++) {
+    for (let i = 0; i < types.length; i++) {
       if (index + i >= this.tokens.length) {
         return false;
       }
-      if (this.tokens[index + i].type.label !== tagLabels[i]) {
+      if (this.tokens[index + i].type !== types[i]) {
         return false;
       }
     }
@@ -53,7 +53,7 @@ export default class TokenProcessor {
   }
 
   matchesNameAtIndex(index: number, name: string): boolean {
-    return this.matchesAtIndex(index, ["name"]) && this.tokens[index].value === name;
+    return this.matchesAtIndex(index, [tt.name]) && this.tokens[index].value === name;
   }
 
   matches1(t1: TokenType): boolean {

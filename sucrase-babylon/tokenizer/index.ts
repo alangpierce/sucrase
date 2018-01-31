@@ -7,73 +7,6 @@ import {isNewLine, lineBreak, nonASCIIwhitespace} from "../util/whitespace";
 import State from "./state";
 import {keywords as keywordTypes, TokenType, TokenType as tt} from "./types";
 
-// The following character codes are forbidden from being
-// an immediate sibling of NumericLiteralSeparator _
-
-const forbiddenNumericSeparatorSiblings = {
-  decBinOct: [
-    charCodes.dot,
-    charCodes.uppercaseB,
-    charCodes.uppercaseE,
-    charCodes.uppercaseO,
-    charCodes.underscore, // multiple separators are not allowed
-    charCodes.lowercaseB,
-    charCodes.lowercaseE,
-    charCodes.lowercaseO,
-  ],
-  hex: [
-    charCodes.dot,
-    charCodes.uppercaseX,
-    charCodes.underscore, // multiple separators are not allowed
-    charCodes.lowercaseX,
-  ],
-};
-
-// tslint:disable-next-line no-any
-const allowedNumericSeparatorSiblings: any = {};
-allowedNumericSeparatorSiblings.bin = [
-  // 0 - 1
-  charCodes.digit0,
-  charCodes.digit1,
-];
-allowedNumericSeparatorSiblings.oct = [
-  // 0 - 7
-  ...allowedNumericSeparatorSiblings.bin,
-
-  charCodes.digit2,
-  charCodes.digit3,
-  charCodes.digit4,
-  charCodes.digit5,
-  charCodes.digit6,
-  charCodes.digit7,
-];
-allowedNumericSeparatorSiblings.dec = [
-  // 0 - 9
-  ...allowedNumericSeparatorSiblings.oct,
-
-  charCodes.digit8,
-  charCodes.digit9,
-];
-
-allowedNumericSeparatorSiblings.hex = [
-  // 0 - 9, A - F, a - f,
-  ...allowedNumericSeparatorSiblings.dec,
-
-  charCodes.uppercaseA,
-  charCodes.uppercaseB,
-  charCodes.uppercaseC,
-  charCodes.uppercaseD,
-  charCodes.uppercaseE,
-  charCodes.uppercaseF,
-
-  charCodes.lowercaseA,
-  charCodes.lowercaseB,
-  charCodes.lowercaseC,
-  charCodes.lowercaseD,
-  charCodes.lowercaseE,
-  charCodes.lowercaseF,
-];
-
 export enum IdentifierRole {
   Access,
   ExportAccess,
@@ -752,19 +685,6 @@ export default abstract class Tokenizer extends BaseParser {
 
   readInt(radix: number, len?: number): number | null {
     const start = this.state.pos;
-    const forbiddenSiblings =
-      radix === 16
-        ? forbiddenNumericSeparatorSiblings.hex
-        : forbiddenNumericSeparatorSiblings.decBinOct;
-    /* eslint-disable no-nested-ternary */
-    const allowedSiblings =
-      radix === 16
-        ? allowedNumericSeparatorSiblings.hex
-        : radix === 10
-          ? allowedNumericSeparatorSiblings.dec
-          : radix === 8 ? allowedNumericSeparatorSiblings.oct : allowedNumericSeparatorSiblings.bin;
-    /* eslint-enable no-nested-ternary */
-
     let total = 0;
 
     for (let i = 0, e = len == null ? Infinity : len; i < e; ++i) {
@@ -772,21 +692,7 @@ export default abstract class Tokenizer extends BaseParser {
       let val;
 
       // Handle numeric separators.
-      const prev = this.input.charCodeAt(this.state.pos - 1);
-      const next = this.input.charCodeAt(this.state.pos + 1);
       if (code === charCodes.underscore) {
-        if (allowedSiblings.indexOf(next) === -1) {
-          this.raise(this.state.pos, "Invalid or unexpected token");
-        }
-
-        if (
-          forbiddenSiblings.indexOf(prev) > -1 ||
-          forbiddenSiblings.indexOf(next) > -1 ||
-          Number.isNaN(next)
-        ) {
-          this.raise(this.state.pos, "Invalid or unexpected token");
-        }
-
         // Ignore this _ character
         ++this.state.pos;
         continue;
@@ -1015,7 +921,6 @@ export default abstract class Tokenizer extends BaseParser {
   }
 
   // Used to read escaped characters
-
   readEscapedChar(inTemplate: boolean): string | null {
     const throwOnInvalid = !inTemplate;
     const ch = this.input.charCodeAt(++this.state.pos);
@@ -1074,7 +979,6 @@ export default abstract class Tokenizer extends BaseParser {
   }
 
   // Used to read character escape sequences ('\x', '\u').
-
   readHexChar(len: number, throwOnInvalid: boolean): number | null {
     const codePos = this.state.pos;
     const n = this.readInt(16, len);
@@ -1093,7 +997,6 @@ export default abstract class Tokenizer extends BaseParser {
   //
   // Incrementally adds only escaped chars, adding other chunks as-is
   // as a micro-optimization.
-
   readWord1(): string {
     let word = "";
     let first = true;

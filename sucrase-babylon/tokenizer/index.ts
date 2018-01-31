@@ -284,7 +284,6 @@ export default abstract class Tokenizer extends BaseParser {
   // into it.
   //
   // All in the name of speed.
-  //
   readToken_dot(): void {
     const next = this.input.charCodeAt(this.state.pos + 1);
     if (next >= charCodes.digit0 && next <= charCodes.digit9) {
@@ -682,7 +681,6 @@ export default abstract class Tokenizer extends BaseParser {
   // Read an integer in the given radix. Return null if zero digits
   // were read, the integer value otherwise. When `len` is given, this
   // will return `null` unless the integer has exactly `len` digits.
-
   readInt(radix: number, len?: number): number | null {
     const start = this.state.pos;
     let total = 0;
@@ -723,10 +721,7 @@ export default abstract class Tokenizer extends BaseParser {
     let isBigInt = false;
 
     this.state.pos += 2; // 0x
-    const val = this.readInt(radix);
-    if (val == null) {
-      this.raise(this.state.start + 2, `Expected number in radix ${radix}`);
-    }
+    this.readInt(radix);
 
     if (this.input.charCodeAt(this.state.pos) === charCodes.lowercaseN) {
       ++this.state.pos;
@@ -743,72 +738,46 @@ export default abstract class Tokenizer extends BaseParser {
       return;
     }
 
-    this.finishToken(tt.num, val);
+    this.finishToken(tt.num);
   }
 
   // Read an integer, octal integer, or floating-point number.
-
   readNumber(startsWithDot: boolean): void {
-    const start = this.state.pos;
-    let octal = this.input.charCodeAt(start) === charCodes.digit0;
-    let isFloat = false;
     let isBigInt = false;
 
-    if (!startsWithDot && this.readInt(10) === null) {
-      this.raise(start, "Invalid number");
+    if (!startsWithDot) {
+      this.readInt(10);
     }
-    if (octal && this.state.pos === start + 1) octal = false; // number === 0
 
     let next = this.input.charCodeAt(this.state.pos);
-    if (next === charCodes.dot && !octal) {
+    if (next === charCodes.dot) {
       ++this.state.pos;
       this.readInt(10);
-      isFloat = true;
       next = this.input.charCodeAt(this.state.pos);
     }
 
-    if ((next === charCodes.uppercaseE || next === charCodes.lowercaseE) && !octal) {
+    if (next === charCodes.uppercaseE || next === charCodes.lowercaseE) {
       next = this.input.charCodeAt(++this.state.pos);
       if (next === charCodes.plusSign || next === charCodes.dash) {
         ++this.state.pos;
       }
-      if (this.readInt(10) === null) this.raise(start, "Invalid number");
-      isFloat = true;
+      this.readInt(10);
       next = this.input.charCodeAt(this.state.pos);
     }
 
     if (next === charCodes.lowercaseN) {
-      // disallow floats and legacy octal syntax, new style octal ("0o") is handled in this.readRadixNumber
-      if (isFloat || octal) this.raise(start, "Invalid BigIntLiteral");
       ++this.state.pos;
       isBigInt = true;
     }
 
-    if (isIdentifierStart(this.fullCharCodeAtPos())) {
-      this.raise(this.state.pos, "Identifier directly after number");
-    }
-
-    // remove "_" for numeric literal separator, and "n" for BigInts
-    const str = this.input.slice(start, this.state.pos).replace(/[_n]/g, "");
-
     if (isBigInt) {
-      this.finishToken(tt.bigint, str);
+      this.finishToken(tt.bigint);
       return;
     }
-
-    let val;
-    if (isFloat) {
-      val = parseFloat(str);
-    } else if (!octal || str.length === 1) {
-      val = parseInt(str, 10);
-    } else {
-      this.raise(start, "Invalid number");
-    }
-    this.finishToken(tt.num, val);
+    this.finishToken(tt.num);
   }
 
   // Read a string value, interpreting backslash-escapes.
-
   readCodePoint(throwOnInvalid: boolean): number | null {
     const ch = this.input.charCodeAt(this.state.pos);
     let code;

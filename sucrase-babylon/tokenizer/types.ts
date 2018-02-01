@@ -1,158 +1,124 @@
-// ## Token types
-
-// The assignment of fine-grained, information-carrying type objects
-// allows the tokenizer to store the information it has about a
-// token in a way that is very cheap for the parser to look up.
-
-// All token type variables start with an underscore, to make them
-// easy to recognize.
-
+// Generated file, do not edit! Run "yarn generate" to re-generate this file.
+/**
+ * Enum of all token types, with bit fields to signify meaningful properties.
+ */
 export const enum TokenType {
-  // Flags and bitmasks.
-  PRECEDENCE_MASK = 0xf,
   // Precedence 0 means not an operator; otherwise it is a positive number up to 12.
-  PRECEDENCE_UNIT = 1,
+  PRECEDENCE_MASK = 0xf,
   IS_KEYWORD = 1 << 4,
   IS_ASSIGN = 1 << 5,
   IS_RIGHT_ASSOCIATIVE = 1 << 6,
   IS_PREFIX = 1 << 7,
   IS_POSTFIX = 1 << 8,
-  TOK_TYPE = 1 << 9,
 
-  // Actual token values.
-  num = TOK_TYPE * 0,
-  bigint = TOK_TYPE * 1,
-  regexp = TOK_TYPE * 2,
-  string = TOK_TYPE * 3,
-  name = TOK_TYPE * 4,
-  eof = TOK_TYPE * 5,
-
-  // Punctuation token types.
-  bracketL = TOK_TYPE * 6,
-  bracketR = TOK_TYPE * 7,
-  braceL = TOK_TYPE * 8,
-  braceBarL = TOK_TYPE * 9,
-  braceR = TOK_TYPE * 10,
-  braceBarR = TOK_TYPE * 11,
-  parenL = TOK_TYPE * 12,
-  parenR = TOK_TYPE * 13,
-  comma = TOK_TYPE * 14,
-  semi = TOK_TYPE * 15,
-  colon = TOK_TYPE * 16,
-  doubleColon = TOK_TYPE * 17,
-  dot = TOK_TYPE * 18,
-  question = TOK_TYPE * 19,
-  questionDot = TOK_TYPE * 20,
-  arrow = TOK_TYPE * 21,
-  template = TOK_TYPE * 22,
-  ellipsis = TOK_TYPE * 23,
-  backQuote = TOK_TYPE * 24,
-  dollarBraceL = TOK_TYPE * 25,
-  at = TOK_TYPE * 26,
-  hash = TOK_TYPE * 27,
-
-  // Operators. These carry several kinds of properties to help the
-  // parser use them properly (the presence of these properties is
-  // what categorizes them as operators).
-  //
-  // `binop`, when present, specifies that this operator is a binary
-  // operator, and will refer to its precedence.
-  //
-  // `prefix` and `postfix` mark the operator as a prefix or postfix
-  // unary operator.
-  //
-  // `isAssign` marks all of `=`, `+=`, `-=` etcetera, which act as
-  // binary operators with a very low precedence, that should result
-  // in AssignmentExpression nodes.
-
-  eq = (TOK_TYPE * 28) | IS_ASSIGN,
-  assign = (TOK_TYPE * 29) | IS_ASSIGN,
-  incDec = (TOK_TYPE * 30) | IS_PREFIX | IS_POSTFIX,
-  bang = (TOK_TYPE * 31) | IS_PREFIX,
-  tilde = (TOK_TYPE * 32) | IS_PREFIX,
-  pipeline = (TOK_TYPE * 33) | (PRECEDENCE_UNIT * 1),
-  nullishCoalescing = (TOK_TYPE * 34) | (PRECEDENCE_UNIT * 2),
-  logicalOR = (TOK_TYPE * 35) | (PRECEDENCE_UNIT * 2),
-  logicalAND = (TOK_TYPE * 36) | (PRECEDENCE_UNIT * 3),
-  bitwiseOR = (TOK_TYPE * 37) | (PRECEDENCE_UNIT * 4),
-  bitwiseXOR = (TOK_TYPE * 38) | (PRECEDENCE_UNIT * 5),
-  bitwiseAND = (TOK_TYPE * 39) | (PRECEDENCE_UNIT * 6),
-  equality = (TOK_TYPE * 40) | (PRECEDENCE_UNIT * 7),
-  lessThan = (TOK_TYPE * 41) | (PRECEDENCE_UNIT * 8),
-  greaterThan = (TOK_TYPE * 42) | (PRECEDENCE_UNIT * 8),
-  relationalOrEqual = (TOK_TYPE * 43) | (PRECEDENCE_UNIT * 8),
-  bitShift = (TOK_TYPE * 44) | (PRECEDENCE_UNIT * 9),
-  plusMin = (TOK_TYPE * 45) | (PRECEDENCE_UNIT * 10) | IS_PREFIX,
-  modulo = (TOK_TYPE * 46) | (PRECEDENCE_UNIT * 11),
-  star = (TOK_TYPE * 47) | (PRECEDENCE_UNIT * 11),
-  slash = (TOK_TYPE * 48) | (PRECEDENCE_UNIT * 11),
-  exponent = (TOK_TYPE * 49) | (PRECEDENCE_UNIT * 12) | IS_RIGHT_ASSOCIATIVE,
-
-  jsxName = TOK_TYPE * 50,
-  jsxText = TOK_TYPE * 51,
-  jsxTagStart = TOK_TYPE * 52,
-  jsxTagEnd = TOK_TYPE * 53,
-  typeParameterStart = TOK_TYPE * 54,
-  nonNullAssertion = TOK_TYPE * 55,
-
-  // keywords
-  _break = (TOK_TYPE * 56) | IS_KEYWORD,
-  _case = (TOK_TYPE * 57) | IS_KEYWORD,
-  _catch = (TOK_TYPE * 58) | IS_KEYWORD,
-  _continue = (TOK_TYPE * 59) | IS_KEYWORD,
-  _debugger = (TOK_TYPE * 60) | IS_KEYWORD,
-  _default = (TOK_TYPE * 61) | IS_KEYWORD,
-  _do = (TOK_TYPE * 62) | IS_KEYWORD,
-  _else = (TOK_TYPE * 63) | IS_KEYWORD,
-  _finally = (TOK_TYPE * 64) | IS_KEYWORD,
-  _for = (TOK_TYPE * 65) | IS_KEYWORD,
-  _function = (TOK_TYPE * 66) | IS_KEYWORD,
-  _if = (TOK_TYPE * 67) | IS_KEYWORD,
-  _return = (TOK_TYPE * 68) | IS_KEYWORD,
-  _switch = (TOK_TYPE * 69) | IS_KEYWORD,
-  _throw = (TOK_TYPE * 70) | IS_KEYWORD | IS_PREFIX,
-  _try = (TOK_TYPE * 71) | IS_KEYWORD,
-  _var = (TOK_TYPE * 72) | IS_KEYWORD,
-  _let = (TOK_TYPE * 73) | IS_KEYWORD,
-  _const = (TOK_TYPE * 74) | IS_KEYWORD,
-  _while = (TOK_TYPE * 75) | IS_KEYWORD,
-  _with = (TOK_TYPE * 76) | IS_KEYWORD,
-  _new = (TOK_TYPE * 77) | IS_KEYWORD,
-  _this = (TOK_TYPE * 78) | IS_KEYWORD,
-  _super = (TOK_TYPE * 79) | IS_KEYWORD,
-  _class = (TOK_TYPE * 80) | IS_KEYWORD,
-  _extends = (TOK_TYPE * 81) | IS_KEYWORD,
-  _export = (TOK_TYPE * 82) | IS_KEYWORD,
-  _import = (TOK_TYPE * 83) | IS_KEYWORD,
-  _yield = (TOK_TYPE * 84) | IS_KEYWORD,
-  _null = (TOK_TYPE * 85) | IS_KEYWORD,
-  _true = (TOK_TYPE * 86) | IS_KEYWORD,
-  _false = (TOK_TYPE * 87) | IS_KEYWORD,
-  _in = (TOK_TYPE * 88) | (PRECEDENCE_UNIT * 8) | IS_KEYWORD,
-  _instanceof = (TOK_TYPE * 89) | (PRECEDENCE_UNIT * 8) | IS_KEYWORD,
-  _typeof = (TOK_TYPE * 90) | IS_KEYWORD | IS_PREFIX,
-  _void = (TOK_TYPE * 91) | IS_KEYWORD | IS_PREFIX,
-  _delete = (TOK_TYPE * 92) | IS_KEYWORD | IS_PREFIX,
-
-  // Other keywords
-  _async = TOK_TYPE * 93,
-  _get = TOK_TYPE * 94,
-  _set = TOK_TYPE * 95,
-
-  // TypeScript keywords
-  _declare = TOK_TYPE * 96,
-  _readonly = TOK_TYPE * 97,
-  _abstract = TOK_TYPE * 98,
-  _static = TOK_TYPE * 99,
-  _public = TOK_TYPE * 100,
-  _private = TOK_TYPE * 101,
-  _protected = TOK_TYPE * 102,
-  _as = TOK_TYPE * 103,
-  _enum = TOK_TYPE * 104,
-  _type = TOK_TYPE * 105,
-  _implements = TOK_TYPE * 106,
+  num = 0, // num
+  bigint = 512, // bigint
+  regexp = 1024, // regexp
+  string = 1536, // string
+  name = 2048, // name
+  eof = 2560, // eof
+  bracketL = 3072, // [
+  bracketR = 3584, // ]
+  braceL = 4096, // {
+  braceBarL = 4608, // {|
+  braceR = 5120, // }
+  braceBarR = 5632, // |}
+  parenL = 6144, // (
+  parenR = 6656, // )
+  comma = 7168, // ,
+  semi = 7680, // ;
+  colon = 8192, // :
+  doubleColon = 8704, // ::
+  dot = 9216, // .
+  question = 9728, // ?
+  questionDot = 10240, // ?.
+  arrow = 10752, // =>
+  template = 11264, // template
+  ellipsis = 11776, // ...
+  backQuote = 12288, // `
+  dollarBraceL = 12800, // ${
+  at = 13312, // @
+  hash = 13824, // #
+  eq = 14368, // = isAssign
+  assign = 14880, // _= isAssign
+  incDec = 15744, // ++/-- prefix postfix
+  bang = 16000, // ! prefix
+  tilde = 16512, // ~ prefix
+  pipeline = 16897, // |> prec:1
+  nullishCoalescing = 17410, // ?? prec:2
+  logicalOR = 17922, // || prec:2
+  logicalAND = 18435, // && prec:3
+  bitwiseOR = 18948, // | prec:4
+  bitwiseXOR = 19461, // ^ prec:5
+  bitwiseAND = 19974, // & prec:6
+  equality = 20487, // ==/!= prec:7
+  lessThan = 21000, // < prec:8
+  greaterThan = 21512, // > prec:8
+  relationalOrEqual = 22024, // <=/>= prec:8
+  bitShift = 22537, // <</>> prec:9
+  plusMin = 23178, // +/- prec:10 prefix
+  modulo = 23563, // % prec:11
+  star = 24075, // * prec:11
+  slash = 24587, // / prec:11
+  exponent = 25164, // ** prec:12 rightAssociative
+  jsxName = 25600, // jsxName
+  jsxText = 26112, // jsxText
+  jsxTagStart = 26624, // jsxTagStart
+  jsxTagEnd = 27136, // jsxTagEnd
+  typeParameterStart = 27648, // typeParameterStart
+  nonNullAssertion = 28160, // nonNullAssertion
+  _break = 28688, // break keyword
+  _case = 29200, // case keyword
+  _catch = 29712, // catch keyword
+  _continue = 30224, // continue keyword
+  _debugger = 30736, // debugger keyword
+  _default = 31248, // default keyword
+  _do = 31760, // do keyword
+  _else = 32272, // else keyword
+  _finally = 32784, // finally keyword
+  _for = 33296, // for keyword
+  _function = 33808, // function keyword
+  _if = 34320, // if keyword
+  _return = 34832, // return keyword
+  _switch = 35344, // switch keyword
+  _throw = 35984, // throw keyword prefix
+  _try = 36368, // try keyword
+  _var = 36880, // var keyword
+  _let = 37392, // let keyword
+  _const = 37904, // const keyword
+  _while = 38416, // while keyword
+  _with = 38928, // with keyword
+  _new = 39440, // new keyword
+  _this = 39952, // this keyword
+  _super = 40464, // super keyword
+  _class = 40976, // class keyword
+  _extends = 41488, // extends keyword
+  _export = 42000, // export keyword
+  _import = 42512, // import keyword
+  _yield = 43024, // yield keyword
+  _null = 43536, // null keyword
+  _true = 44048, // true keyword
+  _false = 44560, // false keyword
+  _in = 45080, // in prec:8 keyword
+  _instanceof = 45592, // instanceof prec:8 keyword
+  _typeof = 46224, // typeof keyword prefix
+  _void = 46736, // void keyword prefix
+  _delete = 47248, // delete keyword prefix
+  _async = 47632, // async keyword
+  _get = 48144, // get keyword
+  _set = 48656, // set keyword
+  _declare = 49168, // declare keyword
+  _readonly = 49680, // readonly keyword
+  _abstract = 50192, // abstract keyword
+  _static = 50704, // static keyword
+  _public = 51216, // public keyword
+  _private = 51728, // private keyword
+  _protected = 52240, // protected keyword
+  _as = 52752, // as keyword
+  _enum = 53264, // enum keyword
+  _type = 53776, // type keyword
+  _implements = 54288, // implements keyword
 }
-
 export const keywords = {
   break: TokenType._break,
   case: TokenType._case,
@@ -191,13 +157,9 @@ export const keywords = {
   typeof: TokenType._typeof,
   void: TokenType._void,
   delete: TokenType._delete,
-
-  // Other keywords
   async: TokenType._async,
   get: TokenType._get,
   set: TokenType._set,
-
-  // TypeScript keywords
   declare: TokenType._declare,
   readonly: TokenType._readonly,
   abstract: TokenType._abstract,
@@ -210,10 +172,6 @@ export const keywords = {
   type: TokenType._type,
   implements: TokenType._implements,
 };
-
-/**
- * String form of each token type, only used for things like error messages.
- */
 export function formatTokenType(tokenType: TokenType): string {
   switch (tokenType) {
     case TokenType.num:
@@ -271,7 +229,7 @@ export function formatTokenType(tokenType: TokenType): string {
     case TokenType.at:
       return "@";
     case TokenType.hash:
-      return "$";
+      return "#";
     case TokenType.eq:
       return "=";
     case TokenType.assign:

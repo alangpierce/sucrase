@@ -18,6 +18,7 @@
   "scripts": {
     "build": "script/build",
     "clean": "rm -rf ./build ./dist",
+    "generate": "ts-node ./generator/generate.ts",
     "self-build": "script/self-build",
     "self-test": "mocha test/**/*.ts --opts test/mocha-self-test.opts",
     "benchmark": "node ./build/benchmark/benchmark.js",

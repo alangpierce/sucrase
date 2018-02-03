@@ -1,7 +1,7 @@
 /* eslint max-len: 0 */
 
 import {File} from "../index";
-import {IdentifierRole} from "../tokenizer";
+import {ContextualKeyword, IdentifierRole} from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import ExpressionParser from "./expression";
 
@@ -117,7 +117,7 @@ export default class StatementParser extends ExpressionParser {
         return;
       }
       case tt.name:
-        if (this.state.value === "async") {
+        if (this.state.contextualKeyword === ContextualKeyword._async) {
           const functionStart = this.state.start;
           // peek ahead and see if next token is a function
           const snapshot = this.state.snapshot();
@@ -146,7 +146,7 @@ export default class StatementParser extends ExpressionParser {
     if (this.state.tokens.length === initialTokensLength + 1) {
       const token = this.state.tokens[this.state.tokens.length - 1];
       if (token.type === tt.name) {
-        simpleName = token.value;
+        simpleName = token.contextualKeyword;
       }
     }
     if (simpleName == null) {
@@ -217,7 +217,7 @@ export default class StatementParser extends ExpressionParser {
     this.next();
 
     let forAwait = false;
-    if (this.isContextual("await")) {
+    if (this.isContextual(ContextualKeyword._await)) {
       forAwait = true;
       this.next();
     }
@@ -235,7 +235,7 @@ export default class StatementParser extends ExpressionParser {
       const varKind = this.state.type;
       this.next();
       this.parseVar(true, varKind);
-      if (this.match(tt._in) || this.isContextual("of")) {
+      if (this.match(tt._in) || this.isContextual(ContextualKeyword._of)) {
         this.parseForIn(forAwait);
         return;
       }
@@ -244,7 +244,7 @@ export default class StatementParser extends ExpressionParser {
     }
 
     this.parseExpression(true);
-    if (this.match(tt._in) || this.isContextual("of")) {
+    if (this.match(tt._in) || this.isContextual(ContextualKeyword._of)) {
       this.parseForIn(forAwait);
       return;
     }
@@ -367,7 +367,7 @@ export default class StatementParser extends ExpressionParser {
    * Parse a statement starting with an identifier of the given name. Subclasses match on the name
    * to handle statements like "declare".
    */
-  parseIdentifierStatement(name: string): void {
+  parseIdentifierStatement(contextualKeyword: ContextualKeyword): void {
     this.semicolon();
   }
 
@@ -421,7 +421,7 @@ export default class StatementParser extends ExpressionParser {
 
   parseForIn(forAwait: boolean): void {
     if (forAwait) {
-      this.eatContextual("of");
+      this.eatContextual(ContextualKeyword._of);
     } else {
       this.next();
     }
@@ -572,7 +572,7 @@ export default class StatementParser extends ExpressionParser {
 
   parseClassMember(memberStart: number, classContextId: number): void {
     let isStatic = false;
-    if (this.match(tt.name) && this.state.value === "static") {
+    if (this.match(tt.name) && this.state.contextualKeyword === ContextualKeyword._static) {
       this.parseIdentifier(); // eats 'static'
       if (this.isClassMethod()) {
         this.parseClassMethod(memberStart, false, /* isConstructor */ false);
@@ -604,14 +604,10 @@ export default class StatementParser extends ExpressionParser {
     // Get the identifier name so we can tell if it's actually a keyword like "async", "get", or
     // "set".
     this.parseClassPropertyName(classContextId);
-    let simpleName = null;
     let isConstructor = false;
     const token = this.state.tokens[this.state.tokens.length - 1];
-    if (token.type === tt.name) {
-      simpleName = token.value;
-    }
     // We allow "constructor" as either an identifier or a string.
-    if (token.value === "constructor") {
+    if (token.contextualKeyword === ContextualKeyword._constructor) {
       isConstructor = true;
     }
     this.parsePostMemberNameModifiers();
@@ -620,7 +616,7 @@ export default class StatementParser extends ExpressionParser {
       this.parseClassMethod(memberStart, false, isConstructor);
     } else if (this.isClassProperty()) {
       this.parseClassProperty();
-    } else if (simpleName === "async" && !this.isLineTerminator()) {
+    } else if (token.contextualKeyword === ContextualKeyword._async && !this.isLineTerminator()) {
       this.state.tokens[this.state.tokens.length - 1].type = tt._async;
       // an async method
       const isGenerator = this.match(tt.star);
@@ -632,10 +628,11 @@ export default class StatementParser extends ExpressionParser {
       this.parseClassPropertyName(classContextId);
       this.parseClassMethod(memberStart, isGenerator, false /* isConstructor */);
     } else if (
-      (simpleName === "get" || simpleName === "set") &&
+      (token.contextualKeyword === ContextualKeyword._get ||
+        token.contextualKeyword === ContextualKeyword._set) &&
       !(this.isLineTerminator() && this.match(tt.star))
     ) {
-      if (simpleName === "get") {
+      if (token.contextualKeyword === ContextualKeyword._get) {
         this.state.tokens[this.state.tokens.length - 1].type = tt._get;
       } else {
         this.state.tokens[this.state.tokens.length - 1].type = tt._set;
@@ -704,7 +701,7 @@ export default class StatementParser extends ExpressionParser {
       if (this.match(tt.comma) && this.lookaheadType() === tt.star) {
         this.expect(tt.comma);
         this.expect(tt.star);
-        this.expectContextual("as");
+        this.expectContextual(ContextualKeyword._as);
         this.parseIdentifier();
       } else {
         this.parseExportSpecifiersMaybe();
@@ -726,9 +723,12 @@ export default class StatementParser extends ExpressionParser {
     const functionStart = this.state.start;
     if (this.eat(tt._function)) {
       this.parseFunction(functionStart, true, false, true);
-    } else if (this.isContextual("async") && this.lookaheadType() === tt._function) {
+    } else if (
+      this.isContextual(ContextualKeyword._async) &&
+      this.lookaheadType() === tt._function
+    ) {
       // async function declaration
-      this.eatContextual("async");
+      this.eatContextual(ContextualKeyword._async);
       this.eat(tt._function);
       this.parseFunction(functionStart, true, false, true);
     } else if (this.match(tt._class)) {
@@ -746,16 +746,17 @@ export default class StatementParser extends ExpressionParser {
 
   isExportDefaultSpecifier(): boolean {
     if (this.match(tt.name)) {
-      return this.state.value !== "async";
+      return this.state.contextualKeyword !== ContextualKeyword._async;
     }
 
     if (!this.match(tt._default)) {
       return false;
     }
 
-    const lookahead = this.lookaheadTypeAndValue();
+    const lookahead = this.lookaheadTypeAndKeyword();
     return (
-      lookahead.type === tt.comma || (lookahead.type === tt.name && lookahead.value === "from")
+      lookahead.type === tt.comma ||
+      (lookahead.type === tt.name && lookahead.contextualKeyword === ContextualKeyword._from)
     );
   }
 
@@ -766,7 +767,7 @@ export default class StatementParser extends ExpressionParser {
   }
 
   parseExportFrom(): void {
-    if (this.eatContextual("from")) {
+    if (this.eatContextual(ContextualKeyword._from)) {
       this.parseExprAtom();
     }
     this.semicolon();
@@ -779,7 +780,7 @@ export default class StatementParser extends ExpressionParser {
   parseExportStar(): void {
     this.expect(tt.star);
 
-    if (this.isContextual("as")) {
+    if (this.isContextual(ContextualKeyword._as)) {
       this.parseExportNamespace();
     } else {
       this.parseExportFrom();
@@ -801,7 +802,7 @@ export default class StatementParser extends ExpressionParser {
       this.state.type === tt._let ||
       this.state.type === tt._function ||
       this.state.type === tt._class ||
-      this.isContextual("async") ||
+      this.isContextual(ContextualKeyword._async) ||
       this.match(tt.at)
     );
   }
@@ -823,7 +824,7 @@ export default class StatementParser extends ExpressionParser {
 
       this.parseIdentifier();
       this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.ExportAccess;
-      if (this.eatContextual("as")) {
+      if (this.eatContextual(ContextualKeyword._as)) {
         this.parseIdentifier();
       }
     }
@@ -837,7 +838,7 @@ export default class StatementParser extends ExpressionParser {
       this.parseExprAtom();
     } else {
       this.parseImportSpecifiers();
-      this.expectContextual("from");
+      this.expectContextual(ContextualKeyword._from);
       this.parseExprAtom();
     }
     this.semicolon();
@@ -864,7 +865,7 @@ export default class StatementParser extends ExpressionParser {
 
     if (this.match(tt.star)) {
       this.next();
-      this.expectContextual("as");
+      this.expectContextual(ContextualKeyword._as);
 
       this.parseImportSpecifierLocal();
 
@@ -894,7 +895,7 @@ export default class StatementParser extends ExpressionParser {
 
   parseImportSpecifier(): void {
     this.parseIdentifier();
-    if (this.eatContextual("as")) {
+    if (this.eatContextual(ContextualKeyword._as)) {
       this.parseIdentifier();
     }
   }

@@ -1,4 +1,4 @@
-import {IdentifierRole} from "../../sucrase-babylon/tokenizer";
+import {ContextualKeyword, IdentifierRole} from "../../sucrase-babylon/tokenizer";
 import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import ImportProcessor from "../ImportProcessor";
 import TokenProcessor from "../TokenProcessor";
@@ -24,7 +24,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
 
   process(): boolean {
     const startIndex = this.tokens.currentIndex();
-    if (this.tokens.matchesName("createReactClass")) {
+    if (this.tokens.matchesContextual(ContextualKeyword._createReactClass)) {
       const newName = this.importProcessor.getIdentifierReplacement("createReactClass");
       if (newName) {
         this.tokens.replaceToken(`(0, ${newName})`);
@@ -36,8 +36,11 @@ export default class ReactDisplayNameTransformer extends Transformer {
     }
     if (
       this.tokens.matches3(tt.name, tt.dot, tt.name) &&
-      this.tokens.matchesName("React") &&
-      this.tokens.matchesNameAtIndex(this.tokens.currentIndex() + 2, "createClass")
+      this.tokens.matchesContextual(ContextualKeyword._React) &&
+      this.tokens.matchesContextualAtIndex(
+        this.tokens.currentIndex() + 2,
+        ContextualKeyword._createClass,
+      )
     ) {
       const newName = this.importProcessor.getIdentifierReplacement("React");
       if (newName) {
@@ -81,11 +84,11 @@ export default class ReactDisplayNameTransformer extends Transformer {
     ) {
       // This is an assignment (or declaration) with an identifier LHS, so use
       // that identifier name.
-      return this.tokens.tokens[startIndex - 2].value;
+      return this.tokens.identifierNameAtIndex(startIndex - 2);
     }
     if (this.tokens.tokens[startIndex - 2].identifierRole === IdentifierRole.ObjectKey) {
       // This is an object literal value.
-      return this.tokens.tokens[startIndex - 2].value;
+      return this.tokens.identifierNameAtIndex(startIndex - 2);
     }
     return null;
   }
@@ -117,7 +120,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
       }
 
       if (
-        this.tokens.matchesNameAtIndex(index, "displayName") &&
+        this.tokens.matchesContextualAtIndex(index, ContextualKeyword._displayName) &&
         this.tokens.tokens[index].identifierRole === IdentifierRole.ObjectKey &&
         token.contextId === objectContextId
       ) {

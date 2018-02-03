@@ -12,7 +12,7 @@ export default function formatTokens(code: string, tokens: Array<Token>): string
   );
   const typeKeys = Object.keys(tokens[0].type).filter((k) => k !== "label" && k !== "keyword");
 
-  const headings = ["Location", "Label", "Value", ...tokenKeys, ...typeKeys];
+  const headings = ["Location", "Label", "Raw", ...tokenKeys, ...typeKeys];
 
   const lines = new LinesAndColumns(code);
   const rows = [headings, ...tokens.map(getTokenComponents)];
@@ -27,10 +27,11 @@ export default function formatTokens(code: string, tokens: Array<Token>): string
     .join("\n");
 
   function getTokenComponents(token: Token): Array<string> {
+    const raw = code.slice(token.start, token.end);
     return [
       formatRange(token.start, token.end),
       formatTokenType(token.type),
-      token.value != null ? truncate(String(token.value), 14) : "",
+      truncate(String(raw), 14),
       ...tokenKeys.map((key) => formatValue(token[key], key)),
       ...typeKeys.map((key) => formatValue(token.type[key], key)),
     ];

@@ -1,4 +1,4 @@
-import {Token} from "../sucrase-babylon/tokenizer";
+import {ContextualKeyword, Token} from "../sucrase-babylon/tokenizer";
 import {TokenType, TokenType as tt} from "../sucrase-babylon/tokenizer/types";
 
 export type TokenProcessorSnapshot = {
@@ -52,8 +52,40 @@ export default class TokenProcessor {
     return true;
   }
 
-  matchesNameAtIndex(index: number, name: string): boolean {
-    return this.matchesAtIndex(index, [tt.name]) && this.tokens[index].value === name;
+  matchesContextualAtIndex(index: number, contextualKeyword: ContextualKeyword): boolean {
+    return (
+      this.matchesAtIndex(index, [tt.name]) &&
+      this.tokens[index].contextualKeyword === contextualKeyword
+    );
+  }
+
+  identifierNameAtIndex(index: number): string {
+    // TODO: We need to process escapes since technically you can have unicode escapes in variable
+    // names.
+    return this.identifierNameForToken(this.tokens[index]);
+  }
+
+  identifierName(): string {
+    return this.identifierNameForToken(this.currentToken());
+  }
+
+  identifierNameForToken(token: Token): string {
+    return this.code.slice(token.start, token.end);
+  }
+
+  stringValueAtIndex(index: number): string {
+    return this.stringValueForToken(this.tokens[index]);
+  }
+
+  stringValue(): string {
+    return this.stringValueForToken(this.currentToken());
+  }
+
+  stringValueForToken(token: Token): string {
+    // This is used to identify when two imports are the same and to resolve TypeScript enum keys.
+    // Ideally we'd process escapes within the strings, but for now we pretty much take the raw
+    // code.
+    return this.code.slice(token.start + 1, token.end - 1);
   }
 
   matches1(t1: TokenType): boolean {
@@ -91,8 +123,8 @@ export default class TokenProcessor {
     );
   }
 
-  matchesName(name: string): boolean {
-    return this.matchesNameAtIndex(this.tokenIndex, name);
+  matchesContextual(contextualKeyword: ContextualKeyword): boolean {
+    return this.matchesContextualAtIndex(this.tokenIndex, contextualKeyword);
   }
 
   matchesContextIdAndLabel(type: TokenType, contextId: number): boolean {

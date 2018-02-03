@@ -1,4 +1,4 @@
-import {Token} from "./index";
+import {ContextualKeyword, Token} from "./index";
 import {TokenType, TokenType as tt} from "./types";
 
 export type Scope = {
@@ -16,6 +16,7 @@ export type StateSnapshot = {
   type: TokenType;
   // tslint:disable-next-line: no-any
   value: any;
+  contextualKeyword: ContextualKeyword;
   start: number;
   end: number;
   isType: boolean;
@@ -63,6 +64,7 @@ export default class State {
   type: TokenType;
   // tslint:disable-next-line no-any
   value: any;
+  contextualKeyword: ContextualKeyword;
   start: number;
   end: number;
 
@@ -76,8 +78,8 @@ export default class State {
       scopesLength: this.scopes.length,
       pos: this.pos,
       type: this.type,
-      // tslint:disable-next-line: no-any
       value: this.value,
+      contextualKeyword: this.contextualKeyword,
       start: this.start,
       end: this.end,
       isType: this.isType,
@@ -92,6 +94,7 @@ export default class State {
     this.pos = snapshot.pos;
     this.type = snapshot.type;
     this.value = snapshot.value;
+    this.contextualKeyword = snapshot.contextualKeyword;
     this.start = snapshot.start;
     this.end = snapshot.end;
     this.isType = snapshot.isType;

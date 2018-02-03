@@ -16,6 +16,81 @@ export enum IdentifierRole {
   ObjectKey,
 }
 
+export enum ContextualKeyword {
+  NONE,
+  _abstract,
+  _as,
+  _async,
+  _await,
+  _checks,
+  _constructor,
+  _declare,
+  _enum,
+  _exports,
+  _from,
+  _get,
+  _global,
+  _implements,
+  _interface,
+  _is,
+  _keyof,
+  _mixins,
+  _module,
+  _namespace,
+  _of,
+  _opaque,
+  _private,
+  _protected,
+  _public,
+  _readonly,
+  _require,
+  _static,
+  _type,
+  _set,
+  // Also throw in some identifiers we know we'll need to match on.
+  _React,
+  _createClass,
+  _createReactClass,
+  _displayName,
+}
+
+const contextualKeywordByName = {
+  abstract: ContextualKeyword._abstract,
+  as: ContextualKeyword._as,
+  async: ContextualKeyword._async,
+  await: ContextualKeyword._await,
+  checks: ContextualKeyword._checks,
+  constructor: ContextualKeyword._constructor,
+  declare: ContextualKeyword._declare,
+  enum: ContextualKeyword._enum,
+  exports: ContextualKeyword._exports,
+  from: ContextualKeyword._from,
+  get: ContextualKeyword._get,
+  global: ContextualKeyword._global,
+  implements: ContextualKeyword._implements,
+  interface: ContextualKeyword._interface,
+  is: ContextualKeyword._is,
+  keyof: ContextualKeyword._keyof,
+  mixins: ContextualKeyword._mixins,
+  module: ContextualKeyword._module,
+  namespace: ContextualKeyword._namespace,
+  of: ContextualKeyword._of,
+  opaque: ContextualKeyword._opaque,
+  private: ContextualKeyword._private,
+  protected: ContextualKeyword._protected,
+  public: ContextualKeyword._public,
+  readonly: ContextualKeyword._readonly,
+  require: ContextualKeyword._require,
+  static: ContextualKeyword._static,
+  type: ContextualKeyword._type,
+  set: ContextualKeyword._set,
+  // Custom identifiers we want to match.
+  React: ContextualKeyword._React,
+  createClass: ContextualKeyword._createClass,
+  createReactClass: ContextualKeyword._createReactClass,
+  displayName: ContextualKeyword._displayName,
+};
+
 // Object type used to represent tokens. Note that normally, tokens
 // simply exist as properties on the parser object. This is only
 // used for the onToken callback and the external tokenizer.
@@ -24,6 +99,7 @@ export class Token {
   constructor(state: State) {
     this.type = state.type;
     this.value = state.value;
+    this.contextualKeyword = state.contextualKeyword;
     this.start = state.start;
     this.end = state.end;
     this.isType = state.isType;
@@ -37,6 +113,7 @@ export class Token {
   type: TokenType;
   // tslint:disable-next-line no-any
   value: any;
+  contextualKeyword: ContextualKeyword;
   start: number;
   end: number;
   isType: boolean;
@@ -128,10 +205,6 @@ export default abstract class Tokenizer extends BaseParser {
     return this.state.type === type;
   }
 
-  isKeyword(word: string): boolean {
-    return isKeyword(word);
-  }
-
   lookaheadType(): TokenType {
     const snapshot = this.state.snapshot();
     this.next();
@@ -140,14 +213,13 @@ export default abstract class Tokenizer extends BaseParser {
     return type;
   }
 
-  // tslint:disable-next-line no-any
-  lookaheadTypeAndValue(): {type: TokenType; value: any} {
+  lookaheadTypeAndKeyword(): {type: TokenType; contextualKeyword: ContextualKeyword} {
     const snapshot = this.state.snapshot();
     this.next();
     const type = this.state.type;
-    const value = this.state.value;
+    const contextualKeyword = this.state.contextualKeyword;
     this.state.restoreFromSnapshot(snapshot);
-    return {type, value};
+    return {type, contextualKeyword};
   }
 
   // Read a single token, updating the parser object's token-related
@@ -268,12 +340,16 @@ export default abstract class Tokenizer extends BaseParser {
   // the token, so that the next one's `start` will point at the
   // right position.
 
-  // tslint:disable-next-line no-any
-  finishToken(type: TokenType, val?: any): void {
+  finishToken(
+    type: TokenType,
+    // tslint:disable-next-line no-any
+    val?: any,
+    contextualKeyword: ContextualKeyword = ContextualKeyword.NONE,
+  ): void {
     this.state.end = this.state.pos;
-    const prevType = this.state.type;
     this.state.type = type;
     this.state.value = val;
+    this.state.contextualKeyword = contextualKeyword;
   }
 
   // ### Token reading
@@ -1000,17 +1076,15 @@ export default abstract class Tokenizer extends BaseParser {
     return word + this.input.slice(chunkStart, this.state.pos);
   }
 
-  // Read an identifier or keyword token. Will check for reserved
-  // words when necessary.
-
+  // Read an identifier or keyword token.
   readWord(): void {
     const word = this.readWord1();
-    let type = tt.name;
-
-    if (this.isKeyword(word)) {
-      type = keywordTypes[word];
+    if (isKeyword(word)) {
+      this.finishToken(keywordTypes[word]);
+    } else if (contextualKeywordByName[word] != null) {
+      this.finishToken(tt.name, null, contextualKeywordByName[word]);
+    } else {
+      this.finishToken(tt.name);
     }
-
-    this.finishToken(type, word);
   }
 }

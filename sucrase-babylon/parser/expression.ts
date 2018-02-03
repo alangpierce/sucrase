@@ -18,7 +18,7 @@
 //
 // [opp]: http://en.wikipedia.org/wiki/Operator-precedence_parser
 
-import {IdentifierRole} from "../tokenizer";
+import {ContextualKeyword, IdentifierRole} from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import LValParser from "./lval";
 
@@ -131,11 +131,10 @@ export default abstract class ExpressionParser extends LValParser {
     const prec = this.state.type & TokenType.PRECEDENCE_MASK;
     if (prec > 0 && (!noIn || !this.match(tt._in))) {
       if (prec > minPrec) {
-        const operator = this.state.value;
         const op = this.state.type;
         this.next();
 
-        if (operator === "|>") {
+        if (op === tt.pipeline) {
           // Support syntax such as 10 |> x => x + 1
           this.state.potentialArrowAt = this.state.start;
         }
@@ -245,8 +244,8 @@ export default abstract class ExpressionParser extends LValParser {
     // This was made less strict than the original version to avoid passing around nodes, but it
     // should be safe to have rare false positives here.
     return (
-      this.state.tokens[this.state.tokens.length - 1].value === "async" &&
-      !this.canInsertSemicolon()
+      this.state.tokens[this.state.tokens.length - 1].contextualKeyword ===
+        ContextualKeyword._async && !this.canInsertSemicolon()
     );
   }
 
@@ -317,16 +316,24 @@ export default abstract class ExpressionParser extends LValParser {
       case tt.name: {
         const startTokenIndex = this.state.tokens.length;
         const functionStart = this.state.start;
-        const name = this.state.value;
+        const contextualKeyword = this.state.contextualKeyword;
         this.parseIdentifier();
-        if (name === "await") {
+        if (contextualKeyword === ContextualKeyword._await) {
           this.parseAwait();
           return false;
-        } else if (name === "async" && this.match(tt._function) && !this.canInsertSemicolon()) {
+        } else if (
+          contextualKeyword === ContextualKeyword._async &&
+          this.match(tt._function) &&
+          !this.canInsertSemicolon()
+        ) {
           this.next();
           this.parseFunction(functionStart, false, false);
           return false;
-        } else if (canBeArrow && name === "async" && this.match(tt.name)) {
+        } else if (
+          canBeArrow &&
+          contextualKeyword === ContextualKeyword._async &&
+          this.match(tt.name)
+        ) {
           this.parseIdentifier();
           this.expect(tt.arrow);
           // let foo = bar => {};
@@ -595,7 +602,7 @@ export default abstract class ExpressionParser extends LValParser {
         isGenerator = this.eat(tt.star);
       }
 
-      if (!isPattern && this.isContextual("async")) {
+      if (!isPattern && this.isContextual(ContextualKeyword._async)) {
         if (isGenerator) this.unexpected();
 
         this.parseIdentifier();
@@ -795,9 +802,7 @@ export default abstract class ExpressionParser extends LValParser {
     }
   }
 
-  // Parse the next token as an identifier. If `liberal` is true (used
-  // when parsing properties), it will also convert keywords into
-  // identifiers.
+  // Parse the next token as an identifier.
   parseIdentifier(): void {
     this.next();
     this.state.tokens[this.state.tokens.length - 1].type = tt.name;

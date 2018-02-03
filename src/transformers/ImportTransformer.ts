@@ -1,4 +1,4 @@
-import {IdentifierRole} from "../../sucrase-babylon/tokenizer";
+import {ContextualKeyword, IdentifierRole} from "../../sucrase-babylon/tokenizer";
 import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import ImportProcessor from "../ImportProcessor";
 import TokenProcessor from "../TokenProcessor";
@@ -89,7 +89,7 @@ export default class ImportTransformer extends Transformer {
     if (wasOnlyTypes) {
       this.tokens.removeToken();
     } else {
-      const path = this.tokens.currentToken().value;
+      const path = this.tokens.stringValue();
       this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
       this.tokens.appendCode(this.importProcessor.claimImportCode(path));
     }
@@ -107,9 +107,9 @@ export default class ImportTransformer extends Transformer {
   private removeImportAndDetectIfType(): boolean {
     this.tokens.removeInitialToken();
     if (
-      this.tokens.matchesName("type") &&
+      this.tokens.matchesContextual(ContextualKeyword._type) &&
       !this.tokens.matchesAtIndex(this.tokens.currentIndex() + 1, [tt.comma]) &&
-      !this.tokens.matchesNameAtIndex(this.tokens.currentIndex() + 1, "from")
+      !this.tokens.matchesContextualAtIndex(this.tokens.currentIndex() + 1, ContextualKeyword._from)
     ) {
       // This is an "import type" statement, so exit early.
       this.removeRemainingImport();
@@ -167,7 +167,9 @@ export default class ImportTransformer extends Transformer {
     if (token.identifierRole !== IdentifierRole.Access) {
       return false;
     }
-    const replacement = this.importProcessor.getIdentifierReplacement(token.value);
+    const replacement = this.importProcessor.getIdentifierReplacement(
+      this.tokens.identifierNameForToken(token),
+    );
     if (!replacement) {
       return false;
     }
@@ -192,7 +194,7 @@ export default class ImportTransformer extends Transformer {
   }
 
   processObjectShorthand(): boolean {
-    const identifier = this.tokens.currentToken().value;
+    const identifier = this.tokens.identifierName();
     const replacement = this.importProcessor.getIdentifierReplacement(identifier);
     if (!replacement) {
       return false;
@@ -263,7 +265,9 @@ export default class ImportTransformer extends Transformer {
       // since the assignment is just redundant.
       return false;
     }
-    const exportedName = this.importProcessor.resolveExportBinding(identifierToken.value);
+    const exportedName = this.importProcessor.resolveExportBinding(
+      this.tokens.identifierNameForToken(identifierToken),
+    );
     if (!exportedName) {
       return false;
     }
@@ -314,7 +318,7 @@ export default class ImportTransformer extends Transformer {
     if (!this.tokens.matches1(tt.name)) {
       throw new Error("Expected a regular identifier after export var/let/const.");
     }
-    const name = this.tokens.currentToken().value;
+    const name = this.tokens.identifierName();
     const replacement = this.importProcessor.getIdentifierReplacement(name);
     if (replacement === null) {
       throw new Error("Expected a replacement for `export var` syntax..");
@@ -341,7 +345,7 @@ export default class ImportTransformer extends Transformer {
     if (this.tokens.matches1(tt._function)) {
       this.tokens.copyToken();
     } else if (this.tokens.matches2(tt.name, tt._function)) {
-      if (this.tokens.currentToken().value !== "async") {
+      if (!this.tokens.matchesContextual(ContextualKeyword._async)) {
         throw new Error("Expected async keyword in function export.");
       }
       this.tokens.copyToken();
@@ -350,7 +354,7 @@ export default class ImportTransformer extends Transformer {
     if (!this.tokens.matches1(tt.name)) {
       throw new Error("Expected identifier for exported function name.");
     }
-    const name = this.tokens.currentToken().value;
+    const name = this.tokens.identifierName();
     this.tokens.copyToken();
     if (this.tokens.currentToken().isType) {
       this.tokens.removeInitialToken();
@@ -401,12 +405,12 @@ export default class ImportTransformer extends Transformer {
 
     const exportStatements = [];
     while (true) {
-      const localName = this.tokens.currentToken().value;
+      const localName = this.tokens.identifierName();
       let exportedName;
       this.tokens.removeToken();
-      if (this.tokens.matchesName("as")) {
+      if (this.tokens.matchesContextual(ContextualKeyword._as)) {
         this.tokens.removeToken();
-        exportedName = this.tokens.currentToken().value;
+        exportedName = this.tokens.identifierName();
         this.tokens.removeToken();
       } else {
         exportedName = localName;
@@ -429,11 +433,11 @@ export default class ImportTransformer extends Transformer {
       }
     }
 
-    if (this.tokens.matchesName("from")) {
+    if (this.tokens.matchesContextual(ContextualKeyword._from)) {
       // This is an export...from, so throw away the normal named export code
       // and use the Object.defineProperty code from ImportProcessor.
       this.tokens.removeToken();
-      const path = this.tokens.currentToken().value;
+      const path = this.tokens.stringValue();
       this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
     } else {
       // This is a normal named export, so use that.
@@ -450,7 +454,7 @@ export default class ImportTransformer extends Transformer {
     while (!this.tokens.matches1(tt.string)) {
       this.tokens.removeToken();
     }
-    const path = this.tokens.currentToken().value;
+    const path = this.tokens.stringValue();
     this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
     if (this.tokens.matches1(tt.semi)) {
       this.tokens.removeToken();

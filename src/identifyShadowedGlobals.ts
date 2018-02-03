@@ -1,13 +1,14 @@
-import {IdentifierRole, Token} from "../sucrase-babylon/tokenizer";
+import {IdentifierRole} from "../sucrase-babylon/tokenizer";
 import {Scope} from "../sucrase-babylon/tokenizer/state";
 import {TokenType as tt} from "../sucrase-babylon/tokenizer/types";
+import TokenProcessor from "./TokenProcessor";
 
 /**
  * Traverse the given tokens and modify them if necessary to indicate that some names shadow global
  * variables.
  */
 export default function identifyShadowedGlobals(
-  tokens: Array<Token>,
+  tokens: TokenProcessor,
   scopes: Array<Scope>,
   globalNames: Set<string>,
 ): void {
@@ -21,13 +22,13 @@ export default function identifyShadowedGlobals(
  * We can do a fast up-front check to see if there are any declarations to global names. If not,
  * then there's no point in computing scope assignments.
  */
-function hasShadowedGlobals(tokens: Array<Token>, globalNames: Set<string>): boolean {
-  for (const token of tokens) {
+function hasShadowedGlobals(tokens: TokenProcessor, globalNames: Set<string>): boolean {
+  for (const token of tokens.tokens) {
     if (
       token.type === tt.name &&
       (token.identifierRole === IdentifierRole.FunctionScopedDeclaration ||
         token.identifierRole === IdentifierRole.BlockScopedDeclaration) &&
-      globalNames.has(token.value)
+      globalNames.has(tokens.identifierNameForToken(token))
     ) {
       return true;
     }
@@ -36,7 +37,7 @@ function hasShadowedGlobals(tokens: Array<Token>, globalNames: Set<string>): boo
 }
 
 function markShadowedGlobals(
-  tokens: Array<Token>,
+  tokens: TokenProcessor,
   scopes: Array<Scope>,
   globalNames: Set<string>,
 ): void {
@@ -44,7 +45,7 @@ function markShadowedGlobals(
   let scopeIndex = scopes.length - 1;
   // Scopes were generated at completion time, so they're sorted by end index, so we can maintain a
   // good stack by going backwards through them.
-  for (let i = tokens.length - 1; ; i--) {
+  for (let i = tokens.tokens.length - 1; ; i--) {
     while (scopeStack.length > 0 && scopeStack[scopeStack.length - 1].startTokenIndex === i + 1) {
       scopeStack.pop();
     }
@@ -57,10 +58,11 @@ function markShadowedGlobals(
       break;
     }
 
-    const token = tokens[i];
-    if (scopeStack.length > 1 && token.type === tt.name && globalNames.has(token.value)) {
+    const token = tokens.tokens[i];
+    const name = tokens.identifierNameForToken(token);
+    if (scopeStack.length > 1 && token.type === tt.name && globalNames.has(name)) {
       if (token.identifierRole === IdentifierRole.BlockScopedDeclaration) {
-        markShadowedForScope(scopeStack[scopeStack.length - 1], tokens, token.value);
+        markShadowedForScope(scopeStack[scopeStack.length - 1], tokens, name);
       } else if (token.identifierRole === IdentifierRole.FunctionScopedDeclaration) {
         let stackIndex = scopeStack.length - 1;
         while (stackIndex > 0 && !scopeStack[stackIndex].isFunctionScope) {
@@ -69,7 +71,7 @@ function markShadowedGlobals(
         if (stackIndex < 0) {
           throw new Error("Did not find parent function scope.");
         }
-        markShadowedForScope(scopeStack[stackIndex], tokens, token.value);
+        markShadowedForScope(scopeStack[stackIndex], tokens, name);
       }
     }
   }
@@ -78,10 +80,10 @@ function markShadowedGlobals(
   }
 }
 
-function markShadowedForScope(scope: Scope, tokens: Array<Token>, name: string): void {
+function markShadowedForScope(scope: Scope, tokens: TokenProcessor, name: string): void {
   for (let i = scope.startTokenIndex; i < scope.endTokenIndex; i++) {
-    const token = tokens[i];
-    if (token.type === tt.name && token.value === name) {
+    const token = tokens.tokens[i];
+    if (token.type === tt.name && tokens.identifierNameForToken(token) === name) {
       token.shadowsGlobal = true;
     }
   }

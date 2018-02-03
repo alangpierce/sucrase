@@ -1,4 +1,4 @@
-import {IdentifierRole} from "../sucrase-babylon/tokenizer";
+import {ContextualKeyword, IdentifierRole} from "../sucrase-babylon/tokenizer";
 import {TokenType as tt} from "../sucrase-babylon/tokenizer/types";
 import NameManager from "./NameManager";
 import TokenProcessor from "./TokenProcessor";
@@ -105,7 +105,7 @@ export default class ImportProcessor {
           token.identifierRole === IdentifierRole.ObjectShorthand ||
           token.identifierRole === IdentifierRole.ExportAccess)
       ) {
-        nonTypeIdentifiers.add(token.value);
+        nonTypeIdentifiers.add(this.tokens.identifierNameForToken(token));
       }
     }
     for (const [path, importInfo] of this.importInfoByPath.entries()) {
@@ -222,11 +222,10 @@ get: () => ${primaryImportName}[key]}); });`;
 
     index++;
     if (
-      // Ideally "type" would be a token type label, but for now, it's just an identifier.
-      (this.tokens.matchesNameAtIndex(index, "type") ||
+      (this.tokens.matchesContextualAtIndex(index, ContextualKeyword._type) ||
         this.tokens.matchesAtIndex(index, [tt._typeof])) &&
       !this.tokens.matchesAtIndex(index + 1, [tt.comma]) &&
-      !this.tokens.matchesNameAtIndex(index + 1, "from")
+      !this.tokens.matchesContextualAtIndex(index + 1, ContextualKeyword._from)
     ) {
       // import type declaration, so no need to process anything.
       return;
@@ -238,7 +237,7 @@ get: () => ${primaryImportName}[key]}); });`;
     }
 
     if (this.tokens.matchesAtIndex(index, [tt.name])) {
-      defaultNames.push(this.tokens.tokens[index].value);
+      defaultNames.push(this.tokens.identifierNameAtIndex(index));
       index++;
       if (this.tokens.matchesAtIndex(index, [tt.comma])) {
         index++;
@@ -248,7 +247,7 @@ get: () => ${primaryImportName}[key]}); });`;
     if (this.tokens.matchesAtIndex(index, [tt.star])) {
       // * as
       index += 2;
-      wildcardNames.push(this.tokens.tokens[index].value);
+      wildcardNames.push(this.tokens.identifierNameAtIndex(index));
       index++;
     }
 
@@ -257,14 +256,14 @@ get: () => ${primaryImportName}[key]}); });`;
       ({newIndex: index, namedImports} = this.getNamedImports(index));
     }
 
-    if (this.tokens.matchesNameAtIndex(index, "from")) {
+    if (this.tokens.matchesContextualAtIndex(index, ContextualKeyword._from)) {
       index++;
     }
 
     if (!this.tokens.matchesAtIndex(index, [tt.string])) {
       throw new Error("Expected string token at the end of import statement.");
     }
-    const path = this.tokens.tokens[index].value;
+    const path = this.tokens.stringValueAtIndex(index);
     const importInfo = this.getImportInfo(path);
     importInfo.defaultNames.push(...defaultNames);
     importInfo.wildcardNames.push(...wildcardNames);
@@ -280,16 +279,16 @@ get: () => ${primaryImportName}[key]}); });`;
       this.tokens.matchesAtIndex(index, [tt._export, tt._let]) ||
       this.tokens.matchesAtIndex(index, [tt._export, tt._const])
     ) {
-      const exportName = this.tokens.tokens[index + 2].value;
+      const exportName = this.tokens.identifierNameAtIndex(index + 2);
       this.identifierReplacements.set(exportName, `exports.${exportName}`);
     } else if (
       this.tokens.matchesAtIndex(index, [tt._export, tt._function]) ||
       this.tokens.matchesAtIndex(index, [tt._export, tt._class])
     ) {
-      const exportName = this.tokens.tokens[index + 2].value;
+      const exportName = this.tokens.identifierNameAtIndex(index + 2);
       this.exportBindingsByLocalName.set(exportName, exportName);
     } else if (this.tokens.matchesAtIndex(index, [tt._export, tt.name, tt._function])) {
-      const exportName = this.tokens.tokens[index + 3].value;
+      const exportName = this.tokens.identifierNameAtIndex(index + 3);
       this.exportBindingsByLocalName.set(exportName, exportName);
     } else if (this.tokens.matchesAtIndex(index, [tt._export, tt.braceL])) {
       this.preprocessNamedExportAtIndex(index);
@@ -309,7 +308,7 @@ get: () => ${primaryImportName}[key]}); });`;
     const {newIndex, namedImports} = this.getNamedImports(index);
     index = newIndex;
 
-    if (this.tokens.matchesNameAtIndex(index, "from")) {
+    if (this.tokens.matchesContextualAtIndex(index, ContextualKeyword._from)) {
       index++;
     } else {
       // Reinterpret "a as b" to be local/exported rather than imported/local.
@@ -322,7 +321,7 @@ get: () => ${primaryImportName}[key]}); });`;
     if (!this.tokens.matchesAtIndex(index, [tt.string])) {
       throw new Error("Expected string token at the end of import statement.");
     }
-    const path = this.tokens.tokens[index].value;
+    const path = this.tokens.stringValueAtIndex(index);
     const importInfo = this.getImportInfo(path);
     importInfo.namedExports.push(...namedImports);
   }
@@ -332,7 +331,7 @@ get: () => ${primaryImportName}[key]}); });`;
     if (this.tokens.matchesAtIndex(index, [tt._export, tt.star, tt._as])) {
       // export * as
       index += 3;
-      exportedName = this.tokens.tokens[index].value;
+      exportedName = this.tokens.identifierNameAtIndex(index);
       // foo from
       index += 2;
     } else {
@@ -342,7 +341,7 @@ get: () => ${primaryImportName}[key]}); });`;
     if (!this.tokens.matchesAtIndex(index, [tt.string])) {
       throw new Error("Expected string token at the end of star export statement.");
     }
-    const path = this.tokens.tokens[index].value;
+    const path = this.tokens.stringValueAtIndex(index);
     const importInfo = this.getImportInfo(path);
     if (exportedName !== null) {
       importInfo.exportStarNames.push(exportedName);
@@ -357,21 +356,21 @@ get: () => ${primaryImportName}[key]}); });`;
       // Flow type imports should just be ignored.
       let isTypeImport = false;
       if (
-        (this.tokens.matchesAtIndex(index, [tt._type]) ||
+        (this.tokens.matchesContextualAtIndex(index, ContextualKeyword._type) ||
           this.tokens.matchesAtIndex(index, [tt._typeof])) &&
         this.tokens.matchesAtIndex(index + 1, [tt.name]) &&
-        !this.tokens.matchesNameAtIndex(index + 1, "as")
+        !this.tokens.matchesContextualAtIndex(index + 1, ContextualKeyword._as)
       ) {
         isTypeImport = true;
         index++;
       }
 
-      const importedName = this.tokens.tokens[index].value;
+      const importedName = this.tokens.identifierNameAtIndex(index);
       let localName;
       index++;
-      if (this.tokens.matchesNameAtIndex(index, "as")) {
+      if (this.tokens.matchesContextualAtIndex(index, ContextualKeyword._as)) {
         index++;
-        localName = this.tokens.tokens[index].value;
+        localName = this.tokens.identifierNameAtIndex(index);
         index++;
       } else {
         localName = importedName;
@@ -388,7 +387,7 @@ get: () => ${primaryImportName}[key]}); });`;
       } else if (this.tokens.matchesAtIndex(index, [tt.comma])) {
         index++;
       } else {
-        throw new Error(`Unexpected token: ${JSON.stringify(this.tokens.currentToken())}`);
+        throw new Error(`Unexpected token: ${JSON.stringify(this.tokens.tokens[index])}`);
       }
     }
     return {newIndex: index, namedImports};

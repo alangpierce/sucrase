@@ -1,13 +1,17 @@
 /* eslint max-len: 0 */
 
+import {ContextualKeyword} from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import TypeParser from "./types";
 
 // tslint:disable-next-line no-any
-function isMaybeDefaultImport(lookahead: {type: TokenType; value: any}): boolean {
+function isMaybeDefaultImport(lookahead: {
+  type: TokenType;
+  contextualKeyword: ContextualKeyword;
+}): boolean {
   return (
-    (lookahead.type === tt.name || !!(lookahead.type && TokenType.IS_KEYWORD)) &&
-    lookahead.value !== "from"
+    (lookahead.type === tt.name || !!(lookahead.type & TokenType.IS_KEYWORD)) &&
+    lookahead.contextualKeyword !== ContextualKeyword._from
   );
 }
 
@@ -21,7 +25,7 @@ export default class FlowParser extends TypeParser {
 
   flowParsePredicate(): void {
     this.expect(tt.modulo);
-    this.expectContextual("checks");
+    this.expectContextual(ContextualKeyword._checks);
     if (this.eat(tt.parenL)) {
       this.parseExpression();
       this.expect(tt.parenR);
@@ -71,17 +75,17 @@ export default class FlowParser extends TypeParser {
       this.flowParseDeclareFunction();
     } else if (this.match(tt._var)) {
       this.flowParseDeclareVariable();
-    } else if (this.isContextual("module")) {
+    } else if (this.isContextual(ContextualKeyword._module)) {
       if (this.lookaheadType() === tt.dot) {
         this.flowParseDeclareModuleExports();
       } else {
         this.flowParseDeclareModule();
       }
-    } else if (this.isContextual("type")) {
+    } else if (this.isContextual(ContextualKeyword._type)) {
       this.flowParseDeclareTypeAlias();
-    } else if (this.isContextual("opaque")) {
+    } else if (this.isContextual(ContextualKeyword._opaque)) {
       this.flowParseDeclareOpaqueType();
-    } else if (this.isContextual("interface")) {
+    } else if (this.isContextual(ContextualKeyword._interface)) {
       this.flowParseDeclareInterface();
     } else if (this.match(tt._export)) {
       this.flowParseDeclareExportDeclaration();
@@ -132,15 +136,15 @@ export default class FlowParser extends TypeParser {
       this.match(tt._var) || // declare export var ...
       this.match(tt._function) || // declare export function ...
       this.match(tt._class) || // declare export class ...
-      this.isContextual("opaque") // declare export opaque ..
+      this.isContextual(ContextualKeyword._opaque) // declare export opaque ..
     ) {
       this.flowParseDeclare();
     } else if (
       this.match(tt.star) || // declare export * from ''
       this.match(tt.braceL) || // declare export {} ...
-      this.isContextual("interface") || // declare export interface ...
-      this.isContextual("type") || // declare export type ...
-      this.isContextual("opaque") // declare export opaque type ...
+      this.isContextual(ContextualKeyword._interface) || // declare export interface ...
+      this.isContextual(ContextualKeyword._type) || // declare export type ...
+      this.isContextual(ContextualKeyword._opaque) // declare export opaque type ...
     ) {
       this.parseExport();
     } else {
@@ -149,9 +153,9 @@ export default class FlowParser extends TypeParser {
   }
 
   flowParseDeclareModuleExports(): void {
-    this.expectContextual("module");
+    this.expectContextual(ContextualKeyword._module);
     this.expect(tt.dot);
-    this.expectContextual("exports");
+    this.expectContextual(ContextualKeyword._exports);
     this.parseTypeAnnotation();
     this.semicolon();
   }
@@ -186,7 +190,7 @@ export default class FlowParser extends TypeParser {
       } while (!isClass && this.eat(tt.comma));
     }
 
-    if (this.isContextual("mixins")) {
+    if (this.isContextual(ContextualKeyword._mixins)) {
       this.next();
       do {
         this.flowParseInterfaceExtends();
@@ -225,7 +229,7 @@ export default class FlowParser extends TypeParser {
   }
 
   flowParseOpaqueType(declare: boolean): void {
-    this.expectContextual("type");
+    this.expectContextual(ContextualKeyword._type);
     this.flowParseRestrictedIdentifier();
 
     if (this.match(tt.lessThan)) {
@@ -342,7 +346,11 @@ export default class FlowParser extends TypeParser {
 
     while (!this.match(endDelim)) {
       let isStatic = false;
-      if (allowStatic && this.isContextual("static") && this.lookaheadType() !== tt.colon) {
+      if (
+        allowStatic &&
+        this.isContextual(ContextualKeyword._static) &&
+        this.lookaheadType() !== tt.colon
+      ) {
         this.next();
         isStatic = true;
       }
@@ -354,7 +362,10 @@ export default class FlowParser extends TypeParser {
       } else if (this.match(tt.parenL) || this.match(tt.lessThan)) {
         this.flowParseObjectTypeCallProperty();
       } else {
-        if (this.isContextual("get") || this.isContextual("set")) {
+        if (
+          this.isContextual(ContextualKeyword._get) ||
+          this.isContextual(ContextualKeyword._set)
+        ) {
           const lookaheadType = this.lookaheadType();
           if (
             lookaheadType === tt.name ||
@@ -458,23 +469,6 @@ export default class FlowParser extends TypeParser {
     }
   }
 
-  flowIdentToTypeAnnotation(name: string): void {
-    switch (name) {
-      case "any":
-      case "void":
-      case "bool":
-      case "boolean":
-      case "mixed":
-      case "empty":
-      case "number":
-      case "string":
-        return;
-
-      default:
-        this.flowParseGenericType();
-    }
-  }
-
   // The parsing of types roughly parallels the parsing of expressions, and
   // primary types are kind of like primary expressions...they're the
   // primitives with which other types are constructed.
@@ -485,8 +479,7 @@ export default class FlowParser extends TypeParser {
     switch (this.state.type) {
       case tt.name: {
         this.parseIdentifier();
-        const name = this.state.tokens[this.state.tokens.length - 1].value;
-        this.flowIdentToTypeAnnotation(name);
+        this.flowParseGenericType();
         return;
       }
 
@@ -664,7 +657,7 @@ export default class FlowParser extends TypeParser {
 
   // interfaces
   parseStatement(declaration: boolean, topLevel?: boolean): void {
-    if (this.match(tt.name) && this.state.value === "interface") {
+    if (this.match(tt.name) && this.state.contextualKeyword === ContextualKeyword._interface) {
       this.runInTypeContext(0, () => {
         this.next();
         this.flowParseInterface();
@@ -675,8 +668,8 @@ export default class FlowParser extends TypeParser {
   }
 
   // declares, interfaces and type aliases
-  parseIdentifierStatement(name: string): void {
-    if (name === "declare") {
+  parseIdentifierStatement(contextualKeyword: ContextualKeyword): void {
+    if (contextualKeyword === ContextualKeyword._declare) {
       if (
         this.match(tt._class) ||
         this.match(tt.name) ||
@@ -689,29 +682,29 @@ export default class FlowParser extends TypeParser {
         });
       }
     } else if (this.match(tt.name)) {
-      if (name === "interface") {
+      if (contextualKeyword === ContextualKeyword._interface) {
         this.runInTypeContext(1, () => {
           this.flowParseInterface();
         });
-      } else if (name === "type") {
+      } else if (contextualKeyword === ContextualKeyword._type) {
         this.runInTypeContext(1, () => {
           this.flowParseTypeAlias();
         });
-      } else if (name === "opaque") {
+      } else if (contextualKeyword === ContextualKeyword._opaque) {
         this.runInTypeContext(1, () => {
           this.flowParseOpaqueType(false);
         });
       }
     }
-    super.parseIdentifierStatement(name);
+    super.parseIdentifierStatement(contextualKeyword);
   }
 
   // export type
   shouldParseExportDeclaration(): boolean {
     return (
-      this.isContextual("type") ||
-      this.isContextual("interface") ||
-      this.isContextual("opaque") ||
+      this.isContextual(ContextualKeyword._type) ||
+      this.isContextual(ContextualKeyword._interface) ||
+      this.isContextual(ContextualKeyword._opaque) ||
       super.shouldParseExportDeclaration()
     );
   }
@@ -719,9 +712,9 @@ export default class FlowParser extends TypeParser {
   isExportDefaultSpecifier(): boolean {
     if (
       this.match(tt.name) &&
-      (this.state.value === "type" ||
-        this.state.value === "interface" ||
-        this.state.value === "opaque")
+      (this.state.contextualKeyword === ContextualKeyword._type ||
+        this.state.contextualKeyword === ContextualKeyword._interface ||
+        this.state.contextualKeyword === ContextualKeyword._opaque)
     ) {
       return false;
     }
@@ -730,7 +723,7 @@ export default class FlowParser extends TypeParser {
   }
 
   parseExportDeclaration(): void {
-    if (this.isContextual("type")) {
+    if (this.isContextual(ContextualKeyword._type)) {
       this.runInTypeContext(1, () => {
         this.next();
 
@@ -743,13 +736,13 @@ export default class FlowParser extends TypeParser {
           this.flowParseTypeAlias();
         }
       });
-    } else if (this.isContextual("opaque")) {
+    } else if (this.isContextual(ContextualKeyword._opaque)) {
       this.runInTypeContext(1, () => {
         this.next();
         // export opaque type Foo = Bar;
         this.flowParseOpaqueType(false);
       });
-    } else if (this.isContextual("interface")) {
+    } else if (this.isContextual(ContextualKeyword._interface)) {
       this.runInTypeContext(1, () => {
         this.next();
         this.flowParseInterface();
@@ -762,12 +755,12 @@ export default class FlowParser extends TypeParser {
   shouldParseExportStar(): boolean {
     return (
       super.shouldParseExportStar() ||
-      (this.isContextual("type") && this.lookaheadType() === tt.star)
+      (this.isContextual(ContextualKeyword._type) && this.lookaheadType() === tt.star)
     );
   }
 
   parseExportStar(): void {
-    if (this.eatContextual("type")) {
+    if (this.eatContextual(ContextualKeyword._type)) {
       this.runInTypeContext(2, () => {
         super.parseExportStar();
       });
@@ -814,7 +807,7 @@ export default class FlowParser extends TypeParser {
     if (hadSuper && this.match(tt.lessThan)) {
       this.flowParseTypeParameterInstantiation();
     }
-    if (this.isContextual("implements")) {
+    if (this.isContextual(ContextualKeyword._implements)) {
       this.state.tokens[this.state.tokens.length - 1].type = tt._implements;
       this.runInTypeContext(0, () => {
         this.next();
@@ -864,11 +857,11 @@ export default class FlowParser extends TypeParser {
     let kind = null;
     if (this.match(tt._typeof)) {
       kind = "typeof";
-    } else if (this.isContextual("type")) {
+    } else if (this.isContextual(ContextualKeyword._type)) {
       kind = "type";
     }
     if (kind) {
-      const lh = this.lookaheadTypeAndValue();
+      const lh = this.lookaheadTypeAndKeyword();
       if (isMaybeDefaultImport(lh) || lh.type === tt.braceL || lh.type === tt.star) {
         this.next();
       }
@@ -879,37 +872,32 @@ export default class FlowParser extends TypeParser {
 
   // parse import-type/typeof shorthand
   parseImportSpecifier(): void {
-    this.parseIdentifier();
-    const firstIdentName = this.state.tokens[this.state.tokens.length - 1].value;
-
-    let specifierTypeKind = null;
-    if (firstIdentName === "type") {
-      this.state.tokens[this.state.tokens.length - 1].type = tt._type;
-      specifierTypeKind = "type";
-    } else if (firstIdentName === "typeof") {
-      specifierTypeKind = "typeof";
-      this.state.tokens[this.state.tokens.length - 1].type = tt._typeof;
+    const isTypeKeyword =
+      this.state.contextualKeyword === ContextualKeyword._type || this.state.type === tt._typeof;
+    if (isTypeKeyword) {
+      this.next();
+    } else {
+      this.parseIdentifier();
     }
 
-    if (this.isContextual("as") && !this.isLookaheadContextual("as")) {
+    if (
+      this.isContextual(ContextualKeyword._as) &&
+      !this.isLookaheadContextual(ContextualKeyword._as)
+    ) {
       this.parseIdentifier();
-      if (
-        specifierTypeKind !== null &&
-        !this.match(tt.name) &&
-        !(this.state.type & TokenType.IS_KEYWORD)
-      ) {
+      if (isTypeKeyword && !this.match(tt.name) && !(this.state.type & TokenType.IS_KEYWORD)) {
         // `import {type as ,` or `import {type as }`
       } else {
         // `import {type as foo`
         this.parseIdentifier();
       }
     } else if (
-      specifierTypeKind !== null &&
+      isTypeKeyword &&
       (this.match(tt.name) || !!(this.state.type & TokenType.IS_KEYWORD))
     ) {
       // `import {type foo`
       this.parseIdentifier();
-      if (this.eatContextual("as")) {
+      if (this.eatContextual(ContextualKeyword._as)) {
         this.parseIdentifier();
       }
     }
@@ -1022,7 +1010,8 @@ export default class FlowParser extends TypeParser {
 
   parseSubscripts(startPos: number, noCalls?: boolean | null): void {
     if (
-      this.state.tokens[this.state.tokens.length - 1].value === "async" &&
+      this.state.tokens[this.state.tokens.length - 1].contextualKeyword ===
+        ContextualKeyword._async &&
       this.match(tt.lessThan)
     ) {
       const snapshot = this.state.snapshot();

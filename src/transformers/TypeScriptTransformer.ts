@@ -45,7 +45,7 @@ export default class TypeScriptTransformer extends Transformer {
     while (this.tokens.matches1(tt._const) || this.tokens.matches1(tt._enum)) {
       this.tokens.removeToken();
     }
-    const enumName = this.tokens.currentToken().value;
+    const enumName = this.tokens.identifierName();
     this.tokens.removeToken();
     this.tokens.appendCode(`var ${enumName}; (function (${enumName})`);
     this.tokens.copyExpectedToken(tt.braceL);
@@ -75,11 +75,11 @@ export default class TypeScriptTransformer extends Transformer {
       let isValidIdentifier;
       let nameStringCode;
       if (nameToken.type === tt.name) {
-        name = nameToken.value;
+        name = this.tokens.identifierNameForToken(nameToken);
         isValidIdentifier = true;
         nameStringCode = `"${name}"`;
       } else if (nameToken.type === tt.string) {
-        name = nameToken.value;
+        name = this.tokens.stringValueForToken(nameToken);
         isValidIdentifier = isIdentifier(name);
         nameStringCode = this.tokens.code.slice(nameToken.start, nameToken.end);
       } else {

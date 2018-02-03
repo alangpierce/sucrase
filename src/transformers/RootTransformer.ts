@@ -130,7 +130,7 @@ export default class RootTransformer {
     if (!this.tokens.matches2(tt._class, tt.name)) {
       throw new Error("Expected identifier for exported class name.");
     }
-    const name = this.tokens.tokens[this.tokens.currentIndex() + 1].value;
+    const name = this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 1);
     this.processClass();
     return name;
   }

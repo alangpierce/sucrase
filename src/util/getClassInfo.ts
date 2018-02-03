@@ -1,4 +1,4 @@
-import {Token} from "../../sucrase-babylon/tokenizer";
+import {ContextualKeyword, Token} from "../../sucrase-babylon/tokenizer";
 import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "../transformers/RootTransformer";
@@ -48,7 +48,7 @@ export default function getClassInfo(
 
   tokens.nextToken();
   while (!tokens.matchesContextIdAndLabel(tt.braceR, classContextId)) {
-    if (tokens.matchesName("constructor")) {
+    if (tokens.matchesContextual(ContextualKeyword._constructor)) {
       ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
     } else if (tokens.matches1(tt.semi)) {
       tokens.nextToken();
@@ -62,7 +62,7 @@ export default function getClassInfo(
         }
         tokens.nextToken();
       }
-      if (tokens.matchesName("constructor")) {
+      if (tokens.matchesContextual(ContextualKeyword._constructor)) {
         ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
         continue;
       }
@@ -133,7 +133,7 @@ function processClassHeader(tokens: TokenProcessor): ClassHeaderInfo {
   let hasSuperclass = false;
   tokens.nextToken();
   if (tokens.matches1(tt.name)) {
-    className = tokens.currentToken().value;
+    className = tokens.identifierName();
   }
   while (!tokens.matchesContextIdAndLabel(tt.braceL, contextId)) {
     if (tokens.matches1(tt._extends)) {
@@ -169,7 +169,7 @@ function processConstructor(
       if (token.type !== tt.name) {
         throw new Error("Expected identifier after access modifiers in constructor arg.");
       }
-      const name = token.value;
+      const name = tokens.identifierNameForToken(token);
       constructorInitializers.push(`this.${name} = ${name}`);
     }
     tokens.nextToken();
@@ -242,7 +242,7 @@ function getNameCode(tokens: TokenProcessor): string {
     if (nameToken.type === tt.string || nameToken.type === tt.num) {
       return `[${tokens.code.slice(nameToken.start, nameToken.end)}]`;
     } else {
-      return `.${nameToken.value}`;
+      return `.${tokens.identifierNameForToken(nameToken)}`;
     }
   }
 }

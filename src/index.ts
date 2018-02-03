@@ -77,6 +77,6 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
   if (isTypeScript) {
     importProcessor.pruneTypeOnlyImports();
   }
-  identifyShadowedGlobals(tokens, scopes, importProcessor.getGlobalNames());
+  identifyShadowedGlobals(tokenProcessor, scopes, importProcessor.getGlobalNames());
   return {tokenProcessor, scopes, nameManager, importProcessor};
 }

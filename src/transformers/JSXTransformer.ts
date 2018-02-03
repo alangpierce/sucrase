@@ -68,8 +68,9 @@ export default class JSXTransformer extends Transformer {
     this.tokens.appendCode(`, {`);
     while (true) {
       if (this.tokens.matches2(tt.jsxName, tt.eq)) {
-        if (this.tokens.currentToken().value.includes("-")) {
-          this.tokens.replaceToken(`'${this.tokens.currentToken().value}'`);
+        const keyName = this.tokens.identifierName();
+        if (keyName.includes("-")) {
+          this.tokens.replaceToken(`'${keyName}'`);
         } else {
           this.tokens.copyToken();
         }
@@ -121,11 +122,11 @@ export default class JSXTransformer extends Transformer {
     ) {
       introEnd++;
     }
-    if (
-      introEnd === this.tokens.currentIndex() + 1 &&
-      startsWithLowerCase(this.tokens.currentToken().value)
-    ) {
-      this.tokens.replaceToken(`'${this.tokens.currentToken().value}'`);
+    if (introEnd === this.tokens.currentIndex() + 1) {
+      const tagName = this.tokens.identifierName();
+      if (startsWithLowerCase(tagName)) {
+        this.tokens.replaceToken(`'${tagName}'`);
+      }
     }
     while (this.tokens.currentIndex() < introEnd) {
       this.rootTransformer.processToken();

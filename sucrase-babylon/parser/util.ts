@@ -1,4 +1,4 @@
-import Tokenizer from "../tokenizer";
+import Tokenizer, {ContextualKeyword} from "../tokenizer";
 import {formatTokenType, TokenType, TokenType as tt} from "../tokenizer/types";
 import {lineBreak} from "../util/whitespace";
 
@@ -6,23 +6,25 @@ import {lineBreak} from "../util/whitespace";
 
 export default class UtilParser extends Tokenizer {
   // Tests whether parsed token is a contextual keyword.
-  isContextual(name: string): boolean {
-    return this.match(tt.name) && this.state.value === name;
+  isContextual(contextualKeyword: ContextualKeyword): boolean {
+    return this.state.contextualKeyword === contextualKeyword;
   }
 
-  isLookaheadContextual(name: string): boolean {
-    const l = this.lookaheadTypeAndValue();
-    return l.type === tt.name && l.value === name;
+  isLookaheadContextual(contextualKeyword: ContextualKeyword): boolean {
+    const l = this.lookaheadTypeAndKeyword();
+    return l.type === tt.name && l.contextualKeyword === contextualKeyword;
   }
 
   // Consumes contextual keyword if possible.
-  eatContextual(name: string): boolean {
-    return this.state.value === name && this.eat(tt.name);
+  eatContextual(contextualKeyword: ContextualKeyword): boolean {
+    return this.state.contextualKeyword === contextualKeyword && this.eat(tt.name);
   }
 
   // Asserts that following token is given contextual keyword.
-  expectContextual(name: string, message?: string): void {
-    if (!this.eatContextual(name)) this.unexpected(null, message);
+  expectContextual(contextualKeyword: ContextualKeyword): void {
+    if (!this.eatContextual(contextualKeyword)) {
+      this.unexpected(null);
+    }
   }
 
   // Test whether a semicolon can be inserted at the current position.

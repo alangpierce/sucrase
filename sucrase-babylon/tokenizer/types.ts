@@ -105,20 +105,6 @@ export const enum TokenType {
   _typeof = 46736, // typeof keyword prefix
   _void = 47248, // void keyword prefix
   _delete = 47760, // delete keyword prefix
-  _async = 48144, // async keyword
-  _get = 48656, // get keyword
-  _set = 49168, // set keyword
-  _declare = 49680, // declare keyword
-  _readonly = 50192, // readonly keyword
-  _abstract = 50704, // abstract keyword
-  _static = 51216, // static keyword
-  _public = 51728, // public keyword
-  _private = 52240, // private keyword
-  _protected = 52752, // protected keyword
-  _as = 53264, // as keyword
-  _enum = 53776, // enum keyword
-  _type = 54288, // type keyword
-  _implements = 54800, // implements keyword
 }
 export const keywords = {
   break: TokenType._break,
@@ -158,20 +144,6 @@ export const keywords = {
   typeof: TokenType._typeof,
   void: TokenType._void,
   delete: TokenType._delete,
-  async: TokenType._async,
-  get: TokenType._get,
-  set: TokenType._set,
-  declare: TokenType._declare,
-  readonly: TokenType._readonly,
-  abstract: TokenType._abstract,
-  static: TokenType._static,
-  public: TokenType._public,
-  private: TokenType._private,
-  protected: TokenType._protected,
-  as: TokenType._as,
-  enum: TokenType._enum,
-  type: TokenType._type,
-  implements: TokenType._implements,
 };
 export function formatTokenType(tokenType: TokenType): string {
   switch (tokenType) {
@@ -363,34 +335,6 @@ export function formatTokenType(tokenType: TokenType): string {
       return "void";
     case TokenType._delete:
       return "delete";
-    case TokenType._async:
-      return "async";
-    case TokenType._get:
-      return "get";
-    case TokenType._set:
-      return "set";
-    case TokenType._declare:
-      return "declare";
-    case TokenType._readonly:
-      return "readonly";
-    case TokenType._abstract:
-      return "abstract";
-    case TokenType._static:
-      return "static";
-    case TokenType._public:
-      return "public";
-    case TokenType._private:
-      return "private";
-    case TokenType._protected:
-      return "protected";
-    case TokenType._as:
-      return "as";
-    case TokenType._enum:
-      return "enum";
-    case TokenType._type:
-      return "type";
-    case TokenType._implements:
-      return "implements";
     default:
       return "";
   }

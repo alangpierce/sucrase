@@ -582,7 +582,6 @@ export default class StatementParser extends ExpressionParser {
         return;
       }
       // otherwise something static
-      this.state.tokens[this.state.tokens.length - 1].type = tt._static;
       isStatic = true;
     }
 
@@ -617,7 +616,6 @@ export default class StatementParser extends ExpressionParser {
     } else if (this.isClassProperty()) {
       this.parseClassProperty();
     } else if (token.contextualKeyword === ContextualKeyword._async && !this.isLineTerminator()) {
-      this.state.tokens[this.state.tokens.length - 1].type = tt._async;
       // an async method
       const isGenerator = this.match(tt.star);
       if (isGenerator) {
@@ -632,11 +630,6 @@ export default class StatementParser extends ExpressionParser {
         token.contextualKeyword === ContextualKeyword._set) &&
       !(this.isLineTerminator() && this.match(tt.star))
     ) {
-      if (token.contextualKeyword === ContextualKeyword._get) {
-        this.state.tokens[this.state.tokens.length - 1].type = tt._get;
-      } else {
-        this.state.tokens[this.state.tokens.length - 1].type = tt._set;
-      }
       // `get\n*` is an uninitialized property named 'get' followed by a generator.
       // a getter or setter
       // The so-called parsed name would have been "get/set": get the real name.
@@ -789,7 +782,6 @@ export default class StatementParser extends ExpressionParser {
 
   parseExportNamespace(): void {
     this.next();
-    this.state.tokens[this.state.tokens.length - 1].type = tt._as;
     this.parseIdentifier();
     this.parseExportSpecifiersMaybe();
     this.parseExportFrom();

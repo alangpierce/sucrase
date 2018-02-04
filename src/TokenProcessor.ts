@@ -1,5 +1,5 @@
 import {ContextualKeyword, Token} from "../sucrase-babylon/tokenizer";
-import {TokenType, TokenType as tt} from "../sucrase-babylon/tokenizer/types";
+import {formatTokenType, TokenType, TokenType as tt} from "../sucrase-babylon/tokenizer/types";
 
 export type TokenProcessorSnapshot = {
   resultCode: string;
@@ -160,7 +160,7 @@ export default class TokenProcessor {
 
   copyExpectedToken(tokenType: TokenType): void {
     if (this.tokens[this.tokenIndex].type !== tokenType) {
-      throw new Error(`Expected token ${tokenType}`);
+      throw new Error(`Expected token ${formatTokenType(tokenType)}`);
     }
     this.copyToken();
   }

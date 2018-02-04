@@ -328,15 +328,17 @@ get: () => ${primaryImportName}[key]}); });`;
 
   private preprocessExportStarAtIndex(index: number): void {
     let exportedName = null;
-    if (this.tokens.matchesAtIndex(index, [tt._export, tt.star, tt._as])) {
-      // export * as
-      index += 3;
-      exportedName = this.tokens.identifierNameAtIndex(index);
-      // foo from
-      index += 2;
-    } else {
-      // export * from
-      index += 3;
+    if (this.tokens.matchesAtIndex(index, [tt._export, tt.star, tt.name])) {
+      // `export * as` or `export * from`
+      if (this.tokens.matchesContextualAtIndex(index + 2, ContextualKeyword._as)) {
+        index += 3;
+        exportedName = this.tokens.identifierNameAtIndex(index);
+        // foo from
+        index += 2;
+      } else {
+        // export * from
+        index += 3;
+      }
     }
     if (!this.tokens.matchesAtIndex(index, [tt.string])) {
       throw new Error("Expected string token at the end of star export statement.");

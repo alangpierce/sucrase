@@ -804,7 +804,6 @@ export default class FlowParser extends TypeParser {
       this.flowParseTypeParameterInstantiation();
     }
     if (this.isContextual(ContextualKeyword._implements)) {
-      this.state.tokens[this.state.tokens.length - 1].type = tt._implements;
       this.runInTypeContext(0, () => {
         this.next();
         do {

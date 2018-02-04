@@ -72,7 +72,7 @@ export default abstract class LValParser extends UtilParser {
         this.expect(tt.comma);
         // After a "this" type in TypeScript, we need to set the following comma (if any) to also be
         // a type token so that it will be removed.
-        if (!hasRemovedComma && this.state.tokens[firstItemTokenIndex].isType) {
+        if (!hasRemovedComma && this.state.tokens[firstItemTokenIndex].type === tt._this) {
           this.state.tokens[this.state.tokens.length - 1].isType = true;
           hasRemovedComma = true;
         }

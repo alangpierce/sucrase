@@ -742,4 +742,30 @@ describe("typescript transform", () => {
       ["typescript", "imports"],
     );
   });
+
+  it("handles constructor access modifiers", () => {
+    assertResult(
+      `
+      class C {
+        constructor(
+          readonly a,
+          readonly b,
+        ) {
+        }
+      }
+
+    `,
+      `"use strict";
+      class C {
+        constructor(
+           a,
+           b,
+        ) {;this.a = a;this.b = b;
+        }
+      }
+
+    `,
+      ["typescript", "imports"],
+    );
+  });
 });

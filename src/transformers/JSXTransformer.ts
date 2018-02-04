@@ -1,9 +1,13 @@
+import XHTMLEntities from "../../sucrase-babylon/plugins/jsx/xhtml";
 import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import ImportProcessor from "../ImportProcessor";
 import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
+
+const HEX_NUMBER = /^[\da-fA-F]+$/;
+const DECIMAL_NUMBER = /^\d+$/;
 
 export default class JSXTransformer extends Transformer {
   lastLineNumber: number = 1;
@@ -98,9 +102,10 @@ export default class JSXTransformer extends Transformer {
   }
 
   processStringPropValue(): void {
-    const value = this.tokens.currentToken().value;
-    const replacementCode = formatJSXTextReplacement(value);
-    const literalCode = formatJSXStringValueLiteral(value);
+    const token = this.tokens.currentToken();
+    const valueCode = this.tokens.code.slice(token.start + 1, token.end - 1);
+    const replacementCode = formatJSXTextReplacement(valueCode);
+    const literalCode = formatJSXStringValueLiteral(valueCode);
     this.tokens.replaceToken(literalCode + replacementCode);
   }
 
@@ -164,9 +169,10 @@ export default class JSXTransformer extends Transformer {
   }
 
   processChildTextElement(): void {
-    const value = this.tokens.currentToken().value;
-    const replacementCode = formatJSXTextReplacement(value);
-    const literalCode = formatJSXTextLiteral(value);
+    const token = this.tokens.currentToken();
+    const valueCode = this.tokens.code.slice(token.start, token.end);
+    const replacementCode = formatJSXTextReplacement(valueCode);
+    const literalCode = formatJSXTextLiteral(valueCode);
     if (literalCode === '""') {
       this.tokens.replaceToken(replacementCode);
     } else {
@@ -219,8 +225,9 @@ function formatJSXTextLiteral(text: string): string {
 
   let isInInitialLineWhitespace = false;
   let seenNonWhitespace = false;
-  for (const c of text) {
-    if (c === " " || c === "\t") {
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === " " || c === "\t" || c === "\r") {
       if (!isInInitialLineWhitespace) {
         whitespace += c;
       }
@@ -233,7 +240,13 @@ function formatJSXTextLiteral(text: string): string {
       }
       result += whitespace;
       whitespace = "";
-      result += c;
+      if (c === "&") {
+        const {entity, newI} = processEntity(text, i + 1);
+        i = newI - 1;
+        result += entity;
+      } else {
+        result += c;
+      }
       seenNonWhitespace = true;
       isInInitialLineWhitespace = false;
     }
@@ -270,5 +283,63 @@ function formatJSXTextReplacement(text: string): string {
  * babel-helper-builder-react-jsx.
  */
 function formatJSXStringValueLiteral(text: string): string {
-  return JSON.stringify(text.replace(/\n\s+/g, " "));
+  let result = "";
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === "\n") {
+      if (/\s/.test(text[i + 1])) {
+        result += " ";
+        while (i < text.length && /\s/.test(text[i + 1])) {
+          i++;
+        }
+      } else {
+        result += "\n";
+      }
+    } else if (c === "&") {
+      const {entity, newI} = processEntity(text, i + 1);
+      result += entity;
+      i = newI - 1;
+    } else {
+      result += c;
+    }
+  }
+  return JSON.stringify(result);
+}
+
+/**
+ * Modified from jsxReadString in Babylon.
+ */
+function processEntity(text: string, indexAfterAmpersand: number): {entity: string; newI: number} {
+  let str = "";
+  let count = 0;
+  let entity;
+  let i = indexAfterAmpersand;
+
+  while (i < text.length && count++ < 10) {
+    const ch = text[i];
+    i++;
+    if (ch === ";") {
+      if (str[0] === "#") {
+        if (str[1] === "x") {
+          str = str.substr(2);
+          if (HEX_NUMBER.test(str)) {
+            entity = String.fromCodePoint(parseInt(str, 16));
+          }
+        } else {
+          str = str.substr(1);
+          if (DECIMAL_NUMBER.test(str)) {
+            entity = String.fromCodePoint(parseInt(str, 10));
+          }
+        }
+      } else {
+        entity = XHTMLEntities[str];
+      }
+      break;
+    }
+    str += ch;
+  }
+  if (!entity) {
+    return {entity: "&", newI: indexAfterAmpersand};
+  }
+  return {entity, newI: i};
 }

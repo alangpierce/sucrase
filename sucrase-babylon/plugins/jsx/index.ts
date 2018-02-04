@@ -6,15 +6,10 @@ import {isIdentifierChar, isIdentifierStart} from "../../util/identifier";
 import {isNewLine} from "../../util/whitespace";
 import XHTMLEntities from "./xhtml";
 
-const HEX_NUMBER = /^[\da-fA-F]+$/;
-const DECIMAL_NUMBER = /^\d+$/;
-
 export default class JSXParser extends Parser {
   // Reads inline JSX contents token.
 
   jsxReadToken(): void {
-    let out = "";
-    let chunkStart = this.state.pos;
     for (;;) {
       if (this.state.pos >= this.input.length) {
         this.raise(this.state.start, "Unterminated JSX contents");
@@ -27,112 +22,37 @@ export default class JSXParser extends Parser {
         case charCodes.leftCurlyBrace:
           if (this.state.pos === this.state.start) {
             if (ch === charCodes.lessThan) {
-              ++this.state.pos;
+              this.state.pos++;
               this.finishToken(tt.jsxTagStart);
               return;
             }
             this.getTokenFromCode(ch);
             return;
           }
-          out += this.input.slice(chunkStart, this.state.pos);
-          this.finishToken(tt.jsxText, out);
+          this.finishToken(tt.jsxText);
           return;
 
-        case charCodes.ampersand:
-          out += this.input.slice(chunkStart, this.state.pos);
-          out += this.jsxReadEntity();
-          chunkStart = this.state.pos;
-          break;
-
         default:
-          if (isNewLine(ch)) {
-            out += this.input.slice(chunkStart, this.state.pos);
-            out += this.jsxReadNewLine(true);
-            chunkStart = this.state.pos;
-          } else {
-            ++this.state.pos;
-          }
+          this.state.pos++;
       }
     }
   }
 
-  jsxReadNewLine(normalizeCRLF: boolean): string {
-    const ch = this.input.charCodeAt(this.state.pos);
-    let out;
-    ++this.state.pos;
-    if (
-      ch === charCodes.carriageReturn &&
-      this.input.charCodeAt(this.state.pos) === charCodes.lineFeed
-    ) {
-      ++this.state.pos;
-      out = normalizeCRLF ? "\n" : "\r\n";
-    } else {
-      out = String.fromCharCode(ch);
-    }
-
-    return out;
-  }
-
   jsxReadString(quote: number): void {
-    let out = "";
-    let chunkStart = ++this.state.pos;
+    this.state.pos++;
     for (;;) {
       if (this.state.pos >= this.input.length) {
         this.raise(this.state.start, "Unterminated string constant");
       }
 
       const ch = this.input.charCodeAt(this.state.pos);
-      if (ch === quote) break;
-      if (ch === charCodes.ampersand) {
-        out += this.input.slice(chunkStart, this.state.pos);
-        out += this.jsxReadEntity();
-        chunkStart = this.state.pos;
-      } else if (isNewLine(ch)) {
-        out += this.input.slice(chunkStart, this.state.pos);
-        out += this.jsxReadNewLine(false);
-        chunkStart = this.state.pos;
-      } else {
-        ++this.state.pos;
-      }
-    }
-    out += this.input.slice(chunkStart, this.state.pos++);
-    this.finishToken(tt.string, out);
-  }
-
-  jsxReadEntity(): string {
-    let str = "";
-    let count = 0;
-    let entity;
-    let ch = this.input[this.state.pos];
-
-    const startPos = ++this.state.pos;
-    while (this.state.pos < this.input.length && count++ < 10) {
-      ch = this.input[this.state.pos++];
-      if (ch === ";") {
-        if (str[0] === "#") {
-          if (str[1] === "x") {
-            str = str.substr(2);
-            if (HEX_NUMBER.test(str)) {
-              entity = String.fromCodePoint(parseInt(str, 16));
-            }
-          } else {
-            str = str.substr(1);
-            if (DECIMAL_NUMBER.test(str)) {
-              entity = String.fromCodePoint(parseInt(str, 10));
-            }
-          }
-        } else {
-          entity = XHTMLEntities[str];
-        }
+      if (ch === quote) {
+        this.state.pos++;
         break;
       }
-      str += ch;
+      this.state.pos++;
     }
-    if (!entity) {
-      this.state.pos = startPos;
-      return "&";
-    }
-    return entity;
+    this.finishToken(tt.string);
   }
 
   // Read a JSX identifier (valid tag or attribute name).

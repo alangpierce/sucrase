@@ -276,4 +276,17 @@ describe("transform JSX", () => {
     `,
     );
   });
+
+  it("preserves/allows windows newlines in string literals but not tag bodies", () => {
+    assertResult(
+      `
+      const e = <div a="foo\r\nbar">a\r\nb</div>;
+    `,
+      `${JSX_PREFIX}
+      const e = React.createElement('div', { a: "foo\\r\\nbar"
+, __self: this, __source: {fileName: _jsxFileName, lineNumber: 2}}, "a b"
+);
+    `,
+    );
+  });
 });

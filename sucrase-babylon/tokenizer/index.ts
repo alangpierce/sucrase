@@ -123,18 +123,6 @@ export class Token {
 
 // ## Tokenizer
 
-function codePointToString(code: number): string {
-  // UTF-16 Decoding
-  if (code <= 0xffff) {
-    return String.fromCharCode(code);
-  } else {
-    return String.fromCharCode(
-      ((code - 0x10000) >> 10) + 0xd800,
-      ((code - 0x10000) & 1023) + 0xdc00,
-    );
-  }
-}
-
 export default abstract class Tokenizer extends BaseParser {
   // Forward-declarations
   // parser/util.js
@@ -239,7 +227,7 @@ export default abstract class Tokenizer extends BaseParser {
       this.finishToken(tt.eof);
       return;
     }
-    this.readToken(this.fullCharCodeAtPos());
+    this.readToken(this.input.charCodeAt(this.state.pos));
   }
 
   readToken(code: number): void {
@@ -250,14 +238,6 @@ export default abstract class Tokenizer extends BaseParser {
     } else {
       this.getTokenFromCode(code);
     }
-  }
-
-  fullCharCodeAtPos(): number {
-    const code = this.input.charCodeAt(this.state.pos);
-    if (code <= 0xd7ff || code >= 0xe000) return code;
-
-    const next = this.input.charCodeAt(this.state.pos + 1);
-    return (code << 10) + next - 0x35fdc00;
   }
 
   skipBlockComment(): void {
@@ -615,19 +595,16 @@ export default abstract class Tokenizer extends BaseParser {
 
       case charCodes.digit0: {
         const next = this.input.charCodeAt(this.state.pos + 1);
-        // '0x', '0X' - hex number
-        if (next === charCodes.lowercaseX || next === charCodes.uppercaseX) {
-          this.readRadixNumber(16);
-          return;
-        }
-        // '0o', '0O' - octal number
-        if (next === charCodes.lowercaseO || next === charCodes.uppercaseO) {
-          this.readRadixNumber(8);
-          return;
-        }
-        // '0b', '0B' - binary number
-        if (next === charCodes.lowercaseB || next === charCodes.uppercaseB) {
-          this.readRadixNumber(2);
+        // '0x', '0X', '0o', '0O', '0b', '0B'
+        if (
+          next === charCodes.lowercaseX ||
+          next === charCodes.uppercaseX ||
+          next === charCodes.lowercaseO ||
+          next === charCodes.uppercaseO ||
+          next === charCodes.lowercaseB ||
+          next === charCodes.uppercaseB
+        ) {
+          this.readRadixNumber();
           return;
         }
       }
@@ -697,7 +674,7 @@ export default abstract class Tokenizer extends BaseParser {
         break;
     }
 
-    this.raise(this.state.pos, `Unexpected character '${codePointToString(code)}'`);
+    this.raise(this.state.pos, `Unexpected character '${String.fromCharCode(code)}'`);
   }
 
   finishOp(type: TokenType, size: number): void {
@@ -736,57 +713,33 @@ export default abstract class Tokenizer extends BaseParser {
     this.finishToken(tt.regexp);
   }
 
-  // Read an integer in the given radix. Return null if zero digits
-  // were read, the integer value otherwise. When `len` is given, this
-  // will return `null` unless the integer has exactly `len` digits.
-  readInt(radix: number, len?: number): number | null {
-    const start = this.state.pos;
-    let total = 0;
-
-    for (let i = 0, e = len == null ? Infinity : len; i < e; ++i) {
+  // Read an integer. We allow any valid digit, including hex digits, plus numeric separators, and
+  // stop at any other character.
+  readInt(): void {
+    while (true) {
       const code = this.input.charCodeAt(this.state.pos);
-      let val;
-
-      // Handle numeric separators.
-      if (code === charCodes.underscore) {
-        // Ignore this _ character
-        ++this.state.pos;
-        continue;
-      }
-
-      if (code >= charCodes.lowercaseA) {
-        val = code - charCodes.lowercaseA + charCodes.lineFeed;
-      } else if (code >= charCodes.uppercaseA) {
-        val = code - charCodes.uppercaseA + charCodes.lineFeed;
-      } else if (isDigit(code)) {
-        val = code - charCodes.digit0; // 0-9
+      if (
+        (code >= charCodes.digit0 && code <= charCodes.digit9) ||
+        (code >= charCodes.lowercaseA && code <= charCodes.lowercaseF) ||
+        (code >= charCodes.uppercaseA && code <= charCodes.uppercaseF) ||
+        code === charCodes.underscore
+      ) {
+        this.state.pos++;
       } else {
-        val = Infinity;
+        break;
       }
-      if (val >= radix) break;
-      ++this.state.pos;
-      total = total * radix + val;
     }
-    if (this.state.pos === start || (len != null && this.state.pos - start !== len)) {
-      return null;
-    }
-
-    return total;
   }
 
-  readRadixNumber(radix: number): void {
+  readRadixNumber(): void {
     let isBigInt = false;
 
     this.state.pos += 2; // 0x
-    this.readInt(radix);
+    this.readInt();
 
     if (this.input.charCodeAt(this.state.pos) === charCodes.lowercaseN) {
       ++this.state.pos;
       isBigInt = true;
-    }
-
-    if (isIdentifierStart(this.fullCharCodeAtPos())) {
-      this.raise(this.state.pos, "Identifier directly after number");
     }
 
     if (isBigInt) {
@@ -802,13 +755,13 @@ export default abstract class Tokenizer extends BaseParser {
     let isBigInt = false;
 
     if (!startsWithDot) {
-      this.readInt(10);
+      this.readInt();
     }
 
     let next = this.input.charCodeAt(this.state.pos);
     if (next === charCodes.dot) {
       ++this.state.pos;
-      this.readInt(10);
+      this.readInt();
       next = this.input.charCodeAt(this.state.pos);
     }
 
@@ -817,7 +770,7 @@ export default abstract class Tokenizer extends BaseParser {
       if (next === charCodes.plusSign || next === charCodes.dash) {
         ++this.state.pos;
       }
-      this.readInt(10);
+      this.readInt();
       next = this.input.charCodeAt(this.state.pos);
     }
 
@@ -831,31 +784,6 @@ export default abstract class Tokenizer extends BaseParser {
       return;
     }
     this.finishToken(tt.num);
-  }
-
-  // Read a string value, interpreting backslash-escapes.
-  readCodePoint(throwOnInvalid: boolean): number | null {
-    const ch = this.input.charCodeAt(this.state.pos);
-    let code;
-
-    if (ch === charCodes.leftCurlyBrace) {
-      const codePos = ++this.state.pos;
-      code = this.readHexChar(
-        this.input.indexOf("}", this.state.pos) - this.state.pos,
-        throwOnInvalid,
-      );
-      ++this.state.pos;
-      if (code !== null && code > 0x10ffff) {
-        if (throwOnInvalid) {
-          this.raise(codePos, "Code point out of bounds");
-        } else {
-          return null;
-        }
-      }
-    } else {
-      code = this.readHexChar(4, throwOnInvalid);
-    }
-    return code;
   }
 
   readString(quote: number): void {
@@ -909,57 +837,26 @@ export default abstract class Tokenizer extends BaseParser {
     }
   }
 
-  // Used to read character escape sequences ('\x', '\u').
-  readHexChar(len: number, throwOnInvalid: boolean): number | null {
-    const codePos = this.state.pos;
-    const n = this.readInt(16, len);
-    if (n === null) {
-      if (throwOnInvalid) {
-        this.raise(codePos, "Bad character escape sequence");
-      } else {
-        this.state.pos = codePos - 1;
-      }
-    }
-    return n;
-  }
-
-  // Read an identifier, and return it as a string. Sets `this.state.containsEsc`
-  // to whether the word contained a '\u' escape.
-  //
-  // Incrementally adds only escaped chars, adding other chunks as-is
-  // as a micro-optimization.
   readWord1(): string {
-    let word = "";
-    let first = true;
-    let chunkStart = this.state.pos;
+    const start = this.state.pos;
     while (this.state.pos < this.input.length) {
-      const ch = this.fullCharCodeAtPos();
+      const ch = this.input.charCodeAt(this.state.pos);
       if (isIdentifierChar(ch)) {
-        this.state.pos += ch <= 0xffff ? 1 : 2;
+        this.state.pos++;
       } else if (ch === charCodes.backslash) {
-        word += this.input.slice(chunkStart, this.state.pos);
-        const escStart = this.state.pos;
-
-        if (this.input.charCodeAt(++this.state.pos) !== charCodes.lowercaseU) {
-          this.raise(this.state.pos, "Expecting Unicode escape sequence \\uXXXX");
+        // \u
+        this.state.pos += 2;
+        if (this.state.input.charCodeAt(this.state.pos) === charCodes.leftCurlyBrace) {
+          while (this.state.input.charCodeAt(this.state.pos) !== charCodes.leftCurlyBrace) {
+            this.state.pos++;
+          }
+          this.state.pos++;
         }
-
-        ++this.state.pos;
-        const esc: number = this.readCodePoint(true)!;
-        // $FlowFixMe (thinks esc may be null, but throwOnInvalid is true)
-        if (!(first ? isIdentifierStart : isIdentifierChar)(esc)) {
-          this.raise(escStart, "Invalid Unicode escape");
-        }
-
-        // $FlowFixMe
-        word += codePointToString(esc);
-        chunkStart = this.state.pos;
       } else {
         break;
       }
-      first = false;
     }
-    return word + this.input.slice(chunkStart, this.state.pos);
+    return this.input.slice(start, this.state.pos);
   }
 
   // Read an identifier or keyword token.

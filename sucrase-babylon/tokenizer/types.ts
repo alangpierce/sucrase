@@ -56,68 +56,69 @@ export const enum TokenType {
   greaterThan = 21512, // > prec:8
   relationalOrEqual = 22024, // <=/>= prec:8
   bitShift = 22537, // <</>> prec:9
-  plusMin = 23178, // +/- prec:10 prefix
-  modulo = 23563, // % prec:11
-  star = 24075, // * prec:11
-  slash = 24587, // / prec:11
-  exponent = 25164, // ** prec:12 rightAssociative
-  jsxName = 25600, // jsxName
-  jsxText = 26112, // jsxText
-  jsxTagStart = 26624, // jsxTagStart
-  jsxTagEnd = 27136, // jsxTagEnd
-  typeParameterStart = 27648, // typeParameterStart
-  nonNullAssertion = 28160, // nonNullAssertion
-  _break = 28688, // break keyword
-  _case = 29200, // case keyword
-  _catch = 29712, // catch keyword
-  _continue = 30224, // continue keyword
-  _debugger = 30736, // debugger keyword
-  _default = 31248, // default keyword
-  _do = 31760, // do keyword
-  _else = 32272, // else keyword
-  _finally = 32784, // finally keyword
-  _for = 33296, // for keyword
-  _function = 33808, // function keyword
-  _if = 34320, // if keyword
-  _return = 34832, // return keyword
-  _switch = 35344, // switch keyword
-  _throw = 35984, // throw keyword prefix
-  _try = 36368, // try keyword
-  _var = 36880, // var keyword
-  _let = 37392, // let keyword
-  _const = 37904, // const keyword
-  _while = 38416, // while keyword
-  _with = 38928, // with keyword
-  _new = 39440, // new keyword
-  _this = 39952, // this keyword
-  _super = 40464, // super keyword
-  _class = 40976, // class keyword
-  _extends = 41488, // extends keyword
-  _export = 42000, // export keyword
-  _import = 42512, // import keyword
-  _yield = 43024, // yield keyword
-  _null = 43536, // null keyword
-  _true = 44048, // true keyword
-  _false = 44560, // false keyword
-  _in = 45080, // in prec:8 keyword
-  _instanceof = 45592, // instanceof prec:8 keyword
-  _typeof = 46224, // typeof keyword prefix
-  _void = 46736, // void keyword prefix
-  _delete = 47248, // delete keyword prefix
-  _async = 47632, // async keyword
-  _get = 48144, // get keyword
-  _set = 48656, // set keyword
-  _declare = 49168, // declare keyword
-  _readonly = 49680, // readonly keyword
-  _abstract = 50192, // abstract keyword
-  _static = 50704, // static keyword
-  _public = 51216, // public keyword
-  _private = 51728, // private keyword
-  _protected = 52240, // protected keyword
-  _as = 52752, // as keyword
-  _enum = 53264, // enum keyword
-  _type = 53776, // type keyword
-  _implements = 54288, // implements keyword
+  plus = 23178, // + prec:10 prefix
+  minus = 23690, // - prec:10 prefix
+  modulo = 24075, // % prec:11
+  star = 24587, // * prec:11
+  slash = 25099, // / prec:11
+  exponent = 25676, // ** prec:12 rightAssociative
+  jsxName = 26112, // jsxName
+  jsxText = 26624, // jsxText
+  jsxTagStart = 27136, // jsxTagStart
+  jsxTagEnd = 27648, // jsxTagEnd
+  typeParameterStart = 28160, // typeParameterStart
+  nonNullAssertion = 28672, // nonNullAssertion
+  _break = 29200, // break keyword
+  _case = 29712, // case keyword
+  _catch = 30224, // catch keyword
+  _continue = 30736, // continue keyword
+  _debugger = 31248, // debugger keyword
+  _default = 31760, // default keyword
+  _do = 32272, // do keyword
+  _else = 32784, // else keyword
+  _finally = 33296, // finally keyword
+  _for = 33808, // for keyword
+  _function = 34320, // function keyword
+  _if = 34832, // if keyword
+  _return = 35344, // return keyword
+  _switch = 35856, // switch keyword
+  _throw = 36496, // throw keyword prefix
+  _try = 36880, // try keyword
+  _var = 37392, // var keyword
+  _let = 37904, // let keyword
+  _const = 38416, // const keyword
+  _while = 38928, // while keyword
+  _with = 39440, // with keyword
+  _new = 39952, // new keyword
+  _this = 40464, // this keyword
+  _super = 40976, // super keyword
+  _class = 41488, // class keyword
+  _extends = 42000, // extends keyword
+  _export = 42512, // export keyword
+  _import = 43024, // import keyword
+  _yield = 43536, // yield keyword
+  _null = 44048, // null keyword
+  _true = 44560, // true keyword
+  _false = 45072, // false keyword
+  _in = 45592, // in prec:8 keyword
+  _instanceof = 46104, // instanceof prec:8 keyword
+  _typeof = 46736, // typeof keyword prefix
+  _void = 47248, // void keyword prefix
+  _delete = 47760, // delete keyword prefix
+  _async = 48144, // async keyword
+  _get = 48656, // get keyword
+  _set = 49168, // set keyword
+  _declare = 49680, // declare keyword
+  _readonly = 50192, // readonly keyword
+  _abstract = 50704, // abstract keyword
+  _static = 51216, // static keyword
+  _public = 51728, // public keyword
+  _private = 52240, // private keyword
+  _protected = 52752, // protected keyword
+  _as = 53264, // as keyword
+  _enum = 53776, // enum keyword
+  _type = 54288, // type keyword
+  _implements = 54800, // implements keyword
 }
 export const keywords = {
   break: TokenType._break,
@@ -264,8 +265,10 @@ export function formatTokenType(tokenType: TokenType): string {
       return "<=/>=";
     case TokenType.bitShift:
       return "<</>>";
-    case TokenType.plusMin:
-      return "+/-";
+    case TokenType.plus:
+      return "+";
+    case TokenType.minus:
+      return "-";
     case TokenType.modulo:
       return "%";
     case TokenType.star:

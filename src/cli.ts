@@ -75,6 +75,6 @@ async function buildFile(
 ): Promise<void> {
   console.log(`${srcPath} -> ${outPath}`);
   const code = (await readFile(srcPath)).toString();
-  const transformedCode = transform(code, {transforms});
+  const transformedCode = transform(code, {transforms, filePath: srcPath});
   await writeFile(outPath, transformedCode);
 }

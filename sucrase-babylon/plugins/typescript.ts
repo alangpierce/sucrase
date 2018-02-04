@@ -391,14 +391,10 @@ export default class TypeScriptParser extends TypeParser {
       case tt._false:
         this.parseLiteral();
         return;
-      case tt.plusMin:
-        // Allow negative signs but not plus signs before numbers.
-        if (this.state.value === "-") {
-          this.next();
-          this.parseLiteral();
-          return;
-        }
-        break;
+      case tt.minus:
+        this.next();
+        this.parseLiteral();
+        return;
       case tt._this: {
         this.tsParseThisTypeNode();
         if (this.isContextual(ContextualKeyword._is) && !this.hasPrecedingLineBreak()) {

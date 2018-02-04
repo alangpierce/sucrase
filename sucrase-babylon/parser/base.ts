@@ -36,7 +36,7 @@ export function raise(pos: number, message: string): never {
 export function initParser(inputCode: string, pluginList: Array<string>): void {
   input = inputCode;
   state = new State();
-  state.init(input);
+  state.init();
   nextContextId = 1;
   plugins = pluginList.reduce((obj, p) => ({...obj, [p]: true}), {});
 }

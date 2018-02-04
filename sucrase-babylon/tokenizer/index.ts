@@ -5,6 +5,7 @@ import {unexpected} from "../parser/util";
 import {charCodes} from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart, isKeyword} from "../util/identifier";
 import {nonASCIIwhitespace} from "../util/whitespace";
+import readWord from "./readWord";
 import {keywords as keywordTypes, TokenType, TokenType as tt} from "./types";
 
 export enum IdentifierRole {
@@ -16,7 +17,7 @@ export enum IdentifierRole {
   ObjectKey,
 }
 
-export enum ContextualKeyword {
+export const enum ContextualKeyword {
   NONE,
   _abstract,
   _as,
@@ -54,47 +55,9 @@ export enum ContextualKeyword {
   _displayName,
 }
 
-const contextualKeywordByName = {
-  abstract: ContextualKeyword._abstract,
-  as: ContextualKeyword._as,
-  async: ContextualKeyword._async,
-  await: ContextualKeyword._await,
-  checks: ContextualKeyword._checks,
-  constructor: ContextualKeyword._constructor,
-  declare: ContextualKeyword._declare,
-  enum: ContextualKeyword._enum,
-  exports: ContextualKeyword._exports,
-  from: ContextualKeyword._from,
-  get: ContextualKeyword._get,
-  global: ContextualKeyword._global,
-  implements: ContextualKeyword._implements,
-  interface: ContextualKeyword._interface,
-  is: ContextualKeyword._is,
-  keyof: ContextualKeyword._keyof,
-  mixins: ContextualKeyword._mixins,
-  module: ContextualKeyword._module,
-  namespace: ContextualKeyword._namespace,
-  of: ContextualKeyword._of,
-  opaque: ContextualKeyword._opaque,
-  private: ContextualKeyword._private,
-  protected: ContextualKeyword._protected,
-  public: ContextualKeyword._public,
-  readonly: ContextualKeyword._readonly,
-  require: ContextualKeyword._require,
-  static: ContextualKeyword._static,
-  type: ContextualKeyword._type,
-  set: ContextualKeyword._set,
-  // Custom identifiers we want to match.
-  React: ContextualKeyword._React,
-  createClass: ContextualKeyword._createClass,
-  createReactClass: ContextualKeyword._createReactClass,
-  displayName: ContextualKeyword._displayName,
-};
-
 // Object type used to represent tokens. Note that normally, tokens
 // simply exist as properties on the parser object. This is only
 // used for the onToken callback and the external tokenizer.
-
 export class Token {
   constructor() {
     this.type = state.type;
@@ -675,9 +638,8 @@ function readRegexp(): void {
     ++state.pos;
   }
   ++state.pos;
-  // Need to use `readWord1` because '\uXXXX' sequences are allowed
-  // here (don't ask).
-  readWord1();
+  // Need to use `skipWord` because '\uXXXX' sequences are allowed here (don't ask).
+  skipWord();
 
   finishToken(tt.regexp);
 }
@@ -805,8 +767,10 @@ function readTmplToken(): void {
   }
 }
 
-function readWord1(): string {
-  const start = state.pos;
+// Skip to the end of the current word. Note that this is the same as the snippet at the end of
+// readWord, but calling skipWord from readWord seems to slightly hurt performance from some rough
+// measurements.
+export function skipWord(): void {
   while (state.pos < input.length) {
     const ch = input.charCodeAt(state.pos);
     if (isIdentifierChar(ch)) {
@@ -814,8 +778,8 @@ function readWord1(): string {
     } else if (ch === charCodes.backslash) {
       // \u
       state.pos += 2;
-      if (state.input.charCodeAt(state.pos) === charCodes.leftCurlyBrace) {
-        while (state.input.charCodeAt(state.pos) !== charCodes.leftCurlyBrace) {
+      if (input.charCodeAt(state.pos) === charCodes.leftCurlyBrace) {
+        while (input.charCodeAt(state.pos) !== charCodes.leftCurlyBrace) {
           state.pos++;
         }
         state.pos++;
@@ -823,18 +787,5 @@ function readWord1(): string {
     } else {
       break;
     }
-  }
-  return input.slice(start, state.pos);
-}
-
-// Read an identifier or keyword token.
-function readWord(): void {
-  const word = readWord1();
-  if (isKeyword(word)) {
-    finishToken(keywordTypes[word]);
-  } else if (contextualKeywordByName[word] != null) {
-    finishToken(tt.name, contextualKeywordByName[word]);
-  } else {
-    finishToken(tt.name);
   }
 }

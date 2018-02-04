@@ -1,9 +1,9 @@
 /* eslint max-len: 0 */
 
 import BaseParser from "../parser/base";
-import {charCodes, isDigit} from "../util/charcodes";
+import {charCodes} from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart, isKeyword} from "../util/identifier";
-import {isNewLine, lineBreak, nonASCIIwhitespace} from "../util/whitespace";
+import {nonASCIIwhitespace} from "../util/whitespace";
 import State from "./state";
 import {keywords as keywordTypes, TokenType, TokenType as tt} from "./types";
 

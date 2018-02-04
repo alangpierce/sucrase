@@ -1,3 +1,4 @@
+import {ContextualKeyword} from "../../sucrase-babylon/tokenizer";
 import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import isIdentifier from "../util/isIdentifier";
@@ -10,28 +11,33 @@ export default class TypeScriptTransformer extends Transformer {
   }
 
   process(): boolean {
+    // Remove all types. Note that access modifiers are also marked as types so that they will be
+    // removed.
     const processedType = this.rootTransformer.processPossibleTypeRange();
     if (processedType) {
       return true;
     }
-    if (
-      this.tokens.matches1(tt._public) ||
-      this.tokens.matches1(tt._protected) ||
-      this.tokens.matches1(tt._private) ||
-      this.tokens.matches1(tt._abstract) ||
-      this.tokens.matches1(tt._readonly) ||
-      this.tokens.matches1(tt.nonNullAssertion)
-    ) {
+    if (this.tokens.matches1(tt.nonNullAssertion)) {
       this.tokens.removeInitialToken();
       return true;
     }
-    if (this.tokens.matches1(tt._enum) || this.tokens.matches2(tt._const, tt._enum)) {
+    if (
+      this.tokens.matchesContextual(ContextualKeyword._enum) ||
+      (this.tokens.matches1(tt._const) &&
+        this.tokens.matchesContextualAtIndex(
+          this.tokens.currentIndex() + 1,
+          ContextualKeyword._enum,
+        ))
+    ) {
       this.processEnum();
       return true;
     }
+    const index = this.tokens.currentIndex();
     if (
-      this.tokens.matches2(tt._export, tt._enum) ||
-      this.tokens.matches3(tt._export, tt._const, tt._enum)
+      (this.tokens.matches1(tt._export) &&
+        this.tokens.matchesContextualAtIndex(index + 1, ContextualKeyword._enum)) ||
+      (this.tokens.matches2(tt._export, tt._const) &&
+        this.tokens.matchesContextualAtIndex(index + 2, ContextualKeyword._enum))
     ) {
       this.processEnum(true);
       return true;
@@ -42,7 +48,10 @@ export default class TypeScriptTransformer extends Transformer {
   processEnum(isExport: boolean = false): void {
     // We might have "export const enum", so just remove all relevant tokens.
     this.tokens.removeInitialToken();
-    while (this.tokens.matches1(tt._const) || this.tokens.matches1(tt._enum)) {
+    while (
+      this.tokens.matches1(tt._const) ||
+      this.tokens.matchesContextual(ContextualKeyword._enum)
+    ) {
       this.tokens.removeToken();
     }
     const enumName = this.tokens.identifierName();

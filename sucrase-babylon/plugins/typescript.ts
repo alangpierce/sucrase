@@ -56,28 +56,7 @@ export default class TypeScriptParser extends TypeParser {
       allowedModifiers.indexOf(modifier as T) !== -1 &&
       this.tsTryParse(() => this.tsNextTokenCanFollowModifier())
     ) {
-      switch (modifier) {
-        case ContextualKeyword._readonly:
-          this.state.tokens[this.state.tokens.length - 1].type = tt._readonly;
-          break;
-        case ContextualKeyword._abstract:
-          this.state.tokens[this.state.tokens.length - 1].type = tt._abstract;
-          break;
-        case ContextualKeyword._static:
-          this.state.tokens[this.state.tokens.length - 1].type = tt._static;
-          break;
-        case ContextualKeyword._public:
-          this.state.tokens[this.state.tokens.length - 1].type = tt._public;
-          break;
-        case ContextualKeyword._private:
-          this.state.tokens[this.state.tokens.length - 1].type = tt._private;
-          break;
-        case ContextualKeyword._protected:
-          this.state.tokens[this.state.tokens.length - 1].type = tt._protected;
-          break;
-        default:
-          break;
-      }
+      this.state.tokens[this.state.tokens.length - 1].isType = true;
       return modifier as T;
     }
     return null;
@@ -775,7 +754,6 @@ export default class TypeScriptParser extends TypeParser {
             // `const enum = 0;` not allowed because "enum" is a strict mode reserved word.
             this.expect(tt._const);
             this.expectContextual(ContextualKeyword._enum);
-            this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
             this.tsParseEnumDeclaration();
           });
           return true;
@@ -816,7 +794,6 @@ export default class TypeScriptParser extends TypeParser {
         const declareTokenIndex = this.state.tokens.length - 1;
         const matched = this.tsTryParseDeclare();
         if (matched) {
-          this.state.tokens[declareTokenIndex].type = tt._declare;
           return true;
         }
         break;
@@ -843,7 +820,7 @@ export default class TypeScriptParser extends TypeParser {
       case ContextualKeyword._abstract:
         if (next || this.match(tt._class)) {
           if (next) this.next();
-          this.state.tokens[this.state.tokens.length - 1].type = tt._abstract;
+          this.state.tokens[this.state.tokens.length - 1].isType = true;
           this.parseClass(/* isStatement */ true, /* optionalId */ false);
           return true;
         }
@@ -852,7 +829,6 @@ export default class TypeScriptParser extends TypeParser {
       case ContextualKeyword._enum:
         if (next || this.match(tt.name)) {
           if (next) this.next();
-          this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
           this.tsParseEnumDeclaration();
           return true;
         }
@@ -1064,7 +1040,6 @@ export default class TypeScriptParser extends TypeParser {
       !this.hasPrecedingLineBreak() &&
       this.eatContextual(ContextualKeyword._as)
     ) {
-      this.state.tokens[this.state.tokens.length - 1].type = tt._as;
       this.runInTypeContext(1, () => {
         this.tsParseType();
       });
@@ -1116,7 +1091,6 @@ export default class TypeScriptParser extends TypeParser {
 
   parseExportDefaultExpression(): void {
     if (this.isContextual(ContextualKeyword._abstract) && this.lookaheadType() === tt._class) {
-      this.state.type = tt._abstract;
       this.next(); // Skip "abstract"
       this.parseClass(true, true);
       return;
@@ -1130,7 +1104,6 @@ export default class TypeScriptParser extends TypeParser {
       if (ahead.type === tt.name && ahead.contextualKeyword === ContextualKeyword._enum) {
         this.expect(tt._const);
         this.expectContextual(ContextualKeyword._enum);
-        this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
         this.tsParseEnumDeclaration();
         return;
       }
@@ -1218,10 +1191,6 @@ export default class TypeScriptParser extends TypeParser {
   parseExportDeclaration(): void {
     // "export declare" is equivalent to just "export".
     const isDeclare = this.eatContextual(ContextualKeyword._declare);
-    if (isDeclare) {
-      this.state.tokens[this.state.tokens.length - 1].type = tt._declare;
-    }
-
     let matchedDeclaration = false;
     if (this.match(tt.name)) {
       if (isDeclare) {
@@ -1266,7 +1235,6 @@ export default class TypeScriptParser extends TypeParser {
       this.tsParseTypeArguments();
     }
     if (this.eatContextual(ContextualKeyword._implements)) {
-      this.state.tokens[this.state.tokens.length - 1].type = tt._implements;
       this.runInTypeContext(1, () => {
         this.tsParseHeritageClause();
       });
@@ -1412,7 +1380,7 @@ export default class TypeScriptParser extends TypeParser {
       case tt._this:
         // "this" may be the name of a parameter, so allow it.
         this.runInTypeContext(0, () => {
-          this.parseIdentifier();
+          this.next();
         });
         return;
       default:

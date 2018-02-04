@@ -56,8 +56,14 @@ export default function getClassInfo(
       // Either a method or a field. Skip to the identifier part.
       const statementStartIndex = tokens.currentIndex();
       let isStatic = false;
-      while (isAccessModifier(tokens.currentToken())) {
-        if (tokens.matches1(tt._static)) {
+      while (
+        isAccessModifier(tokens.currentToken()) &&
+        // Make sure we properly handle method and filed names that happen to also be access
+        // modifier names.
+        (tokens.tokenAtRelativeIndex(1).type === tt.name ||
+          tokens.tokenAtRelativeIndex(1).type === tt.bracketL)
+      ) {
+        if (tokens.matchesContextual(ContextualKeyword._static)) {
           isStatic = true;
         }
         tokens.nextToken();
@@ -203,19 +209,19 @@ function processConstructor(
  * Determine if this is any token that can go before the name in a method/field.
  */
 function isAccessModifier(token: Token): boolean {
-  return [
-    tt._async,
-    tt._get,
-    tt._set,
-    tt.plus,
-    tt.minus,
-    tt._readonly,
-    tt._static,
-    tt._public,
-    tt._private,
-    tt._protected,
-    tt._abstract,
-  ].includes(token.type);
+  return (
+    token.type === tt.plus ||
+    token.type === tt.minus ||
+    token.contextualKeyword === ContextualKeyword._async ||
+    token.contextualKeyword === ContextualKeyword._get ||
+    token.contextualKeyword === ContextualKeyword._set ||
+    token.contextualKeyword === ContextualKeyword._readonly ||
+    token.contextualKeyword === ContextualKeyword._static ||
+    token.contextualKeyword === ContextualKeyword._public ||
+    token.contextualKeyword === ContextualKeyword._private ||
+    token.contextualKeyword === ContextualKeyword._protected ||
+    token.contextualKeyword === ContextualKeyword._abstract
+  );
 }
 
 /**

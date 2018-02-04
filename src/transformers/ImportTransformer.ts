@@ -204,9 +204,12 @@ export default class ImportTransformer extends Transformer {
   }
 
   processExport(): boolean {
+    const index = this.tokens.currentIndex();
     if (
-      this.tokens.matches2(tt._export, tt._enum) ||
-      this.tokens.matches3(tt._export, tt._const, tt._enum)
+      // export enum
+      this.tokens.matchesContextualAtIndex(index + 1, ContextualKeyword._enum) ||
+      // export const enum
+      this.tokens.matchesContextualAtIndex(index + 2, ContextualKeyword._enum)
     ) {
       // Let the TypeScript transform handle it.
       return false;
@@ -232,7 +235,8 @@ export default class ImportTransformer extends Transformer {
       return true;
     } else if (
       this.tokens.matches2(tt._export, tt._class) ||
-      this.tokens.matches3(tt._export, tt._abstract, tt._class)
+      // export abstract class
+      this.tokens.matches3(tt._export, tt.name, tt._class)
     ) {
       this.processExportClass();
       return true;
@@ -290,11 +294,12 @@ export default class ImportTransformer extends Transformer {
       this.tokens.appendCode(` exports.default = ${name};`);
     } else if (
       this.tokens.matches4(tt._export, tt._default, tt._class, tt.name) ||
-      this.tokens.matches5(tt._export, tt._default, tt._abstract, tt._class, tt.name)
+      // export default abstract class
+      this.tokens.matches5(tt._export, tt._default, tt.name, tt._class, tt.name)
     ) {
       this.tokens.removeInitialToken();
       this.tokens.removeToken();
-      if (this.tokens.matches1(tt._abstract)) {
+      if (this.tokens.matchesContextual(ContextualKeyword._abstract)) {
         this.tokens.removeToken();
       }
       const name = this.rootTransformer.processNamedClass();
@@ -380,7 +385,7 @@ export default class ImportTransformer extends Transformer {
    */
   private processExportClass(): void {
     this.tokens.removeInitialToken();
-    if (this.tokens.matches1(tt._abstract)) {
+    if (this.tokens.matchesContextual(ContextualKeyword._abstract)) {
       this.tokens.removeToken();
     }
     const name = this.rootTransformer.processNamedClass();

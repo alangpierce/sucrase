@@ -146,24 +146,6 @@ const types = {
   _typeof: new KeywordTokenType("typeof", {prefix}),
   _void: new KeywordTokenType("void", {prefix}),
   _delete: new KeywordTokenType("delete", {prefix}),
-
-  // Other keywords
-  _async: new KeywordTokenType("async"),
-  _get: new KeywordTokenType("get"),
-  _set: new KeywordTokenType("set"),
-
-  // TypeScript keywords
-  _declare: new KeywordTokenType("declare"),
-  _readonly: new KeywordTokenType("readonly"),
-  _abstract: new KeywordTokenType("abstract"),
-  _static: new KeywordTokenType("static"),
-  _public: new KeywordTokenType("public"),
-  _private: new KeywordTokenType("private"),
-  _protected: new KeywordTokenType("protected"),
-  _as: new KeywordTokenType("as"),
-  _enum: new KeywordTokenType("enum"),
-  _type: new KeywordTokenType("type"),
-  _implements: new KeywordTokenType("implements"),
 };
 
 export default function generateTokenTypes(): string {

@@ -106,5 +106,9 @@ export const enum charCodes {
 }
 
 export function isDigit(code: number): boolean {
-  return code >= charCodes.digit0 && code <= charCodes.digit9;
+  return (
+    (code >= charCodes.digit0 && code <= charCodes.digit9) ||
+    (code >= charCodes.lowercaseA && code <= charCodes.lowercaseF) ||
+    (code >= charCodes.uppercaseA && code <= charCodes.uppercaseF)
+  );
 }

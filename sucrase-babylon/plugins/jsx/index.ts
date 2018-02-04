@@ -263,7 +263,7 @@ export default class JSXParser extends Parser {
     this.state.tokens.push(new Token(this.state));
     this.skipSpace();
     this.state.start = this.state.pos;
-    const code = this.fullCharCodeAtPos();
+    const code = this.input.charCodeAt(this.state.pos);
 
     if (isIdentifierStart(code)) {
       this.jsxReadWord();

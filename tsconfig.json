@@ -10,6 +10,7 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "suppressImplicitAnyIndexErrors": true,
+    "noImplicitThis": true,
     "downlevelIteration": true,
     "noEmitHelpers": true,
     "importHelpers": true,

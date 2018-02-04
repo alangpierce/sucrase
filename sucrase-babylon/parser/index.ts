@@ -1,25 +1,13 @@
 import {File} from "../index";
-import StatementParser from "./statement";
+import {nextToken, skipLineComment} from "../tokenizer";
+import {input, state} from "./base";
+import {parseTopLevel} from "./statement";
 
-export type Pos = {
-  start: number;
-};
-
-export default class Parser extends StatementParser {
-  constructor(input: string, plugins: Array<string>) {
-    super(input);
-
-    this.input = input;
-    this.plugins = plugins.reduce((obj, p) => ({...obj, [p]: true}), {});
-
-    // If enabled, skip leading hashbang line.
-    if (this.state.pos === 0 && this.input[0] === "#" && this.input[1] === "!") {
-      this.skipLineComment(2);
-    }
+export function parseFile(): File {
+  // If enabled, skip leading hashbang line.
+  if (state.pos === 0 && input[0] === "#" && input[1] === "!") {
+    skipLineComment(2);
   }
-
-  parse(): File {
-    this.nextToken();
-    return this.parseTopLevel();
-  }
+  nextToken();
+  return parseTopLevel();
 }

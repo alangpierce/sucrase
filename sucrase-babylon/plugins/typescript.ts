@@ -1,6 +1,52 @@
-import {ContextualKeyword} from "../tokenizer";
+import {hasPlugin, state} from "../parser/base";
+import {
+  atPossibleAsync,
+  baseParseMaybeAssign,
+  baseParseSubscript,
+  parseCallExpressionArguments,
+  parseExprAtom,
+  parseExpression,
+  parseFunctionBody,
+  parseIdentifier,
+  parseLiteral,
+  parseMaybeAssign,
+  parseMaybeUnary,
+  parsePropertyName,
+} from "../parser/expression";
+import {parseBindingList} from "../parser/lval";
+import {
+  parseBlockBody,
+  parseClass,
+  parseClassProperty,
+  parseClassPropertyName,
+  parseFunction,
+  parseFunctionParams,
+  parsePostMemberNameModifiers,
+  parseStatement,
+  parseVarStatement,
+} from "../parser/statement";
+import {
+  canInsertSemicolon,
+  eatContextual,
+  expect,
+  expectContextual,
+  hasPrecedingLineBreak,
+  isContextual,
+  isLineTerminator,
+  isLookaheadContextual,
+  semicolon,
+  unexpected,
+} from "../parser/util";
+import {
+  ContextualKeyword,
+  eat,
+  lookaheadType,
+  lookaheadTypeAndKeyword,
+  match,
+  next,
+  runInTypeContext,
+} from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
-import TypeParser from "./types";
 
 export type TsModifier =
   | ContextualKeyword._readonly
@@ -23,1400 +69,1254 @@ export type ParsingContext =
   | "TypeMembers"
   | "TypeParametersOrArguments";
 
-export default class TypeScriptParser extends TypeParser {
-  tsIsIdentifier(): boolean {
-    // TODO: actually a bit more complex in TypeScript, but shouldn't matter.
-    // See https://github.com/Microsoft/TypeScript/issues/15008
-    return this.match(tt.name);
-  }
+function tsIsIdentifier(): boolean {
+  // TODO: actually a bit more complex in TypeScript, but shouldn't matter.
+  // See https://github.com/Microsoft/TypeScript/issues/15008
+  return match(tt.name);
+}
 
-  tsNextTokenCanFollowModifier(): boolean {
-    // Note: TypeScript's implementation is much more complicated because
-    // more things are considered modifiers there.
-    // This implementation only handles modifiers not handled by babylon itself. And "static".
-    // TODO: Would be nice to avoid lookahead. Want a hasLineBreakUpNext() method...
-    this.next();
-    return (
-      !this.hasPrecedingLineBreak() &&
-      !this.match(tt.parenL) &&
-      !this.match(tt.colon) &&
-      !this.match(tt.eq) &&
-      !this.match(tt.question)
-    );
-  }
+function tsNextTokenCanFollowModifier(): boolean {
+  // Note: TypeScript's implementation is much more complicated because
+  // more things are considered modifiers there.
+  // This implementation only handles modifiers not handled by babylon itself. And "static".
+  // TODO: Would be nice to avoid lookahead. Want a hasLineBreakUpNext() method...
+  next();
+  return (
+    !hasPrecedingLineBreak() &&
+    !match(tt.parenL) &&
+    !match(tt.colon) &&
+    !match(tt.eq) &&
+    !match(tt.question)
+  );
+}
 
-  /** Parses a modifier matching one the given modifier names. */
-  tsParseModifier<T extends TsModifier>(allowedModifiers: Array<T>): T | null {
-    if (!this.match(tt.name)) {
-      return null;
-    }
-
-    const modifier = this.state.contextualKeyword;
-    if (
-      allowedModifiers.indexOf(modifier as T) !== -1 &&
-      this.tsTryParse(() => this.tsNextTokenCanFollowModifier())
-    ) {
-      switch (modifier) {
-        case ContextualKeyword._readonly:
-          this.state.tokens[this.state.tokens.length - 1].type = tt._readonly;
-          break;
-        case ContextualKeyword._abstract:
-          this.state.tokens[this.state.tokens.length - 1].type = tt._abstract;
-          break;
-        case ContextualKeyword._static:
-          this.state.tokens[this.state.tokens.length - 1].type = tt._static;
-          break;
-        case ContextualKeyword._public:
-          this.state.tokens[this.state.tokens.length - 1].type = tt._public;
-          break;
-        case ContextualKeyword._private:
-          this.state.tokens[this.state.tokens.length - 1].type = tt._private;
-          break;
-        case ContextualKeyword._protected:
-          this.state.tokens[this.state.tokens.length - 1].type = tt._protected;
-          break;
-        default:
-          break;
-      }
-      return modifier as T;
-    }
+/** Parses a modifier matching one the given modifier names. */
+export function tsParseModifier<T extends TsModifier>(allowedModifiers: Array<T>): T | null {
+  if (!match(tt.name)) {
     return null;
   }
 
-  tsIsListTerminator(kind: ParsingContext): boolean {
-    switch (kind) {
-      case "EnumMembers":
-      case "TypeMembers":
-        return this.match(tt.braceR);
-      case "HeritageClauseElement":
-        return this.match(tt.braceL);
-      case "TupleElementTypes":
-        return this.match(tt.bracketR);
-      case "TypeParametersOrArguments":
-        return this.match(tt.greaterThan);
-      default:
-        break;
-    }
-
-    throw new Error("Unreachable");
-  }
-
-  tsParseList(kind: ParsingContext, parseElement: () => void): void {
-    while (!this.tsIsListTerminator(kind)) {
-      // Skipping "parseListElement" from the TS source since that's just for error handling.
-      parseElement();
-    }
-  }
-
-  tsParseDelimitedList(kind: ParsingContext, parseElement: () => void): void {
-    this.tsParseDelimitedListWorker(kind, parseElement);
-  }
-
-  /**
-   * If !expectSuccess, returns undefined instead of failing to parse.
-   * If expectSuccess, parseElement should always return a defined value.
-   */
-  tsParseDelimitedListWorker(kind: ParsingContext, parseElement: () => void): void {
-    while (true) {
-      if (this.tsIsListTerminator(kind)) {
-        break;
-      }
-
-      parseElement();
-      if (this.eat(tt.comma)) {
-        continue;
-      }
-
-      if (this.tsIsListTerminator(kind)) {
-        break;
-      }
-    }
-  }
-
-  tsParseBracketedList(
-    kind: ParsingContext,
-    parseElement: () => void,
-    bracket: boolean,
-    skipFirstToken: boolean,
-  ): void {
-    if (!skipFirstToken) {
-      if (bracket) {
-        this.expect(tt.bracketL);
-      } else {
-        this.expect(tt.lessThan);
-      }
-    }
-    this.tsParseDelimitedList(kind, parseElement);
-    if (bracket) {
-      this.expect(tt.bracketR);
-    } else {
-      this.expect(tt.greaterThan);
-    }
-  }
-
-  tsParseEntityName(): void {
-    this.parseIdentifier();
-    while (this.eat(tt.dot)) {
-      this.parseIdentifier();
-    }
-  }
-
-  tsParseTypeReference(): void {
-    this.tsParseEntityName();
-    if (!this.hasPrecedingLineBreak() && this.match(tt.lessThan)) {
-      this.tsParseTypeArguments();
-    }
-  }
-
-  tsParseThisTypePredicate(): void {
-    this.next();
-    this.parseTypeAnnotation();
-  }
-
-  tsParseThisTypeNode(): void {
-    this.next();
-  }
-
-  tsParseTypeQuery(): void {
-    this.expect(tt._typeof);
-    this.tsParseEntityName();
-  }
-
-  tsParseTypeParameter(): void {
-    this.parseIdentifier();
-    if (this.eat(tt._extends)) {
-      this.tsParseType();
-    }
-    if (this.eat(tt.eq)) {
-      this.tsParseType();
-    }
-  }
-
-  tsTryParseTypeParameters(): void {
-    if (this.match(tt.lessThan)) {
-      this.tsParseTypeParameters();
-    }
-  }
-
-  tsParseTypeParameters(): void {
-    this.runInTypeContext(0, () => {
-      if (this.match(tt.lessThan) || this.match(tt.typeParameterStart)) {
-        this.next();
-      } else {
-        this.unexpected();
-      }
-
-      this.tsParseBracketedList(
-        "TypeParametersOrArguments",
-        this.tsParseTypeParameter.bind(this),
-        /* bracket */ false,
-        /* skipFirstToken */ true,
-      );
-    });
-  }
-
-  // Note: In TypeScript implementation we must provide `yieldContext` and `awaitContext`,
-  // but here it's always false, because this is only used for types.
-  tsFillSignature(returnToken: TokenType): void {
-    // Arrow fns *must* have return token (`=>`). Normal functions can omit it.
-    const returnTokenRequired = returnToken === tt.arrow;
-    this.tsTryParseTypeParameters();
-    this.expect(tt.parenL);
-    this.tsParseBindingListForSignature(false /* isBlockScope */);
-    if (returnTokenRequired) {
-      this.tsParseTypeOrTypePredicateAnnotation(returnToken);
-    } else if (this.match(returnToken)) {
-      this.tsParseTypeOrTypePredicateAnnotation(returnToken);
-    }
-  }
-
-  tsParseBindingListForSignature(isBlockScope: boolean): void {
-    this.parseBindingList(tt.parenR, isBlockScope);
-  }
-
-  tsParseTypeMemberSemicolon(): void {
-    if (!this.eat(tt.comma)) {
-      this.semicolon();
-    }
-  }
-
-  tsParseSignatureMember(
-    kind: "TSCallSignatureDeclaration" | "TSConstructSignatureDeclaration",
-  ): void {
-    if (kind === "TSConstructSignatureDeclaration") {
-      this.expect(tt._new);
-    }
-    this.tsFillSignature(tt.colon);
-    this.tsParseTypeMemberSemicolon();
-  }
-
-  tsIsUnambiguouslyIndexSignature(): boolean {
-    this.next(); // Skip '{'
-    return this.eat(tt.name) && this.match(tt.colon);
-  }
-
-  tsTryParseIndexSignature(): boolean {
-    if (
-      !(
-        this.match(tt.bracketL) && this.tsLookAhead(this.tsIsUnambiguouslyIndexSignature.bind(this))
-      )
-    ) {
-      return false;
-    }
-
-    this.expect(tt.bracketL);
-    this.parseIdentifier();
-    this.parseTypeAnnotation();
-    this.expect(tt.bracketR);
-
-    this.tsTryParseTypeAnnotation();
-    this.tsParseTypeMemberSemicolon();
-    return true;
-  }
-
-  tsParsePropertyOrMethodSignature(readonly: boolean): void {
-    this.parsePropertyName(-1 /* Types don't need context IDs. */);
-    this.eat(tt.question);
-
-    if (!readonly && (this.match(tt.parenL) || this.match(tt.lessThan))) {
-      this.tsFillSignature(tt.colon);
-      this.tsParseTypeMemberSemicolon();
-    } else {
-      this.tsTryParseTypeAnnotation();
-      this.tsParseTypeMemberSemicolon();
-    }
-  }
-
-  tsParseTypeMember(): void {
-    if (this.match(tt.parenL) || this.match(tt.lessThan)) {
-      this.tsParseSignatureMember("TSCallSignatureDeclaration");
-      return;
-    }
-    if (this.match(tt._new) && this.tsLookAhead(this.tsIsStartOfConstructSignature.bind(this))) {
-      this.tsParseSignatureMember("TSConstructSignatureDeclaration");
-      return;
-    }
-    const readonly = !!this.tsParseModifier([ContextualKeyword._readonly]);
-
-    const found = this.tsTryParseIndexSignature();
-    if (found) {
-      return;
-    }
-    this.tsParsePropertyOrMethodSignature(readonly);
-  }
-
-  tsIsStartOfConstructSignature(): boolean {
-    this.next();
-    return this.match(tt.parenL) || this.match(tt.lessThan);
-  }
-
-  tsParseTypeLiteral(): void {
-    this.tsParseObjectTypeMembers();
-  }
-
-  tsParseObjectTypeMembers(): void {
-    this.expect(tt.braceL);
-    this.tsParseList("TypeMembers", this.tsParseTypeMember.bind(this));
-    this.expect(tt.braceR);
-  }
-
-  tsIsStartOfMappedType(): boolean {
-    this.next();
-    if (this.isContextual(ContextualKeyword._readonly)) {
-      this.next();
-    }
-    if (!this.match(tt.bracketL)) {
-      return false;
-    }
-    this.next();
-    if (!this.tsIsIdentifier()) {
-      return false;
-    }
-    this.next();
-    return this.match(tt._in);
-  }
-
-  tsParseMappedTypeParameter(): void {
-    this.parseIdentifier();
-    this.expect(tt._in);
-    this.tsParseType();
-  }
-
-  tsParseMappedType(): void {
-    this.expect(tt.braceL);
-    this.eatContextual(ContextualKeyword._readonly);
-    this.expect(tt.bracketL);
-    this.tsParseMappedTypeParameter();
-    this.expect(tt.bracketR);
-    this.eat(tt.question);
-    this.tsTryParseType();
-    this.semicolon();
-    this.expect(tt.braceR);
-  }
-
-  tsParseTupleType(): void {
-    this.tsParseBracketedList(
-      "TupleElementTypes",
-      this.tsParseType.bind(this),
-      /* bracket */ true,
-      /* skipFirstToken */ false,
-    );
-  }
-
-  tsParseParenthesizedType(): void {
-    this.expect(tt.parenL);
-    this.tsParseType();
-    this.expect(tt.parenR);
-  }
-
-  tsParseFunctionOrConstructorType(type: "TSFunctionType" | "TSConstructorType"): void {
-    if (type === "TSConstructorType") {
-      this.expect(tt._new);
-    }
-    this.tsFillSignature(tt.arrow);
-  }
-
-  tsParseNonArrayType(): void {
-    switch (this.state.type) {
-      case tt.name:
-        this.tsParseTypeReference();
-        return;
-      case tt._void:
-      case tt._null:
-        this.next();
-        return;
-      case tt.string:
-      case tt.num:
-      case tt._true:
-      case tt._false:
-        this.parseLiteral();
-        return;
-      case tt.minus:
-        this.next();
-        this.parseLiteral();
-        return;
-      case tt._this: {
-        this.tsParseThisTypeNode();
-        if (this.isContextual(ContextualKeyword._is) && !this.hasPrecedingLineBreak()) {
-          this.tsParseThisTypePredicate();
-        }
-        return;
-      }
-      case tt._typeof:
-        this.tsParseTypeQuery();
-        return;
-      case tt.braceL:
-        if (this.tsLookAhead(this.tsIsStartOfMappedType.bind(this))) {
-          this.tsParseMappedType();
-        } else {
-          this.tsParseTypeLiteral();
-        }
-        return;
-      case tt.bracketL:
-        this.tsParseTupleType();
-        return;
-      case tt.parenL:
-        this.tsParseParenthesizedType();
-        return;
-      default:
-        break;
-    }
-
-    throw this.unexpected();
-  }
-
-  tsParseArrayTypeOrHigher(): void {
-    this.tsParseNonArrayType();
-    while (!this.hasPrecedingLineBreak() && this.eat(tt.bracketL)) {
-      if (!this.eat(tt.bracketR)) {
-        // If we hit ] immediately, this is an array type, otherwise it's an indexed access type.
-        this.tsParseType();
-        this.expect(tt.bracketR);
-      }
-    }
-  }
-
-  tsParseTypeOperatorOrHigher(): void {
-    if (this.eatContextual(ContextualKeyword._keyof)) {
-      this.tsParseTypeOperatorOrHigher();
-    } else {
-      this.tsParseArrayTypeOrHigher();
-    }
-  }
-
-  tsParseUnionOrIntersectionType(
-    kind: "TSUnionType" | "TSIntersectionType",
-    parseConstituentType: () => void,
-    operator: TokenType,
-  ): void {
-    this.eat(operator);
-    parseConstituentType();
-    if (this.match(operator)) {
-      while (this.eat(operator)) {
-        parseConstituentType();
-      }
-    }
-  }
-
-  tsParseIntersectionTypeOrHigher(): void {
-    this.tsParseUnionOrIntersectionType(
-      "TSIntersectionType",
-      this.tsParseTypeOperatorOrHigher.bind(this),
-      tt.bitwiseAND,
-    );
-  }
-
-  tsParseUnionTypeOrHigher(): void {
-    this.tsParseUnionOrIntersectionType(
-      "TSUnionType",
-      this.tsParseIntersectionTypeOrHigher.bind(this),
-      tt.bitwiseOR,
-    );
-  }
-
-  tsIsStartOfFunctionType(): boolean {
-    if (this.match(tt.lessThan)) {
-      return true;
-    }
-    return (
-      this.match(tt.parenL) &&
-      this.tsLookAhead(this.tsIsUnambiguouslyStartOfFunctionType.bind(this))
-    );
-  }
-
-  tsSkipParameterStart(): boolean {
-    if (this.match(tt.name) || this.match(tt._this)) {
-      this.next();
-      return true;
-    }
-    return false;
-  }
-
-  tsIsUnambiguouslyStartOfFunctionType(): boolean {
-    this.next();
-    if (this.match(tt.parenR) || this.match(tt.ellipsis)) {
-      // ( )
-      // ( ...
-      return true;
-    }
-    if (this.tsSkipParameterStart()) {
-      if (
-        this.match(tt.colon) ||
-        this.match(tt.comma) ||
-        this.match(tt.question) ||
-        this.match(tt.eq)
-      ) {
-        // ( xxx :
-        // ( xxx ,
-        // ( xxx ?
-        // ( xxx =
-        return true;
-      }
-      if (this.match(tt.parenR)) {
-        this.next();
-        if (this.match(tt.arrow)) {
-          // ( xxx ) =>
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  tsParseTypeOrTypePredicateAnnotation(returnToken: TokenType): void {
-    this.runInTypeContext(0, () => {
-      this.expect(returnToken);
-      this.tsTryParse(() => this.tsParseTypePredicatePrefix());
-      // Regardless of whether we found an "is" token, there's now just a regular type in front of
-      // us.
-      this.tsParseType();
-    });
-  }
-
-  tsTryParseTypeOrTypePredicateAnnotation(): void {
-    if (this.match(tt.colon)) {
-      this.tsParseTypeOrTypePredicateAnnotation(tt.colon);
-    }
-  }
-
-  tsTryParseTypeAnnotation(): void {
-    if (this.match(tt.colon)) {
-      this.parseTypeAnnotation();
-    }
-  }
-
-  tsTryParseType(): void {
-    if (this.eat(tt.colon)) {
-      this.tsParseType();
-    }
-  }
-
-  tsParseTypePredicatePrefix(): boolean {
-    this.parseIdentifier();
-    if (this.isContextual(ContextualKeyword._is) && !this.hasPrecedingLineBreak()) {
-      this.next();
-      return true;
-    }
-    return false;
-  }
-
-  parseTypeAnnotation(): void {
-    this.runInTypeContext(0, () => {
-      this.expect(tt.colon);
-      this.tsParseType();
-    });
-  }
-
-  tsParseType(): void {
-    if (this.tsIsStartOfFunctionType()) {
-      this.tsParseFunctionOrConstructorType("TSFunctionType");
-      return;
-    }
-    if (this.match(tt._new)) {
-      // As in `new () => Date`
-      this.tsParseFunctionOrConstructorType("TSConstructorType");
-      return;
-    }
-    this.tsParseUnionTypeOrHigher();
-  }
-
-  tsParseTypeAssertion(): void {
-    this.runInTypeContext(1, () => {
-      this.tsParseType();
-      this.expect(tt.greaterThan);
-    });
-    this.parseMaybeUnary();
-  }
-
-  // Returns true if parsing was successful.
-  tsTryParseTypeArgumentsInExpression(): boolean {
-    return this.tsTryParseAndCatch(() => {
-      this.runInTypeContext(0, () => {
-        this.expect(tt.lessThan);
-        this.state.tokens[this.state.tokens.length - 1].type = tt.typeParameterStart;
-        this.tsParseDelimitedList("TypeParametersOrArguments", this.tsParseType.bind(this));
-        this.expect(tt.greaterThan);
-      });
-      this.expect(tt.parenL);
-    });
-  }
-
-  tsParseHeritageClause(): void {
-    this.tsParseDelimitedList(
-      "HeritageClauseElement",
-      this.tsParseExpressionWithTypeArguments.bind(this),
-    );
-  }
-
-  tsParseExpressionWithTypeArguments(): void {
-    // Note: TS uses parseLeftHandSideExpressionOrHigher,
-    // then has grammar errors later if it's not an EntityName.
-    this.tsParseEntityName();
-    if (this.match(tt.lessThan)) {
-      this.tsParseTypeArguments();
-    }
-  }
-
-  tsParseInterfaceDeclaration(): void {
-    this.parseIdentifier();
-    this.tsTryParseTypeParameters();
-    if (this.eat(tt._extends)) {
-      this.tsParseHeritageClause();
-    }
-    this.tsParseObjectTypeMembers();
-  }
-
-  tsParseTypeAliasDeclaration(): void {
-    this.parseIdentifier();
-    this.tsTryParseTypeParameters();
-    this.expect(tt.eq);
-    this.tsParseType();
-    this.semicolon();
-  }
-
-  tsParseEnumMember(): void {
-    // Computed property names are grammar errors in an enum, so accept just string literal or identifier.
-    if (this.match(tt.string)) {
-      this.parseLiteral();
-    } else {
-      this.parseIdentifier();
-    }
-    if (this.eat(tt.eq)) {
-      const eqIndex = this.state.tokens.length - 1;
-      this.parseMaybeAssign();
-      this.state.tokens[eqIndex].rhsEndIndex = this.state.tokens.length;
-    }
-  }
-
-  tsParseEnumDeclaration(): void {
-    this.parseIdentifier();
-    this.expect(tt.braceL);
-    this.tsParseDelimitedList("EnumMembers", this.tsParseEnumMember.bind(this));
-    this.expect(tt.braceR);
-  }
-
-  tsParseModuleBlock(): void {
-    this.expect(tt.braceL);
-    // Inside of a module block is considered "top-level", meaning it can have imports and exports.
-    this.parseBlockBody(/* topLevel */ true, /* end */ tt.braceR);
-  }
-
-  tsParseModuleOrNamespaceDeclaration(): void {
-    this.parseIdentifier();
-    if (this.eat(tt.dot)) {
-      this.tsParseModuleOrNamespaceDeclaration();
-    } else {
-      this.tsParseModuleBlock();
-    }
-  }
-
-  tsParseAmbientExternalModuleDeclaration(): void {
-    if (this.isContextual(ContextualKeyword._global)) {
-      this.parseIdentifier();
-    } else if (this.match(tt.string)) {
-      this.parseExprAtom();
-    } else {
-      this.unexpected();
-    }
-
-    if (this.match(tt.braceL)) {
-      this.tsParseModuleBlock();
-    } else {
-      this.semicolon();
-    }
-  }
-
-  tsParseImportEqualsDeclaration(): void {
-    this.parseIdentifier();
-    this.expect(tt.eq);
-    this.tsParseModuleReference();
-    this.semicolon();
-  }
-
-  tsIsExternalModuleReference(): boolean {
-    return this.isContextual(ContextualKeyword._require) && this.lookaheadType() === tt.parenL;
-  }
-
-  tsParseModuleReference(): void {
-    if (this.tsIsExternalModuleReference()) {
-      this.tsParseExternalModuleReference();
-    } else {
-      this.tsParseEntityName();
-    }
-  }
-
-  tsParseExternalModuleReference(): void {
-    this.expectContextual(ContextualKeyword._require);
-    this.expect(tt.parenL);
-    if (!this.match(tt.string)) {
-      throw this.unexpected();
-    }
-    this.parseLiteral();
-    this.expect(tt.parenR);
-  }
-
-  // Utilities
-
-  tsLookAhead<T>(f: () => T): T {
-    const snapshot = this.state.snapshot();
-    const res = f();
-    this.state.restoreFromSnapshot(snapshot);
-    return res;
-  }
-
-  // Returns true if parsing was successful.
-  tsTryParseAndCatch<T>(f: () => void): boolean {
-    const snapshot = this.state.snapshot();
-    try {
-      f();
-      return true;
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        this.state.restoreFromSnapshot(snapshot);
-        return false;
-      }
-      throw e;
-    }
-  }
-
-  // The function should return true if the parse was successful. If not, we revert the state to
-  // before we started parsing.
-  tsTryParse<T>(f: () => boolean): boolean {
-    const snapshot = this.state.snapshot();
-    const wasSuccessful = f();
-    if (wasSuccessful) {
-      return true;
-    } else {
-      this.state.restoreFromSnapshot(snapshot);
-      return false;
-    }
-  }
-
-  // Returns true if a statement matched.
-  tsTryParseDeclare(): boolean {
-    switch (this.state.type) {
-      case tt._function:
-        this.runInTypeContext(1, () => {
-          this.next();
-          // We don't need to precisely get the function start here, since it's only used to mark
-          // the function as a type if it's bodiless, and it's already a type here.
-          const functionStart = this.state.start;
-          this.parseFunction(functionStart, /* isStatement */ true);
-        });
-        return true;
-      case tt._class:
-        this.runInTypeContext(1, () => {
-          this.parseClass(/* isStatement */ true, /* optionalId */ false);
-        });
-        return true;
-      case tt._const:
-        if (this.match(tt._const) && this.isLookaheadContextual(ContextualKeyword._enum)) {
-          this.runInTypeContext(1, () => {
-            // `const enum = 0;` not allowed because "enum" is a strict mode reserved word.
-            this.expect(tt._const);
-            this.expectContextual(ContextualKeyword._enum);
-            this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
-            this.tsParseEnumDeclaration();
-          });
-          return true;
-        }
-      // falls through
-      case tt._var:
-      case tt._let:
-        this.runInTypeContext(1, () => {
-          this.parseVarStatement(this.state.type);
-        });
-        return true;
-      case tt.name: {
-        return this.runInTypeContext(1, () => {
-          const contextualKeyword = this.state.contextualKeyword;
-          if (contextualKeyword === ContextualKeyword._global) {
-            this.tsParseAmbientExternalModuleDeclaration();
-            return true;
-          } else {
-            return this.tsParseDeclaration(contextualKeyword, /* next */ true);
-          }
-        });
-      }
-      default:
-        return false;
-    }
-  }
-
-  // Note: this won't be called unless the keyword is allowed in `shouldParseExportDeclaration`.
-  // Returns true if it matched a declaration.
-  tsTryParseExportDeclaration(): boolean {
-    return this.tsParseDeclaration(this.state.contextualKeyword, /* next */ true);
-  }
-
-  // Returns true if it matched a statement.
-  tsParseExpressionStatement(contextualKeyword: ContextualKeyword): boolean {
-    switch (contextualKeyword) {
-      case ContextualKeyword._declare: {
-        const declareTokenIndex = this.state.tokens.length - 1;
-        const matched = this.tsTryParseDeclare();
-        if (matched) {
-          this.state.tokens[declareTokenIndex].type = tt._declare;
-          return true;
-        }
-        break;
-      }
-      case ContextualKeyword._global:
-        // `global { }` (with no `declare`) may appear inside an ambient module declaration.
-        // Would like to use tsParseAmbientExternalModuleDeclaration here, but already ran past "global".
-        if (this.match(tt.braceL)) {
-          this.tsParseModuleBlock();
-          return true;
-        }
-        break;
-
-      default:
-        return this.tsParseDeclaration(contextualKeyword, /* next */ false);
-    }
-    return false;
-  }
-
-  // Common to tsTryParseDeclare, tsTryParseExportDeclaration, and tsParseExpressionStatement.
-  // Returns true if it matched a declaration.
-  tsParseDeclaration(contextualKeyword: ContextualKeyword, next: boolean): boolean {
-    switch (contextualKeyword) {
-      case ContextualKeyword._abstract:
-        if (next || this.match(tt._class)) {
-          if (next) this.next();
-          this.state.tokens[this.state.tokens.length - 1].type = tt._abstract;
-          this.parseClass(/* isStatement */ true, /* optionalId */ false);
-          return true;
-        }
-        break;
-
-      case ContextualKeyword._enum:
-        if (next || this.match(tt.name)) {
-          if (next) this.next();
-          this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
-          this.tsParseEnumDeclaration();
-          return true;
-        }
-        break;
-
-      case ContextualKeyword._interface:
-        if (next || this.match(tt.name)) {
-          // `next` is true in "export" and "declare" contexts, so we want to remove that token
-          // as well.
-          this.runInTypeContext(1, () => {
-            if (next) this.next();
-            this.tsParseInterfaceDeclaration();
-          });
-          return true;
-        }
-        break;
-
-      case ContextualKeyword._module:
-        if (next) this.next();
-        if (this.match(tt.string)) {
-          this.runInTypeContext(next ? 2 : 1, () => {
-            this.tsParseAmbientExternalModuleDeclaration();
-          });
-          return true;
-        } else if (next || this.match(tt.name)) {
-          this.runInTypeContext(next ? 2 : 1, () => {
-            this.tsParseModuleOrNamespaceDeclaration();
-          });
-          return true;
-        }
-        break;
-
-      case ContextualKeyword._namespace:
-        if (next || this.match(tt.name)) {
-          this.runInTypeContext(1, () => {
-            if (next) this.next();
-            this.tsParseModuleOrNamespaceDeclaration();
-          });
-          return true;
-        }
-        break;
-
-      case ContextualKeyword._type:
-        if (next || this.match(tt.name)) {
-          this.runInTypeContext(1, () => {
-            if (next) this.next();
-            this.tsParseTypeAliasDeclaration();
-          });
-          return true;
-        }
-        break;
-
-      default:
-        break;
-    }
-    return false;
-  }
-
-  // Returns true if there was a generic async arrow function.
-  tsTryParseGenericAsyncArrowFunction(): boolean {
-    const matched = this.tsTryParseAndCatch(() => {
-      this.tsParseTypeParameters();
-      // Don't use overloaded parseFunctionParams which would look for "<" again.
-      super.parseFunctionParams();
-      this.tsTryParseTypeOrTypePredicateAnnotation();
-      this.expect(tt.arrow);
-    });
-
-    if (!matched) {
-      return false;
-    }
-
-    // We don't need to be precise about the function start since it's only used if this is a
-    // bodiless function, which isn't valid here.
-    const functionStart = this.state.start;
-    this.parseFunctionBody(functionStart, false /* isGenerator */, true);
-    return true;
-  }
-
-  tsParseTypeArguments(): void {
-    this.runInTypeContext(0, () => {
-      this.expect(tt.lessThan);
-      this.tsParseDelimitedList("TypeParametersOrArguments", this.tsParseType.bind(this));
-      this.expect(tt.greaterThan);
-    });
-  }
-
-  tsIsDeclarationStart(): boolean {
-    if (this.match(tt.name)) {
-      switch (this.state.contextualKeyword) {
-        case ContextualKeyword._abstract:
-        case ContextualKeyword._declare:
-        case ContextualKeyword._enum:
-        case ContextualKeyword._interface:
-        case ContextualKeyword._module:
-        case ContextualKeyword._namespace:
-        case ContextualKeyword._type:
-          return true;
-        default:
-          break;
-      }
-    }
-
-    return false;
-  }
-
-  // ======================================================
-  // OVERRIDES
-  // ======================================================
-
-  isExportDefaultSpecifier(): boolean {
-    if (this.tsIsDeclarationStart()) return false;
-    return super.isExportDefaultSpecifier();
-  }
-
-  parseAssignableListItem(allowModifiers: boolean | null, isBlockScope: boolean): void {
-    if (allowModifiers) {
-      this.parseAccessModifier();
-      this.tsParseModifier([ContextualKeyword._readonly]);
-    }
-
-    this.parseMaybeDefault(isBlockScope);
-    this.parseAssignableListItemTypes();
-    this.parseMaybeDefault(isBlockScope, true);
-  }
-
-  parseFunctionBodyAndFinish(
-    functionStart: number,
-    isGenerator: boolean,
-    allowExpressionBody?: boolean,
-    funcContextId?: number,
-  ): void {
-    // For arrow functions, `parseArrow` handles the return type itself.
-    if (!allowExpressionBody && this.match(tt.colon)) {
-      this.tsParseTypeOrTypePredicateAnnotation(tt.colon);
-    }
-
-    // The original code checked the node type to make sure this function type allows a missing
-    // body, but we skip that to avoid sending around the node type. We instead just use the
-    // allowExpressionBody boolean to make sure it's not an arrow function.
-    if (!allowExpressionBody && !this.match(tt.braceL) && this.isLineTerminator()) {
-      // Retroactively mark the function declaration as a type.
-      let i = this.state.tokens.length - 1;
-      while (
-        i >= 0 &&
-        (this.state.tokens[i].start >= functionStart ||
-          this.state.tokens[i].type === tt._default ||
-          this.state.tokens[i].type === tt._export)
-      ) {
-        this.state.tokens[i].isType = true;
-        i--;
-      }
-      return;
-    }
-
-    super.parseFunctionBodyAndFinish(
-      functionStart,
-      isGenerator,
-      allowExpressionBody,
-      funcContextId,
-    );
-  }
-
-  parseSubscript(startPos: number, noCalls: boolean | null, state: {stop: boolean}): void {
-    if (!this.hasPrecedingLineBreak() && this.eat(tt.bang)) {
-      this.state.tokens[this.state.tokens.length - 1].type = tt.nonNullAssertion;
-      return;
-    }
-
-    if (!noCalls && this.match(tt.lessThan)) {
-      if (this.atPossibleAsync()) {
-        // Almost certainly this is a generic async function `async <T>() => ...
-        // But it might be a call with a type argument `async<T>();`
-        const asyncArrowFn = this.tsTryParseGenericAsyncArrowFunction();
-        if (asyncArrowFn) {
-          return;
-        }
-      }
-
-      // May be passing type arguments. But may just be the `<` operator.
-      const typeArguments = this.tsTryParseTypeArgumentsInExpression(); // Also eats the "("
-      if (typeArguments) {
-        // possibleAsync always false here, because we would have handled it above.
-        this.parseCallExpressionArguments(tt.parenR);
-      }
-    }
-    super.parseSubscript(startPos, noCalls, state);
-  }
-
-  parseNewArguments(): void {
-    if (this.match(tt.lessThan)) {
-      // tsTryParseAndCatch is expensive, so avoid if not necessary.
-      // 99% certain this is `new C<T>();`. But may be `new C < T;`, which is also legal.
-      this.tsTryParseAndCatch(() => {
-        this.state.type = tt.typeParameterStart;
-        this.tsParseTypeArguments();
-        if (!this.match(tt.parenL)) {
-          this.unexpected();
-        }
-      });
-    }
-
-    super.parseNewArguments();
-  }
-
-  parseExprOp(minPrec: number, noIn: boolean | null): void {
-    if (
-      (tt._in & TokenType.PRECEDENCE_MASK) > minPrec &&
-      !this.hasPrecedingLineBreak() &&
-      this.eatContextual(ContextualKeyword._as)
-    ) {
-      this.state.tokens[this.state.tokens.length - 1].type = tt._as;
-      this.runInTypeContext(1, () => {
-        this.tsParseType();
-      });
-      this.parseExprOp(minPrec, noIn);
-      return;
-    }
-
-    super.parseExprOp(minPrec, noIn);
-  }
-
-  /*
-  Don't bother doing this check in TypeScript code because:
-  1. We may have a nested export statement with the same name:
-    export const x = 0;
-    export namespace N {
-      export const x = 1;
-    }
-  2. We have a type checker to warn us about this sort of thing.
-  */
-  checkDuplicateExports(): void {}
-
-  parseImport(): void {
-    if (this.match(tt.name) && this.lookaheadType() === tt.eq) {
-      this.tsParseImportEqualsDeclaration();
-      return;
-    }
-    super.parseImport();
-  }
-
-  parseExport(): void {
-    if (this.match(tt._import)) {
-      // `export import A = B;`
-      this.expect(tt._import);
-      this.tsParseImportEqualsDeclaration();
-    } else if (this.eat(tt.eq)) {
-      // `export = x;`
-      this.parseExpression();
-      this.semicolon();
-    } else if (this.eatContextual(ContextualKeyword._as)) {
-      // `export as namespace A;`
-      // See `parseNamespaceExportDeclaration` in TypeScript's own parser
-      this.expectContextual(ContextualKeyword._namespace);
-      this.parseIdentifier();
-      this.semicolon();
-    } else {
-      super.parseExport();
-    }
-  }
-
-  parseExportDefaultExpression(): void {
-    if (this.isContextual(ContextualKeyword._abstract) && this.lookaheadType() === tt._class) {
-      this.state.type = tt._abstract;
-      this.next(); // Skip "abstract"
-      this.parseClass(true, true);
-      return;
-    }
-    super.parseExportDefaultExpression();
-  }
-
-  parseStatementContent(declaration: boolean, topLevel: boolean = false): void {
-    if (this.state.type === tt._const) {
-      const ahead = this.lookaheadTypeAndKeyword();
-      if (ahead.type === tt.name && ahead.contextualKeyword === ContextualKeyword._enum) {
-        this.expect(tt._const);
-        this.expectContextual(ContextualKeyword._enum);
-        this.state.tokens[this.state.tokens.length - 1].type = tt._enum;
-        this.tsParseEnumDeclaration();
-        return;
-      }
-    }
-    super.parseStatementContent(declaration, topLevel);
-  }
-
-  parseAccessModifier(): void {
-    this.tsParseModifier([
-      ContextualKeyword._public,
-      ContextualKeyword._protected,
-      ContextualKeyword._private,
-    ]);
-  }
-
-  parseClassMember(memberStart: number, classContextId: number): void {
-    this.parseAccessModifier();
-    super.parseClassMember(memberStart, classContextId);
-  }
-
-  parseClassMemberWithIsStatic(
-    memberStart: number,
-    isStatic: boolean,
-    classContextId: number,
-  ): void {
-    let isAbstract = false;
-    let isReadonly = false;
-
-    const mod = this.tsParseModifier([ContextualKeyword._abstract, ContextualKeyword._readonly]);
-    switch (mod) {
+  const modifier = state.contextualKeyword;
+  if (
+    allowedModifiers.indexOf(modifier as T) !== -1 &&
+    tsTryParse(() => tsNextTokenCanFollowModifier())
+  ) {
+    switch (modifier) {
       case ContextualKeyword._readonly:
-        isReadonly = true;
-        isAbstract = !!this.tsParseModifier([ContextualKeyword._abstract]);
+        state.tokens[state.tokens.length - 1].type = tt._readonly;
         break;
       case ContextualKeyword._abstract:
-        isAbstract = true;
-        isReadonly = !!this.tsParseModifier([ContextualKeyword._readonly]);
+        state.tokens[state.tokens.length - 1].type = tt._abstract;
+        break;
+      case ContextualKeyword._static:
+        state.tokens[state.tokens.length - 1].type = tt._static;
+        break;
+      case ContextualKeyword._public:
+        state.tokens[state.tokens.length - 1].type = tt._public;
+        break;
+      case ContextualKeyword._private:
+        state.tokens[state.tokens.length - 1].type = tt._private;
+        break;
+      case ContextualKeyword._protected:
+        state.tokens[state.tokens.length - 1].type = tt._protected;
         break;
       default:
         break;
     }
+    return modifier as T;
+  }
+  return null;
+}
 
-    // We no longer check for public/private/etc, but tsTryParseIndexSignature should just return
-    // false in that case for valid code.
-    if (!isAbstract && !isStatic) {
-      const found = this.tsTryParseIndexSignature();
-      if (found) {
+function tsIsListTerminator(kind: ParsingContext): boolean {
+  switch (kind) {
+    case "EnumMembers":
+    case "TypeMembers":
+      return match(tt.braceR);
+    case "HeritageClauseElement":
+      return match(tt.braceL);
+    case "TupleElementTypes":
+      return match(tt.bracketR);
+    case "TypeParametersOrArguments":
+      return match(tt.greaterThan);
+    default:
+      break;
+  }
+
+  throw new Error("Unreachable");
+}
+
+function tsParseList(kind: ParsingContext, parseElement: () => void): void {
+  while (!tsIsListTerminator(kind)) {
+    // Skipping "parseListElement" from the TS source since that's just for error handling.
+    parseElement();
+  }
+}
+
+function tsParseDelimitedList(kind: ParsingContext, parseElement: () => void): void {
+  tsParseDelimitedListWorker(kind, parseElement);
+}
+
+/**
+ * If !expectSuccess, returns undefined instead of failing to parse.
+ * If expectSuccess, parseElement should always return a defined value.
+ */
+function tsParseDelimitedListWorker(kind: ParsingContext, parseElement: () => void): void {
+  while (true) {
+    if (tsIsListTerminator(kind)) {
+      break;
+    }
+
+    parseElement();
+    if (eat(tt.comma)) {
+      continue;
+    }
+
+    if (tsIsListTerminator(kind)) {
+      break;
+    }
+  }
+}
+
+function tsParseBracketedList(
+  kind: ParsingContext,
+  parseElement: () => void,
+  bracket: boolean,
+  skipFirstToken: boolean,
+): void {
+  if (!skipFirstToken) {
+    if (bracket) {
+      expect(tt.bracketL);
+    } else {
+      expect(tt.lessThan);
+    }
+  }
+  tsParseDelimitedList(kind, parseElement);
+  if (bracket) {
+    expect(tt.bracketR);
+  } else {
+    expect(tt.greaterThan);
+  }
+}
+
+function tsParseEntityName(): void {
+  parseIdentifier();
+  while (eat(tt.dot)) {
+    parseIdentifier();
+  }
+}
+
+function tsParseTypeReference(): void {
+  tsParseEntityName();
+  if (!hasPrecedingLineBreak() && match(tt.lessThan)) {
+    tsParseTypeArguments();
+  }
+}
+
+function tsParseThisTypePredicate(): void {
+  next();
+  tsParseTypeAnnotation();
+}
+
+function tsParseThisTypeNode(): void {
+  next();
+}
+
+function tsParseTypeQuery(): void {
+  expect(tt._typeof);
+  tsParseEntityName();
+}
+
+function tsParseTypeParameter(): void {
+  parseIdentifier();
+  if (eat(tt._extends)) {
+    tsParseType();
+  }
+  if (eat(tt.eq)) {
+    tsParseType();
+  }
+}
+
+export function tsTryParseTypeParameters(): void {
+  if (match(tt.lessThan)) {
+    tsParseTypeParameters();
+  }
+}
+
+function tsParseTypeParameters(): void {
+  runInTypeContext(0, () => {
+    if (match(tt.lessThan) || match(tt.typeParameterStart)) {
+      next();
+    } else {
+      unexpected();
+    }
+
+    tsParseBracketedList(
+      "TypeParametersOrArguments",
+      tsParseTypeParameter,
+      /* bracket */ false,
+      /* skipFirstToken */ true,
+    );
+  });
+}
+
+// Note: In TypeScript implementation we must provide `yieldContext` and `awaitContext`,
+// but here it's always false, because this is only used for types.
+function tsFillSignature(returnToken: TokenType): void {
+  // Arrow fns *must* have return token (`=>`). Normal functions can omit it.
+  const returnTokenRequired = returnToken === tt.arrow;
+  tsTryParseTypeParameters();
+  expect(tt.parenL);
+  tsParseBindingListForSignature(false /* isBlockScope */);
+  if (returnTokenRequired) {
+    tsParseTypeOrTypePredicateAnnotation(returnToken);
+  } else if (match(returnToken)) {
+    tsParseTypeOrTypePredicateAnnotation(returnToken);
+  }
+}
+
+function tsParseBindingListForSignature(isBlockScope: boolean): void {
+  parseBindingList(tt.parenR, isBlockScope);
+}
+
+function tsParseTypeMemberSemicolon(): void {
+  if (!eat(tt.comma)) {
+    semicolon();
+  }
+}
+
+function tsParseSignatureMember(
+  kind: "TSCallSignatureDeclaration" | "TSConstructSignatureDeclaration",
+): void {
+  if (kind === "TSConstructSignatureDeclaration") {
+    expect(tt._new);
+  }
+  tsFillSignature(tt.colon);
+  tsParseTypeMemberSemicolon();
+}
+
+function tsIsUnambiguouslyIndexSignature(): boolean {
+  next(); // Skip '{'
+  return eat(tt.name) && match(tt.colon);
+}
+
+function tsTryParseIndexSignature(): boolean {
+  if (!(match(tt.bracketL) && tsLookAhead(tsIsUnambiguouslyIndexSignature))) {
+    return false;
+  }
+
+  expect(tt.bracketL);
+  parseIdentifier();
+  tsParseTypeAnnotation();
+  expect(tt.bracketR);
+
+  tsTryParseTypeAnnotation();
+  tsParseTypeMemberSemicolon();
+  return true;
+}
+
+function tsParsePropertyOrMethodSignature(readonly: boolean): void {
+  parsePropertyName(-1 /* Types don't need context IDs. */);
+  eat(tt.question);
+
+  if (!readonly && (match(tt.parenL) || match(tt.lessThan))) {
+    tsFillSignature(tt.colon);
+    tsParseTypeMemberSemicolon();
+  } else {
+    tsTryParseTypeAnnotation();
+    tsParseTypeMemberSemicolon();
+  }
+}
+
+function tsParseTypeMember(): void {
+  if (match(tt.parenL) || match(tt.lessThan)) {
+    tsParseSignatureMember("TSCallSignatureDeclaration");
+    return;
+  }
+  if (match(tt._new) && tsLookAhead(tsIsStartOfConstructSignature)) {
+    tsParseSignatureMember("TSConstructSignatureDeclaration");
+    return;
+  }
+  const readonly = !!tsParseModifier([ContextualKeyword._readonly]);
+
+  const found = tsTryParseIndexSignature();
+  if (found) {
+    return;
+  }
+  tsParsePropertyOrMethodSignature(readonly);
+}
+
+function tsIsStartOfConstructSignature(): boolean {
+  next();
+  return match(tt.parenL) || match(tt.lessThan);
+}
+
+function tsParseTypeLiteral(): void {
+  tsParseObjectTypeMembers();
+}
+
+function tsParseObjectTypeMembers(): void {
+  expect(tt.braceL);
+  tsParseList("TypeMembers", tsParseTypeMember);
+  expect(tt.braceR);
+}
+
+function tsIsStartOfMappedType(): boolean {
+  next();
+  if (isContextual(ContextualKeyword._readonly)) {
+    next();
+  }
+  if (!match(tt.bracketL)) {
+    return false;
+  }
+  next();
+  if (!tsIsIdentifier()) {
+    return false;
+  }
+  next();
+  return match(tt._in);
+}
+
+function tsParseMappedTypeParameter(): void {
+  parseIdentifier();
+  expect(tt._in);
+  tsParseType();
+}
+
+function tsParseMappedType(): void {
+  expect(tt.braceL);
+  eatContextual(ContextualKeyword._readonly);
+  expect(tt.bracketL);
+  tsParseMappedTypeParameter();
+  expect(tt.bracketR);
+  eat(tt.question);
+  tsTryParseType();
+  semicolon();
+  expect(tt.braceR);
+}
+
+function tsParseTupleType(): void {
+  tsParseBracketedList(
+    "TupleElementTypes",
+    tsParseType,
+    /* bracket */ true,
+    /* skipFirstToken */ false,
+  );
+}
+
+function tsParseParenthesizedType(): void {
+  expect(tt.parenL);
+  tsParseType();
+  expect(tt.parenR);
+}
+
+function tsParseFunctionOrConstructorType(type: "TSFunctionType" | "TSConstructorType"): void {
+  if (type === "TSConstructorType") {
+    expect(tt._new);
+  }
+  tsFillSignature(tt.arrow);
+}
+
+function tsParseNonArrayType(): void {
+  switch (state.type) {
+    case tt.name:
+      tsParseTypeReference();
+      return;
+    case tt._void:
+    case tt._null:
+      next();
+      return;
+    case tt.string:
+    case tt.num:
+    case tt._true:
+    case tt._false:
+      parseLiteral();
+      return;
+    case tt.minus:
+      next();
+      parseLiteral();
+      return;
+    case tt._this: {
+      tsParseThisTypeNode();
+      if (isContextual(ContextualKeyword._is) && !hasPrecedingLineBreak()) {
+        tsParseThisTypePredicate();
+      }
+      return;
+    }
+    case tt._typeof:
+      tsParseTypeQuery();
+      return;
+    case tt.braceL:
+      if (tsLookAhead(tsIsStartOfMappedType)) {
+        tsParseMappedType();
+      } else {
+        tsParseTypeLiteral();
+      }
+      return;
+    case tt.bracketL:
+      tsParseTupleType();
+      return;
+    case tt.parenL:
+      tsParseParenthesizedType();
+      return;
+    default:
+      break;
+  }
+
+  throw unexpected();
+}
+
+function tsParseArrayTypeOrHigher(): void {
+  tsParseNonArrayType();
+  while (!hasPrecedingLineBreak() && eat(tt.bracketL)) {
+    if (!eat(tt.bracketR)) {
+      // If we hit ] immediately, this is an array type, otherwise it's an indexed access type.
+      tsParseType();
+      expect(tt.bracketR);
+    }
+  }
+}
+
+function tsParseTypeOperatorOrHigher(): void {
+  if (eatContextual(ContextualKeyword._keyof)) {
+    tsParseTypeOperatorOrHigher();
+  } else {
+    tsParseArrayTypeOrHigher();
+  }
+}
+
+function tsParseUnionOrIntersectionType(
+  kind: "TSUnionType" | "TSIntersectionType",
+  parseConstituentType: () => void,
+  operator: TokenType,
+): void {
+  eat(operator);
+  parseConstituentType();
+  if (match(operator)) {
+    while (eat(operator)) {
+      parseConstituentType();
+    }
+  }
+}
+
+function tsParseIntersectionTypeOrHigher(): void {
+  tsParseUnionOrIntersectionType("TSIntersectionType", tsParseTypeOperatorOrHigher, tt.bitwiseAND);
+}
+
+function tsParseUnionTypeOrHigher(): void {
+  tsParseUnionOrIntersectionType("TSUnionType", tsParseIntersectionTypeOrHigher, tt.bitwiseOR);
+}
+
+function tsIsStartOfFunctionType(): boolean {
+  if (match(tt.lessThan)) {
+    return true;
+  }
+  return match(tt.parenL) && tsLookAhead(tsIsUnambiguouslyStartOfFunctionType);
+}
+
+function tsSkipParameterStart(): boolean {
+  if (match(tt.name) || match(tt._this)) {
+    next();
+    return true;
+  }
+  return false;
+}
+
+function tsIsUnambiguouslyStartOfFunctionType(): boolean {
+  next();
+  if (match(tt.parenR) || match(tt.ellipsis)) {
+    // ( )
+    // ( ...
+    return true;
+  }
+  if (tsSkipParameterStart()) {
+    if (match(tt.colon) || match(tt.comma) || match(tt.question) || match(tt.eq)) {
+      // ( xxx :
+      // ( xxx ,
+      // ( xxx ?
+      // ( xxx =
+      return true;
+    }
+    if (match(tt.parenR)) {
+      next();
+      if (match(tt.arrow)) {
+        // ( xxx ) =>
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function tsParseTypeOrTypePredicateAnnotation(returnToken: TokenType): void {
+  runInTypeContext(0, () => {
+    expect(returnToken);
+    tsTryParse(() => tsParseTypePredicatePrefix());
+    // Regardless of whether we found an "is" token, there's now just a regular type in front of
+    // us.
+    tsParseType();
+  });
+}
+
+function tsTryParseTypeOrTypePredicateAnnotation(): void {
+  if (match(tt.colon)) {
+    tsParseTypeOrTypePredicateAnnotation(tt.colon);
+  }
+}
+
+export function tsTryParseTypeAnnotation(): void {
+  if (match(tt.colon)) {
+    tsParseTypeAnnotation();
+  }
+}
+
+function tsTryParseType(): void {
+  if (eat(tt.colon)) {
+    tsParseType();
+  }
+}
+
+function tsParseTypePredicatePrefix(): boolean {
+  parseIdentifier();
+  if (isContextual(ContextualKeyword._is) && !hasPrecedingLineBreak()) {
+    next();
+    return true;
+  }
+  return false;
+}
+
+export function tsParseTypeAnnotation(): void {
+  runInTypeContext(0, () => {
+    expect(tt.colon);
+    tsParseType();
+  });
+}
+
+export function tsParseType(): void {
+  if (tsIsStartOfFunctionType()) {
+    tsParseFunctionOrConstructorType("TSFunctionType");
+    return;
+  }
+  if (match(tt._new)) {
+    // As in `new () => Date`
+    tsParseFunctionOrConstructorType("TSConstructorType");
+    return;
+  }
+  tsParseUnionTypeOrHigher();
+}
+
+export function tsParseTypeAssertion(): void {
+  runInTypeContext(1, () => {
+    tsParseType();
+    expect(tt.greaterThan);
+  });
+  parseMaybeUnary();
+}
+
+// Returns true if parsing was successful.
+function tsTryParseTypeArgumentsInExpression(): boolean {
+  return tsTryParseAndCatch(() => {
+    runInTypeContext(0, () => {
+      expect(tt.lessThan);
+      state.tokens[state.tokens.length - 1].type = tt.typeParameterStart;
+      tsParseDelimitedList("TypeParametersOrArguments", tsParseType);
+      expect(tt.greaterThan);
+    });
+    expect(tt.parenL);
+  });
+}
+
+function tsParseHeritageClause(): void {
+  tsParseDelimitedList("HeritageClauseElement", tsParseExpressionWithTypeArguments);
+}
+
+function tsParseExpressionWithTypeArguments(): void {
+  // Note: TS uses parseLeftHandSideExpressionOrHigher,
+  // then has grammar errors later if it's not an EntityName.
+  tsParseEntityName();
+  if (match(tt.lessThan)) {
+    tsParseTypeArguments();
+  }
+}
+
+function tsParseInterfaceDeclaration(): void {
+  parseIdentifier();
+  tsTryParseTypeParameters();
+  if (eat(tt._extends)) {
+    tsParseHeritageClause();
+  }
+  tsParseObjectTypeMembers();
+}
+
+function tsParseTypeAliasDeclaration(): void {
+  parseIdentifier();
+  tsTryParseTypeParameters();
+  expect(tt.eq);
+  tsParseType();
+  semicolon();
+}
+
+function tsParseEnumMember(): void {
+  // Computed property names are grammar errors in an enum, so accept just string literal or identifier.
+  if (match(tt.string)) {
+    parseLiteral();
+  } else {
+    parseIdentifier();
+  }
+  if (eat(tt.eq)) {
+    const eqIndex = state.tokens.length - 1;
+    parseMaybeAssign();
+    state.tokens[eqIndex].rhsEndIndex = state.tokens.length;
+  }
+}
+
+function tsParseEnumDeclaration(): void {
+  parseIdentifier();
+  expect(tt.braceL);
+  tsParseDelimitedList("EnumMembers", tsParseEnumMember);
+  expect(tt.braceR);
+}
+
+function tsParseModuleBlock(): void {
+  expect(tt.braceL);
+  // Inside of a module block is considered "top-level", meaning it can have imports and exports.
+  parseBlockBody(/* topLevel */ true, /* end */ tt.braceR);
+}
+
+function tsParseModuleOrNamespaceDeclaration(): void {
+  parseIdentifier();
+  if (eat(tt.dot)) {
+    tsParseModuleOrNamespaceDeclaration();
+  } else {
+    tsParseModuleBlock();
+  }
+}
+
+function tsParseAmbientExternalModuleDeclaration(): void {
+  if (isContextual(ContextualKeyword._global)) {
+    parseIdentifier();
+  } else if (match(tt.string)) {
+    parseExprAtom();
+  } else {
+    unexpected();
+  }
+
+  if (match(tt.braceL)) {
+    tsParseModuleBlock();
+  } else {
+    semicolon();
+  }
+}
+
+export function tsParseImportEqualsDeclaration(): void {
+  parseIdentifier();
+  expect(tt.eq);
+  tsParseModuleReference();
+  semicolon();
+}
+
+function tsIsExternalModuleReference(): boolean {
+  return isContextual(ContextualKeyword._require) && lookaheadType() === tt.parenL;
+}
+
+function tsParseModuleReference(): void {
+  if (tsIsExternalModuleReference()) {
+    tsParseExternalModuleReference();
+  } else {
+    tsParseEntityName();
+  }
+}
+
+function tsParseExternalModuleReference(): void {
+  expectContextual(ContextualKeyword._require);
+  expect(tt.parenL);
+  if (!match(tt.string)) {
+    throw unexpected();
+  }
+  parseLiteral();
+  expect(tt.parenR);
+}
+
+// Utilities
+
+function tsLookAhead<T>(f: () => T): T {
+  const snapshot = state.snapshot();
+  const res = f();
+  state.restoreFromSnapshot(snapshot);
+  return res;
+}
+
+// Returns true if parsing was successful.
+function tsTryParseAndCatch<T>(f: () => void): boolean {
+  const snapshot = state.snapshot();
+  try {
+    f();
+    return true;
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      state.restoreFromSnapshot(snapshot);
+      return false;
+    }
+    throw e;
+  }
+}
+
+// The function should return true if the parse was successful. If not, we revert the state to
+// before we started parsing.
+function tsTryParse<T>(f: () => boolean): boolean {
+  const snapshot = state.snapshot();
+  const wasSuccessful = f();
+  if (wasSuccessful) {
+    return true;
+  } else {
+    state.restoreFromSnapshot(snapshot);
+    return false;
+  }
+}
+
+// Returns true if a statement matched.
+function tsTryParseDeclare(): boolean {
+  switch (state.type) {
+    case tt._function:
+      runInTypeContext(1, () => {
+        next();
+        // We don't need to precisely get the function start here, since it's only used to mark
+        // the function as a type if it's bodiless, and it's already a type here.
+        const functionStart = state.start;
+        parseFunction(functionStart, /* isStatement */ true);
+      });
+      return true;
+    case tt._class:
+      runInTypeContext(1, () => {
+        parseClass(/* isStatement */ true, /* optionalId */ false);
+      });
+      return true;
+    case tt._const:
+      if (match(tt._const) && isLookaheadContextual(ContextualKeyword._enum)) {
+        runInTypeContext(1, () => {
+          // `const enum = 0;` not allowed because "enum" is a strict mode reserved word.
+          expect(tt._const);
+          expectContextual(ContextualKeyword._enum);
+          state.tokens[state.tokens.length - 1].type = tt._enum;
+          tsParseEnumDeclaration();
+        });
+        return true;
+      }
+    // falls through
+    case tt._var:
+    case tt._let:
+      runInTypeContext(1, () => {
+        parseVarStatement(state.type);
+      });
+      return true;
+    case tt.name: {
+      return runInTypeContext(1, () => {
+        const contextualKeyword = state.contextualKeyword;
+        if (contextualKeyword === ContextualKeyword._global) {
+          tsParseAmbientExternalModuleDeclaration();
+          return true;
+        } else {
+          return tsParseDeclaration(contextualKeyword, /* isBeforeToken */ true);
+        }
+      });
+    }
+    default:
+      return false;
+  }
+}
+
+// Note: this won't be called unless the keyword is allowed in `shouldParseExportDeclaration`.
+// Returns true if it matched a declaration.
+function tsTryParseExportDeclaration(): boolean {
+  return tsParseDeclaration(state.contextualKeyword, /* isBeforeToken */ true);
+}
+
+// Returns true if it matched a statement.
+function tsParseExpressionStatement(contextualKeyword: ContextualKeyword): boolean {
+  switch (contextualKeyword) {
+    case ContextualKeyword._declare: {
+      const declareTokenIndex = state.tokens.length - 1;
+      const matched = tsTryParseDeclare();
+      if (matched) {
+        state.tokens[declareTokenIndex].type = tt._declare;
+        return true;
+      }
+      break;
+    }
+    case ContextualKeyword._global:
+      // `global { }` (with no `declare`) may appear inside an ambient module declaration.
+      // Would like to use tsParseAmbientExternalModuleDeclaration here, but already ran past "global".
+      if (match(tt.braceL)) {
+        tsParseModuleBlock();
+        return true;
+      }
+      break;
+
+    default:
+      return tsParseDeclaration(contextualKeyword, /* isBeforeToken */ false);
+  }
+  return false;
+}
+
+// Common to tsTryParseDeclare, tsTryParseExportDeclaration, and tsParseExpressionStatement.
+// Returns true if it matched a declaration.
+function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken: boolean): boolean {
+  switch (contextualKeyword) {
+    case ContextualKeyword._abstract:
+      if (isBeforeToken || match(tt._class)) {
+        if (isBeforeToken) next();
+        state.tokens[state.tokens.length - 1].type = tt._abstract;
+        parseClass(/* isStatement */ true, /* optionalId */ false);
+        return true;
+      }
+      break;
+
+    case ContextualKeyword._enum:
+      if (isBeforeToken || match(tt.name)) {
+        if (isBeforeToken) next();
+        state.tokens[state.tokens.length - 1].type = tt._enum;
+        tsParseEnumDeclaration();
+        return true;
+      }
+      break;
+
+    case ContextualKeyword._interface:
+      if (isBeforeToken || match(tt.name)) {
+        // `next` is true in "export" and "declare" contexts, so we want to remove that token
+        // as well.
+        runInTypeContext(1, () => {
+          if (isBeforeToken) next();
+          tsParseInterfaceDeclaration();
+        });
+        return true;
+      }
+      break;
+
+    case ContextualKeyword._module:
+      if (isBeforeToken) next();
+      if (match(tt.string)) {
+        runInTypeContext(isBeforeToken ? 2 : 1, () => {
+          tsParseAmbientExternalModuleDeclaration();
+        });
+        return true;
+      } else if (next || match(tt.name)) {
+        runInTypeContext(isBeforeToken ? 2 : 1, () => {
+          tsParseModuleOrNamespaceDeclaration();
+        });
+        return true;
+      }
+      break;
+
+    case ContextualKeyword._namespace:
+      if (isBeforeToken || match(tt.name)) {
+        runInTypeContext(1, () => {
+          if (isBeforeToken) next();
+          tsParseModuleOrNamespaceDeclaration();
+        });
+        return true;
+      }
+      break;
+
+    case ContextualKeyword._type:
+      if (isBeforeToken || match(tt.name)) {
+        runInTypeContext(1, () => {
+          if (isBeforeToken) next();
+          tsParseTypeAliasDeclaration();
+        });
+        return true;
+      }
+      break;
+
+    default:
+      break;
+  }
+  return false;
+}
+
+// Returns true if there was a generic async arrow function.
+function tsTryParseGenericAsyncArrowFunction(): boolean {
+  const matched = tsTryParseAndCatch(() => {
+    tsParseTypeParameters();
+    parseFunctionParams();
+    tsTryParseTypeOrTypePredicateAnnotation();
+    expect(tt.arrow);
+  });
+
+  if (!matched) {
+    return false;
+  }
+
+  // We don't need to be precise about the function start since it's only used if this is a
+  // bodiless function, which isn't valid here.
+  const functionStart = state.start;
+  parseFunctionBody(functionStart, false /* isGenerator */, true);
+  return true;
+}
+
+function tsParseTypeArguments(): void {
+  runInTypeContext(0, () => {
+    expect(tt.lessThan);
+    tsParseDelimitedList("TypeParametersOrArguments", tsParseType);
+    expect(tt.greaterThan);
+  });
+}
+
+export function tsIsDeclarationStart(): boolean {
+  if (match(tt.name)) {
+    switch (state.contextualKeyword) {
+      case ContextualKeyword._abstract:
+      case ContextualKeyword._declare:
+      case ContextualKeyword._enum:
+      case ContextualKeyword._interface:
+      case ContextualKeyword._module:
+      case ContextualKeyword._namespace:
+      case ContextualKeyword._type:
+        return true;
+      default:
+        break;
+    }
+  }
+
+  return false;
+}
+
+// ======================================================
+// OVERRIDES
+// ======================================================
+
+export function tsParseFunctionBodyAndFinish(
+  functionStart: number,
+  isGenerator: boolean,
+  allowExpressionBody: boolean | null = null,
+  funcContextId?: number,
+): void {
+  // For arrow functions, `parseArrow` handles the return type itself.
+  if (!allowExpressionBody && match(tt.colon)) {
+    tsParseTypeOrTypePredicateAnnotation(tt.colon);
+  }
+
+  // The original code checked the node type to make sure this function type allows a missing
+  // body, but we skip that to avoid sending around the node type. We instead just use the
+  // allowExpressionBody boolean to make sure it's not an arrow function.
+  if (!allowExpressionBody && !match(tt.braceL) && isLineTerminator()) {
+    // Retroactively mark the function declaration as a type.
+    let i = state.tokens.length - 1;
+    while (
+      i >= 0 &&
+      (state.tokens[i].start >= functionStart ||
+        state.tokens[i].type === tt._default ||
+        state.tokens[i].type === tt._export)
+    ) {
+      state.tokens[i].isType = true;
+      i--;
+    }
+    return;
+  }
+
+  parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);
+}
+
+export function tsParseSubscript(
+  startPos: number,
+  noCalls: boolean | null,
+  stopState: {stop: boolean},
+): void {
+  if (!hasPrecedingLineBreak() && eat(tt.bang)) {
+    state.tokens[state.tokens.length - 1].type = tt.nonNullAssertion;
+    return;
+  }
+
+  if (!noCalls && match(tt.lessThan)) {
+    if (atPossibleAsync()) {
+      // Almost certainly this is a generic async function `async <T>() => ...
+      // But it might be a call with a type argument `async<T>();`
+      const asyncArrowFn = tsTryParseGenericAsyncArrowFunction();
+      if (asyncArrowFn) {
         return;
       }
     }
 
-    if (isReadonly) {
-      // Must be a property (if not an index signature).
-      this.parseClassPropertyName(classContextId);
-      this.parsePostMemberNameModifiers();
-      this.parseClassProperty();
-      return;
-    }
-
-    super.parseClassMemberWithIsStatic(memberStart, isStatic, classContextId);
-  }
-
-  parsePostMemberNameModifiers(): void {
-    this.eat(tt.question);
-  }
-
-  // Note: The reason we do this in `parseIdentifierStatement` and not `parseStatement`
-  // is that e.g. `type()` is valid JS, so we must try parsing that first.
-  // If it's really a type, we will parse `type` as the statement, and can correct it here
-  // by parsing the rest.
-  parseIdentifierStatement(contextualKeyword: ContextualKeyword): void {
-    const matched = this.tsParseExpressionStatement(contextualKeyword);
-    if (!matched) {
-      super.parseIdentifierStatement(contextualKeyword);
+    // May be passing type arguments. But may just be the `<` operator.
+    const typeArguments = tsTryParseTypeArgumentsInExpression(); // Also eats the "("
+    if (typeArguments) {
+      // possibleAsync always false here, because we would have handled it above.
+      parseCallExpressionArguments(tt.parenR);
     }
   }
+  baseParseSubscript(startPos, noCalls, stopState);
+}
 
-  // export type
-  // Should be true for anything parsed by `tsTryParseExportDeclaration`.
-  shouldParseExportDeclaration(): boolean {
-    if (this.tsIsDeclarationStart()) return true;
-    return super.shouldParseExportDeclaration();
+export function tsStartParseNewArguments(): void {
+  if (match(tt.lessThan)) {
+    // tsTryParseAndCatch is expensive, so avoid if not necessary.
+    // 99% certain this is `new C<T>();`. But may be `new C < T;`, which is also legal.
+    tsTryParseAndCatch(() => {
+      state.type = tt.typeParameterStart;
+      tsParseTypeArguments();
+      if (!match(tt.parenL)) {
+        unexpected();
+      }
+    });
+  }
+}
+
+export function tsTryParseExport(): boolean {
+  if (match(tt._import)) {
+    // `export import A = B;`
+    expect(tt._import);
+    tsParseImportEqualsDeclaration();
+    return true;
+  } else if (eat(tt.eq)) {
+    // `export = x;`
+    parseExpression();
+    semicolon();
+    return true;
+  } else if (eatContextual(ContextualKeyword._as)) {
+    // `export as namespace A;`
+    // See `parseNamespaceExportDeclaration` in TypeScript's own parser
+    expectContextual(ContextualKeyword._namespace);
+    parseIdentifier();
+    semicolon();
+    return true;
+  } else {
+    return false;
+  }
+}
+
+export function tsTryParseExportDefaultExpression(): boolean {
+  if (isContextual(ContextualKeyword._abstract) && lookaheadType() === tt._class) {
+    state.type = tt._abstract;
+    next(); // Skip "abstract"
+    parseClass(true, true);
+    return true;
+  }
+  return false;
+}
+
+export function tsTryParseStatementContent(): boolean {
+  if (state.type === tt._const) {
+    const ahead = lookaheadTypeAndKeyword();
+    if (ahead.type === tt.name && ahead.contextualKeyword === ContextualKeyword._enum) {
+      expect(tt._const);
+      expectContextual(ContextualKeyword._enum);
+      state.tokens[state.tokens.length - 1].type = tt._enum;
+      tsParseEnumDeclaration();
+      return true;
+    }
+  }
+  return false;
+}
+
+export function tsParseAccessModifier(): void {
+  tsParseModifier([
+    ContextualKeyword._public,
+    ContextualKeyword._protected,
+    ContextualKeyword._private,
+  ]);
+}
+
+export function tsTryParseClassMemberWithIsStatic(
+  isStatic: boolean,
+  classContextId: number,
+): boolean {
+  let isAbstract = false;
+  let isReadonly = false;
+
+  const mod = tsParseModifier([ContextualKeyword._abstract, ContextualKeyword._readonly]);
+  switch (mod) {
+    case ContextualKeyword._readonly:
+      isReadonly = true;
+      isAbstract = !!tsParseModifier([ContextualKeyword._abstract]);
+      break;
+    case ContextualKeyword._abstract:
+      isAbstract = true;
+      isReadonly = !!tsParseModifier([ContextualKeyword._readonly]);
+      break;
+    default:
+      break;
   }
 
-  parseExportDeclaration(): void {
-    // "export declare" is equivalent to just "export".
-    const isDeclare = this.eatContextual(ContextualKeyword._declare);
+  // We no longer check for public/private/etc, but tsTryParseIndexSignature should just return
+  // false in that case for valid code.
+  if (!isAbstract && !isStatic) {
+    const found = tsTryParseIndexSignature();
+    if (found) {
+      return true;
+    }
+  }
+
+  if (isReadonly) {
+    // Must be a property (if not an index signature).
+    parseClassPropertyName(classContextId);
+    parsePostMemberNameModifiers();
+    parseClassProperty();
+    return true;
+  }
+  return false;
+}
+
+// Note: The reason we do this in `parseIdentifierStatement` and not `parseStatement`
+// is that e.g. `type()` is valid JS, so we must try parsing that first.
+// If it's really a type, we will parse `type` as the statement, and can correct it here
+// by parsing the rest.
+export function tsParseIdentifierStatement(contextualKeyword: ContextualKeyword): void {
+  const matched = tsParseExpressionStatement(contextualKeyword);
+  if (!matched) {
+    semicolon();
+  }
+}
+
+export function tsParseExportDeclaration(): void {
+  // "export declare" is equivalent to just "export".
+  const isDeclare = eatContextual(ContextualKeyword._declare);
+  if (isDeclare) {
+    state.tokens[state.tokens.length - 1].type = tt._declare;
+  }
+
+  let matchedDeclaration = false;
+  if (match(tt.name)) {
     if (isDeclare) {
-      this.state.tokens[this.state.tokens.length - 1].type = tt._declare;
-    }
-
-    let matchedDeclaration = false;
-    if (this.match(tt.name)) {
-      if (isDeclare) {
-        matchedDeclaration = this.runInTypeContext(2, () => this.tsTryParseExportDeclaration());
-      } else {
-        matchedDeclaration = this.tsTryParseExportDeclaration();
-      }
-    }
-    if (!matchedDeclaration) {
-      if (isDeclare) {
-        this.runInTypeContext(2, () => {
-          super.parseExportDeclaration();
-        });
-      } else {
-        super.parseExportDeclaration();
-      }
+      matchedDeclaration = runInTypeContext(2, () => tsTryParseExportDeclaration());
+    } else {
+      matchedDeclaration = tsTryParseExportDeclaration();
     }
   }
-
-  parseClassId(isStatement: boolean, optionalId: boolean = false): void {
-    if ((!isStatement || optionalId) && this.isContextual(ContextualKeyword._implements)) {
-      return;
-    }
-
-    super.parseClassId(isStatement, optionalId);
-    this.tsTryParseTypeParameters();
-  }
-
-  parseClassProperty(): void {
-    this.tsTryParseTypeAnnotation();
-    super.parseClassProperty();
-  }
-
-  parseClassMethod(functionStart: number, isGenerator: boolean, isConstructor: boolean): void {
-    this.tsTryParseTypeParameters();
-    super.parseClassMethod(functionStart, isGenerator, isConstructor);
-  }
-
-  parseClassSuper(): boolean {
-    const hasSuper = super.parseClassSuper();
-    if (hasSuper && this.match(tt.lessThan)) {
-      this.tsParseTypeArguments();
-    }
-    if (this.eatContextual(ContextualKeyword._implements)) {
-      this.state.tokens[this.state.tokens.length - 1].type = tt._implements;
-      this.runInTypeContext(1, () => {
-        this.tsParseHeritageClause();
+  if (!matchedDeclaration) {
+    if (isDeclare) {
+      runInTypeContext(2, () => {
+        parseStatement(true);
       });
+    } else {
+      parseStatement(true);
     }
-    return hasSuper;
   }
+}
 
-  parseObjPropValue(
-    isGenerator: boolean,
-    isPattern: boolean,
-    isBlockScope: boolean,
-    objectContextId: number,
-  ): void {
-    if (this.match(tt.lessThan)) {
-      throw new Error("TODO");
-    }
-    super.parseObjPropValue(isGenerator, isPattern, isBlockScope, objectContextId);
+export function tsAfterParseClassSuper(hasSuper: boolean): void {
+  if (hasSuper && match(tt.lessThan)) {
+    tsParseTypeArguments();
   }
-
-  parseFunctionParams(allowModifiers?: boolean, contextId?: number): void {
-    this.tsTryParseTypeParameters();
-    super.parseFunctionParams(allowModifiers, contextId);
+  if (eatContextual(ContextualKeyword._implements)) {
+    state.tokens[state.tokens.length - 1].type = tt._implements;
+    runInTypeContext(1, () => {
+      tsParseHeritageClause();
+    });
   }
+}
 
-  // `let x: number;`
-  parseVarHead(isBlockScope: boolean): void {
-    super.parseVarHead(isBlockScope);
-    this.tsTryParseTypeAnnotation();
+export function tsStartParseObjPropValue(): void {
+  if (match(tt.lessThan)) {
+    throw new Error("TODO");
   }
+}
 
-  // parse the return type of an async arrow function - let foo = (async (): number => {});
-  parseAsyncArrowFromCallExpression(functionStart: number, startTokenIndex: number): void {
-    if (this.match(tt.colon)) {
-      this.parseTypeAnnotation();
-    }
-    super.parseAsyncArrowFromCallExpression(functionStart, startTokenIndex);
+export function tsStartParseFunctionParams(): void {
+  tsTryParseTypeParameters();
+}
+
+// `let x: number;`
+export function tsAfterParseVarHead(): void {
+  tsTryParseTypeAnnotation();
+}
+
+// parse the return type of an async arrow function - let foo = (async (): number => {});
+export function tsStartParseAsyncArrowFromCallExpression(): void {
+  if (match(tt.colon)) {
+    tsParseTypeAnnotation();
   }
+}
 
-  // Returns true if the expression was an arrow function.
-  parseMaybeAssign(noIn: boolean | null = null, afterLeftParse?: Function): boolean {
-    // Note: When the JSX plugin is on, type assertions (`<T> x`) aren't valid syntax.
+// Returns true if the expression was an arrow function.
+export function tsParseMaybeAssign(
+  noIn: boolean | null = null,
+  afterLeftParse?: Function,
+): boolean {
+  // Note: When the JSX plugin is on, type assertions (`<T> x`) aren't valid syntax.
 
-    let jsxError: SyntaxError | null = null;
+  let jsxError: SyntaxError | null = null;
 
-    if (this.match(tt.lessThan) && this.hasPlugin("jsx")) {
-      // Prefer to parse JSX if possible. But may be an arrow fn.
-      const snapshot = this.state.snapshot();
-      try {
-        return super.parseMaybeAssign(noIn, afterLeftParse);
-      } catch (err) {
-        if (!(err instanceof SyntaxError)) {
-          // istanbul ignore next: no such error is expected
-          throw err;
-        }
-
-        this.state.restoreFromSnapshot(snapshot);
-        this.state.type = tt.typeParameterStart;
-        jsxError = err;
-      }
-    }
-
-    if (jsxError === null && !this.match(tt.lessThan)) {
-      return super.parseMaybeAssign(noIn, afterLeftParse);
-    }
-
-    // Either way, we're looking at a '<': tt.typeParameterStart or relational.
-
-    let wasArrow = false;
-    const snapshot = this.state.snapshot();
+  if (match(tt.lessThan) && hasPlugin("jsx")) {
+    // Prefer to parse JSX if possible. But may be an arrow fn.
+    const snapshot = state.snapshot();
     try {
-      // This is similar to TypeScript's `tryParseParenthesizedArrowFunctionExpression`.
-      this.runInTypeContext(0, () => {
-        this.tsParseTypeParameters();
-      });
-      wasArrow = super.parseMaybeAssign(noIn, afterLeftParse);
-      if (!wasArrow) {
-        this.unexpected(); // Go to the catch block (needs a SyntaxError).
-      }
+      return baseParseMaybeAssign(noIn, afterLeftParse);
     } catch (err) {
       if (!(err instanceof SyntaxError)) {
         // istanbul ignore next: no such error is expected
         throw err;
       }
 
-      if (jsxError) {
-        throw jsxError;
-      }
-
-      // Try parsing a type cast instead of an arrow function.
-      // This will never happen outside of JSX.
-      // (Because in JSX the '<' should be a jsxTagStart and not a relational.
-      assert(!this.hasPlugin("jsx"));
-      // Parsing an arrow function failed, so try a type cast.
-      this.state.restoreFromSnapshot(snapshot);
-      // This will start with a type assertion (via parseMaybeUnary).
-      // But don't directly call `this.tsParseTypeAssertion` because we want to handle any binary after it.
-      return super.parseMaybeAssign(noIn, afterLeftParse);
-    }
-    return wasArrow;
-  }
-
-  // Handle type assertions
-  parseMaybeUnary(): boolean {
-    if (!this.hasPlugin("jsx") && this.eat(tt.lessThan)) {
-      this.tsParseTypeAssertion();
-      return false;
-    } else {
-      return super.parseMaybeUnary();
+      state.restoreFromSnapshot(snapshot);
+      state.type = tt.typeParameterStart;
+      jsxError = err;
     }
   }
 
-  parseArrow(): boolean {
-    if (this.match(tt.colon)) {
-      // This is different from how the TS parser does it.
-      // TS uses lookahead. Babylon parses it as a parenthesized expression and converts.
-      const snapshot = this.state.snapshot();
-      try {
-        this.tsParseTypeOrTypePredicateAnnotation(tt.colon);
-        if (this.canInsertSemicolon()) this.unexpected();
-        if (!this.match(tt.arrow)) this.unexpected();
-      } catch (err) {
-        if (err instanceof SyntaxError) {
-          this.state.restoreFromSnapshot(snapshot);
-        } else {
-          // istanbul ignore next: no such error is expected
-          throw err;
-        }
-      }
-    }
-    return super.parseArrow();
+  if (jsxError === null && !match(tt.lessThan)) {
+    return baseParseMaybeAssign(noIn, afterLeftParse);
   }
 
-  // Allow type annotations inside of a parameter list.
-  parseAssignableListItemTypes(): void {
-    this.runInTypeContext(0, () => {
-      this.eat(tt.question);
-      this.tsTryParseTypeAnnotation();
+  // Either way, we're looking at a '<': tt.typeParameterStart or relational.
+
+  let wasArrow = false;
+  const snapshot = state.snapshot();
+  try {
+    // This is similar to TypeScript's `tryParseParenthesizedArrowFunctionExpression`.
+    runInTypeContext(0, () => {
+      tsParseTypeParameters();
     });
-  }
+    wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
+    if (!wasArrow) {
+      unexpected(); // Go to the catch block (needs a SyntaxError).
+    }
+  } catch (err) {
+    if (!(err instanceof SyntaxError)) {
+      // istanbul ignore next: no such error is expected
+      throw err;
+    }
 
-  parseBindingAtom(isBlockScope: boolean): void {
-    switch (this.state.type) {
-      case tt._this:
-        // "this" may be the name of a parameter, so allow it.
-        this.runInTypeContext(0, () => {
-          this.parseIdentifier();
-        });
-        return;
-      default:
-        super.parseBindingAtom(isBlockScope);
+    if (jsxError) {
+      throw jsxError;
+    }
+
+    // Try parsing a type cast instead of an arrow function.
+    // This will never happen outside of JSX.
+    // (Because in JSX the '<' should be a jsxTagStart and not a relational.
+    assert(!hasPlugin("jsx"));
+    // Parsing an arrow function failed, so try a type cast.
+    state.restoreFromSnapshot(snapshot);
+    // This will start with a type assertion (via parseMaybeUnary).
+    // But don't directly call `tsParseTypeAssertion` because we want to handle any binary after it.
+    return baseParseMaybeAssign(noIn, afterLeftParse);
+  }
+  return wasArrow;
+}
+
+export function tsParseArrow(): boolean {
+  if (match(tt.colon)) {
+    // This is different from how the TS parser does it.
+    // TS uses lookahead. Babylon parses it as a parenthesized expression and converts.
+    const snapshot = state.snapshot();
+    try {
+      tsParseTypeOrTypePredicateAnnotation(tt.colon);
+      if (canInsertSemicolon()) unexpected();
+      if (!match(tt.arrow)) unexpected();
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        state.restoreFromSnapshot(snapshot);
+      } else {
+        // istanbul ignore next: no such error is expected
+        throw err;
+      }
     }
   }
+  return eat(tt.arrow);
+}
+
+// Allow type annotations inside of a parameter list.
+export function tsParseAssignableListItemTypes(): void {
+  runInTypeContext(0, () => {
+    eat(tt.question);
+    tsTryParseTypeAnnotation();
+  });
 }

@@ -1,305 +1,294 @@
-import Parser from "../../parser";
-import {IdentifierRole, Token} from "../../tokenizer";
-import {TokenType, TokenType as tt} from "../../tokenizer/types";
+import {input, raise, state} from "../../parser/base";
+import {parseExpression, parseMaybeAssign} from "../../parser/expression";
+import {expect, unexpected} from "../../parser/util";
+import {
+  eat,
+  finishToken,
+  getTokenFromCode,
+  IdentifierRole,
+  lookaheadType,
+  match,
+  next,
+  skipSpace,
+  Token,
+} from "../../tokenizer";
+import {TokenType as tt} from "../../tokenizer/types";
 import {charCodes} from "../../util/charcodes";
 import {isIdentifierChar, isIdentifierStart} from "../../util/identifier";
-import {isNewLine} from "../../util/whitespace";
-import XHTMLEntities from "./xhtml";
 
-export default class JSXParser extends Parser {
-  // Reads inline JSX contents token.
+// Reads inline JSX contents token.
+function jsxReadToken(): void {
+  for (;;) {
+    if (state.pos >= input.length) {
+      raise(state.start, "Unterminated JSX contents");
+    }
 
-  jsxReadToken(): void {
-    for (;;) {
-      if (this.state.pos >= this.input.length) {
-        this.raise(this.state.start, "Unterminated JSX contents");
-      }
+    const ch = input.charCodeAt(state.pos);
 
-      const ch = this.input.charCodeAt(this.state.pos);
-
-      switch (ch) {
-        case charCodes.lessThan:
-        case charCodes.leftCurlyBrace:
-          if (this.state.pos === this.state.start) {
-            if (ch === charCodes.lessThan) {
-              this.state.pos++;
-              this.finishToken(tt.jsxTagStart);
-              return;
-            }
-            this.getTokenFromCode(ch);
+    switch (ch) {
+      case charCodes.lessThan:
+      case charCodes.leftCurlyBrace:
+        if (state.pos === state.start) {
+          if (ch === charCodes.lessThan) {
+            state.pos++;
+            finishToken(tt.jsxTagStart);
             return;
           }
-          this.finishToken(tt.jsxText);
+          getTokenFromCode(ch);
           return;
-
-        default:
-          this.state.pos++;
-      }
-    }
-  }
-
-  jsxReadString(quote: number): void {
-    this.state.pos++;
-    for (;;) {
-      if (this.state.pos >= this.input.length) {
-        this.raise(this.state.start, "Unterminated string constant");
-      }
-
-      const ch = this.input.charCodeAt(this.state.pos);
-      if (ch === quote) {
-        this.state.pos++;
-        break;
-      }
-      this.state.pos++;
-    }
-    this.finishToken(tt.string);
-  }
-
-  // Read a JSX identifier (valid tag or attribute name).
-  //
-  // Optimized version since JSX identifiers can't contain
-  // escape characters and so can be read as single slice.
-  // Also assumes that first character was already checked
-  // by isIdentifierStart in readToken.
-
-  jsxReadWord(): void {
-    let ch;
-    do {
-      ch = this.input.charCodeAt(++this.state.pos);
-    } while (isIdentifierChar(ch) || ch === charCodes.dash);
-    this.finishToken(tt.jsxName);
-  }
-
-  // Parse next token as JSX identifier
-  jsxParseIdentifier(): void {
-    this.nextJSXTagToken();
-  }
-
-  // Parse namespaced identifier.
-  jsxParseNamespacedName(): void {
-    this.jsxParseIdentifier();
-    if (!this.eat(tt.colon)) {
-      // Plain identifier, so this is an access.
-      this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.Access;
-      return;
-    }
-    // Process the second half of the namespaced name.
-    this.jsxParseIdentifier();
-  }
-
-  // Parses element name in any form - namespaced, member
-  // or single identifier.
-  jsxParseElementName(): void {
-    this.jsxParseNamespacedName();
-    while (this.match(tt.dot)) {
-      this.nextJSXTagToken();
-      this.jsxParseIdentifier();
-    }
-  }
-
-  // Parses any type of JSX attribute value.
-  jsxParseAttributeValue(): void {
-    switch (this.state.type) {
-      case tt.braceL:
-        this.jsxParseExpressionContainer();
-        this.nextJSXTagToken();
-        return;
-
-      case tt.jsxTagStart:
-        this.jsxParseElement();
-        this.nextJSXTagToken();
-        return;
-
-      case tt.string:
-        this.nextJSXTagToken();
+        }
+        finishToken(tt.jsxText);
         return;
 
       default:
-        throw this.raise(
-          this.state.start,
-          "JSX value should be either an expression or a quoted JSX text",
-        );
+        state.pos++;
     }
   }
+}
 
-  jsxParseEmptyExpression(): void {
-    // Do nothing.
-  }
-
-  // Parse JSX spread child
-  jsxParseSpreadChild(): void {
-    this.expect(tt.braceL);
-    this.expect(tt.ellipsis);
-    this.parseExpression();
-    this.expect(tt.braceR);
-  }
-
-  // Parses JSX expression enclosed into curly brackets.
-  // Does not parse the last token.
-  jsxParseExpressionContainer(): void {
-    this.next();
-    if (this.match(tt.braceR)) {
-      this.jsxParseEmptyExpression();
-    } else {
-      this.parseExpression();
+function jsxReadString(quote: number): void {
+  state.pos++;
+  for (;;) {
+    if (state.pos >= input.length) {
+      raise(state.start, "Unterminated string constant");
     }
-  }
 
-  // Parses following JSX attribute name-value pair.
-  jsxParseAttribute(): void {
-    if (this.eat(tt.braceL)) {
-      this.expect(tt.ellipsis);
-      this.parseMaybeAssign();
-      // }
-      this.nextJSXTagToken();
+    const ch = input.charCodeAt(state.pos);
+    if (ch === quote) {
+      state.pos++;
+      break;
+    }
+    state.pos++;
+  }
+  finishToken(tt.string);
+}
+
+// Read a JSX identifier (valid tag or attribute name).
+//
+// Optimized version since JSX identifiers can't contain
+// escape characters and so can be read as single slice.
+// Also assumes that first character was already checked
+// by isIdentifierStart in readToken.
+
+function jsxReadWord(): void {
+  let ch;
+  do {
+    ch = input.charCodeAt(++state.pos);
+  } while (isIdentifierChar(ch) || ch === charCodes.dash);
+  finishToken(tt.jsxName);
+}
+
+// Parse next token as JSX identifier
+function jsxParseIdentifier(): void {
+  nextJSXTagToken();
+}
+
+// Parse namespaced identifier.
+function jsxParseNamespacedName(): void {
+  jsxParseIdentifier();
+  if (!eat(tt.colon)) {
+    // Plain identifier, so this is an access.
+    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.Access;
+    return;
+  }
+  // Process the second half of the namespaced name.
+  jsxParseIdentifier();
+}
+
+// Parses element name in any form - namespaced, member
+// or single identifier.
+function jsxParseElementName(): void {
+  jsxParseNamespacedName();
+  while (match(tt.dot)) {
+    nextJSXTagToken();
+    jsxParseIdentifier();
+  }
+}
+
+// Parses any type of JSX attribute value.
+function jsxParseAttributeValue(): void {
+  switch (state.type) {
+    case tt.braceL:
+      jsxParseExpressionContainer();
+      nextJSXTagToken();
       return;
-    }
-    this.jsxParseNamespacedName();
-    if (this.match(tt.eq)) {
-      this.nextJSXTagToken();
-      this.jsxParseAttributeValue();
-    }
-  }
 
-  // Parses JSX opening tag starting after "<".
-  // Returns true if the tag was self-closing.
-  // Does not parse the last token.
-  jsxParseOpeningElement(): boolean {
-    if (this.match(tt.jsxTagEnd)) {
-      this.nextJSXExprToken();
-      // This is an open-fragment.
-      return false;
-    }
-    this.jsxParseElementName();
-    while (!this.match(tt.slash) && !this.match(tt.jsxTagEnd)) {
-      this.jsxParseAttribute();
-    }
-    const isSelfClosing = this.match(tt.slash);
-    if (isSelfClosing) {
-      // /
-      this.nextJSXTagToken();
-    }
-    return isSelfClosing;
-  }
-
-  // Parses JSX closing tag starting after "</".
-  // Does not parse the last token.
-  jsxParseClosingElement(): void {
-    if (this.eat(tt.jsxTagEnd)) {
+    case tt.jsxTagStart:
+      jsxParseElement();
+      nextJSXTagToken();
       return;
-    }
-    this.jsxParseElementName();
+
+    case tt.string:
+      nextJSXTagToken();
+      return;
+
+    default:
+      throw raise(state.start, "JSX value should be either an expression or a quoted JSX text");
   }
+}
 
-  // Parses entire JSX element, including its opening tag
-  // (starting after "<"), attributes, contents and closing tag.
-  // Does not parse the last token.
-  jsxParseElementAt(): void {
-    const isSelfClosing = this.jsxParseOpeningElement();
-    if (!isSelfClosing) {
-      this.nextJSXExprToken();
-      contents: while (true) {
-        switch (this.state.type) {
-          case tt.jsxTagStart:
-            this.nextJSXTagToken();
-            if (this.match(tt.slash)) {
-              this.nextJSXTagToken();
-              this.jsxParseClosingElement();
-              break contents;
-            }
-            this.jsxParseElementAt();
-            this.nextJSXExprToken();
-            break;
+function jsxParseEmptyExpression(): void {
+  // Do nothing.
+}
 
-          case tt.jsxText:
-            this.nextJSXExprToken();
-            break;
+// Parse JSX spread child
+function jsxParseSpreadChild(): void {
+  expect(tt.braceL);
+  expect(tt.ellipsis);
+  parseExpression();
+  expect(tt.braceR);
+}
 
-          case tt.braceL:
-            if (this.lookaheadType() === tt.ellipsis) {
-              this.jsxParseSpreadChild();
-            } else {
-              this.jsxParseExpressionContainer();
-              this.nextJSXExprToken();
-            }
-
-            break;
-
-          // istanbul ignore next - should never happen
-          default:
-            throw this.unexpected();
-        }
-      }
-    }
+// Parses JSX expression enclosed into curly brackets.
+// Does not parse the last token.
+function jsxParseExpressionContainer(): void {
+  next();
+  if (match(tt.braceR)) {
+    jsxParseEmptyExpression();
+  } else {
+    parseExpression();
   }
+}
 
-  // Parses entire JSX element from current position.
-  // Does not parse the last token.
-  jsxParseElement(): void {
-    this.nextJSXTagToken();
-    this.jsxParseElementAt();
+// Parses following JSX attribute name-value pair.
+function jsxParseAttribute(): void {
+  if (eat(tt.braceL)) {
+    expect(tt.ellipsis);
+    parseMaybeAssign();
+    // }
+    nextJSXTagToken();
+    return;
   }
-
-  // ==================================
-  // Overrides
-  // ==================================
-
-  // Returns true if this was an arrow function.
-  parseExprAtom(): boolean {
-    if (this.match(tt.jsxText)) {
-      this.parseLiteral();
-      return false;
-    } else if (this.match(tt.lessThan) && this.hasPlugin("jsx")) {
-      this.state.type = tt.jsxTagStart;
-      this.jsxParseElement();
-      this.next();
-      return false;
-    } else {
-      return super.parseExprAtom();
-    }
+  jsxParseNamespacedName();
+  if (match(tt.eq)) {
+    nextJSXTagToken();
+    jsxParseAttributeValue();
   }
+}
 
-  nextJSXTagToken(): void {
-    this.state.tokens.push(new Token(this.state));
-    this.skipSpace();
-    this.state.start = this.state.pos;
-    const code = this.input.charCodeAt(this.state.pos);
+// Parses JSX opening tag starting after "<".
+// Returns true if the tag was self-closing.
+// Does not parse the last token.
+function jsxParseOpeningElement(): boolean {
+  if (match(tt.jsxTagEnd)) {
+    nextJSXExprToken();
+    // This is an open-fragment.
+    return false;
+  }
+  jsxParseElementName();
+  while (!match(tt.slash) && !match(tt.jsxTagEnd)) {
+    jsxParseAttribute();
+  }
+  const isSelfClosing = match(tt.slash);
+  if (isSelfClosing) {
+    // /
+    nextJSXTagToken();
+  }
+  return isSelfClosing;
+}
 
-    if (isIdentifierStart(code)) {
-      this.jsxReadWord();
-    } else if (code === charCodes.quotationMark || code === charCodes.apostrophe) {
-      this.jsxReadString(code);
-    } else {
-      // The following tokens are just one character each.
-      ++this.state.pos;
-      switch (code) {
-        case charCodes.greaterThan:
-          this.finishToken(tt.jsxTagEnd);
+// Parses JSX closing tag starting after "</".
+// Does not parse the last token.
+function jsxParseClosingElement(): void {
+  if (eat(tt.jsxTagEnd)) {
+    return;
+  }
+  jsxParseElementName();
+}
+
+// Parses entire JSX element, including its opening tag
+// (starting after "<"), attributes, contents and closing tag.
+// Does not parse the last token.
+function jsxParseElementAt(): void {
+  const isSelfClosing = jsxParseOpeningElement();
+  if (!isSelfClosing) {
+    nextJSXExprToken();
+    contents: while (true) {
+      switch (state.type) {
+        case tt.jsxTagStart:
+          nextJSXTagToken();
+          if (match(tt.slash)) {
+            nextJSXTagToken();
+            jsxParseClosingElement();
+            break contents;
+          }
+          jsxParseElementAt();
+          nextJSXExprToken();
           break;
-        case charCodes.slash:
-          this.finishToken(tt.slash);
+
+        case tt.jsxText:
+          nextJSXExprToken();
           break;
-        case charCodes.equalsTo:
-          this.finishToken(tt.eq);
+
+        case tt.braceL:
+          if (lookaheadType() === tt.ellipsis) {
+            jsxParseSpreadChild();
+          } else {
+            jsxParseExpressionContainer();
+            nextJSXExprToken();
+          }
+
           break;
-        case charCodes.leftCurlyBrace:
-          this.finishToken(tt.braceL);
-          break;
-        case charCodes.dot:
-          this.finishToken(tt.dot);
-          break;
-        case charCodes.colon:
-          this.finishToken(tt.colon);
-          break;
+
+        // istanbul ignore next - should never happen
         default:
-          this.unexpected();
+          throw unexpected();
       }
     }
   }
+}
 
-  nextJSXExprToken(): void {
-    this.state.tokens.push(new Token(this.state));
-    this.state.start = this.state.pos;
-    this.jsxReadToken();
+// Parses entire JSX element from current position.
+// Does not parse the last token.
+export function jsxParseElement(): void {
+  nextJSXTagToken();
+  jsxParseElementAt();
+}
+
+// ==================================
+// Overrides
+// ==================================
+
+function nextJSXTagToken(): void {
+  state.tokens.push(new Token());
+  skipSpace();
+  state.start = state.pos;
+  const code = input.charCodeAt(state.pos);
+
+  if (isIdentifierStart(code)) {
+    jsxReadWord();
+  } else if (code === charCodes.quotationMark || code === charCodes.apostrophe) {
+    jsxReadString(code);
+  } else {
+    // The following tokens are just one character each.
+    ++state.pos;
+    switch (code) {
+      case charCodes.greaterThan:
+        finishToken(tt.jsxTagEnd);
+        break;
+      case charCodes.slash:
+        finishToken(tt.slash);
+        break;
+      case charCodes.equalsTo:
+        finishToken(tt.eq);
+        break;
+      case charCodes.leftCurlyBrace:
+        finishToken(tt.braceL);
+        break;
+      case charCodes.dot:
+        finishToken(tt.dot);
+        break;
+      case charCodes.colon:
+        finishToken(tt.colon);
+        break;
+      default:
+        unexpected();
+    }
   }
+}
+
+function nextJSXExprToken(): void {
+  state.tokens.push(new Token());
+  state.start = state.pos;
+  jsxReadToken();
 }

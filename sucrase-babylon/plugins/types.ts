@@ -1,59 +1,47 @@
+import {hasPlugin, state} from "../parser/base";
+import {baseParseConditional} from "../parser/expression";
+import {eat, match} from "../tokenizer";
 import {TokenType as tt} from "../tokenizer/types";
-import JSXParser from "./jsx";
+import {flowParseTypeAnnotation} from "./flow";
+import {tsParseTypeAnnotation} from "./typescript";
 
 /**
  * Common parser code for TypeScript and Flow.
  */
-export default abstract class TypeParser extends JSXParser {
-  abstract parseTypeAnnotation(): void;
 
-  // An apparent conditional expression could actually be an optional parameter in an arrow function.
-  parseConditional(noIn: boolean | null, startPos: number): void {
-    // only do the expensive clone if there is a question mark
-    // and if we come from inside parens
-    if (!this.match(tt.question)) {
-      super.parseConditional(noIn, startPos);
-      return;
+// An apparent conditional expression could actually be an optional parameter in an arrow function.
+export function typedParseConditional(noIn: boolean | null, startPos: number): void {
+  // only do the expensive clone if there is a question mark
+  // and if we come from inside parens
+  if (!match(tt.question)) {
+    baseParseConditional(noIn, startPos);
+    return;
+  }
+
+  const snapshot = state.snapshot();
+  try {
+    baseParseConditional(noIn, startPos);
+    return;
+  } catch (err) {
+    if (!(err instanceof SyntaxError)) {
+      // istanbul ignore next: no such error is expected
+      throw err;
     }
+    state.restoreFromSnapshot(snapshot);
+  }
+}
 
-    const snapshot = this.state.snapshot();
-    try {
-      super.parseConditional(noIn, startPos);
-      return;
-    } catch (err) {
-      if (!(err instanceof SyntaxError)) {
-        // istanbul ignore next: no such error is expected
-        throw err;
-      }
-      this.state.restoreFromSnapshot(snapshot);
+// Note: These "type casts" are *not* valid TS expressions.
+// But we parse them here and change them when completing the arrow function.
+export function typedParseParenItem(): void {
+  if (eat(tt.question)) {
+    state.tokens[state.tokens.length - 1].isType = true;
+  }
+  if (match(tt.colon)) {
+    if (hasPlugin("typescript")) {
+      tsParseTypeAnnotation();
+    } else if (hasPlugin("flow")) {
+      flowParseTypeAnnotation();
     }
-  }
-
-  // Note: These "type casts" are *not* valid TS expressions.
-  // But we parse them here and change them when completing the arrow function.
-  parseParenItem(): void {
-    super.parseParenItem();
-    if (this.eat(tt.question)) {
-      this.state.tokens[this.state.tokens.length - 1].isType = true;
-    }
-    if (this.match(tt.colon)) {
-      this.parseTypeAnnotation();
-    }
-  }
-
-  isClassMethod(): boolean {
-    return this.match(tt.lessThan) || super.isClassMethod();
-  }
-
-  isClassProperty(): boolean {
-    return this.match(tt.colon) || super.isClassProperty();
-  }
-
-  shouldParseArrow(): boolean {
-    return this.match(tt.colon) || super.shouldParseArrow();
-  }
-
-  shouldParseAsyncArrow(): boolean {
-    return this.match(tt.colon) || super.shouldParseAsyncArrow();
   }
 }

@@ -64,11 +64,10 @@ export default class JSXParser extends Parser {
 
   jsxReadWord(): void {
     let ch;
-    const start = this.state.pos;
     do {
       ch = this.input.charCodeAt(++this.state.pos);
     } while (isIdentifierChar(ch) || ch === charCodes.dash);
-    this.finishToken(tt.jsxName, this.input.slice(start, this.state.pos));
+    this.finishToken(tt.jsxName);
   }
 
   // Parse next token as JSX identifier

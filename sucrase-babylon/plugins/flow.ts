@@ -542,14 +542,10 @@ export default class FlowParser extends TypeParser {
         this.flowParseType();
         return;
 
-      case tt.plusMin:
-        // Only allow negative signs, not plus signs.
-        if (this.state.value === "-") {
-          this.next();
-          this.parseLiteral();
-          return;
-        }
-        throw this.unexpected();
+      case tt.minus:
+        this.next();
+        this.parseLiteral();
+        return;
 
       case tt.string:
       case tt.num:
@@ -627,7 +623,7 @@ export default class FlowParser extends TypeParser {
   }
 
   flowParseVariance(): void {
-    if (this.match(tt.plusMin)) {
+    if (this.match(tt.plus) || this.match(tt.minus)) {
       this.next();
     }
   }

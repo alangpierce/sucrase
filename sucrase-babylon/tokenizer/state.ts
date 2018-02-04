@@ -14,8 +14,6 @@ export type StateSnapshot = {
   scopesLength: number;
   pos: number;
   type: TokenType;
-  // tslint:disable-next-line: no-any
-  value: any;
   contextualKeyword: ContextualKeyword;
   start: number;
   end: number;
@@ -36,7 +34,6 @@ export default class State {
     this.pos = 0;
 
     this.type = tt.eof;
-    this.value = null;
     this.start = this.pos;
     this.end = this.pos;
 
@@ -62,8 +59,6 @@ export default class State {
 
   // Information about the current token.
   type: TokenType;
-  // tslint:disable-next-line no-any
-  value: any;
   contextualKeyword: ContextualKeyword;
   start: number;
   end: number;
@@ -78,7 +73,6 @@ export default class State {
       scopesLength: this.scopes.length,
       pos: this.pos,
       type: this.type,
-      value: this.value,
       contextualKeyword: this.contextualKeyword,
       start: this.start,
       end: this.end,
@@ -93,7 +87,6 @@ export default class State {
     this.scopes.length = snapshot.scopesLength;
     this.pos = snapshot.pos;
     this.type = snapshot.type;
-    this.value = snapshot.value;
     this.contextualKeyword = snapshot.contextualKeyword;
     this.start = snapshot.start;
     this.end = snapshot.end;

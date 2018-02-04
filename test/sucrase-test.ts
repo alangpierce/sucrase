@@ -420,4 +420,16 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  it("handles strings with escaped quotes", () => {
+    assertResult(
+      `
+      const s = 'ab\\'cd';
+    `,
+      `"use strict";
+      const s = 'ab\\'cd';
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

@@ -136,7 +136,7 @@ describe("tokens", () => {
       `
       5 + /3/
     `,
-      [{type: tt.num}, {type: tt.plusMin}, {type: tt.regexp}, {type: tt.eof}],
+      [{type: tt.num}, {type: tt.plus}, {type: tt.regexp}, {type: tt.eof}],
     );
   });
 
@@ -163,7 +163,7 @@ describe("tokens", () => {
     `,
       [
         {type: tt.name},
-        {type: tt.plusMin},
+        {type: tt.plus},
         {type: tt.jsxTagStart},
         {type: tt.jsxName},
         {type: tt.slash},

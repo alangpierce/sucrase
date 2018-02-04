@@ -98,7 +98,6 @@ const contextualKeywordByName = {
 export class Token {
   constructor(state: State) {
     this.type = state.type;
-    this.value = state.value;
     this.contextualKeyword = state.contextualKeyword;
     this.start = state.start;
     this.end = state.end;
@@ -111,8 +110,6 @@ export class Token {
   }
 
   type: TokenType;
-  // tslint:disable-next-line no-any
-  value: any;
   contextualKeyword: ContextualKeyword;
   start: number;
   end: number;
@@ -342,13 +339,10 @@ export default abstract class Tokenizer extends BaseParser {
 
   finishToken(
     type: TokenType,
-    // tslint:disable-next-line no-any
-    val?: any,
     contextualKeyword: ContextualKeyword = ContextualKeyword.NONE,
   ): void {
     this.state.end = this.state.pos;
     this.state.type = type;
-    this.state.value = val;
     this.state.contextualKeyword = contextualKeyword;
   }
 
@@ -461,8 +455,10 @@ export default abstract class Tokenizer extends BaseParser {
 
     if (next === charCodes.equalsTo) {
       this.finishOp(tt.assign, 2);
+    } else if (code === charCodes.plusSign) {
+      this.finishOp(tt.plus, 1);
     } else {
-      this.finishOp(tt.plusMin, 1);
+      this.finishOp(tt.minus, 1);
     }
   }
 
@@ -705,9 +701,8 @@ export default abstract class Tokenizer extends BaseParser {
   }
 
   finishOp(type: TokenType, size: number): void {
-    const str = this.input.slice(this.state.pos, this.state.pos + size);
     this.state.pos += size;
-    this.finishToken(type, str);
+    this.finishToken(type);
   }
 
   readRegexp(): void {
@@ -719,9 +714,6 @@ export default abstract class Tokenizer extends BaseParser {
         this.raise(start, "Unterminated regular expression");
       }
       const ch = this.input.charAt(this.state.pos);
-      if (lineBreak.test(ch)) {
-        this.raise(start, "Unterminated regular expression");
-      }
       if (escaped) {
         escaped = false;
       } else {
@@ -736,22 +728,12 @@ export default abstract class Tokenizer extends BaseParser {
       }
       ++this.state.pos;
     }
-    const content = this.input.slice(start, this.state.pos);
     ++this.state.pos;
     // Need to use `readWord1` because '\uXXXX' sequences are allowed
     // here (don't ask).
-    const mods = this.readWord1();
-    if (mods) {
-      const validFlags = /^[gmsiyu]*$/;
-      if (!validFlags.test(mods)) {
-        this.raise(start, "Invalid regular expression flag");
-      }
-    }
+    this.readWord1();
 
-    this.finishToken(tt.regexp, {
-      pattern: content,
-      flags: mods,
-    });
+    this.finishToken(tt.regexp);
   }
 
   // Read an integer in the given radix. Return null if zero digits
@@ -793,7 +775,6 @@ export default abstract class Tokenizer extends BaseParser {
   }
 
   readRadixNumber(radix: number): void {
-    const start = this.state.pos;
     let isBigInt = false;
 
     this.state.pos += 2; // 0x
@@ -809,8 +790,7 @@ export default abstract class Tokenizer extends BaseParser {
     }
 
     if (isBigInt) {
-      const str = this.input.slice(start, this.state.pos).replace(/[_n]/g, "");
-      this.finishToken(tt.bigint, str);
+      this.finishToken(tt.bigint);
       return;
     }
 
@@ -879,36 +859,25 @@ export default abstract class Tokenizer extends BaseParser {
   }
 
   readString(quote: number): void {
-    let out = "";
-    let chunkStart = ++this.state.pos;
+    this.state.pos++;
     for (;;) {
       if (this.state.pos >= this.input.length) {
         this.raise(this.state.start, "Unterminated string constant");
       }
       const ch = this.input.charCodeAt(this.state.pos);
-      if (ch === quote) break;
       if (ch === charCodes.backslash) {
-        out += this.input.slice(chunkStart, this.state.pos);
-        // $FlowFixMe
-        out += this.readEscapedChar(false);
-        chunkStart = this.state.pos;
-      } else {
-        if (isNewLine(ch)) {
-          this.raise(this.state.start, "Unterminated string constant");
-        }
-        ++this.state.pos;
+        this.state.pos++;
+      } else if (ch === quote) {
+        break;
       }
+      this.state.pos++;
     }
-    out += this.input.slice(chunkStart, this.state.pos++);
-    this.finishToken(tt.string, out);
+    this.state.pos++;
+    this.finishToken(tt.string);
   }
 
   // Reads template string tokens.
-
   readTmplToken(): void {
-    let out = "";
-    let chunkStart = this.state.pos;
-    let containsInvalid = false;
     for (;;) {
       if (this.state.pos >= this.input.length) {
         this.raise(this.state.start, "Unterminated template");
@@ -930,96 +899,13 @@ export default abstract class Tokenizer extends BaseParser {
             return;
           }
         }
-        out += this.input.slice(chunkStart, this.state.pos);
-        this.finishToken(tt.template, containsInvalid ? null : out);
+        this.finishToken(tt.template);
         return;
       }
       if (ch === charCodes.backslash) {
-        out += this.input.slice(chunkStart, this.state.pos);
-        const escaped = this.readEscapedChar(true);
-        if (escaped === null) {
-          containsInvalid = true;
-        } else {
-          out += escaped;
-        }
-        chunkStart = this.state.pos;
-      } else if (isNewLine(ch)) {
-        out += this.input.slice(chunkStart, this.state.pos);
-        ++this.state.pos;
-        switch (ch) {
-          case charCodes.carriageReturn:
-            if (this.input.charCodeAt(this.state.pos) === charCodes.lineFeed) {
-              ++this.state.pos;
-            }
-          case charCodes.lineFeed:
-            out += "\n";
-            break;
-          default:
-            out += String.fromCharCode(ch);
-            break;
-        }
-        chunkStart = this.state.pos;
-      } else {
-        ++this.state.pos;
+        this.state.pos++;
       }
-    }
-  }
-
-  // Used to read escaped characters
-  readEscapedChar(inTemplate: boolean): string | null {
-    const throwOnInvalid = !inTemplate;
-    const ch = this.input.charCodeAt(++this.state.pos);
-    ++this.state.pos;
-    switch (ch) {
-      case charCodes.lowercaseN:
-        return "\n";
-      case charCodes.lowercaseR:
-        return "\r";
-      case charCodes.lowercaseX: {
-        const code = this.readHexChar(2, throwOnInvalid);
-        return code === null ? null : String.fromCharCode(code);
-      }
-      case charCodes.lowercaseU: {
-        const code = this.readCodePoint(throwOnInvalid);
-        return code === null ? null : codePointToString(code);
-      }
-      case charCodes.lowercaseT:
-        return "\t";
-      case charCodes.lowercaseB:
-        return "\b";
-      case charCodes.lowercaseV:
-        return "\u000b";
-      case charCodes.lowercaseF:
-        return "\f";
-      case charCodes.carriageReturn:
-        if (this.input.charCodeAt(this.state.pos) === charCodes.lineFeed) {
-          ++this.state.pos;
-        }
-      case charCodes.lineFeed:
-        return "";
-      default:
-        // TODO(sucrase): Consider removing all octal parsing.
-        if (ch >= charCodes.digit0 && ch <= charCodes.digit7) {
-          const codePos = this.state.pos - 1;
-          // $FlowFixMe
-          // @ts-ignore
-          let octalStr = this.input.substr(this.state.pos - 1, 3).match(/^[0-7]+/)[0];
-          let octal = parseInt(octalStr, 8);
-          if (octal > 255) {
-            octalStr = octalStr.slice(0, -1);
-            octal = parseInt(octalStr, 8);
-          }
-          if (octal > 0) {
-            if (inTemplate) {
-              return null;
-            } else {
-              this.raise(codePos, "Octal literal in strict mode");
-            }
-          }
-          this.state.pos += octalStr.length - 1;
-          return String.fromCharCode(octal);
-        }
-        return String.fromCharCode(ch);
+      this.state.pos++;
     }
   }
 
@@ -1082,7 +968,7 @@ export default abstract class Tokenizer extends BaseParser {
     if (isKeyword(word)) {
       this.finishToken(keywordTypes[word]);
     } else if (contextualKeywordByName[word] != null) {
-      this.finishToken(tt.name, null, contextualKeywordByName[word]);
+      this.finishToken(tt.name, contextualKeywordByName[word]);
     } else {
       this.finishToken(tt.name);
     }

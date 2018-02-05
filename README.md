@@ -14,8 +14,8 @@ focuses on compiling non-standard language extensions: JSX, TypeScript, and
 Flow. Because of this smaller scope, Sucrase can get away with an architecture
 that is much more performant but less extensible and maintainable.
 
-**Current state:** The project is in active development. It is about 15x faster
-than Babel and about 6x faster than TypeScript, and it has been tested on
+**Current state:** The project is in active development. It is about 20x faster
+than Babel and about 8x faster than TypeScript, and it has been tested on
 hundreds of thousands of lines of code. Still, you may find correctness issues
 when running on a large codebase. Feel free to file issues!
 
@@ -139,15 +139,15 @@ case, it is much faster than Babel.
 
 ## Performance
 
-Currently, Sucrase runs about 15x faster than Babel (even when Babel only runs
-the relevant transforms) and 6x faster than TypeScript. Here's the output of
+Currently, Sucrase runs about 20x faster than Babel (even when Babel only runs
+the relevant transforms) and 8x faster than TypeScript. Here's the output of
 one run of `npm run benchmark`:
 
 ```
 Simulating transpilation of 100,000 lines of code:
-Sucrase: 670.313ms
-TypeScript: 3988.560ms
-Babel: 10060.157ms
+Sucrase: 469.672ms
+TypeScript: 3782.414ms
+Babel: 9591.515ms
 ```
 
 ## Project vision and future work

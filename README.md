@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/alangpierce/sucrase.svg?branch=master)](https://travis-ci.org/alangpierce/sucrase)
 [![npm version](https://badge.fury.io/js/sucrase.svg)](https://www.npmjs.com/package/sucrase)
 [![MIT License](https://img.shields.io/npm/l/express.svg?maxAge=2592000)](LICENSE)
-
+[![Join the chat at https://gitter.im/sucrasejs](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sucrasejs/Lobby)
 
 ### [Try it out](https://sucrase.io)
 

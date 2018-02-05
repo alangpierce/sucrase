@@ -21,26 +21,18 @@ export type StateSnapshot = {
 };
 
 export default class State {
-  init(input: string): void {
-    this.input = input;
-
+  init(): void {
     this.potentialArrowAt = -1;
-
     this.noAnonFunctionType = false;
-
     this.tokens = [];
     this.scopes = [];
-
     this.pos = 0;
-
     this.type = tt.eof;
     this.start = this.pos;
     this.end = this.pos;
 
     this.isType = false;
   }
-
-  input: string;
 
   // Used to signify the start of a potential arrow function
   potentialArrowAt: number;

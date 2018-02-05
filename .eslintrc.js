@@ -11,6 +11,7 @@ module.exports = {
     "class-methods-use-this": "off",
     "func-names": "off",
     "import/extensions": "off",
+    "import/no-mutable-exports": "off",
     "import/prefer-default-export": "off",
     "no-await-in-loop": "off",
     "no-bitwise": "off",

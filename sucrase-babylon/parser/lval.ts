@@ -1,113 +1,128 @@
-import {IdentifierRole} from "../tokenizer";
+import {flowParseAssignableListItemTypes} from "../plugins/flow";
+import {
+  tsParseAccessModifier,
+  tsParseAssignableListItemTypes,
+  tsParseModifier,
+} from "../plugins/typescript";
+import {ContextualKeyword, eat, IdentifierRole, match, next, runInTypeContext} from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
-import UtilParser from "./util";
+import {hasPlugin, state} from "./base";
+import {parseIdentifier, parseMaybeAssign, parseObj} from "./expression";
+import {expect, unexpected} from "./util";
 
-export default abstract class LValParser extends UtilParser {
-  // Forward-declaration: defined in expression.js
-  abstract parseIdentifier(): void;
-  abstract parseMaybeAssign(noIn?: boolean | null, afterLeftParse?: Function): void;
-  abstract parseObj(isPattern: boolean, isBlockScope: boolean): void;
-  // Forward-declaration: defined in statement.js
-  abstract parseDecorator(): void;
+export function parseSpread(): void {
+  next();
+  parseMaybeAssign(false);
+}
 
-  // Parses spread element.
+export function parseRest(isBlockScope: boolean): void {
+  next();
+  parseBindingAtom(isBlockScope);
+}
 
-  parseSpread(): void {
-    this.next();
-    this.parseMaybeAssign(false);
-  }
+export function parseBindingIdentifier(): void {
+  parseIdentifier();
+}
 
-  parseRest(isBlockScope: boolean): void {
-    this.next();
-    this.parseBindingAtom(isBlockScope);
-  }
+// Parses lvalue (assignable) atom.
+export function parseBindingAtom(isBlockScope: boolean): void {
+  switch (state.type) {
+    case tt._this:
+      // In TypeScript, "this" may be the name of a parameter, so allow it.
+      runInTypeContext(0, () => {
+        next();
+      });
+      return;
 
-  parseBindingIdentifier(): void {
-    this.parseIdentifier();
-  }
-
-  // Parses lvalue (assignable) atom.
-  parseBindingAtom(isBlockScope: boolean): void {
-    switch (this.state.type) {
-      case tt._yield:
-      case tt.name: {
-        this.state.type = tt.name;
-        this.parseBindingIdentifier();
-        this.state.tokens[this.state.tokens.length - 1].identifierRole = isBlockScope
-          ? IdentifierRole.BlockScopedDeclaration
-          : IdentifierRole.FunctionScopedDeclaration;
-        return;
-      }
-
-      case tt.bracketL: {
-        this.next();
-        this.parseBindingList(tt.bracketR, isBlockScope, true /* allowEmpty */);
-        return;
-      }
-
-      case tt.braceL:
-        this.parseObj(true, isBlockScope);
-        return;
-
-      default:
-        throw this.unexpected();
-    }
-  }
-
-  parseBindingList(
-    close: TokenType,
-    isBlockScope: boolean,
-    allowEmpty?: boolean,
-    allowModifiers: boolean | null = null,
-  ): void {
-    let first = true;
-
-    let hasRemovedComma = false;
-    const firstItemTokenIndex = this.state.tokens.length;
-
-    while (!this.eat(close)) {
-      if (first) {
-        first = false;
-      } else {
-        this.expect(tt.comma);
-        // After a "this" type in TypeScript, we need to set the following comma (if any) to also be
-        // a type token so that it will be removed.
-        if (!hasRemovedComma && this.state.tokens[firstItemTokenIndex].isType) {
-          this.state.tokens[this.state.tokens.length - 1].isType = true;
-          hasRemovedComma = true;
-        }
-      }
-      if (allowEmpty && this.match(tt.comma)) {
-        // Empty item; nothing further to parse for this item.
-      } else if (this.eat(close)) {
-        break;
-      } else if (this.match(tt.ellipsis)) {
-        this.parseRest(isBlockScope);
-        this.parseAssignableListItemTypes();
-        this.expect(close);
-        break;
-      } else {
-        this.parseAssignableListItem(allowModifiers, isBlockScope);
-      }
-    }
-  }
-
-  parseAssignableListItem(allowModifiers: boolean | null, isBlockScope: boolean): void {
-    this.parseMaybeDefault(isBlockScope);
-    this.parseAssignableListItemTypes();
-    this.parseMaybeDefault(isBlockScope, true /* leftAlreadyParsed */);
-  }
-
-  parseAssignableListItemTypes(): void {}
-
-  // Parses assignment pattern around given atom if possible.
-  parseMaybeDefault(isBlockScope: boolean, leftAlreadyParsed: boolean = false): void {
-    if (!leftAlreadyParsed) {
-      this.parseBindingAtom(isBlockScope);
-    }
-    if (!this.eat(tt.eq)) {
+    case tt._yield:
+    case tt.name: {
+      state.type = tt.name;
+      parseBindingIdentifier();
+      state.tokens[state.tokens.length - 1].identifierRole = isBlockScope
+        ? IdentifierRole.BlockScopedDeclaration
+        : IdentifierRole.FunctionScopedDeclaration;
       return;
     }
-    this.parseMaybeAssign();
+
+    case tt.bracketL: {
+      next();
+      parseBindingList(tt.bracketR, isBlockScope, true /* allowEmpty */);
+      return;
+    }
+
+    case tt.braceL:
+      parseObj(true, isBlockScope);
+      return;
+
+    default:
+      throw unexpected();
   }
+}
+
+export function parseBindingList(
+  close: TokenType,
+  isBlockScope: boolean,
+  allowEmpty?: boolean,
+  allowModifiers: boolean | null = null,
+): void {
+  let first = true;
+
+  let hasRemovedComma = false;
+  const firstItemTokenIndex = state.tokens.length;
+
+  while (!eat(close)) {
+    if (first) {
+      first = false;
+    } else {
+      expect(tt.comma);
+      // After a "this" type in TypeScript, we need to set the following comma (if any) to also be
+      // a type token so that it will be removed.
+      if (!hasRemovedComma && state.tokens[firstItemTokenIndex].isType) {
+        state.tokens[state.tokens.length - 1].isType = true;
+        hasRemovedComma = true;
+      }
+    }
+    if (allowEmpty && match(tt.comma)) {
+      // Empty item; nothing further to parse for this item.
+    } else if (eat(close)) {
+      break;
+    } else if (match(tt.ellipsis)) {
+      parseRest(isBlockScope);
+      parseAssignableListItemTypes();
+      expect(close);
+      break;
+    } else {
+      parseAssignableListItem(allowModifiers, isBlockScope);
+    }
+  }
+}
+
+function parseAssignableListItem(allowModifiers: boolean | null, isBlockScope: boolean): void {
+  if (allowModifiers) {
+    tsParseAccessModifier();
+    tsParseModifier([ContextualKeyword._readonly]);
+  }
+
+  parseMaybeDefault(isBlockScope);
+  parseAssignableListItemTypes();
+  parseMaybeDefault(isBlockScope, true /* leftAlreadyParsed */);
+}
+
+function parseAssignableListItemTypes(): void {
+  if (hasPlugin("flow")) {
+    flowParseAssignableListItemTypes();
+  } else if (hasPlugin("typescript")) {
+    tsParseAssignableListItemTypes();
+  }
+}
+
+// Parses assignment pattern around given atom if possible.
+export function parseMaybeDefault(isBlockScope: boolean, leftAlreadyParsed: boolean = false): void {
+  if (!leftAlreadyParsed) {
+    parseBindingAtom(isBlockScope);
+  }
+  if (!eat(tt.eq)) {
+    return;
+  }
+  parseMaybeAssign();
 }

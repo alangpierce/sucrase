@@ -18,807 +18,943 @@
 //
 // [opp]: http://en.wikipedia.org/wiki/Operator-precedence_parser
 
-import {ContextualKeyword, IdentifierRole} from "../tokenizer";
+import {
+  flowParseArrow,
+  flowParseFunctionBodyAndFinish,
+  flowParseMaybeAssign,
+  flowParseSubscripts,
+  flowParseTypeAnnotation,
+  flowParseVariance,
+  flowStartParseAsyncArrowFromCallExpression,
+  flowStartParseObjPropValue,
+} from "../plugins/flow";
+import {jsxParseElement} from "../plugins/jsx";
+import {typedParseConditional, typedParseParenItem} from "../plugins/types";
+import {
+  tsParseArrow,
+  tsParseFunctionBodyAndFinish,
+  tsParseMaybeAssign,
+  tsParseSubscript,
+  tsParseType,
+  tsParseTypeAssertion,
+  tsStartParseAsyncArrowFromCallExpression,
+  tsStartParseNewArguments,
+  tsStartParseObjPropValue,
+} from "../plugins/typescript";
+import {
+  ContextualKeyword,
+  eat,
+  IdentifierRole,
+  lookaheadType,
+  match,
+  next,
+  nextTemplateToken,
+  retokenizeSlashAsRegex,
+  runInTypeContext,
+} from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
-import LValParser from "./lval";
+import {getNextContextId, hasPlugin, raise, state} from "./base";
+import {parseMaybeDefault, parseRest, parseSpread} from "./lval";
+import {
+  parseBlock,
+  parseClass,
+  parseDecorators,
+  parseFunction,
+  parseFunctionParams,
+} from "./statement";
+import {
+  canInsertSemicolon,
+  eatContextual,
+  expect,
+  hasPrecedingLineBreak,
+  isContextual,
+  unexpected,
+} from "./util";
 
-export default abstract class ExpressionParser extends LValParser {
-  // Forward-declaration: defined in statement.js
-  abstract parseBlock(
-    allowDirectives?: boolean,
-    isFunctionScope?: boolean,
-    contextId?: number,
-  ): void;
-  abstract parseClass(isStatement: boolean, optionalId?: boolean): void;
-  abstract parseDecorators(allowExport?: boolean): void;
-  abstract parseFunction(
-    functionStart: number,
-    isStatement: boolean,
-    allowExpressionBody?: boolean,
-    optionalId?: boolean,
-  ): void;
-  abstract parseFunctionParams(allowModifiers?: boolean, funcContextId?: number): void;
+// ### Expression parsing
 
-  // ### Expression parsing
+// These nest, from the most general expression type at the top to
+// 'atomic', nondivisible expression types at the bottom. Most of
+// the functions will simply let the function (s) below them parse,
+// and, *if* the syntactic construct they handle is present, wrap
+// the AST node that the inner parser gave them in another node.
 
-  // These nest, from the most general expression type at the top to
-  // 'atomic', nondivisible expression types at the bottom. Most of
-  // the functions will simply let the function (s) below them parse,
-  // and, *if* the syntactic construct they handle is present, wrap
-  // the AST node that the inner parser gave them in another node.
-
-  // Parse a full expression. The optional arguments are used to
-  // forbid the `in` operator (in for loops initialization expressions)
-  // and provide reference for storing '=' operator inside shorthand
-  // property assignment in contexts where both object expression
-  // and object pattern might appear (so it's possible to raise
-  // delayed syntax error at correct position).
-
-  parseExpression(noIn?: boolean): void {
-    this.parseMaybeAssign(noIn);
-    if (this.match(tt.comma)) {
-      while (this.eat(tt.comma)) {
-        this.parseMaybeAssign(noIn);
-      }
+// Parse a full expression. The optional arguments are used to
+// forbid the `in` operator (in for loops initialization expressions)
+// and provide reference for storing '=' operator inside shorthand
+// property assignment in contexts where both object expression
+// and object pattern might appear (so it's possible to raise
+// delayed syntax error at correct position).e
+export function parseExpression(noIn?: boolean): void {
+  parseMaybeAssign(noIn);
+  if (match(tt.comma)) {
+    while (eat(tt.comma)) {
+      parseMaybeAssign(noIn);
     }
   }
+}
 
-  // Parse an assignment expression. This includes applications of
-  // operators like `+=`.
-  // Returns true if the expression was an arrow function.
-  parseMaybeAssign(noIn: boolean | null = null, afterLeftParse?: Function): boolean {
-    if (this.match(tt._yield)) {
-      this.parseYield();
-      if (afterLeftParse) {
-        afterLeftParse.call(this);
-      }
-      return false;
-    }
+export function parseMaybeAssign(noIn: boolean | null = null, afterLeftParse?: Function): boolean {
+  if (hasPlugin("typescript")) {
+    return tsParseMaybeAssign(noIn, afterLeftParse);
+  } else if (hasPlugin("flow")) {
+    return flowParseMaybeAssign(noIn, afterLeftParse);
+  } else {
+    return baseParseMaybeAssign(noIn, afterLeftParse);
+  }
+}
 
-    if (this.match(tt.parenL) || this.match(tt.name) || this.match(tt._yield)) {
-      this.state.potentialArrowAt = this.state.start;
-    }
-
-    const wasArrow = this.parseMaybeConditional(noIn);
+// Parse an assignment expression. This includes applications of
+// operators like `+=`.
+// Returns true if the expression was an arrow function.
+export function baseParseMaybeAssign(
+  noIn: boolean | null = null,
+  afterLeftParse?: Function,
+): boolean {
+  if (match(tt._yield)) {
+    parseYield();
     if (afterLeftParse) {
-      afterLeftParse.call(this);
-    }
-    if (this.state.type & TokenType.IS_ASSIGN) {
-      this.next();
-      this.parseMaybeAssign(noIn);
-      return false;
-    }
-    return wasArrow;
-  }
-
-  // Parse a ternary conditional (`?:`) operator.
-  // Returns true if the expression was an arrow function.
-  parseMaybeConditional(noIn: boolean | null): boolean {
-    const startPos = this.state.start;
-    const wasArrow = this.parseExprOps(noIn);
-    if (wasArrow) {
-      return true;
-    }
-    this.parseConditional(noIn, startPos);
-    return false;
-  }
-
-  parseConditional(noIn: boolean | null, startPos: number): void {
-    if (this.eat(tt.question)) {
-      this.parseMaybeAssign();
-      this.expect(tt.colon);
-      this.parseMaybeAssign(noIn);
-    }
-  }
-
-  // Start the precedence parser.
-  // Returns true if this was an arrow function
-  parseExprOps(noIn: boolean | null): boolean {
-    const wasArrow = this.parseMaybeUnary();
-    if (wasArrow) {
-      return true;
-    }
-    this.parseExprOp(-1, noIn);
-    return false;
-  }
-
-  // Parse binary operators with the operator precedence parsing
-  // algorithm. `left` is the left-hand side of the operator.
-  // `minPrec` provides context that allows the function to stop and
-  // defer further parser to one of its callers when it encounters an
-  // operator that has a lower precedence than the set it is parsing.
-  parseExprOp(minPrec: number, noIn: boolean | null): void {
-    const prec = this.state.type & TokenType.PRECEDENCE_MASK;
-    if (prec > 0 && (!noIn || !this.match(tt._in))) {
-      if (prec > minPrec) {
-        const op = this.state.type;
-        this.next();
-
-        if (op === tt.pipeline) {
-          // Support syntax such as 10 |> x => x + 1
-          this.state.potentialArrowAt = this.state.start;
-        }
-
-        this.parseMaybeUnary();
-        this.parseExprOp(op & TokenType.IS_RIGHT_ASSOCIATIVE ? prec - 1 : prec, noIn);
-        this.parseExprOp(minPrec, noIn);
-      }
-    }
-  }
-
-  // Parse unary operators, both prefix and postfix.
-  // Returns true if this was an arrow function.
-  parseMaybeUnary(): boolean {
-    if (this.state.type & TokenType.IS_PREFIX) {
-      this.next();
-      this.parseMaybeUnary();
-      return false;
-    }
-
-    const wasArrow = this.parseExprSubscripts();
-    if (wasArrow) {
-      return true;
-    }
-    while (this.state.type & TokenType.IS_POSTFIX && !this.canInsertSemicolon()) {
-      this.next();
+      afterLeftParse();
     }
     return false;
   }
 
-  // Parse call, dot, and `[]`-subscript expressions.
-  // Returns true if this was an arrow function.
-  parseExprSubscripts(): boolean {
-    const startPos = this.state.start;
-    const wasArrow = this.parseExprAtom();
-    if (wasArrow) {
-      return true;
+  if (match(tt.parenL) || match(tt.name) || match(tt._yield)) {
+    state.potentialArrowAt = state.start;
+  }
+
+  const wasArrow = parseMaybeConditional(noIn);
+  if (afterLeftParse) {
+    afterLeftParse();
+  }
+  if (state.type & TokenType.IS_ASSIGN) {
+    next();
+    parseMaybeAssign(noIn);
+    return false;
+  }
+  return wasArrow;
+}
+
+// Parse a ternary conditional (`?:`) operator.
+// Returns true if the expression was an arrow function.
+function parseMaybeConditional(noIn: boolean | null): boolean {
+  const startPos = state.start;
+  const wasArrow = parseExprOps(noIn);
+  if (wasArrow) {
+    return true;
+  }
+  parseConditional(noIn, startPos);
+  return false;
+}
+
+function parseConditional(noIn: boolean | null, startPos: number): void {
+  if (hasPlugin("typescript") || hasPlugin("flow")) {
+    typedParseConditional(noIn, startPos);
+  } else {
+    baseParseConditional(noIn, startPos);
+  }
+}
+
+export function baseParseConditional(noIn: boolean | null, startPos: number): void {
+  if (eat(tt.question)) {
+    parseMaybeAssign();
+    expect(tt.colon);
+    parseMaybeAssign(noIn);
+  }
+}
+
+// Start the precedence parser.
+// Returns true if this was an arrow function
+function parseExprOps(noIn: boolean | null): boolean {
+  const wasArrow = parseMaybeUnary();
+  if (wasArrow) {
+    return true;
+  }
+  parseExprOp(-1, noIn);
+  return false;
+}
+
+// Parse binary operators with the operator precedence parsing
+// algorithm. `left` is the left-hand side of the operator.
+// `minPrec` provides context that allows the function to stop and
+// defer further parser to one of its callers when it encounters an
+// operator that has a lower precedence than the set it is parsing.
+function parseExprOp(minPrec: number, noIn: boolean | null): void {
+  if (
+    hasPlugin("typescript") &&
+    (tt._in & TokenType.PRECEDENCE_MASK) > minPrec &&
+    !hasPrecedingLineBreak() &&
+    eatContextual(ContextualKeyword._as)
+  ) {
+    state.tokens[state.tokens.length - 1].type = tt._as;
+    runInTypeContext(1, () => {
+      tsParseType();
+    });
+    parseExprOp(minPrec, noIn);
+    return;
+  }
+
+  const prec = state.type & TokenType.PRECEDENCE_MASK;
+  if (prec > 0 && (!noIn || !match(tt._in))) {
+    if (prec > minPrec) {
+      const op = state.type;
+      next();
+
+      if (op === tt.pipeline) {
+        // Support syntax such as 10 |> x => x + 1
+        state.potentialArrowAt = state.start;
+      }
+
+      parseMaybeUnary();
+      parseExprOp(op & TokenType.IS_RIGHT_ASSOCIATIVE ? prec - 1 : prec, noIn);
+      parseExprOp(minPrec, noIn);
     }
-    this.parseSubscripts(startPos);
+  }
+}
+
+// Parse unary operators, both prefix and postfix.
+// Returns true if this was an arrow function.
+export function parseMaybeUnary(): boolean {
+  if (hasPlugin("typescript") && !hasPlugin("jsx") && eat(tt.lessThan)) {
+    tsParseTypeAssertion();
     return false;
   }
 
-  parseSubscripts(startPos: number, noCalls: boolean | null = null): void {
-    const state = {stop: false};
-    do {
-      this.parseSubscript(startPos, noCalls, state);
-    } while (!state.stop);
+  if (state.type & TokenType.IS_PREFIX) {
+    next();
+    parseMaybeUnary();
+    return false;
   }
 
-  /** Set 'state.stop = true' to indicate that we should stop parsing subscripts. */
-  parseSubscript(startPos: number, noCalls: boolean | null, state: {stop: boolean}): void {
-    if (!noCalls && this.eat(tt.doubleColon)) {
-      this.parseNoCallExpr();
-      state.stop = true;
-      this.parseSubscripts(startPos, noCalls);
-    } else if (this.match(tt.questionDot)) {
-      if (noCalls && this.lookaheadType() === tt.parenL) {
-        state.stop = true;
-        return;
-      }
-      this.next();
+  const wasArrow = parseExprSubscripts();
+  if (wasArrow) {
+    return true;
+  }
+  while (state.type & TokenType.IS_POSTFIX && !canInsertSemicolon()) {
+    next();
+  }
+  return false;
+}
 
-      if (this.eat(tt.bracketL)) {
-        this.parseExpression();
-        this.expect(tt.bracketR);
-      } else if (this.eat(tt.parenL)) {
-        this.parseCallExpressionArguments(tt.parenR);
-      } else {
-        this.parseIdentifier();
-      }
-    } else if (this.eat(tt.dot)) {
-      this.parseMaybePrivateName();
-    } else if (this.eat(tt.bracketL)) {
-      this.parseExpression();
-      this.expect(tt.bracketR);
-    } else if (!noCalls && this.match(tt.parenL)) {
-      const possibleAsync = this.atPossibleAsync();
-      // We see "async", but it's possible it's a usage of the name "async". Parse as if it's a
-      // function call, and if we see an arrow later, backtrack and re-parse as a parameter list.
-      const snapshotForAsyncArrow = possibleAsync ? this.state.snapshot() : null;
-      const startTokenIndex = this.state.tokens.length;
-      this.next();
+// Parse call, dot, and `[]`-subscript expressions.
+// Returns true if this was an arrow function.
+export function parseExprSubscripts(): boolean {
+  const startPos = state.start;
+  const wasArrow = parseExprAtom();
+  if (wasArrow) {
+    return true;
+  }
+  parseSubscripts(startPos);
+  return false;
+}
 
-      const callContextId = this.nextContextId++;
+function parseSubscripts(startPos: number, noCalls: boolean | null = null): void {
+  if (hasPlugin("flow")) {
+    flowParseSubscripts(startPos, noCalls);
+  } else {
+    baseParseSubscripts(startPos, noCalls);
+  }
+}
 
-      this.state.tokens[this.state.tokens.length - 1].contextId = callContextId;
-      this.parseCallExpressionArguments(tt.parenR);
-      this.state.tokens[this.state.tokens.length - 1].contextId = callContextId;
+export function baseParseSubscripts(startPos: number, noCalls: boolean | null = null): void {
+  const stopState = {stop: false};
+  do {
+    parseSubscript(startPos, noCalls, stopState);
+  } while (!stopState.stop);
+}
 
-      if (possibleAsync && this.shouldParseAsyncArrow()) {
-        // We hit an arrow, so backtrack and start again parsing function parameters.
-        this.state.restoreFromSnapshot(snapshotForAsyncArrow!);
-        state.stop = true;
+function parseSubscript(
+  startPos: number,
+  noCalls: boolean | null,
+  stopState: {stop: boolean},
+): void {
+  if (hasPlugin("typescript")) {
+    tsParseSubscript(startPos, noCalls, stopState);
+  } else {
+    baseParseSubscript(startPos, noCalls, stopState);
+  }
+}
 
-        this.parseFunctionParams();
-        this.parseAsyncArrowFromCallExpression(startPos, startTokenIndex);
-      }
-    } else if (this.match(tt.backQuote)) {
-      // Tagged template expression.
-      this.parseTemplate();
+/** Set 'state.stop = true' to indicate that we should stop parsing subscripts. */
+export function baseParseSubscript(
+  startPos: number,
+  noCalls: boolean | null,
+  stopState: {stop: boolean},
+): void {
+  if (!noCalls && eat(tt.doubleColon)) {
+    parseNoCallExpr();
+    stopState.stop = true;
+    parseSubscripts(startPos, noCalls);
+  } else if (match(tt.questionDot)) {
+    if (noCalls && lookaheadType() === tt.parenL) {
+      stopState.stop = true;
+      return;
+    }
+    next();
+
+    if (eat(tt.bracketL)) {
+      parseExpression();
+      expect(tt.bracketR);
+    } else if (eat(tt.parenL)) {
+      parseCallExpressionArguments(tt.parenR);
     } else {
-      state.stop = true;
+      parseIdentifier();
     }
-  }
+  } else if (eat(tt.dot)) {
+    parseMaybePrivateName();
+  } else if (eat(tt.bracketL)) {
+    parseExpression();
+    expect(tt.bracketR);
+  } else if (!noCalls && match(tt.parenL)) {
+    const possibleAsync = atPossibleAsync();
+    // We see "async", but it's possible it's a usage of the name "async". Parse as if it's a
+    // function call, and if we see an arrow later, backtrack and re-parse as a parameter list.
+    const snapshotForAsyncArrow = possibleAsync ? state.snapshot() : null;
+    const startTokenIndex = state.tokens.length;
+    next();
 
-  atPossibleAsync(): boolean {
-    // This was made less strict than the original version to avoid passing around nodes, but it
-    // should be safe to have rare false positives here.
-    return (
-      this.state.tokens[this.state.tokens.length - 1].contextualKeyword ===
-        ContextualKeyword._async && !this.canInsertSemicolon()
-    );
-  }
+    const callContextId = getNextContextId();
 
-  parseCallExpressionArguments(close: TokenType): void {
-    let first = true;
-    while (!this.eat(close)) {
-      if (first) {
-        first = false;
-      } else {
-        this.expect(tt.comma);
-        if (this.eat(close)) break;
-      }
+    state.tokens[state.tokens.length - 1].contextId = callContextId;
+    parseCallExpressionArguments(tt.parenR);
+    state.tokens[state.tokens.length - 1].contextId = callContextId;
 
-      this.parseExprListItem(false);
+    if (possibleAsync && shouldParseAsyncArrow()) {
+      // We hit an arrow, so backtrack and start again parsing function parameters.
+      state.restoreFromSnapshot(snapshotForAsyncArrow!);
+      stopState.stop = true;
+
+      parseFunctionParams();
+      parseAsyncArrowFromCallExpression(startPos, startTokenIndex);
     }
+  } else if (match(tt.backQuote)) {
+    // Tagged template expression.
+    parseTemplate();
+  } else {
+    stopState.stop = true;
   }
+}
 
-  shouldParseAsyncArrow(): boolean {
-    return this.match(tt.arrow);
-  }
+export function atPossibleAsync(): boolean {
+  // This was made less strict than the original version to avoid passing around nodes, but it
+  // should be safe to have rare false positives here.
+  return (
+    state.tokens[state.tokens.length - 1].contextualKeyword === ContextualKeyword._async &&
+    !canInsertSemicolon()
+  );
+}
 
-  parseAsyncArrowFromCallExpression(functionStart: number, startTokenIndex: number): void {
-    this.expect(tt.arrow);
-    this.parseArrowExpression(functionStart, startTokenIndex);
-  }
-
-  // Parse a no-call expression (like argument of `new` or `::` operators).
-
-  parseNoCallExpr(): void {
-    const startPos = this.state.start;
-    this.parseExprAtom();
-    this.parseSubscripts(startPos, true);
-  }
-
-  // Parse an atomic expression — either a single token that is an
-  // expression, an expression started by a keyword like `function` or
-  // `new`, or an expression wrapped in punctuation like `()`, `[]`,
-  // or `{}`.
-  // Returns true if the parsed expression was an arrow function.
-  parseExprAtom(): boolean {
-    const canBeArrow = this.state.potentialArrowAt === this.state.start;
-    switch (this.state.type) {
-      case tt.slash:
-      case tt.assign:
-        this.retokenizeSlashAsRegex();
-      // Fall through.
-
-      case tt._super:
-      case tt._this:
-      case tt.regexp:
-      case tt.num:
-      case tt.bigint:
-      case tt.string:
-      case tt._null:
-      case tt._true:
-      case tt._false:
-        this.next();
-        return false;
-
-      case tt._import:
-        if (this.lookaheadType() === tt.dot) {
-          this.parseImportMetaProperty();
-          return false;
-        }
-        this.next();
-        return false;
-
-      case tt.name: {
-        const startTokenIndex = this.state.tokens.length;
-        const functionStart = this.state.start;
-        const contextualKeyword = this.state.contextualKeyword;
-        this.parseIdentifier();
-        if (contextualKeyword === ContextualKeyword._await) {
-          this.parseAwait();
-          return false;
-        } else if (
-          contextualKeyword === ContextualKeyword._async &&
-          this.match(tt._function) &&
-          !this.canInsertSemicolon()
-        ) {
-          this.next();
-          this.parseFunction(functionStart, false, false);
-          return false;
-        } else if (
-          canBeArrow &&
-          contextualKeyword === ContextualKeyword._async &&
-          this.match(tt.name)
-        ) {
-          this.parseIdentifier();
-          this.expect(tt.arrow);
-          // let foo = bar => {};
-          this.parseArrowExpression(functionStart, startTokenIndex);
-          return true;
-        }
-
-        if (canBeArrow && !this.canInsertSemicolon() && this.eat(tt.arrow)) {
-          this.parseArrowExpression(functionStart, startTokenIndex);
-          return true;
-        }
-
-        this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.Access;
-        return false;
-      }
-
-      case tt._do: {
-        this.next();
-        this.parseBlock(false);
-        return false;
-      }
-
-      case tt.parenL: {
-        const wasArrow = this.parseParenAndDistinguishExpression(canBeArrow);
-        return wasArrow;
-      }
-
-      case tt.bracketL:
-        this.next();
-        this.parseExprList(tt.bracketR, true);
-        return false;
-
-      case tt.braceL:
-        this.parseObj(false, false);
-        return false;
-
-      case tt._function:
-        this.parseFunctionExpression();
-        return false;
-
-      case tt.at:
-        this.parseDecorators();
-      // Fall through.
-
-      case tt._class:
-        this.parseClass(false);
-        return false;
-
-      case tt._new:
-        this.parseNew();
-        return false;
-
-      case tt.backQuote:
-        this.parseTemplate();
-        return false;
-
-      case tt.doubleColon: {
-        this.next();
-        this.parseNoCallExpr();
-        return false;
-      }
-
-      default:
-        throw this.unexpected();
-    }
-  }
-
-  parseMaybePrivateName(): void {
-    this.eat(tt.hash);
-    this.parseIdentifier();
-  }
-
-  parseFunctionExpression(): void {
-    const functionStart = this.state.start;
-    this.parseIdentifier();
-    if (this.eat(tt.dot)) {
-      // function.sent
-      this.parseMetaProperty();
-    }
-    this.parseFunction(functionStart, false);
-  }
-
-  parseMetaProperty(): void {
-    this.parseIdentifier();
-  }
-
-  parseImportMetaProperty(): void {
-    this.parseIdentifier();
-    this.expect(tt.dot);
-    // import.meta
-    this.parseMetaProperty();
-  }
-
-  parseLiteral(): void {
-    this.next();
-  }
-
-  parseParenExpression(): void {
-    this.expect(tt.parenL);
-    this.parseExpression();
-    this.expect(tt.parenR);
-  }
-
-  // Returns true if this was an arrow expression.
-  parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
-    // Assume this is a normal parenthesized expression, but if we see an arrow, we'll bail and
-    // start over as a parameter list.
-    const snapshot = this.state.snapshot();
-
-    const startTokenIndex = this.state.tokens.length;
-    this.expect(tt.parenL);
-
-    const exprList = [];
-    let first = true;
-    let spreadStart;
-    let optionalCommaStart;
-
-    while (!this.match(tt.parenR)) {
-      if (first) {
-        first = false;
-      } else {
-        this.expect(tt.comma);
-        if (this.match(tt.parenR)) {
-          optionalCommaStart = this.state.start;
-          break;
-        }
-      }
-
-      if (this.match(tt.ellipsis)) {
-        spreadStart = this.state.start;
-        this.parseRest(false /* isBlockScope */);
-        this.parseParenItem();
-
-        if (this.match(tt.comma) && this.lookaheadType() === tt.parenR) {
-          this.raise(this.state.start, "A trailing comma is not permitted after the rest element");
-        }
-
-        break;
-      } else {
-        exprList.push(this.parseMaybeAssign(false, this.parseParenItem));
-      }
+export function parseCallExpressionArguments(close: TokenType): void {
+  let first = true;
+  while (!eat(close)) {
+    if (first) {
+      first = false;
+    } else {
+      expect(tt.comma);
+      if (eat(close)) break;
     }
 
-    this.expect(tt.parenR);
+    parseExprListItem(false);
+  }
+}
 
-    if (canBeArrow && this.shouldParseArrow()) {
-      const wasArrow = this.parseArrow();
-      if (wasArrow) {
-        // It was an arrow function this whole time, so start over and parse it as params so that we
-        // get proper token annotations.
-        this.state.restoreFromSnapshot(snapshot);
-        // We don't need to worry about functionStart for arrow functions, so just use something.
-        const functionStart = this.state.start;
-        // Don't specify a context ID because arrow function don't need a context ID.
-        this.parseFunctionParams();
-        this.parseArrow();
-        this.parseArrowExpression(functionStart, startTokenIndex);
+function shouldParseAsyncArrow(): boolean {
+  return match(tt.colon) || match(tt.arrow);
+}
+
+function parseAsyncArrowFromCallExpression(functionStart: number, startTokenIndex: number): void {
+  if (hasPlugin("typescript")) {
+    tsStartParseAsyncArrowFromCallExpression();
+  } else if (hasPlugin("flow")) {
+    flowStartParseAsyncArrowFromCallExpression();
+  }
+  expect(tt.arrow);
+  parseArrowExpression(functionStart, startTokenIndex);
+}
+
+// Parse a no-call expression (like argument of `new` or `::` operators).
+
+function parseNoCallExpr(): void {
+  const startPos = state.start;
+  parseExprAtom();
+  parseSubscripts(startPos, true);
+}
+
+// Parse an atomic expression — either a single token that is an
+// expression, an expression started by a keyword like `function` or
+// `new`, or an expression wrapped in punctuation like `()`, `[]`,
+// or `{}`.
+// Returns true if the parsed expression was an arrow function.
+export function parseExprAtom(): boolean {
+  if (match(tt.jsxText)) {
+    parseLiteral();
+    return false;
+  } else if (match(tt.lessThan) && hasPlugin("jsx")) {
+    state.type = tt.jsxTagStart;
+    jsxParseElement();
+    next();
+    return false;
+  }
+
+  const canBeArrow = state.potentialArrowAt === state.start;
+  switch (state.type) {
+    case tt.slash:
+    case tt.assign:
+      retokenizeSlashAsRegex();
+    // Fall through.
+
+    case tt._super:
+    case tt._this:
+    case tt.regexp:
+    case tt.num:
+    case tt.bigint:
+    case tt.string:
+    case tt._null:
+    case tt._true:
+    case tt._false:
+      next();
+      return false;
+
+    case tt._import:
+      if (lookaheadType() === tt.dot) {
+        parseImportMetaProperty();
+        return false;
+      }
+      next();
+      return false;
+
+    case tt.name: {
+      const startTokenIndex = state.tokens.length;
+      const functionStart = state.start;
+      const contextualKeyword = state.contextualKeyword;
+      parseIdentifier();
+      if (contextualKeyword === ContextualKeyword._await) {
+        parseAwait();
+        return false;
+      } else if (
+        contextualKeyword === ContextualKeyword._async &&
+        match(tt._function) &&
+        !canInsertSemicolon()
+      ) {
+        next();
+        parseFunction(functionStart, false, false);
+        return false;
+      } else if (canBeArrow && contextualKeyword === ContextualKeyword._async && match(tt.name)) {
+        parseIdentifier();
+        expect(tt.arrow);
+        // let foo = bar => {};
+        parseArrowExpression(functionStart, startTokenIndex);
         return true;
       }
-    }
 
-    if (optionalCommaStart) this.unexpected(optionalCommaStart);
-    if (spreadStart) this.unexpected(spreadStart);
-    return false;
-  }
-
-  shouldParseArrow(): boolean {
-    return !this.canInsertSemicolon();
-  }
-
-  // Returns whether there was an arrow token.
-  parseArrow(): boolean {
-    if (this.eat(tt.arrow)) {
-      return true;
-    }
-    return false;
-  }
-
-  parseParenItem(): void {}
-
-  // New's precedence is slightly tricky. It must allow its argument to
-  // be a `[]` or dot subscript expression, but not a call — at least,
-  // not without wrapping it in parentheses. Thus, it uses the noCalls
-  // argument to parseSubscripts to prevent it from consuming the
-  // argument list.
-  parseNew(): void {
-    this.parseIdentifier();
-    if (this.eat(tt.dot)) {
-      // new.target
-      this.parseMetaProperty();
-      return;
-    }
-    this.parseNoCallExpr();
-    this.eat(tt.questionDot);
-    this.parseNewArguments();
-  }
-
-  parseNewArguments(): void {
-    if (this.eat(tt.parenL)) {
-      this.parseExprList(tt.parenR);
-    }
-  }
-
-  parseTemplate(): void {
-    // Finish `, read quasi
-    this.nextTemplateToken();
-    // Finish quasi, read ${
-    this.nextTemplateToken();
-    while (!this.match(tt.backQuote)) {
-      this.expect(tt.dollarBraceL);
-      this.parseExpression();
-      // Finish }, read quasi
-      this.nextTemplateToken();
-      // Finish quasi, read either ${ or `
-      this.nextTemplateToken();
-    }
-    this.next();
-  }
-
-  // Parse an object literal or binding pattern.
-  parseObj(isPattern: boolean, isBlockScope: boolean): void {
-    // Attach a context ID to the object open and close brace and each object key.
-    const contextId = this.nextContextId++;
-    let first = true;
-
-    this.next();
-    this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
-
-    let firstRestLocation = null;
-    while (!this.eat(tt.braceR)) {
-      if (first) {
-        first = false;
-      } else {
-        this.expect(tt.comma);
-        if (this.eat(tt.braceR)) {
-          break;
-        }
+      if (canBeArrow && !canInsertSemicolon() && eat(tt.arrow)) {
+        parseArrowExpression(functionStart, startTokenIndex);
+        return true;
       }
 
-      let isGenerator = false;
-      if (this.match(tt.ellipsis)) {
-        // Note that this is labeled as an access on the token even though it might be an
-        // assignment.
-        this.parseSpread();
-        if (isPattern) {
-          const position = this.state.start;
-          if (firstRestLocation !== null) {
-            this.unexpected(
-              firstRestLocation,
-              "Cannot have multiple rest elements when destructuring",
-            );
-          } else if (this.eat(tt.braceR)) {
-            break;
-          } else if (this.match(tt.comma) && this.lookaheadType() === tt.braceR) {
-            this.unexpected(position, "A trailing comma is not permitted after the rest element");
-          } else {
-            firstRestLocation = position;
-            continue;
-          }
+      state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.Access;
+      return false;
+    }
+
+    case tt._do: {
+      next();
+      parseBlock(false);
+      return false;
+    }
+
+    case tt.parenL: {
+      const wasArrow = parseParenAndDistinguishExpression(canBeArrow);
+      return wasArrow;
+    }
+
+    case tt.bracketL:
+      next();
+      parseExprList(tt.bracketR, true);
+      return false;
+
+    case tt.braceL:
+      parseObj(false, false);
+      return false;
+
+    case tt._function:
+      parseFunctionExpression();
+      return false;
+
+    case tt.at:
+      parseDecorators();
+    // Fall through.
+
+    case tt._class:
+      parseClass(false);
+      return false;
+
+    case tt._new:
+      parseNew();
+      return false;
+
+    case tt.backQuote:
+      parseTemplate();
+      return false;
+
+    case tt.doubleColon: {
+      next();
+      parseNoCallExpr();
+      return false;
+    }
+
+    default:
+      throw unexpected();
+  }
+}
+
+function parseMaybePrivateName(): void {
+  eat(tt.hash);
+  parseIdentifier();
+}
+
+function parseFunctionExpression(): void {
+  const functionStart = state.start;
+  parseIdentifier();
+  if (eat(tt.dot)) {
+    // function.sent
+    parseMetaProperty();
+  }
+  parseFunction(functionStart, false);
+}
+
+function parseMetaProperty(): void {
+  parseIdentifier();
+}
+
+function parseImportMetaProperty(): void {
+  parseIdentifier();
+  expect(tt.dot);
+  // import.meta
+  parseMetaProperty();
+}
+
+export function parseLiteral(): void {
+  next();
+}
+
+export function parseParenExpression(): void {
+  expect(tt.parenL);
+  parseExpression();
+  expect(tt.parenR);
+}
+
+// Returns true if this was an arrow expression.
+function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
+  // Assume this is a normal parenthesized expression, but if we see an arrow, we'll bail and
+  // start over as a parameter list.
+  const snapshot = state.snapshot();
+
+  const startTokenIndex = state.tokens.length;
+  expect(tt.parenL);
+
+  const exprList = [];
+  let first = true;
+  let spreadStart;
+  let optionalCommaStart;
+
+  while (!match(tt.parenR)) {
+    if (first) {
+      first = false;
+    } else {
+      expect(tt.comma);
+      if (match(tt.parenR)) {
+        optionalCommaStart = state.start;
+        break;
+      }
+    }
+
+    if (match(tt.ellipsis)) {
+      spreadStart = state.start;
+      parseRest(false /* isBlockScope */);
+      parseParenItem();
+
+      if (match(tt.comma) && lookaheadType() === tt.parenR) {
+        raise(state.start, "A trailing comma is not permitted after the rest element");
+      }
+
+      break;
+    } else {
+      exprList.push(parseMaybeAssign(false, parseParenItem));
+    }
+  }
+
+  expect(tt.parenR);
+
+  if (canBeArrow && shouldParseArrow()) {
+    const wasArrow = parseArrow();
+    if (wasArrow) {
+      // It was an arrow function this whole time, so start over and parse it as params so that we
+      // get proper token annotations.
+      state.restoreFromSnapshot(snapshot);
+      // We don't need to worry about functionStart for arrow functions, so just use something.
+      const functionStart = state.start;
+      // Don't specify a context ID because arrow function don't need a context ID.
+      parseFunctionParams();
+      parseArrow();
+      parseArrowExpression(functionStart, startTokenIndex);
+      return true;
+    }
+  }
+
+  if (optionalCommaStart) unexpected(optionalCommaStart);
+  if (spreadStart) unexpected(spreadStart);
+  return false;
+}
+
+function shouldParseArrow(): boolean {
+  return match(tt.colon) || !canInsertSemicolon();
+}
+
+// Returns whether there was an arrow token.
+export function parseArrow(): boolean {
+  if (hasPlugin("typescript")) {
+    return tsParseArrow();
+  } else if (hasPlugin("flow")) {
+    return flowParseArrow();
+  } else {
+    return eat(tt.arrow);
+  }
+}
+
+function parseParenItem(): void {
+  if (hasPlugin("typescript") || hasPlugin("flow")) {
+    typedParseParenItem();
+  }
+}
+
+// New's precedence is slightly tricky. It must allow its argument to
+// be a `[]` or dot subscript expression, but not a call — at least,
+// not without wrapping it in parentheses. Thus, it uses the noCalls
+// argument to parseSubscripts to prevent it from consuming the
+// argument list.
+function parseNew(): void {
+  parseIdentifier();
+  if (eat(tt.dot)) {
+    // new.target
+    parseMetaProperty();
+    return;
+  }
+  parseNoCallExpr();
+  eat(tt.questionDot);
+  parseNewArguments();
+}
+
+function parseNewArguments(): void {
+  if (hasPlugin("typescript")) {
+    tsStartParseNewArguments();
+  }
+  if (eat(tt.parenL)) {
+    parseExprList(tt.parenR);
+  }
+}
+
+function parseTemplate(): void {
+  // Finish `, read quasi
+  nextTemplateToken();
+  // Finish quasi, read ${
+  nextTemplateToken();
+  while (!match(tt.backQuote)) {
+    expect(tt.dollarBraceL);
+    parseExpression();
+    // Finish }, read quasi
+    nextTemplateToken();
+    // Finish quasi, read either ${ or `
+    nextTemplateToken();
+  }
+  next();
+}
+
+// Parse an object literal or binding pattern.
+export function parseObj(isPattern: boolean, isBlockScope: boolean): void {
+  // Attach a context ID to the object open and close brace and each object key.
+  const contextId = getNextContextId();
+  let first = true;
+
+  next();
+  state.tokens[state.tokens.length - 1].contextId = contextId;
+
+  let firstRestLocation = null;
+  while (!eat(tt.braceR)) {
+    if (first) {
+      first = false;
+    } else {
+      expect(tt.comma);
+      if (eat(tt.braceR)) {
+        break;
+      }
+    }
+
+    let isGenerator = false;
+    if (match(tt.ellipsis)) {
+      // Note that this is labeled as an access on the token even though it might be an
+      // assignment.
+      parseSpread();
+      if (isPattern) {
+        const position = state.start;
+        if (firstRestLocation !== null) {
+          unexpected(firstRestLocation, "Cannot have multiple rest elements when destructuring");
+        } else if (eat(tt.braceR)) {
+          break;
+        } else if (match(tt.comma) && lookaheadType() === tt.braceR) {
+          unexpected(position, "A trailing comma is not permitted after the rest element");
         } else {
+          firstRestLocation = position;
           continue;
         }
+      } else {
+        continue;
       }
+    }
 
-      if (!isPattern) {
-        isGenerator = this.eat(tt.star);
-      }
+    if (!isPattern) {
+      isGenerator = eat(tt.star);
+    }
 
-      if (!isPattern && this.isContextual(ContextualKeyword._async)) {
-        if (isGenerator) this.unexpected();
+    if (!isPattern && isContextual(ContextualKeyword._async)) {
+      if (isGenerator) unexpected();
 
-        this.parseIdentifier();
-        if (
-          this.match(tt.colon) ||
-          this.match(tt.parenL) ||
-          this.match(tt.braceR) ||
-          this.match(tt.eq) ||
-          this.match(tt.comma)
-        ) {
-          // This is a key called "async" rather than an async function.
-        } else {
-          if (this.match(tt.star)) {
-            this.next();
-            isGenerator = true;
-          }
-          this.parsePropertyName(contextId);
+      parseIdentifier();
+      if (
+        match(tt.colon) ||
+        match(tt.parenL) ||
+        match(tt.braceR) ||
+        match(tt.eq) ||
+        match(tt.comma)
+      ) {
+        // This is a key called "async" rather than an async function.
+      } else {
+        if (match(tt.star)) {
+          next();
+          isGenerator = true;
         }
-      } else {
-        this.parsePropertyName(contextId);
+        parsePropertyName(contextId);
       }
-
-      this.parseObjPropValue(isGenerator, isPattern, isBlockScope, contextId);
+    } else {
+      parsePropertyName(contextId);
     }
 
-    this.state.tokens[this.state.tokens.length - 1].contextId = contextId;
+    parseObjPropValue(isGenerator, isPattern, isBlockScope, contextId);
   }
 
-  isGetterOrSetterMethod(isPattern: boolean): boolean {
-    // We go off of the next and don't bother checking if the node key is actually "get" or "set".
-    // This lets us avoid generating a node, and should only make the validation worse.
-    return (
-      !isPattern &&
-      (this.match(tt.string) || // get "string"() {}
-      this.match(tt.num) || // get 1() {}
-      this.match(tt.bracketL) || // get ["string"]() {}
-      this.match(tt.name) || // get foo() {}
-        !!(this.state.type & TokenType.IS_KEYWORD)) // get debugger() {}
-    );
+  state.tokens[state.tokens.length - 1].contextId = contextId;
+}
+
+function isGetterOrSetterMethod(isPattern: boolean): boolean {
+  // We go off of the next and don't bother checking if the node key is actually "get" or "set".
+  // This lets us avoid generating a node, and should only make the validation worse.
+  return (
+    !isPattern &&
+    (match(tt.string) || // get "string"() {}
+    match(tt.num) || // get 1() {}
+    match(tt.bracketL) || // get ["string"]() {}
+    match(tt.name) || // get foo() {}
+      !!(state.type & TokenType.IS_KEYWORD)) // get debugger() {}
+  );
+}
+
+// Returns true if this was a method.
+function parseObjectMethod(
+  isGenerator: boolean,
+  isPattern: boolean,
+  objectContextId: number,
+): boolean {
+  // We don't need to worry about modifiers because object methods can't have optional bodies, so
+  // the start will never be used.
+  const functionStart = state.start;
+  if (match(tt.parenL)) {
+    if (isPattern) unexpected();
+    parseMethod(functionStart, isGenerator, /* isConstructor */ false);
+    return true;
   }
 
-  // Returns true if this was a method.
-  parseObjectMethod(isGenerator: boolean, isPattern: boolean, objectContextId: number): boolean {
-    // We don't need to worry about modifiers because object methods can't have optional bodies, so
-    // the start will never be used.
-    const functionStart = this.state.start;
-    if (this.match(tt.parenL)) {
-      if (isPattern) this.unexpected();
-      this.parseMethod(functionStart, isGenerator, /* isConstructor */ false);
-      return true;
-    }
-
-    if (this.isGetterOrSetterMethod(isPattern)) {
-      this.parsePropertyName(objectContextId);
-      this.parseMethod(functionStart, /* isGenerator */ false, /* isConstructor */ false);
-      return true;
-    }
-    return false;
+  if (isGetterOrSetterMethod(isPattern)) {
+    parsePropertyName(objectContextId);
+    parseMethod(functionStart, /* isGenerator */ false, /* isConstructor */ false);
+    return true;
   }
+  return false;
+}
 
-  parseObjectProperty(isPattern: boolean, isBlockScope: boolean): void {
-    if (this.eat(tt.colon)) {
-      if (isPattern) {
-        this.parseMaybeDefault(isBlockScope);
-      } else {
-        this.parseMaybeAssign(false);
-      }
-      return;
-    }
-
-    // Since there's no colon, we assume this is an object shorthand.
-
-    // If we're in a destructuring, we've now discovered that the key was actually an assignee, so
-    // we need to tag it as a declaration with the appropriate scope. Otherwise, we might need to
-    // transform it on access, so mark it as an object shorthand.
+function parseObjectProperty(isPattern: boolean, isBlockScope: boolean): void {
+  if (eat(tt.colon)) {
     if (isPattern) {
-      this.state.tokens[this.state.tokens.length - 1].identifierRole = isBlockScope
-        ? IdentifierRole.BlockScopedDeclaration
-        : IdentifierRole.FunctionScopedDeclaration;
+      parseMaybeDefault(isBlockScope);
     } else {
-      this.state.tokens[this.state.tokens.length - 1].identifierRole =
-        IdentifierRole.ObjectShorthand;
+      parseMaybeAssign(false);
     }
-
-    // Regardless of whether we know this to be a pattern or if we're in an ambiguous context, allow
-    // parsing as if there's a default value.
-    this.parseMaybeDefault(isBlockScope, true);
+    return;
   }
 
-  parseObjPropValue(
-    isGenerator: boolean,
-    isPattern: boolean,
-    isBlockScope: boolean,
-    objectContextId: number,
-  ): void {
-    const wasMethod = this.parseObjectMethod(isGenerator, isPattern, objectContextId);
-    if (!wasMethod) {
-      this.parseObjectProperty(isPattern, isBlockScope);
-    }
+  // Since there's no colon, we assume this is an object shorthand.
+
+  // If we're in a destructuring, we've now discovered that the key was actually an assignee, so
+  // we need to tag it as a declaration with the appropriate scope. Otherwise, we might need to
+  // transform it on access, so mark it as an object shorthand.
+  if (isPattern) {
+    state.tokens[state.tokens.length - 1].identifierRole = isBlockScope
+      ? IdentifierRole.BlockScopedDeclaration
+      : IdentifierRole.FunctionScopedDeclaration;
+  } else {
+    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ObjectShorthand;
   }
 
-  parsePropertyName(objectContextId: number): void {
-    if (this.eat(tt.bracketL)) {
-      this.state.tokens[this.state.tokens.length - 1].contextId = objectContextId;
-      this.parseMaybeAssign();
-      this.expect(tt.bracketR);
-      this.state.tokens[this.state.tokens.length - 1].contextId = objectContextId;
+  // Regardless of whether we know this to be a pattern or if we're in an ambiguous context, allow
+  // parsing as if there's a default value.
+  parseMaybeDefault(isBlockScope, true);
+}
+
+function parseObjPropValue(
+  isGenerator: boolean,
+  isPattern: boolean,
+  isBlockScope: boolean,
+  objectContextId: number,
+): void {
+  if (hasPlugin("typescript")) {
+    tsStartParseObjPropValue();
+  } else if (hasPlugin("flow")) {
+    flowStartParseObjPropValue();
+  }
+  const wasMethod = parseObjectMethod(isGenerator, isPattern, objectContextId);
+  if (!wasMethod) {
+    parseObjectProperty(isPattern, isBlockScope);
+  }
+}
+
+export function parsePropertyName(objectContextId: number): void {
+  if (hasPlugin("flow")) {
+    flowParseVariance();
+  }
+  if (eat(tt.bracketL)) {
+    state.tokens[state.tokens.length - 1].contextId = objectContextId;
+    parseMaybeAssign();
+    expect(tt.bracketR);
+    state.tokens[state.tokens.length - 1].contextId = objectContextId;
+  } else {
+    if (match(tt.num) || match(tt.string)) {
+      parseExprAtom();
     } else {
-      if (this.match(tt.num) || this.match(tt.string)) {
-        this.parseExprAtom();
-      } else {
-        this.parseMaybePrivateName();
-      }
-
-      this.state.tokens[this.state.tokens.length - 1].identifierRole = IdentifierRole.ObjectKey;
-      this.state.tokens[this.state.tokens.length - 1].contextId = objectContextId;
+      parseMaybePrivateName();
     }
+
+    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ObjectKey;
+    state.tokens[state.tokens.length - 1].contextId = objectContextId;
   }
+}
 
-  // Parse object or class method.
-  parseMethod(functionStart: number, isGenerator: boolean, isConstructor: boolean): void {
-    const funcContextId = this.nextContextId++;
+// Parse object or class method.
+export function parseMethod(
+  functionStart: number,
+  isGenerator: boolean,
+  isConstructor: boolean,
+): void {
+  const funcContextId = getNextContextId();
 
-    const startTokenIndex = this.state.tokens.length;
-    const allowModifiers = isConstructor; // For TypeScript parameter properties
-    this.parseFunctionParams(allowModifiers, funcContextId);
-    this.parseFunctionBodyAndFinish(
-      functionStart,
-      isGenerator,
-      null /* allowExpressionBody */,
-      funcContextId,
-    );
-    const endTokenIndex = this.state.tokens.length;
-    this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
-  }
-
-  // Parse arrow function expression.
-  // If the parameters are provided, they will be converted to an
-  // assignable list.
-  parseArrowExpression(functionStart: number, startTokenIndex: number): void {
-    this.parseFunctionBody(functionStart, false /* isGenerator */, true);
-    const endTokenIndex = this.state.tokens.length;
-    this.state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
-  }
-
+  const startTokenIndex = state.tokens.length;
+  const allowModifiers = isConstructor; // For TypeScript parameter properties
+  parseFunctionParams(allowModifiers, funcContextId);
   parseFunctionBodyAndFinish(
-    functionStart: number,
-    isGenerator: boolean,
-    allowExpressionBody: boolean | null = null,
-    funcContextId?: number,
-  ): void {
-    this.parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);
+    functionStart,
+    isGenerator,
+    null /* allowExpressionBody */,
+    funcContextId,
+  );
+  const endTokenIndex = state.tokens.length;
+  state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
+}
+
+// Parse arrow function expression.
+// If the parameters are provided, they will be converted to an
+// assignable list.
+export function parseArrowExpression(functionStart: number, startTokenIndex: number): void {
+  parseFunctionBody(functionStart, false /* isGenerator */, true);
+  const endTokenIndex = state.tokens.length;
+  state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
+}
+
+export function parseFunctionBodyAndFinish(
+  functionStart: number,
+  isGenerator: boolean,
+  allowExpressionBody: boolean | null = null,
+  funcContextId?: number,
+): void {
+  if (hasPlugin("typescript")) {
+    tsParseFunctionBodyAndFinish(functionStart, isGenerator, allowExpressionBody, funcContextId);
+  } else if (hasPlugin("flow")) {
+    flowParseFunctionBodyAndFinish(functionStart, isGenerator, allowExpressionBody, funcContextId);
+  } else {
+    parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);
   }
+}
 
-  // Parse function body and check parameters.
-  parseFunctionBody(
-    functionStart: number,
-    isGenerator: boolean,
-    allowExpression: boolean | null,
-    funcContextId?: number,
-  ): void {
-    const isExpression = allowExpression && !this.match(tt.braceL);
+// Parse function body and check parameters.
+export function parseFunctionBody(
+  functionStart: number,
+  isGenerator: boolean,
+  allowExpression: boolean | null,
+  funcContextId?: number,
+): void {
+  const isExpression = allowExpression && !match(tt.braceL);
 
-    if (isExpression) {
-      this.parseMaybeAssign();
+  if (isExpression) {
+    parseMaybeAssign();
+  } else {
+    parseBlock(true /* allowDirectives */, true /* isFunctionScope */, funcContextId);
+  }
+}
+
+// Parses a comma-separated list of expressions, and returns them as
+// an array. `close` is the token type that ends the list, and
+// `allowEmpty` can be turned on to allow subsequent commas with
+// nothing in between them to be parsed as `null` (which is needed
+// for array literals).
+
+function parseExprList(close: TokenType, allowEmpty: boolean | null = null): void {
+  let first = true;
+  while (!eat(close)) {
+    if (first) {
+      first = false;
     } else {
-      this.parseBlock(true /* allowDirectives */, true /* isFunctionScope */, funcContextId);
+      expect(tt.comma);
+      if (eat(close)) break;
     }
+    parseExprListItem(allowEmpty);
   }
+}
 
-  // Parses a comma-separated list of expressions, and returns them as
-  // an array. `close` is the token type that ends the list, and
-  // `allowEmpty` can be turned on to allow subsequent commas with
-  // nothing in between them to be parsed as `null` (which is needed
-  // for array literals).
-
-  parseExprList(close: TokenType, allowEmpty: boolean | null = null): void {
-    let first = true;
-    while (!this.eat(close)) {
-      if (first) {
-        first = false;
-      } else {
-        this.expect(tt.comma);
-        if (this.eat(close)) break;
-      }
-      this.parseExprListItem(allowEmpty);
-    }
+function parseExprListItem(allowEmpty: boolean | null): void {
+  if (allowEmpty && match(tt.comma)) {
+    // Empty item; nothing more to parse for this item.
+  } else if (match(tt.ellipsis)) {
+    parseSpread();
+  } else {
+    parseMaybeAssign(false, parseParenItem);
   }
-
-  parseExprListItem(allowEmpty: boolean | null): void {
-    if (allowEmpty && this.match(tt.comma)) {
-      // Empty item; nothing more to parse for this item.
-    } else if (this.match(tt.ellipsis)) {
-      this.parseSpread();
-    } else {
-      this.parseMaybeAssign(false, this.parseParenItem);
-    }
+  if (hasPlugin("flow") && match(tt.colon)) {
+    flowParseTypeAnnotation();
   }
+}
 
-  // Parse the next token as an identifier.
-  parseIdentifier(): void {
-    this.next();
-    this.state.tokens[this.state.tokens.length - 1].type = tt.name;
-  }
+// Parse the next token as an identifier.
+export function parseIdentifier(): void {
+  next();
+  state.tokens[state.tokens.length - 1].type = tt.name;
+}
 
-  // Parses await expression inside async function.
-  parseAwait(): void {
-    this.parseMaybeUnary();
-  }
+// Parses await expression inside async function.
+function parseAwait(): void {
+  parseMaybeUnary();
+}
 
-  // Parses yield expression inside generator.
-  parseYield(): void {
-    this.next();
-    if (!this.match(tt.semi) && !this.canInsertSemicolon()) {
-      this.eat(tt.star);
-      this.parseMaybeAssign();
-    }
+// Parses yield expression inside generator.
+function parseYield(): void {
+  next();
+  if (!match(tt.semi) && !canInsertSemicolon()) {
+    eat(tt.star);
+    parseMaybeAssign();
   }
 }

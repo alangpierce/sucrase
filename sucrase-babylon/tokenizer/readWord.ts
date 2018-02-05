@@ -6,6 +6,12 @@ import {isIdentifierChar} from "../util/identifier";
 import {ContextualKeyword, finishToken} from "./index";
 import {TokenType as tt} from "./types";
 
+/**
+ * Read an identifier, producing either a name token or matching on one of the existing keywords.
+ * For performance, we generate a big nested switch statement that can recognize all language
+ * keywords, so that we don't need to do any string allocations or hash table lookups to tell when
+ * a name token is a keyword.
+ */
 export default function readWord(): void {
   switch (input.charCodeAt(state.pos++)) {
     case charCodes.uppercaseR:

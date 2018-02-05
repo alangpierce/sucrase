@@ -3,10 +3,10 @@
 import {hasPlugin, input, raise, state} from "../parser/base";
 import {unexpected} from "../parser/util";
 import {charCodes} from "../util/charcodes";
-import {isIdentifierChar, isIdentifierStart, isKeyword} from "../util/identifier";
+import {isIdentifierChar, isIdentifierStart} from "../util/identifier";
 import {nonASCIIwhitespace} from "../util/whitespace";
 import readWord from "./readWord";
-import {keywords as keywordTypes, TokenType, TokenType as tt} from "./types";
+import {TokenType, TokenType as tt} from "./types";
 
 export enum IdentifierRole {
   Access,

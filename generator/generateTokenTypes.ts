@@ -169,7 +169,6 @@ const types = {
 export default function generateTokenTypes(): string {
   let code = '// Generated file, do not edit! Run "yarn generate" to re-generate this file.\n';
   code += generateTokenTypeEnum();
-  code += generateKeywords();
   code += generateFormatTokenType();
   return code;
 }
@@ -232,17 +231,6 @@ export const enum TokenType {
     count++;
   }
   code += "}\n";
-  return code;
-}
-
-function generateKeywords(): string {
-  let code = "export const keywords = {\n";
-  for (const [name, tokenType] of Object.entries(types)) {
-    if (tokenType.keyword) {
-      code += `  ${tokenType.label}: TokenType.${name},\n`;
-    }
-  }
-  code += "};\n";
   return code;
 }
 

@@ -6222,9 +6222,9 @@ style-loader@0.18.2:
     loader-utils "^1.0.2"
     schema-utils "^0.3.0"
 
-sucrase@^1.12.0:
-  version "1.12.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.12.0.tgz#174dfb15dbee6abed0d6d586ba5acbe6003ebca4"
+sucrase@^1.13.0:
+  version "1.13.0"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-1.13.0.tgz#9fa81ea8a5203827cac01f0bc199b039988cc6a8"
   dependencies:
     "@types/mz" "^0.0.32"
     commander "^2.12.2"

@@ -19,7 +19,7 @@ than Babel and about 8x faster than TypeScript, and it has been tested on
 hundreds of thousands of lines of code. Still, you may find correctness issues
 when running on a large codebase. Feel free to file issues!
 
-Sucrase can convert the following codebases with all tests passing:
+Sucrase can build the following codebases with all tests passing:
 * Sucrase itself (6K lines of code excluding Babylon fork, typescript, imports).
 * The [Benchling](https://benchling.com/) frontend codebase
   (500K lines of code, JSX, imports).
@@ -39,7 +39,7 @@ Sucrase can convert the following codebases with all tests passing:
 
 The main configuration option in Sucrase is an array of transform names. There
 are four main transforms that you may want to enable:
-* **jsx**: Converts JSX syntax to `React.createElement`, e.g. `<div a={b} />`
+* **jsx**: Transforms JSX syntax to `React.createElement`, e.g. `<div a={b} />`
   becomes `React.createElement('div', {a: b})`. Behaves like Babel 7's
   [babel-preset-react](https://github.com/babel/babel/tree/master/packages/babel-preset-react),
   including adding `createReactClass` display names and JSX context information.
@@ -47,7 +47,7 @@ are four main transforms that you may want to enable:
   annotations and handling features like enums. Does not check types.
 * **flow**:  Removes Flow types, e.g. `const f = (x: number): string => "hi";`
   to `const f = (x) => "hi";`. Does not check types.
-* **imports**: Converts ES Modules (`import`/`export`) to CommonJS
+* **imports**: Transforms ES Modules (`import`/`export`) to CommonJS
   (`require`/`module.exports`) using the same approach as Babel. With the
   `typescript` transform enabled, the import conversion uses the behavior of the
   TypeScript compiler (which is slightly more lenient). Also includes dynamic

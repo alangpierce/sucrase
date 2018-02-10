@@ -8,8 +8,9 @@ import * as TypeScript from "typescript";
 import * as sucrase from "../src/index";
 
 function main(): void {
-  console.log("Simulating transpilation of 100,000 lines of code:");
-  const code = fs.readFileSync("./benchmark/sample/sample.tsx").toString();
+  const sampleFile = process.argv[2] || "sample.tsx";
+  console.log(`Simulating 100 compilations of ${sampleFile}:`);
+  const code = fs.readFileSync(`./benchmark/sample/${sampleFile}`).toString();
   runBenchmark("Sucrase", () =>
     sucrase.transform(code, {
       transforms: ["jsx", "imports", "typescript"],

@@ -50,7 +50,7 @@ async function buildDirectory(
   transforms: Array<Transform>,
 ): Promise<void> {
   const extension = transforms.includes("typescript") ? ".ts" : ".js";
-  if (!await exists(outDirPath)) {
+  if (!(await exists(outDirPath))) {
     await mkdir(outDirPath);
   }
   for (const child of await readdir(srcDirPath)) {

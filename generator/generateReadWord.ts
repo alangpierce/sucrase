@@ -52,6 +52,7 @@ const CONTEXTUAL_KEYWORDS = [
   "get",
   "global",
   "implements",
+  "infer",
   "interface",
   "is",
   "keyof",
@@ -65,9 +66,10 @@ const CONTEXTUAL_KEYWORDS = [
   "public",
   "readonly",
   "require",
+  "set",
   "static",
   "type",
-  "set",
+  "unique",
   // Custom identifiers we want to match.
   "React",
   "createClass",
@@ -106,6 +108,8 @@ export default function readWord(): void {
         }
         state.pos++;
       }
+    } else if (ch === charCodes.atSign && input.charCodeAt(state.pos + 1) === charCodes.atSign) {
+      state.pos += 2;
     } else {
       break;
     }

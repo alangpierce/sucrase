@@ -299,6 +299,8 @@ export default class ImportTransformer extends Transformer {
       }
       const name = this.rootTransformer.processNamedClass();
       this.tokens.appendCode(` exports.default = ${name};`);
+    } else if (this.tokens.matches3(tt._export, tt._default, tt.at)) {
+      throw new Error("Export default statements with decorators are not yet supported.");
     } else {
       this.tokens.replaceToken("exports.");
       this.tokens.copyToken();

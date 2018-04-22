@@ -93,7 +93,16 @@ function runBabel() {
           "proposal-optional-catch-binding",
           "dynamic-import-node",
         ],
-        parserOpts: {plugins: ["jsx", "classProperties", "numericSeparator"]},
+        parserOpts: {
+          plugins: [
+            "classProperties",
+            "decorators",
+            "jsx",
+            "logicalAssignment",
+            "numericSeparator",
+            "optionalChaining",
+          ],
+        },
       }).code,
   );
 }

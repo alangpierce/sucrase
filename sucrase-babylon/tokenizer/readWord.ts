@@ -528,6 +528,17 @@ export default function readWord(): void {
             return;
           }
           switch (input.charCodeAt(state.pos++)) {
+            case charCodes.lowercaseF:
+              if (
+                input.charCodeAt(state.pos++) === charCodes.lowercaseE &&
+                input.charCodeAt(state.pos++) === charCodes.lowercaseR &&
+                !isIdentifierChar(input.charCodeAt(state.pos)) &&
+                input.charCodeAt(state.pos) !== charCodes.backslash
+              ) {
+                finishToken(tt.name, ContextualKeyword._infer);
+                return;
+              }
+              break;
             case charCodes.lowercaseS:
               if (
                 input.charCodeAt(state.pos++) === charCodes.lowercaseT &&
@@ -913,6 +924,20 @@ export default function readWord(): void {
           break;
       }
       break;
+    case charCodes.lowercaseU:
+      if (
+        input.charCodeAt(state.pos++) === charCodes.lowercaseN &&
+        input.charCodeAt(state.pos++) === charCodes.lowercaseI &&
+        input.charCodeAt(state.pos++) === charCodes.lowercaseQ &&
+        input.charCodeAt(state.pos++) === charCodes.lowercaseU &&
+        input.charCodeAt(state.pos++) === charCodes.lowercaseE &&
+        !isIdentifierChar(input.charCodeAt(state.pos)) &&
+        input.charCodeAt(state.pos) !== charCodes.backslash
+      ) {
+        finishToken(tt.name, ContextualKeyword._unique);
+        return;
+      }
+      break;
     case charCodes.lowercaseV:
       switch (input.charCodeAt(state.pos++)) {
         case charCodes.lowercaseA:
@@ -994,6 +1019,8 @@ export default function readWord(): void {
         }
         state.pos++;
       }
+    } else if (ch === charCodes.atSign && input.charCodeAt(state.pos + 1) === charCodes.atSign) {
+      state.pos += 2;
     } else {
       break;
     }

@@ -32,6 +32,7 @@ export const enum ContextualKeyword {
   _get,
   _global,
   _implements,
+  _infer,
   _interface,
   _is,
   _keyof,
@@ -45,9 +46,10 @@ export const enum ContextualKeyword {
   _public,
   _readonly,
   _require,
+  _set,
   _static,
   _type,
-  _set,
+  _unique,
   // Also throw in some identifiers we know we'll need to match on.
   _React,
   _createClass,
@@ -175,7 +177,11 @@ export function nextToken(): void {
 function readToken(code: number): void {
   // Identifier or keyword. '\uXXXX' sequences are allowed in
   // identifiers, so '\' also dispatches to that.
-  if (isIdentifierStart(code) || code === charCodes.backslash) {
+  if (
+    isIdentifierStart(code) ||
+    code === charCodes.backslash ||
+    (code === charCodes.atSign && input.charCodeAt(state.pos + 1) === charCodes.atSign)
+  ) {
     readWord();
   } else {
     getTokenFromCode(code);
@@ -329,7 +335,13 @@ function readToken_pipe_amp(code: number): void {
   const nextChar = input.charCodeAt(state.pos + 1);
 
   if (nextChar === code) {
-    finishOp(code === charCodes.verticalBar ? tt.logicalOR : tt.logicalAND, 2);
+    if (input.charCodeAt(state.pos + 2) === charCodes.equalsTo) {
+      // ||= or &&=
+      finishOp(tt.assign, 3);
+    } else {
+      // || or &&
+      finishOp(code === charCodes.verticalBar ? tt.logicalOR : tt.logicalAND, 2);
+    }
     return;
   }
 
@@ -434,8 +446,13 @@ function readToken_question(): void {
   const nextChar = input.charCodeAt(state.pos + 1);
   const nextChar2 = input.charCodeAt(state.pos + 2);
   if (nextChar === charCodes.questionMark) {
-    // '??'
-    finishOp(tt.nullishCoalescing, 2);
+    if (nextChar2 === charCodes.equalsTo) {
+      // '??='
+      finishOp(tt.assign, 3);
+    } else {
+      // '??'
+      finishOp(tt.nullishCoalescing, 2);
+    }
   } else if (
     nextChar === charCodes.dot &&
     !(nextChar2 >= charCodes.digit0 && nextChar2 <= charCodes.digit9)

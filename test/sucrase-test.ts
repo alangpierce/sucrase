@@ -432,4 +432,65 @@ describe("sucrase", () => {
       ["jsx", "imports", "typescript"],
     );
   });
+
+  // Decorators aren't yet supported in any runtime, so passing them through correctly is low priority.
+  it.skip("handles decorated classes with static fields", () => {
+    assertResult(
+      `
+      export default @dec class A {
+        static x = 1;
+      }
+    `,
+      `"use strict";
+       @dec class A {
+        
+      } A.x = 1; exports.default = A;
+    `,
+      ["jsx", "imports"],
+    );
+  });
+
+  it("handles logical assignment operators", () => {
+    assertResult(
+      `
+      a &&= b;
+      c ||= d;
+      e ??= f;
+    `,
+      `"use strict";
+      a &&= b;
+      c ||= d;
+      e ??= f;
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
+
+  it("handles decorators with a parenthesized expression", () => {
+    assertResult(
+      `
+      class Bar{
+        @(
+          @classDec class { 
+            @inner 
+            innerMethod() {} 
+          }
+        )
+        outerMethod() {}
+      }
+    `,
+      `"use strict";
+      class Bar{
+        @(
+          @classDec class { 
+             
+            innerMethod() {} 
+          }
+        )
+        outerMethod() {}
+      }
+    `,
+      ["jsx", "imports", "typescript"],
+    );
+  });
 });

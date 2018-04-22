@@ -742,4 +742,118 @@ describe("typescript transform", () => {
       ["typescript", "imports"],
     );
   });
+
+  it("handles assert and assign syntax", () => {
+    assertResult(
+      `
+      (a as b) = c;
+    `,
+      `"use strict";
+      (a ) = c;
+    `,
+      ["typescript", "imports"],
+    );
+  });
+
+  it("handles possible JSX ambiguities", () => {
+    assertResult(
+      `
+      f<T>();
+      new C<T>();
+      type A = T<T>;
+    `,
+      `"use strict";
+      f();
+      new C();
+      
+    `,
+      ["typescript", "imports"],
+    );
+  });
+
+  it("handles the 'unique' contextual keyword", () => {
+    assertResult(
+      `
+      let y: unique symbol;
+    `,
+      `"use strict";
+      let y;
+    `,
+      ["typescript", "imports"],
+    );
+  });
+
+  it("handles async arrow functions with rest params", () => {
+    assertResult(
+      `
+      const foo = async (...args: any[]) => {}
+      const bar = async (...args?: any[]) => {}
+    `,
+      `"use strict";
+      const foo = async (...args) => {}
+      const bar = async (...args) => {}
+    `,
+      ["typescript", "imports"],
+    );
+  });
+
+  it("handles conditional types", () => {
+    assertResult(
+      `
+      type A = B extends C ? D : E;
+    `,
+      `"use strict";
+      
+    `,
+      ["typescript", "imports"],
+    );
+  });
+
+  it("handles the 'infer' contextual keyword in types", () => {
+    assertResult(
+      `
+      type Element<T> = T extends (infer U)[] ? U : T;
+    `,
+      `"use strict";
+      
+    `,
+      ["typescript", "imports"],
+    );
+  });
+
+  it("handles definite assignment assertions in classes", () => {
+    assertResult(
+      `
+      class A {
+        foo!: number;
+        getFoo(): number {
+          return foo;
+        }
+      }
+    `,
+      `"use strict";
+      class A {
+        
+        getFoo() {
+          return foo;
+        }
+      }
+    `,
+      ["typescript", "imports"],
+    );
+  });
+
+  it("handles mapped type modifiers", () => {
+    assertResult(
+      `
+      let map: { +readonly [P in string]+?: number; };
+      let map2: { -readonly [P in string]-?: number };
+    `,
+      `"use strict";
+      let map;
+      let map2;
+    `,
+      ["typescript", "imports"],
+    );
+  });
 });

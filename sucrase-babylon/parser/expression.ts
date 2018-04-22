@@ -931,11 +931,9 @@ function parseExprListItem(allowEmpty: boolean | null): void {
     // Empty item; nothing more to parse for this item.
   } else if (match(tt.ellipsis)) {
     parseSpread();
+    parseParenItem();
   } else {
     parseMaybeAssign(false, parseParenItem);
-  }
-  if (hasPlugin("flow") && match(tt.colon)) {
-    flowParseTypeAnnotation();
   }
 }
 

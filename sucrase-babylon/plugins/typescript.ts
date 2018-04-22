@@ -363,6 +363,9 @@ function tsParseObjectTypeMembers(): void {
 
 function tsIsStartOfMappedType(): boolean {
   next();
+  if (eat(tt.plus) || eat(tt.minus)) {
+    return isContextual(ContextualKeyword._readonly);
+  }
   if (isContextual(ContextualKeyword._readonly)) {
     next();
   }
@@ -385,11 +388,21 @@ function tsParseMappedTypeParameter(): void {
 
 function tsParseMappedType(): void {
   expect(tt.braceL);
-  eatContextual(ContextualKeyword._readonly);
+  if (match(tt.plus) || match(tt.minus)) {
+    next();
+    expectContextual(ContextualKeyword._readonly);
+  } else {
+    eatContextual(ContextualKeyword._readonly);
+  }
   expect(tt.bracketL);
   tsParseMappedTypeParameter();
   expect(tt.bracketR);
-  eat(tt.question);
+  if (match(tt.plus) || match(tt.minus)) {
+    next();
+    expect(tt.question);
+  } else {
+    eat(tt.question);
+  }
   tsTryParseType();
   semicolon();
   expect(tt.braceR);
@@ -477,9 +490,17 @@ function tsParseArrayTypeOrHigher(): void {
   }
 }
 
+function tsParseInferType(): void {
+  expectContextual(ContextualKeyword._infer);
+  parseIdentifier();
+}
+
 function tsParseTypeOperatorOrHigher(): void {
-  if (eatContextual(ContextualKeyword._keyof)) {
+  if (isContextual(ContextualKeyword._keyof) || isContextual(ContextualKeyword._unique)) {
+    next();
     tsParseTypeOperatorOrHigher();
+  } else if (isContextual(ContextualKeyword._infer)) {
+    tsParseInferType();
   } else {
     tsParseArrayTypeOrHigher();
   }
@@ -593,6 +614,21 @@ export function tsParseTypeAnnotation(): void {
 }
 
 export function tsParseType(): void {
+  tsParseNonConditionalType();
+  if (hasPrecedingLineBreak() || !eat(tt._extends)) {
+    return;
+  }
+  // extends type
+  tsParseNonConditionalType();
+  expect(tt.question);
+  // true type
+  tsParseType();
+  expect(tt.colon);
+  // false type
+  tsParseType();
+}
+
+export function tsParseNonConditionalType(): void {
   if (tsIsStartOfFunctionType()) {
     tsParseFunctionOrConstructorType("TSFunctionType");
     return;
@@ -1216,6 +1252,7 @@ export function tsStartParseFunctionParams(): void {
 
 // `let x: number;`
 export function tsAfterParseVarHead(): void {
+  eat(tt.bang);
   tsTryParseTypeAnnotation();
 }
 

@@ -233,6 +233,13 @@ function flowParseInterfaceish(isClass?: boolean): void {
     } while (eat(tt.comma));
   }
 
+  if (isContextual(ContextualKeyword._implements)) {
+    next();
+    do {
+      flowParseInterfaceExtends();
+    } while (eat(tt.comma));
+  }
+
   flowParseObjectType(true, false);
 }
 

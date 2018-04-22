@@ -240,9 +240,14 @@ export function parseDecorators(): void {
 
 function parseDecorator(): void {
   next();
-  parseIdentifier();
-  while (eat(tt.dot)) {
+  if (eat(tt.parenL)) {
+    parseExpression();
+    expect(tt.parenR);
+  } else {
     parseIdentifier();
+    while (eat(tt.dot)) {
+      parseIdentifier();
+    }
   }
   if (eat(tt.parenL)) {
     parseCallExpressionArguments(tt.parenR);
@@ -628,7 +633,7 @@ export function parseClass(isStatement: boolean, optionalId: boolean = false): v
 }
 
 function isClassProperty(): boolean {
-  return match(tt.eq) || match(tt.semi) || match(tt.braceR) || match(tt.colon);
+  return match(tt.eq) || match(tt.semi) || match(tt.braceR) || match(tt.bang) || match(tt.colon);
 }
 
 function isClassMethod(): boolean {
@@ -760,7 +765,6 @@ export function parseClassPropertyName(classContextId: number): void {
   parsePropertyName(classContextId);
 }
 
-// Overridden in typescript.js
 export function parsePostMemberNameModifiers(): void {
   if (hasPlugin("typescript")) {
     eat(tt.question);
@@ -769,6 +773,7 @@ export function parsePostMemberNameModifiers(): void {
 
 export function parseClassProperty(): void {
   if (hasPlugin("typescript")) {
+    eat(tt.bang);
     tsTryParseTypeAnnotation();
   } else if (hasPlugin("flow")) {
     if (match(tt.colon)) {
@@ -874,6 +879,9 @@ function parseExportDefaultExpression(): void {
     eat(tt._function);
     parseFunction(functionStart, true, false, true);
   } else if (match(tt._class)) {
+    parseClass(true, true);
+  } else if (match(tt.at)) {
+    parseDecorators();
     parseClass(true, true);
   } else {
     parseMaybeAssign();

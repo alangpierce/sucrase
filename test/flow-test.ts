@@ -173,4 +173,30 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("properly handles @@iterator in a declared class", () => {
+    assertFlowResult(
+      `
+      declare class A {
+        @@iterator(): Iterator<File>;
+      }
+    `,
+      `"use strict";${IMPORT_PREFIX}
+      
+
+
+    `,
+    );
+  });
+
+  it("supports the implements keyword", () => {
+    assertFlowResult(
+      `
+      declare class A implements B, C {}
+    `,
+      `"use strict";${IMPORT_PREFIX}
+      
+    `,
+    );
+  });
 });

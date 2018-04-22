@@ -66,12 +66,12 @@
     "eslint-plugin-tslint": "^2.1.0",
     "eslint-plugin-typescript": "^0.8.1",
     "mocha": "^3.5.3",
-    "prettier": "^1.9.2",
+    "prettier": "^1.12.1",
     "ts-node": "^4.0.2",
-    "tslint": "^5.8.0",
-    "tslint-language-service": "^0.9.7",
-    "typescript": "^2.6.2",
-    "typescript-eslint-parser": "^11.0.0"
+    "tslint": "^5.9.1",
+    "tslint-language-service": "^0.9.9",
+    "typescript": "^2.8.3",
+    "typescript-eslint-parser": "^15.0.0"
   },
   "dependencies": {
     "@types/mz": "^0.0.32",
@@ -79,7 +79,7 @@
     "lines-and-columns": "^1.1.6",
     "mz": "^2.7.0",
     "pirates": "^3.0.2",
-    "tslib": "^1.7.1"
+    "tslib": "^1.9.0"
   },
   "engines": {
     "node": ">=8"

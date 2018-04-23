@@ -82,16 +82,16 @@ describe("transform react-display-name", () => {
       `
       import React from 'react';
 
-      export default React.createClass({
+      React.createClass({
         render() {
           return <div />;
         }
       });
     `,
-      `"use strict";${JSX_PREFIX}${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${JSX_PREFIX}${IMPORT_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
 
-      exports. default = _react2.default.createClass({
+      _react2.default.createClass({
         render() {
           return _react2.default.createElement('div', {${devProps(6)}} );
         }
@@ -149,6 +149,31 @@ describe("transform react-display-name", () => {
         }
       });
     `,
+    );
+  });
+
+  it("names an anonymous export default component after the filename", () => {
+    assertResult(
+      `
+      import React from 'react';
+
+      export default React.createClass({
+        render() {
+          return <div />;
+        }
+      });
+    `,
+      `"use strict";const _jsxFileName = "MyComponent.js";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+
+      exports. default = _react2.default.createClass({displayName: 'MyComponent',
+        render() {
+          return _react2.default.createElement('div', {${devProps(6)}} );
+        }
+      });
+    `,
+      ["jsx", "imports"],
+      "MyComponent.js",
     );
   });
 });

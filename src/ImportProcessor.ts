@@ -38,11 +38,11 @@ export default class ImportProcessor {
   constructor(
     readonly nameManager: NameManager,
     readonly tokens: TokenProcessor,
-    readonly isTypeScript: boolean,
+    readonly enableLegacyTypeScriptModuleInterop: boolean,
   ) {}
 
   getPrefixCode(): string {
-    if (this.isTypeScript) {
+    if (this.enableLegacyTypeScriptModuleInterop) {
       return "";
     }
     let prefix = "";
@@ -70,7 +70,7 @@ export default class ImportProcessor {
   }
 
   preprocessTokens(): void {
-    if (!this.isTypeScript) {
+    if (!this.enableLegacyTypeScriptModuleInterop) {
       this.interopRequireWildcardName = this.nameManager.claimFreeName("_interopRequireWildcard");
       this.interopRequireDefaultName = this.nameManager.claimFreeName("_interopRequireDefault");
     }
@@ -167,7 +167,7 @@ export default class ImportProcessor {
 
       const primaryImportName = this.getFreeIdentifierForPath(path);
       let secondaryImportName;
-      if (this.isTypeScript) {
+      if (this.enableLegacyTypeScriptModuleInterop) {
         secondaryImportName = primaryImportName;
       } else {
         secondaryImportName =
@@ -176,7 +176,7 @@ export default class ImportProcessor {
       let requireCode = `var ${primaryImportName} = require('${path}');`;
       if (wildcardNames.length > 0) {
         for (const wildcardName of wildcardNames) {
-          const moduleExpr = this.isTypeScript
+          const moduleExpr = this.enableLegacyTypeScriptModuleInterop
             ? primaryImportName
             : `${this.interopRequireWildcardName}(${primaryImportName})`;
           requireCode += ` var ${wildcardName} = ${moduleExpr};`;

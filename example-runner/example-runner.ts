@@ -73,17 +73,20 @@ async function runProject(project: string, shouldSave: boolean): Promise<boolean
   if (!await exists(revPath) || !await exists(patchPath) || shouldSave) {
     console.log(`Generating metadata for ${project}`);
     await run(`git rev-parse HEAD > ${revPath}`);
-    await run(`git diff > ${patchPath}`);
+    await run(`git diff HEAD > ${patchPath}`);
   }
 
   try {
     await run(`cat ${revPath} | xargs git reset --hard`);
+    await run(`git clean -f`);
   } catch (e) {
     await run("git fetch");
     await run(`cat ${revPath} | xargs git reset --hard`);
+    await run(`git clean -f`);
   }
   if ((await readFile(patchPath)).length) {
     await run(`cat ${patchPath} | git apply`);
+    await run(`git add -A`);
   }
 
   await run("yarn");

@@ -7,10 +7,12 @@ import TokenProcessor from "./TokenProcessor";
 import RootTransformer from "./transformers/RootTransformer";
 import formatTokens from "./util/formatTokens";
 
-export type Transform = "jsx" | "imports" | "flow" | "typescript" | "add-module-exports";
+export type Transform = "jsx" | "typescript" | "flow" | "imports";
 
 export type Options = {
   transforms: Array<Transform>;
+  enableLegacyTypeScriptModuleInterop?: boolean;
+  enableLegacyBabel5ModuleInterop?: boolean;
   filePath?: string;
 };
 
@@ -32,6 +34,7 @@ export function transform(code: string, options: Options): string {
     return new RootTransformer(
       sucraseContext,
       options.transforms,
+      Boolean(options.enableLegacyBabel5ModuleInterop),
       options.filePath || null,
     ).transform();
   } catch (e) {
@@ -71,10 +74,14 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
   const tokenProcessor = new TokenProcessor(code, tokens);
   const nameManager = new NameManager(tokenProcessor);
   nameManager.preprocessNames();
-  const isTypeScript = options.transforms.includes("typescript");
-  const importProcessor = new ImportProcessor(nameManager, tokenProcessor, isTypeScript);
+  const enableLegacyTypeScriptModuleInterop = Boolean(options.enableLegacyTypeScriptModuleInterop);
+  const importProcessor = new ImportProcessor(
+    nameManager,
+    tokenProcessor,
+    enableLegacyTypeScriptModuleInterop,
+  );
   importProcessor.preprocessTokens();
-  if (isTypeScript) {
+  if (options.transforms.includes("typescript")) {
     importProcessor.pruneTypeOnlyImports();
   }
   identifyShadowedGlobals(tokenProcessor, scopes, importProcessor.getGlobalNames());

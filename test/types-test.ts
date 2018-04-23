@@ -2,8 +2,8 @@ import {ESMODULE_PREFIX, IMPORT_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
 function assertTypeScriptAndFlowResult(code: string, expectedResult: string): void {
-  assertResult(code, `"use strict";${expectedResult}`, ["jsx", "imports", "typescript"]);
-  assertResult(code, `"use strict";${IMPORT_PREFIX}${expectedResult}`, ["jsx", "imports", "flow"]);
+  assertResult(code, expectedResult, {transforms: ["jsx", "imports", "typescript"]});
+  assertResult(code, expectedResult, {transforms: ["jsx", "imports", "flow"]});
 }
 
 /**
@@ -16,7 +16,7 @@ describe("type transforms", () => {
       class A implements B {}
       class C extends D implements E {}
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       class A  {}
       class C extends D  {}
     `,
@@ -42,7 +42,7 @@ describe("type transforms", () => {
         }
       }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       function f() {
         return 3;
       }
@@ -70,7 +70,7 @@ describe("type transforms", () => {
         const b = (a: number);
       }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       function foo(x, y) {
         const a = "Hello";
         const b = (a);
@@ -86,7 +86,7 @@ describe("type transforms", () => {
         return [];
       }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       function foo() {
         return [];
       }
@@ -101,7 +101,7 @@ describe("type transforms", () => {
         return [];
       }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       function foo() {
         return [];
       }
@@ -117,7 +117,7 @@ describe("type transforms", () => {
         y: {} = {};
       }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       class A {constructor() { this.x = 2;this.y = {}; }
         
         
@@ -133,7 +133,7 @@ describe("type transforms", () => {
         x: number;
       }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       class A {
         
       }
@@ -156,7 +156,7 @@ describe("type transforms", () => {
         }
       }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       function f(t) {
         console.log(t);
       }
@@ -179,7 +179,7 @@ describe("type transforms", () => {
         return x + 1;
       }
     `,
-      `${ESMODULE_PREFIX}
+      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
        function foo(x) {
         return x + 1;
       } exports.foo = foo;
@@ -193,7 +193,7 @@ describe("type transforms", () => {
       type foo = number;
       const x: foo = 3;
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       
       const x = 3;
     `,
@@ -206,7 +206,7 @@ describe("type transforms", () => {
       export type foo = number | string;
       export const x = 1;
     `,
-      `${ESMODULE_PREFIX}
+      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
       
        exports.x = 1;
     `,
@@ -220,7 +220,7 @@ describe("type transforms", () => {
         return x;
       }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       function foo(x) {
         return x;
       }
@@ -233,7 +233,7 @@ describe("type transforms", () => {
       `
       const x: | number | string = "Hello";
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       const x = "Hello";
     `,
     );
@@ -246,7 +246,7 @@ describe("type transforms", () => {
       const arr2: Array<Array<number>> = [[2]];
       const arr3: Array<Array<Array<number>>> = [[[3]]];
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       const arr1 = [[1]];
       const arr2 = [[2]];
       const arr3 = [[[3]]];
@@ -260,7 +260,7 @@ describe("type transforms", () => {
       interface Cartesian { x: number; y: number; }
       export interface Polar { r: number; theta: number; }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       
 
     `,
@@ -274,7 +274,7 @@ describe("type transforms", () => {
         interface: true,
       };
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       const o = {
         interface: true,
       };
@@ -289,7 +289,7 @@ describe("type transforms", () => {
         return 'Hi!';
       }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       function foo(x) {
         return 'Hi!';
       }
@@ -302,7 +302,7 @@ describe("type transforms", () => {
       `
       const f = <T>(t: T): number => 3;
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       const f = (t) => 3;
     `,
     );
@@ -313,7 +313,7 @@ describe("type transforms", () => {
       `
       const f: <T>(t: T) => number = () => 3;
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       const f = () => 3;
     `,
     );
@@ -324,7 +324,7 @@ describe("type transforms", () => {
       `
       class Foo<T> {}
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       class Foo {}
     `,
     );
@@ -337,7 +337,7 @@ describe("type transforms", () => {
         return -1;
       }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       function foo() {
         return -1;
       }
@@ -353,7 +353,7 @@ describe("type transforms", () => {
         }
       }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       class A {
         b() {
         }
@@ -369,7 +369,7 @@ describe("type transforms", () => {
         source: Map<B, C>,
       };
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       
 
 
@@ -385,7 +385,7 @@ describe("type transforms", () => {
         }
       }
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       class A {
         constructor() {
         }
@@ -399,7 +399,7 @@ describe("type transforms", () => {
       `
       const f = (x?: number) => x + 1;
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       const f = (x) => x + 1;
     `,
     );
@@ -410,7 +410,7 @@ describe("type transforms", () => {
       `
       class A extends B<C> {}
     `,
-      `
+      `"use strict";${IMPORT_PREFIX}
       class A extends B {}
     `,
     );

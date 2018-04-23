@@ -16,5 +16,5 @@ index 1aee96b..d084985 100644
 +++ b/test/mocha.opts
 @@ -1,2 +1,2 @@
 ---compilers ts:ts-node/register,js:babel-register
-+--compilers ts:sucrase/register/ts
++--compilers ts:sucrase/register/ts-legacy-module-interop
  --recursive

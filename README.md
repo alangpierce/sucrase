@@ -45,13 +45,10 @@ are four main transforms that you may want to enable:
   including adding `createReactClass` display names and JSX context information.
 * **typescript**: Compiles TypeScript code to JavaScript, removing type
   annotations and handling features like enums. Does not check types.
-* **flow**:  Removes Flow types, e.g. `const f = (x: number): string => "hi";`
-  to `const f = (x) => "hi";`. Does not check types.
+* **flow**:  Removes Flow type annotations. Does not check types.
 * **imports**: Transforms ES Modules (`import`/`export`) to CommonJS
-  (`require`/`module.exports`) using the same approach as Babel. With the
-  `typescript` transform enabled, the import conversion uses the behavior of the
-  TypeScript compiler (which is slightly more lenient). Also includes dynamic
-  `import`.
+  (`require`/`module.exports`) using the same approach as Babel 6 and TypeScript
+  with `--esModuleInterop`. Also includes dynamic `import`.
 
 The following proposed JS features are built-in and always transformed:
 * [Class fields](https://github.com/tc39/proposal-class-fields): `class C { x = 1; }`.
@@ -63,10 +60,19 @@ The following proposed JS features are built-in and always transformed:
 * [Optional catch binding](https://github.com/tc39/proposal-optional-catch-binding):
   `try { doThing(); } catch { }`.
 
-There are some additional opt-in transforms that are useful in legacy situations:
-* **add-module-exports**: Mimic the Babel 5 approach to CommonJS interop, so that
-  you can run `require('./MyModule')` instead of `require('./MyModule').default`.
-  Analogous to
+When using the `import` transform, there are some options to enable legacy
+CommonJS interop approaches:
+* **enableLegacyTypeScriptModuleInterop**: Use the default TypeScript approach
+  to CommonJS interop instead of assuming that TypeScript's `--esModuleInterop`
+  flag is enabled. For example, if a CJS module exports a function, legacy
+  TypeScript interop requires you to write `import * as add from './add';`,
+  while Babel, Webpack, Node.js, and TypeScript with `--esModuleInterop` require
+  you to write `import add from './add';`. As mentioned in the
+  [docs](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-7.html#support-for-import-d-from-cjs-form-commonjs-modules-with---esmoduleinterop),
+  the TypeScript team recommends you always use `--esModuleInterop`.
+* **enableLegacyBabel5ModuleInterop**: Use the Babel 5 approach to CommonJS
+  interop, so that you can run `require('./MyModule')` instead of
+  `require('./MyModule').default`. Analogous to
   [babel-plugin-add-module-exports](https://github.com/59naga/babel-plugin-add-module-exports).
 
 ## Usage

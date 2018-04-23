@@ -84,11 +84,11 @@ function jsxParseIdentifier(): void {
 }
 
 // Parse namespaced identifier.
-function jsxParseNamespacedName(): void {
+function jsxParseNamespacedName(identifierRole: IdentifierRole): void {
   jsxParseIdentifier();
   if (!eat(tt.colon)) {
     // Plain identifier, so this is an access.
-    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.Access;
+    state.tokens[state.tokens.length - 1].identifierRole = identifierRole;
     return;
   }
   // Process the second half of the namespaced name.
@@ -98,7 +98,7 @@ function jsxParseNamespacedName(): void {
 // Parses element name in any form - namespaced, member
 // or single identifier.
 function jsxParseElementName(): void {
-  jsxParseNamespacedName();
+  jsxParseNamespacedName(IdentifierRole.Access);
   while (match(tt.dot)) {
     nextJSXTagToken();
     jsxParseIdentifier();
@@ -159,7 +159,7 @@ function jsxParseAttribute(): void {
     nextJSXTagToken();
     return;
   }
-  jsxParseNamespacedName();
+  jsxParseNamespacedName(IdentifierRole.ObjectKey);
   if (match(tt.eq)) {
     nextJSXTagToken();
     jsxParseAttributeValue();

@@ -308,7 +308,7 @@ describe("type transforms", () => {
     );
   });
 
-  it.skip("does not confuse type parameters with JSX in type expressions", () => {
+  it("does not confuse type parameters with JSX in type expressions", () => {
     assertTypeScriptAndFlowResult(
       `
       const f: <T>(t: T) => number = () => 3;

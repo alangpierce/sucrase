@@ -1,4 +1,4 @@
-import {ESMODULE_PREFIX, IMPORT_PREFIX} from "./prefixes";
+import {ESMODULE_PREFIX, IMPORT_PREFIX, JSX_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
 function assertTypeScriptResult(code: string, expectedResult: string): void {
@@ -854,6 +854,50 @@ describe("typescript transform", () => {
       let map2;
     `,
       ["typescript", "imports"],
+    );
+  });
+
+  it("does not prune imported identifiers referenced by JSX", () => {
+    assertResult(
+      `
+      import React from 'react';
+      
+      import Foo from './Foo';
+      import Bar from './Bar';
+      import someProp from './someProp';
+      import lowercaseComponent from './lowercaseComponent';
+      import div from './div';
+      
+      const x: Bar = 3;
+      function render(): JSX.Element {
+        return (
+          <div>
+            <Foo.Bar someProp="a" />
+            <lowercaseComponent.Thing />
+          </div>
+        );
+      }
+    `,
+      `"use strict";${JSX_PREFIX}
+      var _react = require('react');
+      
+      var _Foo = require('./Foo');
+      
+      
+      var _lowercaseComponent = require('./lowercaseComponent');
+      
+      
+      const x = 3;
+      function render() {
+        return (
+          _react.default.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 13}}
+            , _react.default.createElement(_Foo.default.Bar, { someProp: "a", __self: this, __source: {fileName: _jsxFileName, lineNumber: 14}} )
+            , _react.default.createElement(_lowercaseComponent.default.Thing, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 15}} )
+          )
+        );
+      }
+    `,
+      ["typescript", "jsx", "imports"],
     );
   });
 });

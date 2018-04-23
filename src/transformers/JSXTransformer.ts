@@ -206,7 +206,7 @@ export default class JSXTransformer extends Transformer {
   }
 }
 
-function startsWithLowerCase(s: string): boolean {
+export function startsWithLowerCase(s: string): boolean {
   return s[0] === s[0].toLowerCase();
 }
 

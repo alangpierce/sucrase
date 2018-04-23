@@ -6,8 +6,9 @@ export function assertResult(
   code: string,
   expectedResult: string,
   transforms: Array<Transform> = ["jsx", "imports"],
+  filePath?: string,
 ): void {
-  assert.equal(transform(code, {transforms}), expectedResult);
+  assert.equal(transform(code, {transforms, filePath}), expectedResult);
 }
 
 export function devProps(lineNumber: number): string {

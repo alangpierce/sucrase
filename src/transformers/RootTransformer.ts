@@ -34,7 +34,7 @@ export default class RootTransformer {
         new JSXTransformer(this, tokenProcessor, importProcessor, this.nameManager, filePath),
       );
       this.transformers.push(
-        new ReactDisplayNameTransformer(this, tokenProcessor, importProcessor),
+        new ReactDisplayNameTransformer(this, tokenProcessor, importProcessor, filePath),
       );
     }
 

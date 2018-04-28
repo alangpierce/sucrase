@@ -603,7 +603,7 @@ var _moduleName = require('moduleName');
     
 module.exports = exports.default;
 `,
-      ["imports", "add-module-exports"],
+      {transforms: ["imports"], enableLegacyBabel5ModuleInterop: true},
     );
   });
 
@@ -617,7 +617,7 @@ module.exports = exports.default;
        exports.x = 1;
       exports. default = 4;
     `,
-      ["imports", "add-module-exports"],
+      {transforms: ["imports"], enableLegacyBabel5ModuleInterop: true},
     );
   });
 

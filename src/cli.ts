@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
-import * as commander from "commander";
+import commander from "commander";
 import {exists, mkdir, readdir, readFile, stat, writeFile} from "mz/fs";
 import {join} from "path";
 
-import {Transform, transform} from "./index";
+import {Options, Transform, transform} from "./index";
 
 export default function run(): void {
   commander
@@ -15,6 +15,11 @@ export default function run(): void {
     )
     .option("--exclude-dirs <paths>", "Names of directories that should not be traversed.")
     .option("-t, --transforms <transforms>", "Comma-separated list of transforms to run.")
+    .option(
+      "--enable-legacy-typescript-module-interop",
+      "Use default TypeScript ESM/CJS interop strategy.",
+    )
+    .option("--enable-legacy-babel5-module-interop", "Use Babel 5 ESM/CJS interop strategy.")
     .parse(process.argv);
 
   if (!commander.outDir) {
@@ -33,11 +38,16 @@ export default function run(): void {
   }
 
   const outDir = commander.outDir;
-  const transforms = commander.transforms.split(",");
   const srcDir = commander.args[0];
   const excludeDirs = commander.excludeDirs ? commander.excludeDirs.split(",") : [];
 
-  buildDirectory(srcDir, outDir, excludeDirs, transforms).catch((e) => {
+  const options: Options = {
+    transforms: commander.transforms.split(","),
+    enableLegacyTypeScriptModuleInterop: commander.enableLegacyTypescriptModuleInterop,
+    enableLegacyBabel5ModuleInterop: commander.enableLegacyBabel5ModuleInterop,
+  };
+
+  buildDirectory(srcDir, outDir, excludeDirs, options).catch((e) => {
     process.exitCode = 1;
     console.error(e);
   });
@@ -47,9 +57,9 @@ async function buildDirectory(
   srcDirPath: string,
   outDirPath: string,
   excludeDirs: Array<string>,
-  transforms: Array<Transform>,
+  options: Options,
 ): Promise<void> {
-  const extension = transforms.includes("typescript") ? ".ts" : ".js";
+  const extension = options.transforms.includes("typescript") ? ".ts" : ".js";
   if (!(await exists(outDirPath))) {
     await mkdir(outDirPath);
   }
@@ -60,21 +70,17 @@ async function buildDirectory(
     const srcChildPath = join(srcDirPath, child);
     const outChildPath = join(outDirPath, child);
     if ((await stat(srcChildPath)).isDirectory()) {
-      await buildDirectory(srcChildPath, outChildPath, excludeDirs, transforms);
+      await buildDirectory(srcChildPath, outChildPath, excludeDirs, options);
     } else if (srcChildPath.endsWith(extension)) {
       const outPath = `${outChildPath.substr(0, outChildPath.length - 3)}.js`;
-      await buildFile(srcChildPath, outPath, transforms);
+      await buildFile(srcChildPath, outPath, options);
     }
   }
 }
 
-async function buildFile(
-  srcPath: string,
-  outPath: string,
-  transforms: Array<Transform>,
-): Promise<void> {
+async function buildFile(srcPath: string, outPath: string, options: Options): Promise<void> {
   console.log(`${srcPath} -> ${outPath}`);
   const code = (await readFile(srcPath)).toString();
-  const transformedCode = transform(code, {transforms, filePath: srcPath});
+  const transformedCode = transform(code, {...options, filePath: srcPath});
   await writeFile(outPath, transformedCode);
 }

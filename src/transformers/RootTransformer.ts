@@ -21,6 +21,7 @@ export default class RootTransformer {
   constructor(
     sucraseContext: SucraseContext,
     transforms: Array<Transform>,
+    enableLegacyBabel5ModuleInterop: boolean,
     filePath: string | null,
   ) {
     this.nameManager = sucraseContext.nameManager;
@@ -39,9 +40,13 @@ export default class RootTransformer {
     }
 
     if (transforms.includes("imports")) {
-      const shouldAddModuleExports = transforms.includes("add-module-exports");
       this.transformers.push(
-        new ImportTransformer(this, tokenProcessor, importProcessor, shouldAddModuleExports),
+        new ImportTransformer(
+          this,
+          tokenProcessor,
+          importProcessor,
+          enableLegacyBabel5ModuleInterop,
+        ),
       );
     }
 

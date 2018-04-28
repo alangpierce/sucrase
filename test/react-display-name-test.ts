@@ -172,8 +172,7 @@ describe("transform react-display-name", () => {
         }
       });
     `,
-      ["jsx", "imports"],
-      "MyComponent.js",
+      {transforms: ["jsx", "imports"], filePath: "MyComponent.js"},
     );
   });
 });

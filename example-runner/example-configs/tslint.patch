@@ -1,5 +1,5 @@
 diff --git a/package.json b/package.json
-index 826ad87f..650dbd39 100644
+index 826ad87f..1ac6cee3 100644
 --- a/package.json
 +++ b/package.json
 @@ -22,14 +22,14 @@
@@ -9,9 +9,9 @@ index 826ad87f..650dbd39 100644
 -    "compile:core": "tsc -p src",
 -    "compile:scripts": "tsc -p scripts",
 -    "compile:test": "tsc -p test",
-+    "compile:core": "sucrase ./src -d ./lib --transforms typescript,imports",
-+    "compile:scripts": "sucrase ./scripts -d ./scripts --transforms typescript,imports",
-+    "compile:test": "mkdir -p build && sucrase ./test -d ./build/test --exclude-dirs files,rules --transforms typescript,imports && sucrase ./src -d ./build/src --transforms typescript,imports",
++    "compile:core": "sucrase ./src -d ./lib --transforms typescript,imports --enable-legacy-typescript-module-interop",
++    "compile:scripts": "sucrase ./scripts -d ./scripts --transforms typescript,imports --enable-legacy-typescript-module-interop",
++    "compile:test": "mkdir -p build && sucrase ./test -d ./build/test --exclude-dirs files,rules --transforms typescript,imports --enable-legacy-typescript-module-interop && sucrase ./src -d ./build/src --transforms typescript,imports --enable-legacy-typescript-module-interop",
      "lint": "npm-run-all -p lint:global lint:from-bin",
      "lint:global": "tslint --project test/tsconfig.json --format stylish # test includes 'src' too",
      "lint:from-bin": "node bin/tslint --project test/tsconfig.json --format stylish",
@@ -71,5 +71,29 @@ index 4f1b0bf7..049d4f31 100644
 -    };
 -    return AlwaysFailWalker;
 -})(Lint.RuleWalker);
++    }
++}
+diff --git a/tsconfig.json b/tsconfig.json
+new file mode 100644
+index 00000000..60dc8db4
+--- /dev/null
++++ b/tsconfig.json
+@@ -0,0 +1,18 @@
++{
++    "compilerOptions": {
++        "module": "commonjs",
++        "noImplicitAny": true,
++        "noImplicitReturns": true,
++        "noImplicitThis": true,
++        "noUnusedParameters": true,
++        "noUnusedLocals": true,
++        "strictNullChecks": true,
++        "strictFunctionTypes": true,
++        "importHelpers": true,
++        "declaration": true,
++        "sourceMap": false,
++        "target": "es2017",
++        "lib": ["es6"],
++        "outDir": "../lib"
 +    }
 +}

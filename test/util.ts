@@ -1,14 +1,13 @@
 import * as assert from "assert";
 
-import {transform, Transform} from "../src";
+import {Options, transform, Transform} from "../src";
 
 export function assertResult(
   code: string,
   expectedResult: string,
-  transforms: Array<Transform> = ["jsx", "imports"],
-  filePath?: string,
+  options: Options = {transforms: ["jsx", "imports"]},
 ): void {
-  assert.equal(transform(code, {transforms, filePath}), expectedResult);
+  assert.equal(transform(code, options), expectedResult);
 }
 
 export function devProps(lineNumber: number): string {

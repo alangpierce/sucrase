@@ -4,8 +4,8 @@ import * as util from "./util";
 const {devProps} = util;
 
 function assertResult(code: string, expectedResult: string): void {
-  util.assertResult(code, expectedResult, ["jsx"]);
-  util.assertResult(code, expectedResult, ["jsx", "flow"]);
+  util.assertResult(code, expectedResult, {transforms: ["jsx"]});
+  util.assertResult(code, expectedResult, {transforms: ["jsx", "flow"]});
 }
 
 describe("transform JSX", () => {

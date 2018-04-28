@@ -2,7 +2,7 @@ import {IMPORT_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
 function assertFlowResult(code: string, expectedResult: string): void {
-  assertResult(code, expectedResult, ["jsx", "imports", "flow"]);
+  assertResult(code, expectedResult, {transforms: ["jsx", "imports", "flow"]});
 }
 
 describe("transform flow", () => {

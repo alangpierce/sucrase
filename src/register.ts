@@ -1,28 +1,42 @@
 // @ts-ignore: no types available.
 import * as pirates from "pirates";
-import {Transform, transform} from "./index";
+import {Options, Transform, transform} from "./index";
 
-export function addHook(extension: string, transforms: Array<Transform>): void {
+export function addHook(extension: string, options: Options): void {
   pirates.addHook(
-    (code: string, filePath: string): string => transform(code, {filePath, transforms}),
+    (code: string, filePath: string): string => transform(code, {...options, filePath}),
     {exts: [extension]},
   );
 }
 
 export function registerJS(): void {
-  addHook(".js", ["imports", "flow", "jsx"]);
+  addHook(".js", {transforms: ["imports", "flow", "jsx"]});
 }
 
 export function registerJSX(): void {
-  addHook(".jsx", ["imports", "flow", "jsx"]);
+  addHook(".jsx", {transforms: ["imports", "flow", "jsx"]});
 }
 
 export function registerTS(): void {
-  addHook(".ts", ["imports", "typescript"]);
+  addHook(".ts", {transforms: ["imports", "typescript"]});
 }
 
 export function registerTSX(): void {
-  addHook(".tsx", ["imports", "typescript", "jsx"]);
+  addHook(".tsx", {transforms: ["imports", "typescript", "jsx"]});
+}
+
+export function registerTSLegacyModuleInterop(): void {
+  addHook(".ts", {
+    transforms: ["imports", "typescript"],
+    enableLegacyTypeScriptModuleInterop: true,
+  });
+}
+
+export function registerTSXLegacyModuleInterop(): void {
+  addHook(".tsx", {
+    transforms: ["imports", "typescript", "jsx"],
+    enableLegacyTypeScriptModuleInterop: true,
+  });
 }
 
 export function registerAll(): void {

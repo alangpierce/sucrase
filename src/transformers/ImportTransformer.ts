@@ -14,7 +14,7 @@ export default class ImportTransformer extends Transformer {
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
     readonly importProcessor: ImportProcessor,
-    readonly shouldAddModuleExports: boolean,
+    readonly enableLegacyBabel5ModuleInterop: boolean,
   ) {
     super();
   }
@@ -28,7 +28,7 @@ export default class ImportTransformer extends Transformer {
   }
 
   getSuffixCode(): string {
-    if (this.shouldAddModuleExports && this.hadDefaultExport && !this.hadNamedExport) {
+    if (this.enableLegacyBabel5ModuleInterop && this.hadDefaultExport && !this.hadNamedExport) {
       return "\nmodule.exports = exports.default;\n";
     }
     return "";

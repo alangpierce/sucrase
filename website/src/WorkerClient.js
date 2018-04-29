@@ -1,13 +1,17 @@
 import Worker from "./Worker.worker.js";
 
-const worker = new Worker();
-
 const CANCELLED_MESSAGE = "SUCRASE JOB CANCELLED";
+const TIMEOUT_MESSAGE = "SUCRASE JOB TIMED OUT";
+
+let worker;
 
 // Used to coordinate communication with the worker. This is non-null any time
 // there is an active call, and it is nulled out on completion. Only one request
 // may be active at any time.
 let nextResolve = null;
+let nextReject = null;
+
+let timeoutTimer = null;
 
 // The pending config to be processed next. Set to null when processed.
 let nextConfig = null;
@@ -21,21 +25,39 @@ let updateStateFn = null;
 // slow enough that it's useful to do in a web worker.
 let handleCompressedCodeFn = null;
 
-worker.addEventListener("message", ({data}) => {
-  nextResolve(data);
+function initWorker() {
+  worker = new Worker();
+  worker.addEventListener("message", ({data}) => {
+    nextResolve(data);
+    finishEndMessage();
+  });
+}
+
+initWorker();
+
+function finishEndMessage() {
   nextResolve = null;
-});
+  nextReject = null;
+  clearTimeout(timeoutTimer);
+}
 
 function sendMessage(message) {
   if (nextConfig) {
     throw new Error(CANCELLED_MESSAGE);
   }
   worker.postMessage(message);
-  if (nextResolve) {
+  if (nextResolve || nextReject) {
     throw new Error("Cannot send message when a message is already in progress!");
   }
-  return new Promise((resolve) => {
+  timeoutTimer = setTimeout(() => {
+    worker.terminate();
+    initWorker();
+    nextReject(new Error(TIMEOUT_MESSAGE));
+    finishEndMessage();
+  }, 10000);
+  return new Promise((resolve, reject) => {
     nextResolve = resolve;
+    nextReject = reject;
   });
 }
 
@@ -135,11 +157,20 @@ async function workerLoop() {
 
       const sucraseTimeMs = await profile(profileSucrase);
       const babelTimeMs = config.compareWithBabel ? await profile(profileBabel) : null;
-      const typeScriptTimeMs = config.compareWithTypeScript ? await profile(profileTypeScript) : null;
+      const typeScriptTimeMs = config.compareWithTypeScript
+        ? await profile(profileTypeScript)
+        : null;
       updateStateFn({sucraseTimeMs, babelTimeMs, typeScriptTimeMs});
     } catch (e) {
-      if (e.message !== CANCELLED_MESSAGE) {
+      if (e.message !== CANCELLED_MESSAGE && e.message !== TIMEOUT_MESSAGE) {
         throw e;
+      }
+      if (e.message === TIMEOUT_MESSAGE) {
+        updateStateFn({
+          sucraseCode: "Operation timed out after 10 seconds.",
+          babelCode: "Operation timed out after 10 seconds.",
+          typeScriptCode: "Operation timed out after 10 seconds.",
+        });
       }
       // On cancellation, fall through and try the new config.
     }

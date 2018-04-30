@@ -3,6 +3,7 @@ import {TokenType, TokenType as tt} from "../sucrase-babylon/tokenizer/types";
 import NameManager from "./NameManager";
 import TokenProcessor from "./TokenProcessor";
 import {startsWithLowerCase} from "./transformers/JSXTransformer";
+import {getNonTypeIdentifiers} from "./util/getNonTypeIdentifiers";
 
 type NamedImport = {
   importedName: string;
@@ -26,7 +27,7 @@ type ImportInfo = {
  * TypeScript uses a simpler mechanism that does not use functions like interopRequireDefault and
  * interopRequireWildcard, so we also allow that mode for compatibility.
  */
-export default class ImportProcessor {
+export default class CJSImportProcessor {
   private importInfoByPath: Map<string, ImportInfo> = new Map();
   private importsToReplace: Map<string, string> = new Map();
   private identifierReplacements: Map<string, string> = new Map();
@@ -97,30 +98,7 @@ export default class ImportProcessor {
    * bare imports.
    */
   pruneTypeOnlyImports(): void {
-    const nonTypeIdentifiers: Set<string> = new Set();
-    for (let i = 0; i < this.tokens.tokens.length; i++) {
-      const token = this.tokens.tokens[i];
-      if (
-        token.type === tt.name &&
-        !token.isType &&
-        (token.identifierRole === IdentifierRole.Access ||
-          token.identifierRole === IdentifierRole.ObjectShorthand ||
-          token.identifierRole === IdentifierRole.ExportAccess)
-      ) {
-        nonTypeIdentifiers.add(this.tokens.identifierNameForToken(token));
-      }
-      if (token.type === tt.jsxName && token.identifierRole === IdentifierRole.Access) {
-        nonTypeIdentifiers.add("React");
-        const identifierName = this.tokens.identifierNameForToken(token);
-        // Lower-case single-component tag names like "div" don't count.
-        if (
-          !startsWithLowerCase(identifierName) ||
-          this.tokens.tokens[i + 1].type === TokenType.dot
-        ) {
-          nonTypeIdentifiers.add(this.tokens.identifierNameForToken(token));
-        }
-      }
-    }
+    const nonTypeIdentifiers = getNonTypeIdentifiers(this.tokens);
     for (const [path, importInfo] of this.importInfoByPath.entries()) {
       if (
         importInfo.hasBareImport ||

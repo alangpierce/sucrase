@@ -1,6 +1,6 @@
 import XHTMLEntities from "../../sucrase-babylon/plugins/jsx/xhtml";
 import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
-import ImportProcessor from "../ImportProcessor";
+import CJSImportProcessor from "../CJSImportProcessor";
 import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
@@ -17,7 +17,7 @@ export default class JSXTransformer extends Transformer {
   constructor(
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
-    readonly importProcessor: ImportProcessor,
+    readonly importProcessor: CJSImportProcessor | null,
     readonly nameManager: NameManager,
     readonly filePath: string | null,
   ) {
@@ -181,7 +181,9 @@ export default class JSXTransformer extends Transformer {
   }
 
   processJSXTag(): void {
-    const resolvedReactName = this.importProcessor.getIdentifierReplacement("React") || "React";
+    const resolvedReactName = this.importProcessor
+      ? this.importProcessor.getIdentifierReplacement("React") || "React"
+      : "React";
     const firstTokenStart = this.tokens.currentToken().start;
     // First tag is always jsxTagStart.
     this.tokens.replaceToken(`${resolvedReactName}.createElement(`);

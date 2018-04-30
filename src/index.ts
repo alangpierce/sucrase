@@ -1,7 +1,7 @@
 import {parse} from "../sucrase-babylon";
 import {Scope} from "../sucrase-babylon/tokenizer/state";
+import CJSImportProcessor from "./CJSImportProcessor";
 import identifyShadowedGlobals from "./identifyShadowedGlobals";
-import ImportProcessor from "./ImportProcessor";
 import NameManager from "./NameManager";
 import TokenProcessor from "./TokenProcessor";
 import RootTransformer from "./transformers/RootTransformer";
@@ -20,7 +20,7 @@ export type SucraseContext = {
   tokenProcessor: TokenProcessor;
   scopes: Array<Scope>;
   nameManager: NameManager;
-  importProcessor: ImportProcessor;
+  importProcessor: CJSImportProcessor | null;
 };
 
 export function getVersion(): string {
@@ -75,15 +75,19 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
   const nameManager = new NameManager(tokenProcessor);
   nameManager.preprocessNames();
   const enableLegacyTypeScriptModuleInterop = Boolean(options.enableLegacyTypeScriptModuleInterop);
-  const importProcessor = new ImportProcessor(
-    nameManager,
-    tokenProcessor,
-    enableLegacyTypeScriptModuleInterop,
-  );
-  importProcessor.preprocessTokens();
-  if (options.transforms.includes("typescript")) {
-    importProcessor.pruneTypeOnlyImports();
+
+  let importProcessor = null;
+  if (options.transforms.includes("imports")) {
+    importProcessor = new CJSImportProcessor(
+      nameManager,
+      tokenProcessor,
+      enableLegacyTypeScriptModuleInterop,
+    );
+    importProcessor.preprocessTokens();
+    if (options.transforms.includes("typescript")) {
+      importProcessor.pruneTypeOnlyImports();
+    }
+    identifyShadowedGlobals(tokenProcessor, scopes, importProcessor.getGlobalNames());
   }
-  identifyShadowedGlobals(tokenProcessor, scopes, importProcessor.getGlobalNames());
   return {tokenProcessor, scopes, nameManager, importProcessor};
 }

@@ -5,6 +5,10 @@ function assertFlowResult(code: string, expectedResult: string): void {
   assertResult(code, expectedResult, {transforms: ["jsx", "imports", "flow"]});
 }
 
+function assertFlowESMResult(code: string, expectedResult: string): void {
+  assertResult(code, expectedResult, {transforms: ["jsx", "flow"]});
+}
+
 describe("transform flow", () => {
   it("removes `import type` statements", () => {
     assertFlowResult(
@@ -196,6 +200,19 @@ describe("transform flow", () => {
     `,
       `"use strict";${IMPORT_PREFIX}
       
+    `,
+    );
+  });
+
+  it("properly prunes flow imported names", () => {
+    assertFlowESMResult(
+      `
+      import a, {type n as b, m as c, type d} from './e';
+      import type f from './g';
+    `,
+      `
+      import a, { m as c,} from './e';
+
     `,
     );
   });

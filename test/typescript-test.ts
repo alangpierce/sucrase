@@ -5,6 +5,10 @@ function assertTypeScriptResult(code: string, expectedResult: string): void {
   assertResult(code, expectedResult, {transforms: ["jsx", "imports", "typescript"]});
 }
 
+function assertTypeScriptESMResult(code: string, expectedResult: string): void {
+  assertResult(code, expectedResult, {transforms: ["jsx", "typescript"]});
+}
+
 describe("typescript transform", () => {
   it("removes type assertions using `as`", () => {
     assertTypeScriptResult(
@@ -886,6 +890,66 @@ describe("typescript transform", () => {
           )
         );
       }
+    `,
+    );
+  });
+
+  it("handles TypeScript exported enums in ESM mode", () => {
+    assertTypeScriptESMResult(
+      `
+      export enum Foo {
+        X = "Hello",
+      }
+    `,
+      `
+      export var Foo; (function (Foo) {
+        const X = "Hello"; Foo["X"] = X;
+      })(Foo || (Foo = {}));
+    `,
+    );
+  });
+
+  it("changes import = require to plain require in ESM mode", () => {
+    assertTypeScriptESMResult(
+      `
+      import a = require('a');
+      a();
+    `,
+      `
+      const a = require('a');
+      a();
+    `,
+    );
+  });
+
+  it("properly transforms JSX in ESM mode", () => {
+    assertTypeScriptESMResult(
+      `
+      import React from 'react';
+      const x = <Foo />;
+    `,
+      `${JSX_PREFIX}
+      import React from 'react';
+      const x = React.createElement(Foo, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 3}} );
+    `,
+    );
+  });
+
+  it("properly prunes TypeScript imported names", () => {
+    assertTypeScriptESMResult(
+      `
+      import a, {n as b, m as c, d} from './e';
+      import f, * as g from './h';
+      a();
+      const x: b = 3;
+      const y = c + 1;
+    `,
+      `
+      import a, { m as c,} from './e';
+
+      a();
+      const x = 3;
+      const y = c + 1;
     `,
     );
   });

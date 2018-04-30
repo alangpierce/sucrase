@@ -1,11 +1,14 @@
 import {ContextualKeyword, IdentifierRole} from "../../sucrase-babylon/tokenizer";
 import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
-import ImportProcessor from "../ImportProcessor";
+import CJSImportProcessor from "../CJSImportProcessor";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
-export default class ImportTransformer extends Transformer {
+/**
+ * Class for editing import statements when we are transforming to commonjs.
+ */
+export default class CJSImportTransformer extends Transformer {
   private hadExport: boolean = false;
   private hadNamedExport: boolean = false;
   private hadDefaultExport: boolean = false;
@@ -13,7 +16,7 @@ export default class ImportTransformer extends Transformer {
   constructor(
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
-    readonly importProcessor: ImportProcessor,
+    readonly importProcessor: CJSImportProcessor,
     readonly enableLegacyBabel5ModuleInterop: boolean,
   ) {
     super();
@@ -35,6 +38,7 @@ export default class ImportTransformer extends Transformer {
   }
 
   process(): boolean {
+    // TypeScript `import foo = require('foo');` should always just be translated to plain require.
     if (this.tokens.matches3(tt._import, tt.name, tt.eq)) {
       this.tokens.replaceToken("const");
       return true;

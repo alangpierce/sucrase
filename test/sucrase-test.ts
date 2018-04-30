@@ -493,4 +493,16 @@ describe("sucrase", () => {
       {transforms: ["jsx", "imports", "typescript"]},
     );
   });
+
+  it("handles variables named createReactClass", () => {
+    assertResult(
+      `
+      const createReactClass = 3;
+    `,
+      `"use strict";${IMPORT_PREFIX}
+      const createReactClass = 3;
+    `,
+      {transforms: ["jsx", "imports", "typescript"]},
+    );
+  });
 });

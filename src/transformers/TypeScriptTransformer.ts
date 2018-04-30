@@ -5,7 +5,11 @@ import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
 export default class TypeScriptTransformer extends Transformer {
-  constructor(readonly rootTransformer: RootTransformer, readonly tokens: TokenProcessor) {
+  constructor(
+    readonly rootTransformer: RootTransformer,
+    readonly tokens: TokenProcessor,
+    readonly isImportsTransformEnabled: boolean,
+  ) {
     super();
   }
 
@@ -47,11 +51,14 @@ export default class TypeScriptTransformer extends Transformer {
     }
     const enumName = this.tokens.identifierName();
     this.tokens.removeToken();
+    if (isExport && !this.isImportsTransformEnabled) {
+      this.tokens.appendCode("export ");
+    }
     this.tokens.appendCode(`var ${enumName}; (function (${enumName})`);
     this.tokens.copyExpectedToken(tt.braceL);
     this.processEnumBody(enumName);
     this.tokens.copyExpectedToken(tt.braceR);
-    if (isExport) {
+    if (isExport && this.isImportsTransformEnabled) {
       this.tokens.appendCode(`)(${enumName} || (exports.${enumName} = ${enumName} = {}));`);
     } else {
       this.tokens.appendCode(`)(${enumName} || (${enumName} = {}));`);

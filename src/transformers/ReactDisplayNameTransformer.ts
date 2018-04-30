@@ -1,7 +1,6 @@
 import {ContextualKeyword, IdentifierRole} from "../../sucrase-babylon/tokenizer";
 import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
-import ImportProcessor from "../ImportProcessor";
-import {Options} from "../index";
+import CJSImportProcessor from "../CJSImportProcessor";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
@@ -18,7 +17,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
   constructor(
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
-    readonly importProcessor: ImportProcessor,
+    readonly importProcessor: CJSImportProcessor | null,
     readonly filePath: string | null,
   ) {
     super();
@@ -27,7 +26,8 @@ export default class ReactDisplayNameTransformer extends Transformer {
   process(): boolean {
     const startIndex = this.tokens.currentIndex();
     if (this.tokens.matchesContextual(ContextualKeyword._createReactClass)) {
-      const newName = this.importProcessor.getIdentifierReplacement("createReactClass");
+      const newName =
+        this.importProcessor && this.importProcessor.getIdentifierReplacement("createReactClass");
       if (newName) {
         this.tokens.replaceToken(`(0, ${newName})`);
       } else {
@@ -44,7 +44,9 @@ export default class ReactDisplayNameTransformer extends Transformer {
         ContextualKeyword._createClass,
       )
     ) {
-      const newName = this.importProcessor.getIdentifierReplacement("React");
+      const newName = this.importProcessor
+        ? this.importProcessor.getIdentifierReplacement("React") || "React"
+        : "React";
       if (newName) {
         this.tokens.replaceToken(newName);
         this.tokens.copyToken();
@@ -88,7 +90,10 @@ export default class ReactDisplayNameTransformer extends Transformer {
       // that identifier name.
       return this.tokens.identifierNameAtIndex(startIndex - 2);
     }
-    if (this.tokens.tokens[startIndex - 2].identifierRole === IdentifierRole.ObjectKey) {
+    if (
+      startIndex >= 2 &&
+      this.tokens.tokens[startIndex - 2].identifierRole === IdentifierRole.ObjectKey
+    ) {
       // This is an object literal value.
       return this.tokens.identifierNameAtIndex(startIndex - 2);
     }

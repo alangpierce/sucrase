@@ -3,8 +3,9 @@ import {SucraseContext, Transform} from "../index";
 import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
 import getClassInfo, {ClassInfo} from "../util/getClassInfo";
+import CJSImportTransformer from "./CJSImportTransformer";
+import ESMImportTransformer from "./ESMImportTransformer";
 import FlowTransformer from "./FlowTransformer";
-import ImportTransformer from "./ImportTransformer";
 import JSXTransformer from "./JSXTransformer";
 import NumericSeparatorTransformer from "./NumericSeparatorTransformer";
 import OptionalCatchBindingTransformer from "./OptionalCatchBindingTransformer";
@@ -17,6 +18,7 @@ export default class RootTransformer {
   private nameManager: NameManager;
   private tokens: TokenProcessor;
   private generatedVariables: Array<string> = [];
+  private isImportsTransformEnabled: boolean;
 
   constructor(
     sucraseContext: SucraseContext,
@@ -27,6 +29,7 @@ export default class RootTransformer {
     this.nameManager = sucraseContext.nameManager;
     const {tokenProcessor, importProcessor} = sucraseContext;
     this.tokens = tokenProcessor;
+    this.isImportsTransformEnabled = transforms.includes("imports");
 
     this.transformers.push(new NumericSeparatorTransformer(tokenProcessor));
     this.transformers.push(new OptionalCatchBindingTransformer(tokenProcessor, this.nameManager));
@@ -39,14 +42,24 @@ export default class RootTransformer {
       );
     }
 
+    // Note that we always want to enable the imports transformer, even when the import transform
+    // itself isn't enabled, since we need to do type-only import pruning for both Flow and
+    // TypeScript.
     if (transforms.includes("imports")) {
+      if (importProcessor === null) {
+        throw new Error("Expected non-null importProcessor with imports transform enabled.");
+      }
       this.transformers.push(
-        new ImportTransformer(
+        new CJSImportTransformer(
           this,
           tokenProcessor,
           importProcessor,
           enableLegacyBabel5ModuleInterop,
         ),
+      );
+    } else {
+      this.transformers.push(
+        new ESMImportTransformer(tokenProcessor, transforms.includes("typescript")),
       );
     }
 
@@ -54,19 +67,16 @@ export default class RootTransformer {
       this.transformers.push(new FlowTransformer(this, tokenProcessor));
     }
     if (transforms.includes("typescript")) {
-      if (!transforms.includes("imports")) {
-        throw new Error(
-          "The TypeScript transform without the import transform is not yet supported.",
-        );
-      }
-      this.transformers.push(new TypeScriptTransformer(this, tokenProcessor));
+      this.transformers.push(
+        new TypeScriptTransformer(this, tokenProcessor, transforms.includes("imports")),
+      );
     }
   }
 
   transform(): string {
     this.tokens.reset();
     this.processBalancedCode();
-    const shouldAddUseStrict = this.transformers.some((t) => t instanceof ImportTransformer);
+    const shouldAddUseStrict = this.isImportsTransformEnabled;
     // "use strict" always needs to be first, so override the normal transformer order.
     let prefix = shouldAddUseStrict ? '"use strict";' : "";
     for (const transformer of this.transformers) {

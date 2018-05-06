@@ -1,4 +1,4 @@
-import {hasPlugin, state} from "../parser/base";
+import {isJSXEnabled, state} from "../parser/base";
 import {
   atPossibleAsync,
   baseParseMaybeAssign,
@@ -1272,7 +1272,7 @@ export function tsParseMaybeAssign(
 
   let jsxError: SyntaxError | null = null;
 
-  if (match(tt.lessThan) && hasPlugin("jsx")) {
+  if (match(tt.lessThan) && isJSXEnabled) {
     // Prefer to parse JSX if possible. But may be an arrow fn.
     const snapshot = state.snapshot();
     try {
@@ -1319,7 +1319,7 @@ export function tsParseMaybeAssign(
     // Try parsing a type cast instead of an arrow function.
     // This will never happen outside of JSX.
     // (Because in JSX the '<' should be a jsxTagStart and not a relational.
-    assert(!hasPlugin("jsx"));
+    assert(!isJSXEnabled);
     // Parsing an arrow function failed, so try a type cast.
     state.restoreFromSnapshot(snapshot);
     // This will start with a type assertion (via parseMaybeUnary).

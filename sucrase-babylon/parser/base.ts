@@ -2,17 +2,15 @@ import LinesAndColumns from "lines-and-columns";
 
 import State from "../tokenizer/state";
 
-export let plugins: {[key: string]: boolean};
+export let isJSXEnabled: boolean;
+export let isTypeScriptEnabled: boolean;
+export let isFlowEnabled: boolean;
 export let state: State;
 export let input: string;
 export let nextContextId: number;
 
 export function getNextContextId(): number {
   return nextContextId++;
-}
-
-export function hasPlugin(name: string): boolean {
-  return Boolean(plugins[name]);
 }
 
 // This function is used to raise exceptions on parse errors. It
@@ -33,10 +31,17 @@ export function raise(pos: number, message: string): never {
   throw err;
 }
 
-export function initParser(inputCode: string, pluginList: Array<string>): void {
+export function initParser(
+  inputCode: string,
+  isJSXEnabledArg: boolean,
+  isTypeScriptEnabledArg: boolean,
+  isFlowEnabledArg: boolean,
+): void {
   input = inputCode;
   state = new State();
   state.init();
   nextContextId = 1;
-  plugins = pluginList.reduce((obj, p) => ({...obj, [p]: true}), {});
+  isJSXEnabled = isJSXEnabledArg;
+  isTypeScriptEnabled = isTypeScriptEnabledArg;
+  isFlowEnabled = isFlowEnabledArg;
 }

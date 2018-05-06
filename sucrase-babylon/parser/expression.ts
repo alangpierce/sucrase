@@ -23,7 +23,6 @@ import {
   flowParseFunctionBodyAndFinish,
   flowParseMaybeAssign,
   flowParseSubscripts,
-  flowParseTypeAnnotation,
   flowParseVariance,
   flowStartParseAsyncArrowFromCallExpression,
   flowStartParseObjPropValue,
@@ -53,7 +52,14 @@ import {
   runInTypeContext,
 } from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
-import {getNextContextId, hasPlugin, raise, state} from "./base";
+import {
+  getNextContextId,
+  isFlowEnabled,
+  isJSXEnabled,
+  isTypeScriptEnabled,
+  raise,
+  state,
+} from "./base";
 import {parseMaybeDefault, parseRest, parseSpread} from "./lval";
 import {
   parseBlock,
@@ -95,9 +101,9 @@ export function parseExpression(noIn?: boolean): void {
 }
 
 export function parseMaybeAssign(noIn: boolean | null = null, afterLeftParse?: Function): boolean {
-  if (hasPlugin("typescript")) {
+  if (isTypeScriptEnabled) {
     return tsParseMaybeAssign(noIn, afterLeftParse);
-  } else if (hasPlugin("flow")) {
+  } else if (isFlowEnabled) {
     return flowParseMaybeAssign(noIn, afterLeftParse);
   } else {
     return baseParseMaybeAssign(noIn, afterLeftParse);
@@ -148,7 +154,7 @@ function parseMaybeConditional(noIn: boolean | null): boolean {
 }
 
 function parseConditional(noIn: boolean | null, startPos: number): void {
-  if (hasPlugin("typescript") || hasPlugin("flow")) {
+  if (isTypeScriptEnabled || isFlowEnabled) {
     typedParseConditional(noIn, startPos);
   } else {
     baseParseConditional(noIn, startPos);
@@ -181,7 +187,7 @@ function parseExprOps(noIn: boolean | null): boolean {
 // operator that has a lower precedence than the set it is parsing.
 function parseExprOp(minPrec: number, noIn: boolean | null): void {
   if (
-    hasPlugin("typescript") &&
+    isTypeScriptEnabled &&
     (tt._in & TokenType.PRECEDENCE_MASK) > minPrec &&
     !hasPrecedingLineBreak() &&
     eatContextual(ContextualKeyword._as)
@@ -215,7 +221,7 @@ function parseExprOp(minPrec: number, noIn: boolean | null): void {
 // Parse unary operators, both prefix and postfix.
 // Returns true if this was an arrow function.
 export function parseMaybeUnary(): boolean {
-  if (hasPlugin("typescript") && !hasPlugin("jsx") && eat(tt.lessThan)) {
+  if (isTypeScriptEnabled && !isJSXEnabled && eat(tt.lessThan)) {
     tsParseTypeAssertion();
     return false;
   }
@@ -249,7 +255,7 @@ export function parseExprSubscripts(): boolean {
 }
 
 function parseSubscripts(startPos: number, noCalls: boolean | null = null): void {
-  if (hasPlugin("flow")) {
+  if (isFlowEnabled) {
     flowParseSubscripts(startPos, noCalls);
   } else {
     baseParseSubscripts(startPos, noCalls);
@@ -268,7 +274,7 @@ function parseSubscript(
   noCalls: boolean | null,
   stopState: {stop: boolean},
 ): void {
-  if (hasPlugin("typescript")) {
+  if (isTypeScriptEnabled) {
     tsParseSubscript(startPos, noCalls, stopState);
   } else {
     baseParseSubscript(startPos, noCalls, stopState);
@@ -363,9 +369,9 @@ function shouldParseAsyncArrow(): boolean {
 }
 
 function parseAsyncArrowFromCallExpression(functionStart: number, startTokenIndex: number): void {
-  if (hasPlugin("typescript")) {
+  if (isTypeScriptEnabled) {
     tsStartParseAsyncArrowFromCallExpression();
-  } else if (hasPlugin("flow")) {
+  } else if (isFlowEnabled) {
     flowStartParseAsyncArrowFromCallExpression();
   }
   expect(tt.arrow);
@@ -389,7 +395,7 @@ export function parseExprAtom(): boolean {
   if (match(tt.jsxText)) {
     parseLiteral();
     return false;
-  } else if (match(tt.lessThan) && hasPlugin("jsx")) {
+  } else if (match(tt.lessThan) && isJSXEnabled) {
     state.type = tt.jsxTagStart;
     jsxParseElement();
     next();
@@ -612,9 +618,9 @@ function shouldParseArrow(): boolean {
 
 // Returns whether there was an arrow token.
 export function parseArrow(): boolean {
-  if (hasPlugin("typescript")) {
+  if (isTypeScriptEnabled) {
     return tsParseArrow();
-  } else if (hasPlugin("flow")) {
+  } else if (isFlowEnabled) {
     return flowParseArrow();
   } else {
     return eat(tt.arrow);
@@ -622,7 +628,7 @@ export function parseArrow(): boolean {
 }
 
 function parseParenItem(): void {
-  if (hasPlugin("typescript") || hasPlugin("flow")) {
+  if (isTypeScriptEnabled || isFlowEnabled) {
     typedParseParenItem();
   }
 }
@@ -645,7 +651,7 @@ function parseNew(): void {
 }
 
 function parseNewArguments(): void {
-  if (hasPlugin("typescript")) {
+  if (isTypeScriptEnabled) {
     tsStartParseNewArguments();
   }
   if (eat(tt.parenL)) {
@@ -814,9 +820,9 @@ function parseObjPropValue(
   isBlockScope: boolean,
   objectContextId: number,
 ): void {
-  if (hasPlugin("typescript")) {
+  if (isTypeScriptEnabled) {
     tsStartParseObjPropValue();
-  } else if (hasPlugin("flow")) {
+  } else if (isFlowEnabled) {
     flowStartParseObjPropValue();
   }
   const wasMethod = parseObjectMethod(isGenerator, isPattern, objectContextId);
@@ -826,7 +832,7 @@ function parseObjPropValue(
 }
 
 export function parsePropertyName(objectContextId: number): void {
-  if (hasPlugin("flow")) {
+  if (isFlowEnabled) {
     flowParseVariance();
   }
   if (eat(tt.bracketL)) {
@@ -882,9 +888,9 @@ export function parseFunctionBodyAndFinish(
   allowExpressionBody: boolean | null = null,
   funcContextId?: number,
 ): void {
-  if (hasPlugin("typescript")) {
+  if (isTypeScriptEnabled) {
     tsParseFunctionBodyAndFinish(functionStart, isGenerator, allowExpressionBody, funcContextId);
-  } else if (hasPlugin("flow")) {
+  } else if (isFlowEnabled) {
     flowParseFunctionBodyAndFinish(functionStart, isGenerator, allowExpressionBody, funcContextId);
   } else {
     parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);

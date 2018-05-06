@@ -1,4 +1,4 @@
-import {hasPlugin, state} from "../parser/base";
+import {isFlowEnabled, isTypeScriptEnabled, state} from "../parser/base";
 import {baseParseConditional} from "../parser/expression";
 import {eat, match} from "../tokenizer";
 import {TokenType as tt} from "../tokenizer/types";
@@ -38,9 +38,9 @@ export function typedParseParenItem(): void {
     state.tokens[state.tokens.length - 1].isType = true;
   }
   if (match(tt.colon)) {
-    if (hasPlugin("typescript")) {
+    if (isTypeScriptEnabled) {
       tsParseTypeAnnotation();
-    } else if (hasPlugin("flow")) {
+    } else if (isFlowEnabled) {
       flowParseTypeAnnotation();
     }
   }

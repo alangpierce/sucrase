@@ -1,6 +1,6 @@
 /* eslint max-len: 0 */
 
-import {hasPlugin, input, raise, state} from "../parser/base";
+import {input, isFlowEnabled, raise, state} from "../parser/base";
 import {unexpected} from "../parser/util";
 import {charCodes} from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart} from "../util/identifier";
@@ -350,7 +350,7 @@ function readToken_pipe_amp(code: number): void {
     if (nextChar === charCodes.greaterThan) {
       finishOp(tt.pipeline, 2);
       return;
-    } else if (nextChar === charCodes.rightCurlyBrace && hasPlugin("flow")) {
+    } else if (nextChar === charCodes.rightCurlyBrace && isFlowEnabled) {
       // '|}'
       finishOp(tt.braceBarR, 2);
       return;
@@ -507,7 +507,7 @@ export function getTokenFromCode(code: number): void {
       return;
 
     case charCodes.leftCurlyBrace:
-      if (hasPlugin("flow") && input.charCodeAt(state.pos + 1) === charCodes.verticalBar) {
+      if (isFlowEnabled && input.charCodeAt(state.pos + 1) === charCodes.verticalBar) {
         finishOp(tt.braceBarL, 2);
       } else {
         ++state.pos;

@@ -3,7 +3,7 @@ import {parse} from "../sucrase-babylon";
 import {Scope} from "../sucrase-babylon/tokenizer/state";
 
 function assertScopes(code: string, expectedScopes: Array<Scope>): void {
-  assert.deepEqual(parse(code, []).scopes, expectedScopes);
+  assert.deepEqual(parse(code, false, false, false).scopes, expectedScopes);
 }
 
 describe("scopes", () => {

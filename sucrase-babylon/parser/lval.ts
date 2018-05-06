@@ -6,7 +6,7 @@ import {
 } from "../plugins/typescript";
 import {ContextualKeyword, eat, IdentifierRole, match, next, runInTypeContext} from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
-import {hasPlugin, state} from "./base";
+import {isFlowEnabled, isTypeScriptEnabled, state} from "./base";
 import {parseIdentifier, parseMaybeAssign, parseObj} from "./expression";
 import {expect, unexpected} from "./util";
 
@@ -109,9 +109,9 @@ function parseAssignableListItem(allowModifiers: boolean | null, isBlockScope: b
 }
 
 function parseAssignableListItemTypes(): void {
-  if (hasPlugin("flow")) {
+  if (isFlowEnabled) {
     flowParseAssignableListItemTypes();
-  } else if (hasPlugin("typescript")) {
+  } else if (isTypeScriptEnabled) {
     tsParseAssignableListItemTypes();
   }
 }

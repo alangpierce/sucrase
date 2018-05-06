@@ -8,10 +8,15 @@ export type File = {
   scopes: Array<Scope>;
 };
 
-export function parse(input: string, plugins: Array<string>): File {
-  if (plugins.includes("flow") && plugins.includes("typescript")) {
+export function parse(
+  input: string,
+  isJSXEnabled: boolean,
+  isTypeScriptEnabled: boolean,
+  isFlowEnabled: boolean,
+): File {
+  if (isFlowEnabled && isTypeScriptEnabled) {
     throw new Error("Cannot combine flow and typescript plugins.");
   }
-  initParser(input, plugins);
+  initParser(input, isJSXEnabled, isTypeScriptEnabled, isFlowEnabled);
   return parseFile();
 }

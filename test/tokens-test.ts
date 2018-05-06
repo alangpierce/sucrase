@@ -7,7 +7,7 @@ type SimpleToken = Token & {label?: string};
 type TokenExpectation = {[K in keyof SimpleToken]?: SimpleToken[K]};
 
 function assertTokens(code: string, expectedTokens: Array<TokenExpectation>): void {
-  const tokens: Array<SimpleToken> = parse(code, ["jsx"]).tokens;
+  const tokens: Array<SimpleToken> = parse(code, true, false, false).tokens;
   assert.equal(tokens.length, expectedTokens.length);
   const projectedTokens = tokens.map((token, i) => {
     const result = {};

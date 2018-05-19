@@ -41,6 +41,9 @@ export default class TokenProcessor {
     if (index < 0) {
       return false;
     }
+    if (index > this.tokens.length) {
+      throw new Error("Ran past the end of the token stream.");
+    }
     for (let i = 0; i < types.length; i++) {
       if (index + i >= this.tokens.length) {
         return false;

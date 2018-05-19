@@ -190,7 +190,8 @@ function jsxParseOpeningElement(): boolean {
 // Parses JSX closing tag starting after "</".
 // Does not parse the last token.
 function jsxParseClosingElement(): void {
-  if (eat(tt.jsxTagEnd)) {
+  if (match(tt.jsxTagEnd)) {
+    // Fragment syntax, so we immediately have a tag end.
     return;
   }
   jsxParseElementName();

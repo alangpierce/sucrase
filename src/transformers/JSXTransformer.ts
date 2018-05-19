@@ -187,15 +187,10 @@ export default class JSXTransformer extends Transformer {
     const firstTokenStart = this.tokens.currentToken().start;
     // First tag is always jsxTagStart.
     this.tokens.replaceToken(`${resolvedReactName}.createElement(`);
-    this.processTagIntro();
-    this.processProps(firstTokenStart);
 
-    if (this.tokens.matches2(tt.slash, tt.jsxTagEnd)) {
-      // Self-closing tag.
-      this.tokens.replaceToken("");
-      this.tokens.replaceToken(")");
-    } else if (this.tokens.matches1(tt.jsxTagEnd)) {
-      this.tokens.replaceToken("");
+    if (this.tokens.matches1(tt.jsxTagEnd)) {
+      // Fragment syntax.
+      this.tokens.replaceToken(`${resolvedReactName}.Fragment, null, `);
       // Tag with children.
       this.processChildren();
       while (!this.tokens.matches1(tt.jsxTagEnd)) {
@@ -203,7 +198,25 @@ export default class JSXTransformer extends Transformer {
       }
       this.tokens.replaceToken(")");
     } else {
-      throw new Error("Expected either /> or > at the end of the tag.");
+      // Normal open tag or self-closing tag.
+      this.processTagIntro();
+      this.processProps(firstTokenStart);
+
+      if (this.tokens.matches2(tt.slash, tt.jsxTagEnd)) {
+        // Self-closing tag.
+        this.tokens.replaceToken("");
+        this.tokens.replaceToken(")");
+      } else if (this.tokens.matches1(tt.jsxTagEnd)) {
+        this.tokens.replaceToken("");
+        // Tag with children.
+        this.processChildren();
+        while (!this.tokens.matches1(tt.jsxTagEnd)) {
+          this.tokens.replaceToken("");
+        }
+        this.tokens.replaceToken(")");
+      } else {
+        throw new Error("Expected either /> or > at the end of the tag.");
+      }
     }
   }
 }

@@ -289,4 +289,25 @@ describe("transform JSX", () => {
     `,
     );
   });
+
+  it("allows JSX fragment syntax", () => {
+    assertResult(
+      `
+      const f = (
+        <>
+          <div />
+          <span />
+        </>
+      );
+    `,
+      `${JSX_PREFIX}
+      const f = (
+        React.createElement(React.Fragment, null, 
+          , React.createElement('div', {${devProps(4)}} )
+          , React.createElement('span', {${devProps(5)}} )
+        )
+      );
+    `,
+    );
+  });
 });

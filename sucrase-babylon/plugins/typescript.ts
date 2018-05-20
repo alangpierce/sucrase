@@ -50,26 +50,19 @@ import {
 } from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 
-export type TsModifier =
-  | ContextualKeyword._readonly
-  | ContextualKeyword._abstract
-  | ContextualKeyword._static
-  | ContextualKeyword._public
-  | ContextualKeyword._private
-  | ContextualKeyword._protected;
-
 function assert(x: boolean): void {
   if (!x) {
     throw new Error("Assert fail");
   }
 }
 
-export type ParsingContext =
-  | "EnumMembers"
-  | "HeritageClauseElement"
-  | "TupleElementTypes"
-  | "TypeMembers"
-  | "TypeParametersOrArguments";
+export enum ParsingContext {
+  EnumMembers,
+  HeritageClauseElement,
+  TupleElementTypes,
+  TypeMembers,
+  TypeParametersOrArguments,
+}
 
 function tsIsIdentifier(): boolean {
   // TODO: actually a bit more complex in TypeScript, but shouldn't matter.
@@ -93,14 +86,16 @@ function tsNextTokenCanFollowModifier(): boolean {
 }
 
 /** Parses a modifier matching one the given modifier names. */
-export function tsParseModifier<T extends TsModifier>(allowedModifiers: Array<T>): T | null {
+export function tsParseModifier(
+  allowedModifiers: Array<ContextualKeyword>,
+): ContextualKeyword | null {
   if (!match(tt.name)) {
     return null;
   }
 
   const modifier = state.contextualKeyword;
   if (
-    allowedModifiers.indexOf(modifier as T) !== -1 &&
+    allowedModifiers.indexOf(modifier) !== -1 &&
     tsTryParse(() => tsNextTokenCanFollowModifier())
   ) {
     switch (modifier) {
@@ -125,21 +120,21 @@ export function tsParseModifier<T extends TsModifier>(allowedModifiers: Array<T>
       default:
         break;
     }
-    return modifier as T;
+    return modifier;
   }
   return null;
 }
 
 function tsIsListTerminator(kind: ParsingContext): boolean {
   switch (kind) {
-    case "EnumMembers":
-    case "TypeMembers":
+    case ParsingContext.EnumMembers:
+    case ParsingContext.TypeMembers:
       return match(tt.braceR);
-    case "HeritageClauseElement":
+    case ParsingContext.HeritageClauseElement:
       return match(tt.braceL);
-    case "TupleElementTypes":
+    case ParsingContext.TupleElementTypes:
       return match(tt.bracketR);
-    case "TypeParametersOrArguments":
+    case ParsingContext.TypeParametersOrArguments:
       return match(tt.greaterThan);
     default:
       break;
@@ -254,7 +249,7 @@ function tsParseTypeParameters(): void {
   }
 
   tsParseBracketedList(
-    "TypeParametersOrArguments",
+    ParsingContext.TypeParametersOrArguments,
     tsParseTypeParameter,
     /* bracket */ false,
     /* skipFirstToken */ true,
@@ -320,11 +315,11 @@ function tsTryParseIndexSignature(): boolean {
   return true;
 }
 
-function tsParsePropertyOrMethodSignature(readonly: boolean): void {
+function tsParsePropertyOrMethodSignature(isReadonly: boolean): void {
   parsePropertyName(-1 /* Types don't need context IDs. */);
   eat(tt.question);
 
-  if (!readonly && (match(tt.parenL) || match(tt.lessThan))) {
+  if (!isReadonly && (match(tt.parenL) || match(tt.lessThan))) {
     tsFillSignature(tt.colon);
     tsParseTypeMemberSemicolon();
   } else {
@@ -362,7 +357,7 @@ function tsParseTypeLiteral(): void {
 
 function tsParseObjectTypeMembers(): void {
   expect(tt.braceL);
-  tsParseList("TypeMembers", tsParseTypeMember);
+  tsParseList(ParsingContext.TypeMembers, tsParseTypeMember);
   expect(tt.braceR);
 }
 
@@ -415,7 +410,7 @@ function tsParseMappedType(): void {
 
 function tsParseTupleType(): void {
   tsParseBracketedList(
-    "TupleElementTypes",
+    ParsingContext.TupleElementTypes,
     tsParseType,
     /* bracket */ true,
     /* skipFirstToken */ false,
@@ -664,7 +659,7 @@ function tsTryParseTypeArgumentsInExpression(): boolean {
     const oldIsType = pushTypeContext(0);
     expect(tt.lessThan);
     state.tokens[state.tokens.length - 1].type = tt.typeParameterStart;
-    tsParseDelimitedList("TypeParametersOrArguments", tsParseType);
+    tsParseDelimitedList(ParsingContext.TypeParametersOrArguments, tsParseType);
     expect(tt.greaterThan);
     popTypeContext(oldIsType);
     expect(tt.parenL);
@@ -672,7 +667,7 @@ function tsTryParseTypeArgumentsInExpression(): boolean {
 }
 
 function tsParseHeritageClause(): void {
-  tsParseDelimitedList("HeritageClauseElement", tsParseExpressionWithTypeArguments);
+  tsParseDelimitedList(ParsingContext.HeritageClauseElement, tsParseExpressionWithTypeArguments);
 }
 
 function tsParseExpressionWithTypeArguments(): void {
@@ -718,7 +713,7 @@ function tsParseEnumMember(): void {
 function tsParseEnumDeclaration(): void {
   parseIdentifier();
   expect(tt.braceL);
-  tsParseDelimitedList("EnumMembers", tsParseEnumMember);
+  tsParseDelimitedList(ParsingContext.EnumMembers, tsParseEnumMember);
   expect(tt.braceR);
 }
 
@@ -1008,7 +1003,7 @@ function tsTryParseGenericAsyncArrowFunction(): boolean {
 function tsParseTypeArguments(): void {
   const oldIsType = pushTypeContext(0);
   expect(tt.lessThan);
-  tsParseDelimitedList("TypeParametersOrArguments", tsParseType);
+  tsParseDelimitedList(ParsingContext.TypeParametersOrArguments, tsParseType);
   expect(tt.greaterThan);
   popTypeContext(oldIsType);
 }

@@ -329,7 +329,7 @@ function readToken_slash(): void {
 
 function readToken_mult_modulo(code: number): void {
   // '%*'
-  let type = code === charCodes.asterisk ? tt.star : tt.modulo;
+  let tokenType = code === charCodes.asterisk ? tt.star : tt.modulo;
   let width = 1;
   let nextChar = input.charCodeAt(state.pos + 1);
 
@@ -337,7 +337,7 @@ function readToken_mult_modulo(code: number): void {
   if (code === charCodes.asterisk && nextChar === charCodes.asterisk) {
     width++;
     nextChar = input.charCodeAt(state.pos + 2);
-    type = tt.exponent;
+    tokenType = tt.exponent;
   }
 
   // Match *= or %=, disallowing *=> which can be valid in flow.
@@ -346,10 +346,10 @@ function readToken_mult_modulo(code: number): void {
     input.charCodeAt(state.pos + 2) !== charCodes.greaterThan
   ) {
     width++;
-    type = tt.assign;
+    tokenType = tt.assign;
   }
 
-  finishOp(type, width);
+  finishOp(tokenType, width);
 }
 
 function readToken_pipe_amp(code: number): void {

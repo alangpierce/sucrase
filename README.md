@@ -60,8 +60,14 @@ The following proposed JS features are built-in and always transformed:
 * [Optional catch binding](https://github.com/tc39/proposal-optional-catch-binding):
   `try { doThing(); } catch { }`.
 
-When using the `import` transform, there are some options to enable legacy
-CommonJS interop approaches:
+### JSX Options
+Like Babel, Sucrase compiles JSX to React functions by default, but can be
+configured for any JSX use case.
+* **jsxPragma**: Element creation function, defaults to `React.createElement`.
+* **jsxFragmentPragma**: Fragment component, defaults to `React.Fragment`.
+
+### Legacy CommonJS interop
+Two legacy modes can be used with the `import` tranform:
 * **enableLegacyTypeScriptModuleInterop**: Use the default TypeScript approach
   to CommonJS interop instead of assuming that TypeScript's `--esModuleInterop`
   flag is enabled. For example, if a CJS module exports a function, legacy

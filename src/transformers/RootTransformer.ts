@@ -1,5 +1,5 @@
 import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
-import {SucraseContext, Transform} from "../index";
+import {Options, SucraseContext, Transform} from "../index";
 import NameManager from "../NameManager";
 import TokenProcessor from "../TokenProcessor";
 import getClassInfo, {ClassInfo} from "../util/getClassInfo";
@@ -24,7 +24,7 @@ export default class RootTransformer {
     sucraseContext: SucraseContext,
     transforms: Array<Transform>,
     enableLegacyBabel5ModuleInterop: boolean,
-    filePath: string | null,
+    options: Options,
   ) {
     this.nameManager = sucraseContext.nameManager;
     const {tokenProcessor, importProcessor} = sucraseContext;
@@ -35,10 +35,10 @@ export default class RootTransformer {
     this.transformers.push(new OptionalCatchBindingTransformer(tokenProcessor, this.nameManager));
     if (transforms.includes("jsx")) {
       this.transformers.push(
-        new JSXTransformer(this, tokenProcessor, importProcessor, this.nameManager, filePath),
+        new JSXTransformer(this, tokenProcessor, importProcessor, this.nameManager, options),
       );
       this.transformers.push(
-        new ReactDisplayNameTransformer(this, tokenProcessor, importProcessor, filePath),
+        new ReactDisplayNameTransformer(this, tokenProcessor, importProcessor, options),
       );
     }
 

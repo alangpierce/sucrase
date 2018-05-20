@@ -1,6 +1,7 @@
 import {ContextualKeyword, IdentifierRole} from "../../sucrase-babylon/tokenizer";
 import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import CJSImportProcessor from "../CJSImportProcessor";
+import {Options} from "../index";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
@@ -18,7 +19,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
     readonly importProcessor: CJSImportProcessor | null,
-    readonly filePath: string | null,
+    readonly options: Options,
   ) {
     super();
   }
@@ -104,7 +105,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
   }
 
   private getDisplayNameFromFilename(): string {
-    const filePath = this.filePath || "unknown";
+    const filePath = this.options.filePath || "unknown";
     const pathSegments = filePath.split("/");
     const filename = pathSegments[pathSegments.length - 1];
     const dotIndex = filename.lastIndexOf(".");

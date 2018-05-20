@@ -45,7 +45,7 @@ export function isLineTerminator(): boolean {
 // Consume a semicolon, or, failing that, see if we are allowed to
 // pretend that there is a semicolon at this position.
 export function semicolon(): void {
-  if (!isLineTerminator()) unexpected(null, tt.semi);
+  if (!isLineTerminator()) unexpected(null, 'Unexpected token, expected";"');
 }
 
 // Expect a token of a given type. If found, consume it, otherwise,
@@ -53,18 +53,12 @@ export function semicolon(): void {
 export function expect(type: TokenType, pos?: number | null): void {
   const matched = eat(type);
   if (!matched) {
-    unexpected(pos, type);
+    unexpected(pos, `Unexpected token, expected "${formatTokenType(type)}"`);
   }
 }
 
 // Raise an unexpected token error. Can take the expected token type
 // instead of a message string.
-export function unexpected(
-  pos: number | null = null,
-  messageOrType: string | TokenType = "Unexpected token",
-): never {
-  if (typeof messageOrType !== "string") {
-    messageOrType = `Unexpected token, expected "${formatTokenType(messageOrType)}"`;
-  }
-  throw raise(pos != null ? pos : state.start, messageOrType);
+export function unexpected(pos: number | null = null, message: string = "Unexpected token"): never {
+  throw raise(pos != null ? pos : state.start, message);
 }

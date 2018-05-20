@@ -287,10 +287,13 @@ function tsParseTypeMemberSemicolon(): void {
   }
 }
 
-function tsParseSignatureMember(
-  kind: "TSCallSignatureDeclaration" | "TSConstructSignatureDeclaration",
-): void {
-  if (kind === "TSConstructSignatureDeclaration") {
+enum SignatureMemberKind {
+  TSCallSignatureDeclaration,
+  TSConstructSignatureDeclaration,
+}
+
+function tsParseSignatureMember(kind: SignatureMemberKind): void {
+  if (kind === SignatureMemberKind.TSConstructSignatureDeclaration) {
     expect(tt._new);
   }
   tsFillSignature(tt.colon);
@@ -332,11 +335,11 @@ function tsParsePropertyOrMethodSignature(readonly: boolean): void {
 
 function tsParseTypeMember(): void {
   if (match(tt.parenL) || match(tt.lessThan)) {
-    tsParseSignatureMember("TSCallSignatureDeclaration");
+    tsParseSignatureMember(SignatureMemberKind.TSCallSignatureDeclaration);
     return;
   }
   if (match(tt._new) && tsLookAhead(tsIsStartOfConstructSignature)) {
-    tsParseSignatureMember("TSConstructSignatureDeclaration");
+    tsParseSignatureMember(SignatureMemberKind.TSConstructSignatureDeclaration);
     return;
   }
   const readonly = !!tsParseModifier([ContextualKeyword._readonly]);
@@ -425,8 +428,13 @@ function tsParseParenthesizedType(): void {
   expect(tt.parenR);
 }
 
-function tsParseFunctionOrConstructorType(type: "TSFunctionType" | "TSConstructorType"): void {
-  if (type === "TSConstructorType") {
+enum FunctionType {
+  TSFunctionType,
+  TSConstructorType,
+}
+
+function tsParseFunctionOrConstructorType(type: FunctionType): void {
+  if (type === FunctionType.TSConstructorType) {
     expect(tt._new);
   }
   tsFillSignature(tt.arrow);
@@ -509,7 +517,6 @@ function tsParseTypeOperatorOrHigher(): void {
 }
 
 function tsParseUnionOrIntersectionType(
-  kind: "TSUnionType" | "TSIntersectionType",
   parseConstituentType: () => void,
   operator: TokenType,
 ): void {
@@ -523,11 +530,11 @@ function tsParseUnionOrIntersectionType(
 }
 
 function tsParseIntersectionTypeOrHigher(): void {
-  tsParseUnionOrIntersectionType("TSIntersectionType", tsParseTypeOperatorOrHigher, tt.bitwiseAND);
+  tsParseUnionOrIntersectionType(tsParseTypeOperatorOrHigher, tt.bitwiseAND);
 }
 
 function tsParseUnionTypeOrHigher(): void {
-  tsParseUnionOrIntersectionType("TSUnionType", tsParseIntersectionTypeOrHigher, tt.bitwiseOR);
+  tsParseUnionOrIntersectionType(tsParseIntersectionTypeOrHigher, tt.bitwiseOR);
 }
 
 function tsIsStartOfFunctionType(): boolean {
@@ -632,12 +639,12 @@ export function tsParseType(): void {
 
 export function tsParseNonConditionalType(): void {
   if (tsIsStartOfFunctionType()) {
-    tsParseFunctionOrConstructorType("TSFunctionType");
+    tsParseFunctionOrConstructorType(FunctionType.TSFunctionType);
     return;
   }
   if (match(tt._new)) {
     // As in `new () => Date`
-    tsParseFunctionOrConstructorType("TSConstructorType");
+    tsParseFunctionOrConstructorType(FunctionType.TSConstructorType);
     return;
   }
   tsParseUnionTypeOrHigher();

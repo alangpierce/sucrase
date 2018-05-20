@@ -1,11 +1,20 @@
-import {JSX_PREFIX} from "./prefixes";
+import {Transform} from "../src";
+import {IMPORT_PREFIX, JSX_PREFIX} from "./prefixes";
 import * as util from "./util";
 
 const {devProps} = util;
 
-function assertResult(code: string, expectedResult: string): void {
-  util.assertResult(code, expectedResult, {transforms: ["jsx"]});
-  util.assertResult(code, expectedResult, {transforms: ["jsx", "flow"]});
+function assertResult(
+  code: string,
+  expectedResult: string,
+  {
+    extraTransforms,
+    jsxPragma,
+    jsxFragmentPragma,
+  }: {extraTransforms?: Array<Transform>; jsxPragma?: string; jsxFragmentPragma?: string} = {},
+): void {
+  const transforms: Array<Transform> = ["jsx", ...(extraTransforms || [])];
+  util.assertResult(code, expectedResult, {transforms, jsxPragma, jsxFragmentPragma});
 }
 
 describe("transform JSX", () => {
@@ -308,6 +317,76 @@ describe("transform JSX", () => {
         )
       );
     `,
+    );
+  });
+
+  it("handles transformed react name in createElement and Fragment", () => {
+    assertResult(
+      `
+      import React from 'react';
+      const f = (
+        <>
+          <div />
+          <span />
+        </>
+      );
+    `,
+      `"use strict";${JSX_PREFIX}${IMPORT_PREFIX}
+      var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+      const f = (
+        _react2.default.createElement(_react2.default.Fragment, null, 
+          , _react2.default.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 5}} )
+          , _react2.default.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 6}} )
+        )
+      );
+    `,
+      {extraTransforms: ["imports"]},
+    );
+  });
+
+  it("allows custom JSX pragmas", () => {
+    assertResult(
+      `
+      const f = (
+        <>
+          <div />
+          <span />
+        </>
+      );
+    `,
+      `${JSX_PREFIX}
+      const f = (
+        h(Fragment, null, 
+          , h('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 4}} )
+          , h('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 5}} )
+        )
+      );
+    `,
+      {jsxPragma: "h", jsxFragmentPragma: "Fragment"},
+    );
+  });
+
+  it("properly transforms imports for JSX pragmas", () => {
+    assertResult(
+      `
+      import {h, Fragment} from 'preact';
+      const f = (
+        <>
+          <div />
+          <span />
+        </>
+      );
+    `,
+      `"use strict";${JSX_PREFIX}${IMPORT_PREFIX}
+      var _preact = require('preact');
+      const f = (
+        _preact.h(_preact.Fragment, null, 
+          , _preact.h('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 5}} )
+          , _preact.h('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 6}} )
+        )
+      );
+    `,
+      {extraTransforms: ["imports"], jsxPragma: "h", jsxFragmentPragma: "Fragment"},
     );
   });
 });

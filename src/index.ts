@@ -11,6 +11,8 @@ export type Transform = "jsx" | "typescript" | "flow" | "imports";
 
 export type Options = {
   transforms: Array<Transform>;
+  jsxPragma?: string;
+  jsxFragmentPragma?: string;
   enableLegacyTypeScriptModuleInterop?: boolean;
   enableLegacyBabel5ModuleInterop?: boolean;
   filePath?: string;
@@ -35,7 +37,7 @@ export function transform(code: string, options: Options): string {
       sucraseContext,
       options.transforms,
       Boolean(options.enableLegacyBabel5ModuleInterop),
-      options.filePath || null,
+      options,
     ).transform();
   } catch (e) {
     if (options.filePath) {

@@ -1,6 +1,6 @@
 import * as assert from "assert";
 
-import {Options, transform, Transform} from "../src";
+import {Options, transform} from "../src";
 
 export function assertResult(
   code: string,

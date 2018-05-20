@@ -11,6 +11,7 @@
     "esModuleInterop": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
+    "noUnusedLocals": true,
     "suppressImplicitAnyIndexErrors": true,
     "noImplicitThis": true,
     "downlevelIteration": true,

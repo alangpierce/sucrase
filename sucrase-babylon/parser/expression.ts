@@ -48,8 +48,9 @@ import {
   match,
   next,
   nextTemplateToken,
+  popTypeContext,
+  pushTypeContext,
   retokenizeSlashAsRegex,
-  runInTypeContext,
 } from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {
@@ -193,9 +194,9 @@ function parseExprOp(minPrec: number, noIn: boolean | null): void {
     eatContextual(ContextualKeyword._as)
   ) {
     state.tokens[state.tokens.length - 1].type = tt._as;
-    runInTypeContext(1, () => {
-      tsParseType();
-    });
+    const oldIsType = pushTypeContext(1);
+    tsParseType();
+    popTypeContext(oldIsType);
     parseExprOp(minPrec, noIn);
     return;
   }

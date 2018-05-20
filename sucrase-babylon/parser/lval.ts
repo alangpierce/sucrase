@@ -4,7 +4,15 @@ import {
   tsParseAssignableListItemTypes,
   tsParseModifier,
 } from "../plugins/typescript";
-import {ContextualKeyword, eat, IdentifierRole, match, next, runInTypeContext} from "../tokenizer";
+import {
+  ContextualKeyword,
+  eat,
+  IdentifierRole,
+  match,
+  next,
+  popTypeContext,
+  pushTypeContext,
+} from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {isFlowEnabled, isTypeScriptEnabled, state} from "./base";
 import {parseIdentifier, parseMaybeAssign, parseObj} from "./expression";
@@ -27,12 +35,13 @@ export function parseBindingIdentifier(): void {
 // Parses lvalue (assignable) atom.
 export function parseBindingAtom(isBlockScope: boolean): void {
   switch (state.type) {
-    case tt._this:
+    case tt._this: {
       // In TypeScript, "this" may be the name of a parameter, so allow it.
-      runInTypeContext(0, () => {
-        next();
-      });
+      const oldIsType = pushTypeContext(0);
+      next();
+      popTypeContext(oldIsType);
       return;
+    }
 
     case tt._yield:
     case tt.name: {

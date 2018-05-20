@@ -121,6 +121,19 @@ export function runInTypeContext<T>(existingTokensInType: number, func: () => T)
   return result;
 }
 
+export function pushTypeContext(existingTokensInType: number): boolean {
+  for (let i = state.tokens.length - existingTokensInType; i < state.tokens.length; i++) {
+    state.tokens[i].isType = true;
+  }
+  const oldIsType = state.isType;
+  state.isType = true;
+  return oldIsType;
+}
+
+export function popTypeContext(oldIsType: boolean): void {
+  state.isType = oldIsType;
+}
+
 export function eat(type: TokenType): boolean {
   if (match(type)) {
     next();

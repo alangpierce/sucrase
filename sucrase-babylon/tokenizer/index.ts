@@ -235,7 +235,7 @@ export function skipLineComment(startSkip: number): void {
 // Called at the start of the parse and after every token. Skips
 // whitespace and comments.
 export function skipSpace(): void {
-  loop: while (state.pos < input.length) {
+  while (state.pos < input.length) {
     const ch = input.charCodeAt(state.pos);
     switch (ch) {
       case charCodes.space:
@@ -265,7 +265,7 @@ export function skipSpace(): void {
             break;
 
           default:
-            break loop;
+            return;
         }
         break;
 
@@ -276,7 +276,7 @@ export function skipSpace(): void {
         ) {
           ++state.pos;
         } else {
-          break loop;
+          return;
         }
     }
   }
@@ -655,8 +655,8 @@ function finishOp(type: TokenType, size: number): void {
 
 function readRegexp(): void {
   const start = state.pos;
-  let escaped;
-  let inClass;
+  let escaped = false;
+  let inClass = false;
   for (;;) {
     if (state.pos >= input.length) {
       raise(start, "Unterminated regular expression");

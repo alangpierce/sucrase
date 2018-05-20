@@ -79,6 +79,13 @@ import {
   unexpected,
 } from "./util";
 
+export class StopState {
+  stop: boolean;
+  constructor(stop: boolean) {
+    this.stop = stop;
+  }
+}
+
 // ### Expression parsing
 
 // These nest, from the most general expression type at the top to
@@ -265,17 +272,13 @@ function parseSubscripts(startPos: number, noCalls: boolean | null = null): void
 }
 
 export function baseParseSubscripts(startPos: number, noCalls: boolean | null = null): void {
-  const stopState = {stop: false};
+  const stopState = new StopState(false);
   do {
     parseSubscript(startPos, noCalls, stopState);
   } while (!stopState.stop);
 }
 
-function parseSubscript(
-  startPos: number,
-  noCalls: boolean | null,
-  stopState: {stop: boolean},
-): void {
+function parseSubscript(startPos: number, noCalls: boolean | null, stopState: StopState): void {
   if (isTypeScriptEnabled) {
     tsParseSubscript(startPos, noCalls, stopState);
   } else {
@@ -287,7 +290,7 @@ function parseSubscript(
 export function baseParseSubscript(
   startPos: number,
   noCalls: boolean | null,
-  stopState: {stop: boolean},
+  stopState: StopState,
 ): void {
   if (!noCalls && eat(tt.doubleColon)) {
     parseNoCallExpr();
@@ -562,8 +565,8 @@ function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
 
   const exprList = [];
   let first = true;
-  let spreadStart;
-  let optionalCommaStart;
+  let spreadStart = 0;
+  let optionalCommaStart = 0;
 
   while (!match(tt.parenR)) {
     if (first) {
@@ -609,8 +612,12 @@ function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
     }
   }
 
-  if (optionalCommaStart) unexpected(optionalCommaStart);
-  if (spreadStart) unexpected(spreadStart);
+  if (optionalCommaStart) {
+    unexpected(optionalCommaStart);
+  }
+  if (spreadStart) {
+    unexpected(spreadStart);
+  }
   return false;
 }
 

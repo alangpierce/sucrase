@@ -71,7 +71,7 @@ function jsxReadString(quote: number): void {
 // by isIdentifierStart in readToken.
 
 function jsxReadWord(): void {
-  let ch;
+  let ch: number;
   do {
     ch = input.charCodeAt(++state.pos);
   } while (isIdentifierChar(ch) || ch === charCodes.dash);
@@ -204,14 +204,14 @@ function jsxParseElementAt(): void {
   const isSelfClosing = jsxParseOpeningElement();
   if (!isSelfClosing) {
     nextJSXExprToken();
-    contents: while (true) {
+    while (true) {
       switch (state.type) {
         case tt.jsxTagStart:
           nextJSXTagToken();
           if (match(tt.slash)) {
             nextJSXTagToken();
             jsxParseClosingElement();
-            break contents;
+            return;
           }
           jsxParseElementAt();
           nextJSXExprToken();

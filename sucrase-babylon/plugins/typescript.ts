@@ -12,6 +12,7 @@ import {
   parseMaybeAssign,
   parseMaybeUnary,
   parsePropertyName,
+  StopState,
 } from "../parser/expression";
 import {parseBindingList} from "../parser/lval";
 import {
@@ -1063,7 +1064,7 @@ export function tsParseFunctionBodyAndFinish(
 export function tsParseSubscript(
   startPos: number,
   noCalls: boolean | null,
-  stopState: {stop: boolean},
+  stopState: StopState,
 ): void {
   if (!hasPrecedingLineBreak() && eat(tt.bang)) {
     state.tokens[state.tokens.length - 1].type = tt.nonNullAssertion;

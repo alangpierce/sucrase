@@ -3,7 +3,7 @@ import commander from "commander";
 import {exists, mkdir, readdir, readFile, stat, writeFile} from "mz/fs";
 import {join} from "path";
 
-import {Options, Transform, transform} from "./index";
+import {Options, transform} from "./index";
 
 export default function run(): void {
   commander

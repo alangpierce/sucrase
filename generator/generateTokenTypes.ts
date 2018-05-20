@@ -253,7 +253,3 @@ export function formatTokenType(tokenType: TokenType): string {
 `;
   return code;
 }
-
-function generateLines<T>(arr: Array<T>, f: (t: T) => string): string {
-  return arr.map((t) => `  ${f(t)}\n`).join("");
-}

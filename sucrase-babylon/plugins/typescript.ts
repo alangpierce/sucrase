@@ -44,7 +44,8 @@ import {
   lookaheadTypeAndKeyword,
   match,
   next,
-  runInTypeContext,
+  popTypeContext,
+  pushTypeContext,
 } from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 
@@ -244,20 +245,20 @@ export function tsTryParseTypeParameters(): void {
 }
 
 function tsParseTypeParameters(): void {
-  runInTypeContext(0, () => {
-    if (match(tt.lessThan) || match(tt.typeParameterStart)) {
-      next();
-    } else {
-      unexpected();
-    }
+  const oldIsType = pushTypeContext(0);
+  if (match(tt.lessThan) || match(tt.typeParameterStart)) {
+    next();
+  } else {
+    unexpected();
+  }
 
-    tsParseBracketedList(
-      "TypeParametersOrArguments",
-      tsParseTypeParameter,
-      /* bracket */ false,
-      /* skipFirstToken */ true,
-    );
-  });
+  tsParseBracketedList(
+    "TypeParametersOrArguments",
+    tsParseTypeParameter,
+    /* bracket */ false,
+    /* skipFirstToken */ true,
+  );
+  popTypeContext(oldIsType);
 }
 
 // Note: In TypeScript implementation we must provide `yieldContext` and `awaitContext`,
@@ -570,13 +571,13 @@ function tsIsUnambiguouslyStartOfFunctionType(): boolean {
 }
 
 function tsParseTypeOrTypePredicateAnnotation(returnToken: TokenType): void {
-  runInTypeContext(0, () => {
-    expect(returnToken);
-    tsTryParse(() => tsParseTypePredicatePrefix());
-    // Regardless of whether we found an "is" token, there's now just a regular type in front of
-    // us.
-    tsParseType();
-  });
+  const oldIsType = pushTypeContext(0);
+  expect(returnToken);
+  tsTryParse(() => tsParseTypePredicatePrefix());
+  // Regardless of whether we found an "is" token, there's now just a regular type in front of
+  // us.
+  tsParseType();
+  popTypeContext(oldIsType);
 }
 
 function tsTryParseTypeOrTypePredicateAnnotation(): void {
@@ -607,10 +608,10 @@ function tsParseTypePredicatePrefix(): boolean {
 }
 
 export function tsParseTypeAnnotation(): void {
-  runInTypeContext(0, () => {
-    expect(tt.colon);
-    tsParseType();
-  });
+  const oldIsType = pushTypeContext(0);
+  expect(tt.colon);
+  tsParseType();
+  popTypeContext(oldIsType);
 }
 
 export function tsParseType(): void {
@@ -642,22 +643,22 @@ export function tsParseNonConditionalType(): void {
 }
 
 export function tsParseTypeAssertion(): void {
-  runInTypeContext(1, () => {
-    tsParseType();
-    expect(tt.greaterThan);
-  });
+  const oldIsType = pushTypeContext(1);
+  tsParseType();
+  expect(tt.greaterThan);
+  popTypeContext(oldIsType);
   parseMaybeUnary();
 }
 
 // Returns true if parsing was successful.
 function tsTryParseTypeArgumentsInExpression(): boolean {
   return tsTryParseAndCatch(() => {
-    runInTypeContext(0, () => {
-      expect(tt.lessThan);
-      state.tokens[state.tokens.length - 1].type = tt.typeParameterStart;
-      tsParseDelimitedList("TypeParametersOrArguments", tsParseType);
-      expect(tt.greaterThan);
-    });
+    const oldIsType = pushTypeContext(0);
+    expect(tt.lessThan);
+    state.tokens[state.tokens.length - 1].type = tt.typeParameterStart;
+    tsParseDelimitedList("TypeParametersOrArguments", tsParseType);
+    expect(tt.greaterThan);
+    popTypeContext(oldIsType);
     expect(tt.parenL);
   });
 }
@@ -813,48 +814,55 @@ function tsTryParse<T>(f: () => boolean): boolean {
 // Returns true if a statement matched.
 function tsTryParseDeclare(): boolean {
   switch (state.type) {
-    case tt._function:
-      runInTypeContext(1, () => {
-        next();
-        // We don't need to precisely get the function start here, since it's only used to mark
-        // the function as a type if it's bodiless, and it's already a type here.
-        const functionStart = state.start;
-        parseFunction(functionStart, /* isStatement */ true);
-      });
+    case tt._function: {
+      const oldIsType = pushTypeContext(1);
+      next();
+      // We don't need to precisely get the function start here, since it's only used to mark
+      // the function as a type if it's bodiless, and it's already a type here.
+      const functionStart = state.start;
+      parseFunction(functionStart, /* isStatement */ true);
+      popTypeContext(oldIsType);
       return true;
-    case tt._class:
-      runInTypeContext(1, () => {
-        parseClass(/* isStatement */ true, /* optionalId */ false);
-      });
+    }
+    case tt._class: {
+      const oldIsType = pushTypeContext(1);
+      parseClass(/* isStatement */ true, /* optionalId */ false);
+      popTypeContext(oldIsType);
       return true;
-    case tt._const:
+    }
+    case tt._const: {
       if (match(tt._const) && isLookaheadContextual(ContextualKeyword._enum)) {
-        runInTypeContext(1, () => {
-          // `const enum = 0;` not allowed because "enum" is a strict mode reserved word.
-          expect(tt._const);
-          expectContextual(ContextualKeyword._enum);
-          state.tokens[state.tokens.length - 1].type = tt._enum;
-          tsParseEnumDeclaration();
-        });
+        const oldIsType = pushTypeContext(1);
+        // `const enum = 0;` not allowed because "enum" is a strict mode reserved word.
+        expect(tt._const);
+        expectContextual(ContextualKeyword._enum);
+        state.tokens[state.tokens.length - 1].type = tt._enum;
+        tsParseEnumDeclaration();
+        popTypeContext(oldIsType);
         return true;
       }
+    }
     // falls through
     case tt._var:
-    case tt._let:
-      runInTypeContext(1, () => {
-        parseVarStatement(state.type);
-      });
+    case tt._let: {
+      const oldIsType = pushTypeContext(1);
+      parseVarStatement(state.type);
+      popTypeContext(oldIsType);
       return true;
+    }
     case tt.name: {
-      return runInTypeContext(1, () => {
-        const contextualKeyword = state.contextualKeyword;
-        if (contextualKeyword === ContextualKeyword._global) {
-          tsParseAmbientExternalModuleDeclaration();
-          return true;
-        } else {
-          return tsParseDeclaration(contextualKeyword, /* isBeforeToken */ true);
-        }
-      });
+      const oldIsType = pushTypeContext(1);
+      const contextualKeyword = state.contextualKeyword;
+      let matched = false;
+      if (contextualKeyword === ContextualKeyword._global) {
+        tsParseAmbientExternalModuleDeclaration();
+        matched = true;
+        return true;
+      } else {
+        matched = tsParseDeclaration(contextualKeyword, /* isBeforeToken */ true);
+      }
+      popTypeContext(oldIsType);
+      return matched;
     }
     default:
       return false;
@@ -920,10 +928,10 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
       if (isBeforeToken || match(tt.name)) {
         // `next` is true in "export" and "declare" contexts, so we want to remove that token
         // as well.
-        runInTypeContext(1, () => {
-          if (isBeforeToken) next();
-          tsParseInterfaceDeclaration();
-        });
+        const oldIsType = pushTypeContext(1);
+        if (isBeforeToken) next();
+        tsParseInterfaceDeclaration();
+        popTypeContext(oldIsType);
         return true;
       }
       break;
@@ -931,34 +939,34 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
     case ContextualKeyword._module:
       if (isBeforeToken) next();
       if (match(tt.string)) {
-        runInTypeContext(isBeforeToken ? 2 : 1, () => {
-          tsParseAmbientExternalModuleDeclaration();
-        });
+        const oldIsType = pushTypeContext(isBeforeToken ? 2 : 1);
+        tsParseAmbientExternalModuleDeclaration();
+        popTypeContext(oldIsType);
         return true;
       } else if (next || match(tt.name)) {
-        runInTypeContext(isBeforeToken ? 2 : 1, () => {
-          tsParseModuleOrNamespaceDeclaration();
-        });
+        const oldIsType = pushTypeContext(isBeforeToken ? 2 : 1);
+        tsParseModuleOrNamespaceDeclaration();
+        popTypeContext(oldIsType);
         return true;
       }
       break;
 
     case ContextualKeyword._namespace:
       if (isBeforeToken || match(tt.name)) {
-        runInTypeContext(1, () => {
-          if (isBeforeToken) next();
-          tsParseModuleOrNamespaceDeclaration();
-        });
+        const oldIsType = pushTypeContext(1);
+        if (isBeforeToken) next();
+        tsParseModuleOrNamespaceDeclaration();
+        popTypeContext(oldIsType);
         return true;
       }
       break;
 
     case ContextualKeyword._type:
       if (isBeforeToken || match(tt.name)) {
-        runInTypeContext(1, () => {
-          if (isBeforeToken) next();
-          tsParseTypeAliasDeclaration();
-        });
+        const oldIsType = pushTypeContext(1);
+        if (isBeforeToken) next();
+        tsParseTypeAliasDeclaration();
+        popTypeContext(oldIsType);
         return true;
       }
       break;
@@ -990,11 +998,11 @@ function tsTryParseGenericAsyncArrowFunction(): boolean {
 }
 
 function tsParseTypeArguments(): void {
-  runInTypeContext(0, () => {
-    expect(tt.lessThan);
-    tsParseDelimitedList("TypeParametersOrArguments", tsParseType);
-    expect(tt.greaterThan);
-  });
+  const oldIsType = pushTypeContext(0);
+  expect(tt.lessThan);
+  tsParseDelimitedList("TypeParametersOrArguments", tsParseType);
+  expect(tt.greaterThan);
+  popTypeContext(oldIsType);
 }
 
 export function tsIsDeclarationStart(): boolean {
@@ -1212,16 +1220,18 @@ export function tsParseExportDeclaration(): void {
   let matchedDeclaration = false;
   if (match(tt.name)) {
     if (isDeclare) {
-      matchedDeclaration = runInTypeContext(2, () => tsTryParseExportDeclaration());
+      const oldIsType = pushTypeContext(2);
+      matchedDeclaration = tsTryParseExportDeclaration();
+      popTypeContext(oldIsType);
     } else {
       matchedDeclaration = tsTryParseExportDeclaration();
     }
   }
   if (!matchedDeclaration) {
     if (isDeclare) {
-      runInTypeContext(2, () => {
-        parseStatement(true);
-      });
+      const oldIsType = pushTypeContext(2);
+      parseStatement(true);
+      popTypeContext(oldIsType);
     } else {
       parseStatement(true);
     }
@@ -1234,9 +1244,9 @@ export function tsAfterParseClassSuper(hasSuper: boolean): void {
   }
   if (eatContextual(ContextualKeyword._implements)) {
     state.tokens[state.tokens.length - 1].type = tt._implements;
-    runInTypeContext(1, () => {
-      tsParseHeritageClause();
-    });
+    const oldIsType = pushTypeContext(1);
+    tsParseHeritageClause();
+    popTypeContext(oldIsType);
   }
 }
 
@@ -1299,9 +1309,9 @@ export function tsParseMaybeAssign(
   const snapshot = state.snapshot();
   try {
     // This is similar to TypeScript's `tryParseParenthesizedArrowFunctionExpression`.
-    runInTypeContext(0, () => {
-      tsParseTypeParameters();
-    });
+    const oldIsType = pushTypeContext(0);
+    tsParseTypeParameters();
+    popTypeContext(oldIsType);
     wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
     if (!wasArrow) {
       unexpected(); // Go to the catch block (needs a SyntaxError).
@@ -1352,8 +1362,8 @@ export function tsParseArrow(): boolean {
 
 // Allow type annotations inside of a parameter list.
 export function tsParseAssignableListItemTypes(): void {
-  runInTypeContext(0, () => {
-    eat(tt.question);
-    tsTryParseTypeAnnotation();
-  });
+  const oldIsType = pushTypeContext(0);
+  eat(tt.question);
+  tsTryParseTypeAnnotation();
+  popTypeContext(oldIsType);
 }

@@ -1,6 +1,6 @@
 // @ts-ignore: no types available.
 import * as pirates from "pirates";
-import {Options, Transform, transform} from "./index";
+import {Options, transform} from "./index";
 
 export function addHook(extension: string, options: Options): void {
   pirates.addHook(

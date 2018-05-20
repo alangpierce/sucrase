@@ -1,8 +1,7 @@
-import {ContextualKeyword, IdentifierRole} from "../sucrase-babylon/tokenizer";
-import {TokenType, TokenType as tt} from "../sucrase-babylon/tokenizer/types";
+import {ContextualKeyword} from "../sucrase-babylon/tokenizer";
+import {TokenType as tt} from "../sucrase-babylon/tokenizer/types";
 import NameManager from "./NameManager";
 import TokenProcessor from "./TokenProcessor";
-import {startsWithLowerCase} from "./transformers/JSXTransformer";
 import {getNonTypeIdentifiers} from "./util/getNonTypeIdentifiers";
 
 type NamedImport = {

@@ -38,7 +38,8 @@ import {
   lookaheadTypeAndKeyword,
   match,
   next,
-  runInTypeContext,
+  popTypeContext,
+  pushTypeContext,
 } from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 
@@ -53,10 +54,10 @@ function isMaybeDefaultImport(lookahead: {
 }
 
 function flowParseTypeInitialiser(tok?: TokenType): void {
-  runInTypeContext(0, () => {
-    expect(tok || tt.colon);
-    flowParseType();
-  });
+  const oldIsType = pushTypeContext(0);
+  expect(tok || tt.colon);
+  flowParseType();
+  popTypeContext(oldIsType);
 }
 
 function flowParsePredicate(): void {
@@ -69,17 +70,17 @@ function flowParsePredicate(): void {
 }
 
 function flowParseTypeAndPredicateInitialiser(): void {
-  runInTypeContext(0, () => {
-    expect(tt.colon);
+  const oldIsType = pushTypeContext(0);
+  expect(tt.colon);
+  if (match(tt.modulo)) {
+    flowParsePredicate();
+  } else {
+    flowParseType();
     if (match(tt.modulo)) {
       flowParsePredicate();
-    } else {
-      flowParseType();
-      if (match(tt.modulo)) {
-        flowParsePredicate();
-      }
     }
-  });
+  }
+  popTypeContext(oldIsType);
 }
 
 function flowParseDeclareClass(): void {
@@ -298,35 +299,35 @@ function flowParseTypeParameter(): void {
 }
 
 export function flowParseTypeParameterDeclaration(): void {
-  runInTypeContext(0, () => {
-    // istanbul ignore else: this condition is already checked at all call sites
-    if (match(tt.lessThan) || match(tt.typeParameterStart)) {
-      next();
-    } else {
-      unexpected();
-    }
+  const oldIsType = pushTypeContext(0);
+  // istanbul ignore else: this condition is already checked at all call sites
+  if (match(tt.lessThan) || match(tt.typeParameterStart)) {
+    next();
+  } else {
+    unexpected();
+  }
 
-    do {
-      flowParseTypeParameter();
-      if (!match(tt.greaterThan)) {
-        expect(tt.comma);
-      }
-    } while (!match(tt.greaterThan));
-    expect(tt.greaterThan);
-  });
+  do {
+    flowParseTypeParameter();
+    if (!match(tt.greaterThan)) {
+      expect(tt.comma);
+    }
+  } while (!match(tt.greaterThan));
+  expect(tt.greaterThan);
+  popTypeContext(oldIsType);
 }
 
 function flowParseTypeParameterInstantiation(): void {
-  runInTypeContext(0, () => {
-    expect(tt.lessThan);
-    while (!match(tt.greaterThan)) {
-      flowParseType();
-      if (!match(tt.greaterThan)) {
-        expect(tt.comma);
-      }
+  const oldIsType = pushTypeContext(0);
+  expect(tt.lessThan);
+  while (!match(tt.greaterThan)) {
+    flowParseType();
+    if (!match(tt.greaterThan)) {
+      expect(tt.comma);
     }
-    expect(tt.greaterThan);
-  });
+  }
+  expect(tt.greaterThan);
+  popTypeContext(oldIsType);
 }
 
 function flowParseObjectPropertyKey(): void {
@@ -384,10 +385,8 @@ function flowParseObjectType(allowStatic: boolean, allowExact: boolean): void {
   }
 
   while (!match(endDelim)) {
-    let isStatic = false;
     if (allowStatic && isContextual(ContextualKeyword._static) && lookaheadType() !== tt.colon) {
       next();
-      isStatic = true;
     }
 
     flowParseVariance();
@@ -672,10 +671,10 @@ export function flowParseFunctionBodyAndFinish(
 // interfaces
 export function flowTryParseStatement(): boolean {
   if (match(tt.name) && state.contextualKeyword === ContextualKeyword._interface) {
-    runInTypeContext(0, () => {
-      next();
-      flowParseInterface();
-    });
+    const oldIsType = pushTypeContext(0);
+    next();
+    flowParseInterface();
+    popTypeContext(oldIsType);
     return true;
   } else {
     return false;
@@ -692,23 +691,23 @@ export function flowParseIdentifierStatement(contextualKeyword: ContextualKeywor
       match(tt._var) ||
       match(tt._export)
     ) {
-      runInTypeContext(1, () => {
-        flowParseDeclare();
-      });
+      const oldIsType = pushTypeContext(1);
+      flowParseDeclare();
+      popTypeContext(oldIsType);
     }
   } else if (match(tt.name)) {
     if (contextualKeyword === ContextualKeyword._interface) {
-      runInTypeContext(1, () => {
-        flowParseInterface();
-      });
+      const oldIsType = pushTypeContext(1);
+      flowParseInterface();
+      popTypeContext(oldIsType);
     } else if (contextualKeyword === ContextualKeyword._type) {
-      runInTypeContext(1, () => {
-        flowParseTypeAlias();
-      });
+      const oldIsType = pushTypeContext(1);
+      flowParseTypeAlias();
+      popTypeContext(oldIsType);
     } else if (contextualKeyword === ContextualKeyword._opaque) {
-      runInTypeContext(1, () => {
-        flowParseOpaqueType(false);
-      });
+      const oldIsType = pushTypeContext(1);
+      flowParseOpaqueType(false);
+      popTypeContext(oldIsType);
     }
   }
   semicolon();
@@ -734,29 +733,29 @@ export function flowShouldDisallowExportDefaultSpecifier(): boolean {
 
 export function flowParseExportDeclaration(): void {
   if (isContextual(ContextualKeyword._type)) {
-    runInTypeContext(1, () => {
-      next();
+    const oldIsType = pushTypeContext(1);
+    next();
 
-      if (match(tt.braceL)) {
-        // export type { foo, bar };
-        parseExportSpecifiers();
-        parseExportFrom();
-      } else {
-        // export type Foo = Bar;
-        flowParseTypeAlias();
-      }
-    });
+    if (match(tt.braceL)) {
+      // export type { foo, bar };
+      parseExportSpecifiers();
+      parseExportFrom();
+    } else {
+      // export type Foo = Bar;
+      flowParseTypeAlias();
+    }
+    popTypeContext(oldIsType);
   } else if (isContextual(ContextualKeyword._opaque)) {
-    runInTypeContext(1, () => {
-      next();
-      // export opaque type Foo = Bar;
-      flowParseOpaqueType(false);
-    });
+    const oldIsType = pushTypeContext(1);
+    next();
+    // export opaque type Foo = Bar;
+    flowParseOpaqueType(false);
+    popTypeContext(oldIsType);
   } else if (isContextual(ContextualKeyword._interface)) {
-    runInTypeContext(1, () => {
-      next();
-      flowParseInterface();
-    });
+    const oldIsType = pushTypeContext(1);
+    next();
+    flowParseInterface();
+    popTypeContext(oldIsType);
   } else {
     parseStatement(true);
   }
@@ -768,9 +767,9 @@ export function flowShouldParseExportStar(): boolean {
 
 export function flowParseExportStar(): void {
   if (eatContextual(ContextualKeyword._type)) {
-    runInTypeContext(2, () => {
-      baseParseExportStar();
-    });
+    const oldIsType = pushTypeContext(2);
+    baseParseExportStar();
+    popTypeContext(oldIsType);
   } else {
     baseParseExportStar();
   }
@@ -783,15 +782,15 @@ export function flowAfterParseClassSuper(hasSuper: boolean): void {
   }
   if (isContextual(ContextualKeyword._implements)) {
     state.tokens[state.tokens.length - 1].type = tt._implements;
-    runInTypeContext(0, () => {
-      next();
-      do {
-        flowParseRestrictedIdentifier();
-        if (match(tt.lessThan)) {
-          flowParseTypeParameterInstantiation();
-        }
-      } while (eat(tt.comma));
-    });
+    const oldIsType = pushTypeContext(0);
+    next();
+    do {
+      flowParseRestrictedIdentifier();
+      if (match(tt.lessThan)) {
+        flowParseTypeParameterInstantiation();
+      }
+    } while (eat(tt.comma));
+    popTypeContext(oldIsType);
   }
 }
 
@@ -805,12 +804,12 @@ export function flowStartParseObjPropValue(): void {
 }
 
 export function flowParseAssignableListItemTypes(): void {
-  runInTypeContext(0, () => {
-    eat(tt.question);
-    if (match(tt.colon)) {
-      flowParseTypeAnnotation();
-    }
-  });
+  const oldIsType = pushTypeContext(0);
+  eat(tt.question);
+  if (match(tt.colon)) {
+    flowParseTypeAnnotation();
+  }
+  popTypeContext(oldIsType);
 }
 
 // parse typeof and type imports
@@ -861,9 +860,9 @@ export function flowStartParseFunctionParams(): void {
   // Originally this checked if the method is a getter/setter, but if it was, we'd crash soon
   // anyway, so don't try to propagate that information.
   if (match(tt.lessThan)) {
-    runInTypeContext(0, () => {
-      flowParseTypeParameterDeclaration();
-    });
+    const oldIsType = pushTypeContext(0);
+    flowParseTypeParameterDeclaration();
+    popTypeContext(oldIsType);
   }
 }
 
@@ -915,9 +914,9 @@ export function flowParseMaybeAssign(noIn?: boolean | null, afterLeftParse?: Fun
   if (jsxError != null || match(tt.lessThan)) {
     let wasArrow = false;
     try {
-      runInTypeContext(0, () => {
-        flowParseTypeParameterDeclaration();
-      });
+      const oldIsType = pushTypeContext(0);
+      flowParseTypeParameterDeclaration();
+      popTypeContext(oldIsType);
       wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
     } catch (err) {
       throw jsxError || err;
@@ -935,25 +934,25 @@ export function flowParseMaybeAssign(noIn?: boolean | null, afterLeftParse?: Fun
 // handle return types for arrow functions
 export function flowParseArrow(): boolean {
   if (match(tt.colon)) {
-    runInTypeContext(0, () => {
-      const snapshot = state.snapshot();
-      try {
-        const oldNoAnonFunctionType = state.noAnonFunctionType;
-        state.noAnonFunctionType = true;
-        flowParseTypeAndPredicateInitialiser();
-        state.noAnonFunctionType = oldNoAnonFunctionType;
+    const oldIsType = pushTypeContext(0);
+    const snapshot = state.snapshot();
+    try {
+      const oldNoAnonFunctionType = state.noAnonFunctionType;
+      state.noAnonFunctionType = true;
+      flowParseTypeAndPredicateInitialiser();
+      state.noAnonFunctionType = oldNoAnonFunctionType;
 
-        if (canInsertSemicolon()) unexpected();
-        if (!match(tt.arrow)) unexpected();
-      } catch (err) {
-        if (err instanceof SyntaxError) {
-          state.restoreFromSnapshot(snapshot);
-        } else {
-          // istanbul ignore next: no such error is expected
-          throw err;
-        }
+      if (canInsertSemicolon()) unexpected();
+      if (!match(tt.arrow)) unexpected();
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        state.restoreFromSnapshot(snapshot);
+      } else {
+        // istanbul ignore next: no such error is expected
+        throw err;
       }
-    });
+    }
+    popTypeContext(oldIsType);
   }
   return eat(tt.arrow);
 }

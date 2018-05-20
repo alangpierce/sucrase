@@ -17,11 +17,11 @@ describe("scopes", () => {
     `,
       [
         // Function body
-        {startTokenIndex: 10, endTokenIndex: 19, isFunctionScope: true},
+        new Scope(10, 19, true),
         // Function including params
-        {startTokenIndex: 7, endTokenIndex: 19, isFunctionScope: true},
+        new Scope(7, 19, true),
         // Program
-        {startTokenIndex: 0, endTokenIndex: 20, isFunctionScope: true},
+        new Scope(0, 20, true),
       ],
     );
   });
@@ -53,31 +53,31 @@ describe("scopes", () => {
     `,
       [
         // For loop block
-        {startTokenIndex: 18, endTokenIndex: 27, isFunctionScope: false},
+        new Scope(18, 27, false),
         // For loop including initializers
-        {startTokenIndex: 11, endTokenIndex: 27, isFunctionScope: false},
+        new Scope(11, 27, false),
         // While block
-        {startTokenIndex: 31, endTokenIndex: 33, isFunctionScope: false},
+        new Scope(31, 33, false),
         // If block
-        {startTokenIndex: 37, endTokenIndex: 39, isFunctionScope: false},
+        new Scope(37, 39, false),
         // Block within switch base
-        {startTokenIndex: 47, endTokenIndex: 52, isFunctionScope: false},
+        new Scope(47, 52, false),
         // Switch block
-        {startTokenIndex: 43, endTokenIndex: 58, isFunctionScope: false},
+        new Scope(43, 58, false),
         // Try block
-        {startTokenIndex: 59, endTokenIndex: 61, isFunctionScope: false},
+        new Scope(59, 61, false),
         // Catch block
-        {startTokenIndex: 65, endTokenIndex: 67, isFunctionScope: false},
+        new Scope(65, 67, false),
         // Catch binding scope
-        {startTokenIndex: 62, endTokenIndex: 67, isFunctionScope: false},
+        new Scope(62, 67, false),
         // Finally block
-        {startTokenIndex: 68, endTokenIndex: 70, isFunctionScope: false},
+        new Scope(68, 70, false),
         // Function body
-        {startTokenIndex: 10, endTokenIndex: 71, isFunctionScope: true},
+        new Scope(10, 71, true),
         // Function including params
-        {startTokenIndex: 7, endTokenIndex: 71, isFunctionScope: true},
+        new Scope(7, 71, true),
         // Program
-        {startTokenIndex: 0, endTokenIndex: 72, isFunctionScope: true},
+        new Scope(0, 72, true),
       ],
     );
   });
@@ -100,21 +100,21 @@ describe("scopes", () => {
     `,
       [
         // Arrow function body
-        {startTokenIndex: 6, endTokenIndex: 15, isFunctionScope: true},
+        new Scope(6, 15, true),
         // Arrow function
-        {startTokenIndex: 3, endTokenIndex: 15, isFunctionScope: true},
+        new Scope(3, 15, true),
         // Shorthand arg arrow function
-        {startTokenIndex: 18, endTokenIndex: 21, isFunctionScope: true},
+        new Scope(18, 21, true),
         // Class method body
-        {startTokenIndex: 29, endTokenIndex: 38, isFunctionScope: true},
+        new Scope(29, 38, true),
         // Class method
-        {startTokenIndex: 26, endTokenIndex: 38, isFunctionScope: true},
+        new Scope(26, 38, true),
         // Object method body
-        {startTokenIndex: 47, endTokenIndex: 56, isFunctionScope: true},
+        new Scope(47, 56, true),
         // Object method
-        {startTokenIndex: 44, endTokenIndex: 56, isFunctionScope: true},
+        new Scope(44, 56, true),
         // Program
-        {startTokenIndex: 0, endTokenIndex: 58, isFunctionScope: true},
+        new Scope(0, 58, true),
       ],
     );
   });
@@ -131,17 +131,17 @@ describe("scopes", () => {
     `,
       [
         // Body for f
-        {startTokenIndex: 4, endTokenIndex: 6, isFunctionScope: true},
+        new Scope(4, 6, true),
         // Params and body for f
-        {startTokenIndex: 2, endTokenIndex: 6, isFunctionScope: true},
+        new Scope(2, 6, true),
         // Body for g
-        {startTokenIndex: 13, endTokenIndex: 15, isFunctionScope: true},
+        new Scope(13, 15, true),
         // Params and body for g
-        {startTokenIndex: 11, endTokenIndex: 15, isFunctionScope: true},
+        new Scope(11, 15, true),
         // Name, params and body for g
-        {startTokenIndex: 10, endTokenIndex: 15, isFunctionScope: true},
+        new Scope(10, 15, true),
         // Program
-        {startTokenIndex: 0, endTokenIndex: 16, isFunctionScope: true},
+        new Scope(0, 16, true),
       ],
     );
   });
@@ -158,9 +158,9 @@ describe("scopes", () => {
     `,
       [
         // Class expression scope
-        {startTokenIndex: 8, endTokenIndex: 11, isFunctionScope: false},
+        new Scope(8, 11, false),
         // Program
-        {startTokenIndex: 0, endTokenIndex: 12, isFunctionScope: true},
+        new Scope(0, 12, true),
       ],
     );
   });

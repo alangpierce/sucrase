@@ -42,6 +42,7 @@ import {
   match,
   next,
 } from "../tokenizer";
+import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {getNextContextId, isFlowEnabled, isTypeScriptEnabled, state} from "./base";
 import {
@@ -70,17 +71,8 @@ import {
 
 export function parseTopLevel(): File {
   parseBlockBody(true, tt.eof);
-
-  state.scopes.push({
-    startTokenIndex: 0,
-    endTokenIndex: state.tokens.length,
-    isFunctionScope: true,
-  });
-
-  return {
-    tokens: state.tokens,
-    scopes: state.scopes,
-  };
+  state.scopes.push(new Scope(0, state.tokens.length, true));
+  return new File(state.tokens, state.scopes);
 }
 
 // Parse a single statement.
@@ -407,11 +399,7 @@ function parseTryStatement(): void {
       // We need a special scope for the catch binding which includes the binding itself and the
       // catch block.
       const endTokenIndex = state.tokens.length;
-      state.scopes.push({
-        startTokenIndex: catchBindingStartTokenIndex,
-        endTokenIndex,
-        isFunctionScope: false,
-      });
+      state.scopes.push(new Scope(catchBindingStartTokenIndex, endTokenIndex, false));
     }
   }
   if (eat(tt._finally)) {
@@ -573,11 +561,7 @@ export function parseFunction(
   // that includes the params.
   state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
   if (nameScopeStartTokenIndex !== null) {
-    state.scopes.push({
-      startTokenIndex: nameScopeStartTokenIndex,
-      endTokenIndex,
-      isFunctionScope: true,
-    });
+    state.scopes.push(new Scope(nameScopeStartTokenIndex, endTokenIndex, true));
   }
 }
 
@@ -624,11 +608,7 @@ export function parseClass(isStatement: boolean, optionalId: boolean = false): v
   state.tokens[state.tokens.length - 1].contextId = contextId;
   if (nameScopeStartTokenIndex !== null) {
     const endTokenIndex = state.tokens.length;
-    state.scopes.push({
-      startTokenIndex: nameScopeStartTokenIndex,
-      endTokenIndex,
-      isFunctionScope: false,
-    });
+    state.scopes.push(new Scope(nameScopeStartTokenIndex, endTokenIndex, false));
   }
 }
 

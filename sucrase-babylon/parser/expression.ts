@@ -52,6 +52,7 @@ import {
   pushTypeContext,
   retokenizeSlashAsRegex,
 } from "../tokenizer";
+import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {
   getNextContextId,
@@ -871,7 +872,7 @@ export function parseMethod(
     funcContextId,
   );
   const endTokenIndex = state.tokens.length;
-  state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
+  state.scopes.push(new Scope(startTokenIndex, endTokenIndex, true));
 }
 
 // Parse arrow function expression.
@@ -880,7 +881,7 @@ export function parseMethod(
 export function parseArrowExpression(functionStart: number, startTokenIndex: number): void {
   parseFunctionBody(functionStart, false /* isGenerator */, true);
   const endTokenIndex = state.tokens.length;
-  state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
+  state.scopes.push(new Scope(startTokenIndex, endTokenIndex, true));
 }
 
 export function parseFunctionBodyAndFinish(

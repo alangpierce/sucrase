@@ -1,13 +1,19 @@
 import {ContextualKeyword, Token} from "./index";
 import {TokenType, TokenType as tt} from "./types";
 
-export type Scope = {
-  isFunctionScope: boolean;
+export class Scope {
   startTokenIndex: number;
   endTokenIndex: number;
-};
+  isFunctionScope: boolean;
 
-export type StateSnapshot = {
+  constructor(startTokenIndex: number, endTokenIndex: number, isFunctionScope: boolean) {
+    this.startTokenIndex = startTokenIndex;
+    this.endTokenIndex = endTokenIndex;
+    this.isFunctionScope = isFunctionScope;
+  }
+}
+
+export class StateSnapshot {
   potentialArrowAt: number;
   noAnonFunctionType: boolean;
   tokensLength: number;
@@ -18,7 +24,31 @@ export type StateSnapshot = {
   start: number;
   end: number;
   isType: boolean;
-};
+
+  constructor(
+    potentialArrowAt: number,
+    noAnonFunctionType: boolean,
+    tokensLength: number,
+    scopesLength: number,
+    pos: number,
+    type: TokenType,
+    contextualKeyword: ContextualKeyword,
+    start: number,
+    end: number,
+    isType: boolean,
+  ) {
+    this.potentialArrowAt = potentialArrowAt;
+    this.noAnonFunctionType = noAnonFunctionType;
+    this.tokensLength = tokensLength;
+    this.scopesLength = scopesLength;
+    this.pos = pos;
+    this.type = type;
+    this.contextualKeyword = contextualKeyword;
+    this.start = start;
+    this.end = end;
+    this.isType = isType;
+  }
+}
 
 export default class State {
   init(): void {
@@ -58,18 +88,18 @@ export default class State {
   isType: boolean;
 
   snapshot(): StateSnapshot {
-    return {
-      potentialArrowAt: this.potentialArrowAt,
-      noAnonFunctionType: this.noAnonFunctionType,
-      tokensLength: this.tokens.length,
-      scopesLength: this.scopes.length,
-      pos: this.pos,
-      type: this.type,
-      contextualKeyword: this.contextualKeyword,
-      start: this.start,
-      end: this.end,
-      isType: this.isType,
-    };
+    return new StateSnapshot(
+      this.potentialArrowAt,
+      this.noAnonFunctionType,
+      this.tokens.length,
+      this.scopes.length,
+      this.pos,
+      this.type,
+      this.contextualKeyword,
+      this.start,
+      this.end,
+      this.isType,
+    );
   }
 
   restoreFromSnapshot(snapshot: StateSnapshot): void {

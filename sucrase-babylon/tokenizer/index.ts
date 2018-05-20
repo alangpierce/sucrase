@@ -155,13 +155,22 @@ export function lookaheadType(): TokenType {
   return type;
 }
 
-export function lookaheadTypeAndKeyword(): {type: TokenType; contextualKeyword: ContextualKeyword} {
+export class TypeAndKeyword {
+  type: TokenType;
+  contextualKeyword: ContextualKeyword;
+  constructor(type: TokenType, contextualKeyword: ContextualKeyword) {
+    this.type = type;
+    this.contextualKeyword = contextualKeyword;
+  }
+}
+
+export function lookaheadTypeAndKeyword(): TypeAndKeyword {
   const snapshot = state.snapshot();
   next();
   const type = state.type;
   const contextualKeyword = state.contextualKeyword;
   state.restoreFromSnapshot(snapshot);
-  return {type, contextualKeyword};
+  return new TypeAndKeyword(type, contextualKeyword);
 }
 
 // Read a single token, updating the parser object's token-related

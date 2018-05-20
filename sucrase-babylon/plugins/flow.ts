@@ -40,13 +40,11 @@ import {
   next,
   popTypeContext,
   pushTypeContext,
+  TypeAndKeyword,
 } from "../tokenizer";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 
-function isMaybeDefaultImport(lookahead: {
-  type: TokenType;
-  contextualKeyword: ContextualKeyword;
-}): boolean {
+function isMaybeDefaultImport(lookahead: TypeAndKeyword): boolean {
   return (
     (lookahead.type === tt.name || !!(lookahead.type & TokenType.IS_KEYWORD)) &&
     lookahead.contextualKeyword !== ContextualKeyword._from
@@ -375,7 +373,7 @@ function flowParseObjectTypeCallProperty(): void {
 }
 
 function flowParseObjectType(allowStatic: boolean, allowExact: boolean): void {
-  let endDelim;
+  let endDelim: TokenType;
   if (allowExact && match(tt.braceBarL)) {
     expect(tt.braceBarL);
     endDelim = tt.braceBarR;

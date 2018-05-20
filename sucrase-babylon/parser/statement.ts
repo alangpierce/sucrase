@@ -271,7 +271,7 @@ function parseForStatement(): void {
   const startTokenIndex = state.tokens.length;
   parseAmbiguousForStatement();
   const endTokenIndex = state.tokens.length;
-  state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: false});
+  state.scopes.push(new Scope(startTokenIndex, endTokenIndex, false));
 }
 
 // Disambiguating between a `for` and a `for`/`in` or `for`/`of`
@@ -371,7 +371,7 @@ function parseSwitchStatement(): void {
   }
   next(); // Closing brace
   const endTokenIndex = state.tokens.length;
-  state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: false});
+  state.scopes.push(new Scope(startTokenIndex, endTokenIndex, false));
 }
 
 function parseThrowStatement(): void {
@@ -460,7 +460,7 @@ export function parseBlock(
     state.tokens[state.tokens.length - 1].contextId = contextId;
   }
   const endTokenIndex = state.tokens.length;
-  state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope});
+  state.scopes.push(new Scope(startTokenIndex, endTokenIndex, isFunctionScope));
 }
 
 export function parseBlockBody(topLevel: boolean, end: TokenType): void {
@@ -559,7 +559,7 @@ export function parseFunction(
   const endTokenIndex = state.tokens.length;
   // In addition to the block scope of the function body, we need a separate function-style scope
   // that includes the params.
-  state.scopes.push({startTokenIndex, endTokenIndex, isFunctionScope: true});
+  state.scopes.push(new Scope(startTokenIndex, endTokenIndex, true));
   if (nameScopeStartTokenIndex !== null) {
     state.scopes.push(new Scope(nameScopeStartTokenIndex, endTokenIndex, true));
   }
@@ -795,7 +795,7 @@ function parseClassId(isStatement: boolean, optionalId: boolean = false): void {
 
 // Returns true if there was a superclass.
 function parseClassSuper(): void {
-  let hasSuper;
+  let hasSuper = false;
   if (eat(tt._extends)) {
     parseExprSubscripts();
     hasSuper = true;

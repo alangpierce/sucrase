@@ -65,6 +65,43 @@ index 9f07ae0e2..64cd4c94e 100644
  	./node_modules/.bin/lerna bootstrap
  	make build
  	cd packages/babel-runtime; \
+diff --git a/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/input.js b/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/input.js
+deleted file mode 100644
+index f791cb876..000000000
+--- a/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/input.js
++++ /dev/null
+@@ -1,7 +0,0 @@
+-var func = function * (){
+-  yield obj
+-      .method()
+-      .method2();
+-
+-  const actual = true;
+-};
+diff --git a/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/options.json b/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/options.json
+deleted file mode 100644
+index 21fd7445e..000000000
+--- a/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/options.json
++++ /dev/null
+@@ -1,6 +0,0 @@
+-{
+-  "plugins": [
+-    "transform-regenerator"
+-  ],
+-  "retainLines": true
+-}
+diff --git a/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/output.js b/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/output.js
+deleted file mode 100644
+index 8c4effa02..000000000
+--- a/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/output.js
++++ /dev/null
+@@ -1,6 +0,0 @@
+-var func = /*#__PURE__*/regeneratorRuntime.mark(function _callee() {var actual;return regeneratorRuntime.wrap(function _callee$(_context) {while (1) switch (_context.prev = _context.next) {case 0:_context.next = 2;return (
+-          obj.
+-          method().
+-          method2());case 2:
+-
+-        actual = true;case 3:case "end":return _context.stop();}}, _callee, this);});
 diff --git a/scripts/gulp-tasks.js b/scripts/gulp-tasks.js
 index 2e4891efb..5c4d51602 100644
 --- a/scripts/gulp-tasks.js

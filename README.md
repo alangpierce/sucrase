@@ -1,7 +1,7 @@
 # Sucrase
 
 [![Build Status](https://travis-ci.org/alangpierce/sucrase.svg?branch=master)](https://travis-ci.org/alangpierce/sucrase)
-[![npm version](https://badge.fury.io/js/sucrase.svg)](https://www.npmjs.com/package/sucrase)
+[![npm version](https://img.shields.io/npm/v/sucrase.svg)](https://www.npmjs.com/package/sucrase)
 [![MIT License](https://img.shields.io/npm/l/express.svg?maxAge=2592000)](LICENSE)
 [![Join the chat at https://gitter.im/sucrasejs](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sucrasejs/Lobby)
 
@@ -20,7 +20,8 @@ hundreds of thousands of lines of code. Still, you may find correctness issues
 when running on a large codebase. Feel free to file issues!
 
 Sucrase can build the following codebases with all tests passing:
-* Sucrase itself (6K lines of code excluding Babylon fork, typescript, imports).
+* Sucrase itself (6K lines of code excluding Babel parser fork, typescript,
+  imports).
 * The [Benchling](https://benchling.com/) frontend codebase
   (500K lines of code, JSX, imports).
 * [Babel](https://github.com/babel/babel) (63K lines of code, flow, imports).
@@ -199,9 +200,9 @@ Babel: 9591.515ms
 
 ## License and attribution
 
-Sucrase is MIT-licensed. A large part of Sucrase is based on a fork of
-[Babylon](https://github.com/babel/babel/tree/master/packages/babylon), which is
-also MIT-licensed.
+Sucrase is MIT-licensed. A large part of Sucrase is based on a fork of the
+[Babel parser](https://github.com/babel/babel/tree/master/packages/babel-parser),
+which is also MIT-licensed.
 
 ## Why the name?
 

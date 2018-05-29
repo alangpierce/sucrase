@@ -114,8 +114,7 @@ const compiledCode = transform(code, {transforms: ["typescript", "imports"]});
 
 There are also integrations for
 [Webpack](https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-loader),
-[Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin),
-and [Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin).
+[Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin), [Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin) and [Rollup](https://github.com/rollup/rollup-plugin-sucrase).
 
 ## Motivation
 

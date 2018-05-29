@@ -12,7 +12,11 @@ Instead of compiling a large range of JS features down to ES5, Sucrase assumes
 that you're targeting a modern JS runtime (e.g. Node.js 8 or latest Chrome) and
 focuses on compiling non-standard language extensions: JSX, TypeScript, and
 Flow. Because of this smaller scope, Sucrase can get away with an architecture
-that is much more performant but less extensible and maintainable.
+that is much more performant but less extensible and maintainable. Sucrase's
+parser is forked from Babel's parser (so Sucrase is indebted to Babel and
+wouldn't be possible without it) and trims it down to focus on a small subset of
+what Babel solves. If it fits your use case, hopefully Sucrase can speed up your
+development experience!
 
 **Current state:** The project is in active development. It is about 20x faster
 than Babel and about 8x faster than TypeScript, and it has been tested on
@@ -23,7 +27,7 @@ Sucrase can build the following codebases with all tests passing:
 * Sucrase itself (6K lines of code excluding Babel parser fork, typescript,
   imports).
 * The [Benchling](https://benchling.com/) frontend codebase
-  (500K lines of code, JSX, imports).
+  (500K lines of code, JSX, typescript, imports).
 * [Babel](https://github.com/babel/babel) (63K lines of code, flow, imports).
 * [React](https://github.com/facebook/react) (86K lines of code, JSX, flow,
   imports).
@@ -116,6 +120,36 @@ There are also integrations for
 [Webpack](https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-loader),
 [Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin), [Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin) and [Rollup](https://github.com/rollup/rollup-plugin-sucrase).
 
+## What Sucrase is not
+
+Sucrase is intended to be useful for the most common cases, but it does not aim
+to have nearly the scope and versatility of Babel. Some specific examples:
+
+* Sucrase does not check your code for errors. Sucrase's contract is that if you
+  give it valid code, it will produce valid JS code. If you give it invalid
+  code, it might produce invalid code, it might produce valid code, or it might
+  give an error. Always use Sucrase with a linter or typechecker, which is more
+  suited for error-checking.
+* Sucrase is not pluginizable. With the current architecture, transforms need to
+  be explicitly written to cooperate with each other, so each additional
+  transform takes significant extra work.
+* Sucrase is not good for prototyping language extensions and upcoming language
+  features. Its faster architecture makes new transforms more difficult to write
+  and more fragile.
+* Sucrase will never produce code for old browsers like IE. Compiling code down
+  to ES5 is much more complicated than any transformations that Sucrase needs to
+  do.
+* Sucrase is hesitant to implement upcoming JS features, although some of them
+  make sense to implement for pragmatic reasons. Its main focus is on language
+  extensions (JSX, TypeScript, Flow) that will never be supported by JS
+  runtimes.
+* Like Babel, Sucrase is not a typechecker, and must process each file in
+  isolation. For example, TypeScript `const enum`s are treated as regular
+  `enum`s rather than inlining across files.
+* You should think carefully before using Sucrase in production. Sucrase is
+  mostly beneficial in development, and in many cases, Babel or tsc will be more
+  suitable for production builds.
+
 ## Motivation
 
 As JavaScript implementations mature, it becomes more and more reasonable to
@@ -174,7 +208,7 @@ Babel: 9591.515ms
 
 ### New features
 
-* Implement more integrations, like a Rollup plugin.
+* Implement more integrations, like a Browserify plugin.
 * Emit proper source maps. (The line numbers already match up, but this would
   help with debuggers and other tools.)
 * Rethink configuration and try to simplify it as much as possible, and allow

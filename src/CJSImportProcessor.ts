@@ -159,9 +159,10 @@ export default class CJSImportProcessor {
           requireCode += ` var ${wildcardName} = ${moduleExpr};`;
         }
       } else if (exportStarNames.length > 0 && secondaryImportName !== primaryImportName) {
-        requireCode += ` var ${secondaryImportName} = ${
-          this.interopRequireWildcardName
-        }(${primaryImportName});`;
+        const moduleExpr = this.enableLegacyTypeScriptModuleInterop
+          ? primaryImportName
+          : `${this.interopRequireWildcardName}(${primaryImportName})`;
+        requireCode += ` var ${secondaryImportName} = ${moduleExpr}`;
       } else if (defaultNames.length > 0 && secondaryImportName !== primaryImportName) {
         requireCode += ` var ${secondaryImportName} = ${
           this.interopRequireDefaultName

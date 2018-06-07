@@ -46,35 +46,34 @@ export default class CJSImportProcessor {
       return "";
     }
     let prefix = "";
-    prefix += `
-      function ${this.interopRequireWildcardName}(obj) {
-        if (obj && obj.__esModule) {
-          return obj;
-        } else {
-          var newObj = {};
-          if (obj != null) {
-            for (var key in obj) {
-              if (Object.prototype.hasOwnProperty.call(obj, key))
-                newObj[key] = obj[key];
+    if (this.interopRequireWildcardName) {
+      prefix += `
+        function ${this.interopRequireWildcardName}(obj) {
+          if (obj && obj.__esModule) {
+            return obj;
+          } else {
+            var newObj = {};
+            if (obj != null) {
+              for (var key in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, key))
+                  newObj[key] = obj[key];
+                }
               }
-            }
-          newObj.default = obj;
-          return newObj;
-        }
-      }`.replace(/\s+/g, " ");
-    prefix += `
-      function ${this.interopRequireDefaultName}(obj) {
-        return obj && obj.__esModule ? obj : { default: obj };
-      }`.replace(/\s+/g, " ");
+            newObj.default = obj;
+            return newObj;
+          }
+        }`.replace(/\s+/g, " ");
+    }
+    if (this.interopRequireDefaultName) {
+      prefix += `
+        function ${this.interopRequireDefaultName}(obj) {
+          return obj && obj.__esModule ? obj : { default: obj };
+        }`.replace(/\s+/g, " ");
+    }
     return prefix;
   }
 
   preprocessTokens(): void {
-    if (!this.enableLegacyTypeScriptModuleInterop) {
-      this.interopRequireWildcardName = this.nameManager.claimFreeName("_interopRequireWildcard");
-      this.interopRequireDefaultName = this.nameManager.claimFreeName("_interopRequireDefault");
-    }
-
     for (let i = 0; i < this.tokens.tokens.length; i++) {
       if (
         this.tokens.matchesAtIndex(i, [tt._import]) &&
@@ -152,6 +151,11 @@ export default class CJSImportProcessor {
       }
       let requireCode = `var ${primaryImportName} = require('${path}');`;
       if (wildcardNames.length > 0) {
+        if (!this.enableLegacyTypeScriptModuleInterop && !this.interopRequireWildcardName) {
+          this.interopRequireWildcardName = this.nameManager.claimFreeName(
+            "_interopRequireWildcard",
+          );
+        }
         for (const wildcardName of wildcardNames) {
           const moduleExpr = this.enableLegacyTypeScriptModuleInterop
             ? primaryImportName
@@ -159,10 +163,18 @@ export default class CJSImportProcessor {
           requireCode += ` var ${wildcardName} = ${moduleExpr};`;
         }
       } else if (exportStarNames.length > 0 && secondaryImportName !== primaryImportName) {
+        if (!this.enableLegacyTypeScriptModuleInterop && !this.interopRequireWildcardName) {
+          this.interopRequireWildcardName = this.nameManager.claimFreeName(
+            "_interopRequireWildcard",
+          );
+        }
         requireCode += ` var ${secondaryImportName} = ${
           this.interopRequireWildcardName
         }(${primaryImportName});`;
       } else if (defaultNames.length > 0 && secondaryImportName !== primaryImportName) {
+        if (!this.interopRequireDefaultName) {
+          this.interopRequireDefaultName = this.nameManager.claimFreeName("_interopRequireDefault");
+        }
         requireCode += ` var ${secondaryImportName} = ${
           this.interopRequireDefaultName
         }(${primaryImportName});`;

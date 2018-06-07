@@ -1,5 +1,5 @@
 import {Transform} from "../src";
-import {IMPORT_PREFIX, JSX_PREFIX} from "./prefixes";
+import {IMPORT_DEFAULT_PREFIX, JSX_PREFIX} from "./prefixes";
 import * as util from "./util";
 
 const {devProps} = util;
@@ -331,7 +331,7 @@ describe("transform JSX", () => {
         </>
       );
     `,
-      `"use strict";${JSX_PREFIX}${IMPORT_PREFIX}
+      `"use strict";${JSX_PREFIX}${IMPORT_DEFAULT_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
       const f = (
         _react2.default.createElement(_react2.default.Fragment, null, 
@@ -377,7 +377,7 @@ describe("transform JSX", () => {
         </>
       );
     `,
-      `"use strict";${JSX_PREFIX}${IMPORT_PREFIX}
+      `"use strict";${JSX_PREFIX}
       var _preact = require('preact');
       const f = (
         _preact.h(_preact.Fragment, null, 

@@ -1,4 +1,4 @@
-import {IMPORT_PREFIX} from "./prefixes";
+import {IMPORT_DEFAULT_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
 function assertFlowResult(code: string, expectedResult: string): void {
@@ -20,7 +20,7 @@ describe("transform flow", () => {
       import {type i, type j} from 'k';
       import type L from 'L';
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
       
       var _d = require('d'); var _d2 = _interopRequireDefault(_d);
       var _e = require('e'); var _e2 = _interopRequireDefault(_e);
@@ -37,7 +37,7 @@ describe("transform flow", () => {
       type A<T> = ?number;
       const f = (): number => 3;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
       const f = () => 3;
     `,
@@ -52,7 +52,7 @@ describe("transform flow", () => {
         -bar: number;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class C {
         
         
@@ -66,7 +66,7 @@ describe("transform flow", () => {
       `
       const x: a => b = 2;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const x = 2;
     `,
     );
@@ -82,7 +82,7 @@ describe("transform flow", () => {
         return [];
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       function partition(
         list,
         test,
@@ -100,7 +100,7 @@ describe("transform flow", () => {
         return 3;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       function foo() {
         return 3;
       }
@@ -113,7 +113,7 @@ describe("transform flow", () => {
       `
       export type * from "a";
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
     `,
     );
@@ -125,7 +125,7 @@ describe("transform flow", () => {
       import {typeof a as b} from 'c';
       import typeof d from 'e';
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
       
     `,
@@ -137,7 +137,7 @@ describe("transform flow", () => {
       `
       export type {foo};
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
     `,
     );
@@ -148,7 +148,7 @@ describe("transform flow", () => {
       `
       import { a as b } from "c";
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       var _c = require('c');
     `,
     );
@@ -160,7 +160,7 @@ describe("transform flow", () => {
       function makeWeakCache<A: B>(): void {
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       function makeWeakCache() {
       }
     `,
@@ -172,7 +172,7 @@ describe("transform flow", () => {
       `
       const x: *=>3 = null;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const x = null;
     `,
     );
@@ -185,7 +185,7 @@ describe("transform flow", () => {
         @@iterator(): Iterator<File>;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
 
 
@@ -198,7 +198,7 @@ describe("transform flow", () => {
       `
       declare class A implements B, C {}
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
     `,
     );

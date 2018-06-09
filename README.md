@@ -114,12 +114,14 @@ Call from JS directly:
 
 ```js
 import {transform} from "sucrase";
-const compiledCode = transform(code, {transforms: ["typescript", "imports"]});
+const compiledCode = transform(code, {transforms: ["typescript", "imports"]}).code;
 ```
 
 There are also integrations for
 [Webpack](https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-loader),
-[Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin), [Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin) and [Rollup](https://github.com/rollup/rollup-plugin-sucrase).
+[Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin),
+[Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin) and
+[Rollup](https://github.com/rollup/rollup-plugin-sucrase).
 
 ## What Sucrase is not
 

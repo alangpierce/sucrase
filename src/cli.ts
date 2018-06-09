@@ -81,6 +81,6 @@ async function buildDirectory(
 async function buildFile(srcPath: string, outPath: string, options: Options): Promise<void> {
   console.log(`${srcPath} -> ${outPath}`);
   const code = (await readFile(srcPath)).toString();
-  const transformedCode = transform(code, {...options, filePath: srcPath});
+  const transformedCode = transform(code, {...options, filePath: srcPath}).code;
   await writeFile(outPath, transformedCode);
 }

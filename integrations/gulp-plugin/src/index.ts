@@ -27,7 +27,8 @@ function gulpSucrase(options: Options): Transform {
     }
 
     try {
-      const resultCode = transform(file.contents.toString(), {filePath: file.path, ...options});
+      const resultCode = transform(file.contents.toString(), {filePath: file.path, ...options})
+        .code;
       file.contents = Buffer.from(resultCode);
       file.path = replaceExt(file.path, ".js");
       this.push(file);

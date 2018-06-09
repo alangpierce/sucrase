@@ -1,12 +1,15 @@
 {
   "name": "@sucrase/webpack-object-rest-spread-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Webpack plugin to enable object rest/spread syntax",
   "main": "dist/index.js",
   "repository": "https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-object-rest-spread-plugin",
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
   "private": false,
+  "peerDependencies": {
+    "webpack": "<4"
+  },
   "dependencies": {
     "acorn": "^5.3.0",
     "acorn-dynamic-import": "^3.0.0",

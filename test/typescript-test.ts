@@ -1,4 +1,9 @@
-import {ESMODULE_PREFIX, IMPORT_PREFIX, JSX_PREFIX} from "./prefixes";
+import {
+  ESMODULE_PREFIX,
+  IMPORT_DEFAULT_PREFIX,
+  IMPORT_WILDCARD_PREFIX,
+  JSX_PREFIX,
+} from "./prefixes";
 import {assertResult} from "./util";
 
 function assertTypeScriptResult(code: string, expectedResult: string): void {
@@ -16,7 +21,7 @@ describe("typescript transform", () => {
       const x = 0;
       console.log(x as string);
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const x = 0;
       console.log(x );
     `,
@@ -29,7 +34,7 @@ describe("typescript transform", () => {
       const as = "Hello";
       console.log(as);
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const as = "Hello";
       console.log(as);
     `,
@@ -46,7 +51,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {
         
          c() {
@@ -67,7 +72,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {
         
         constructor() {;this.x = 1;
@@ -88,7 +93,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A extends B {
         
         constructor(a) {
@@ -106,7 +111,7 @@ describe("typescript transform", () => {
         x = 1;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {constructor() { this.x = 1; }
         
       }
@@ -121,7 +126,7 @@ describe("typescript transform", () => {
         x = 1;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A extends B {constructor(...args) { super(...args); this.x = 1; }
         
       }
@@ -136,7 +141,7 @@ describe("typescript transform", () => {
         args = 1;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A extends B {constructor(...args2) { super(...args2); this.args = 1; }
         
       }
@@ -152,7 +157,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {
         constructor( x) {;this.x = x;
         }
@@ -170,7 +175,7 @@ describe("typescript transform", () => {
       const a = (x)!(y);
       const b = x + !y;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const x = 1;
       const y = x;
       const z = !x; 
@@ -188,7 +193,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        class Foo {
         static run() {
         }
@@ -205,7 +210,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        class Foo {
         async run() {
         }
@@ -221,7 +226,7 @@ describe("typescript transform", () => {
         return x === 0;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       function foo(x) {
         return x === 0;
       }
@@ -236,7 +241,7 @@ describe("typescript transform", () => {
         return list.reduce((memo, item) => memo.concat(map(item)), [] as Array<U>);
       }
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        function flatMap(list, map) {
         return list.reduce((memo, item) => memo.concat(map(item)), [] );
       } exports.default = flatMap;
@@ -250,7 +255,7 @@ describe("typescript transform", () => {
       export interface A extends B {
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
 
     `,
@@ -274,7 +279,7 @@ describe("typescript transform", () => {
         return true;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
       var _a = require('a'); var _a2 = _interopRequireDefault(_a);
       
       require('c');
@@ -300,7 +305,7 @@ describe("typescript transform", () => {
         f: any = function() {};
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {constructor() { this.f = function() {}; }
         
         
@@ -314,7 +319,7 @@ describe("typescript transform", () => {
       `
       export abstract class A {}
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        class A {} exports.A = A;
     `,
     );
@@ -325,7 +330,7 @@ describe("typescript transform", () => {
       `
       values.filter((node): node is Node => node !== null);
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       values.filter((node) => node !== null);
     `,
     );
@@ -338,7 +343,7 @@ describe("typescript transform", () => {
       values.filter<Node>((node): node is Node => node !== null);
       const c = new Cache<number>();
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const f = f(y);
       values.filter((node) => node !== null);
       const c = new Cache();
@@ -355,7 +360,7 @@ describe("typescript transform", () => {
         "Hello, world" = 2;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {constructor() { this[a + b] = 3;this[0] = 1;this["Hello, world"] = 2; }
         
         
@@ -374,7 +379,7 @@ describe("typescript transform", () => {
         C
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       var Foo; (function (Foo) {
         const A = 0; Foo[Foo["A"] = A] = "A";
         const B = A + 1; Foo[Foo["B"] = B] = "B";
@@ -393,7 +398,7 @@ describe("typescript transform", () => {
         C = "sea",
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       var Foo; (function (Foo) {
         const A = "eh"; Foo["A"] = A;
         const B = "bee"; Foo["B"] = B;
@@ -418,7 +423,7 @@ describe("typescript transform", () => {
         "'",
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       var Foo; (function (Foo) {
         const A = 15.5; Foo[Foo["A"] = A] = "A";
         Foo[Foo["Hello world"] = A / 2] = "Hello world";
@@ -443,7 +448,7 @@ describe("typescript transform", () => {
         console.log(x);
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
 
       function foo(x) {
@@ -461,7 +466,7 @@ describe("typescript transform", () => {
         export = result;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
 
 
@@ -476,7 +481,7 @@ describe("typescript transform", () => {
       export declare class Foo {
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
 
     `,
@@ -490,7 +495,7 @@ describe("typescript transform", () => {
         return "Hello!";
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       function foo(declare) {
         return "Hello!";
       }
@@ -507,7 +512,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class Foo {
         bar(readonly) {
           console.log(readonly);
@@ -523,7 +528,7 @@ describe("typescript transform", () => {
       export default abstract class Foo {
       }
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        class Foo {
       } exports.default = Foo;
     `,
@@ -536,7 +541,7 @@ describe("typescript transform", () => {
       import * as f from './myFunc';
       console.log(f());
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";${IMPORT_WILDCARD_PREFIX}
       var _myFunc = require('./myFunc'); var f = _interopRequireWildcard(_myFunc);
       console.log(f());
     `,
@@ -551,7 +556,7 @@ describe("typescript transform", () => {
         Bar,
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       var A; (function (A) {
         const Foo = 0; A[A["Foo"] = Foo] = "Foo";
         const Bar = Foo + 1; A[A["Bar"] = Bar] = "Bar";
@@ -568,7 +573,7 @@ describe("typescript transform", () => {
         Bar,
       }
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
       var A; (function (A) {
         const Foo = 0; A[A["Foo"] = Foo] = "Foo";
         const Bar = Foo + 1; A[A["Bar"] = Bar] = "Bar";
@@ -585,7 +590,7 @@ describe("typescript transform", () => {
         Bar,
       }
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
       var A; (function (A) {
         const Foo = 0; A[A["Foo"] = Foo] = "Foo";
         const Bar = Foo + 1; A[A["Bar"] = Bar] = "Bar";
@@ -600,7 +605,7 @@ describe("typescript transform", () => {
       abstract class A {
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
        class A {
       }
     `,
@@ -617,7 +622,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        class A {
         
         b() {
@@ -634,7 +639,7 @@ describe("typescript transform", () => {
       import A from 'a';
       export {A};
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${IMPORT_DEFAULT_PREFIX}${ESMODULE_PREFIX}
       var _a = require('a'); var _a2 = _interopRequireDefault(_a);
       exports.A = _a2.default;
     `,
@@ -648,7 +653,7 @@ describe("typescript transform", () => {
       console.log(a);
       export = 3;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const a = require('a');
       console.log(a);
       module.exports = 3;
@@ -663,7 +668,7 @@ describe("typescript transform", () => {
         return this + x;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       function foo( x) {
         return this + x;
       }
@@ -676,7 +681,7 @@ describe("typescript transform", () => {
       `
       export * from './MyVars';
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
       var _MyVars = require('./MyVars'); Object.keys(_MyVars).filter(key => key !== 'default' && key !== '__esModule').forEach(key => { if (exports.hasOwnProperty(key)) { return; } Object.defineProperty(exports, key, {enumerable: true, get: () => _MyVars[key]}); });
     `,
     );
@@ -691,7 +696,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {
         
          constructor() {;this.x = 1;
@@ -706,7 +711,7 @@ describe("typescript transform", () => {
       `
       const x = <number>3;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const x = 3;
     `,
       {transforms: ["typescript", "imports"]},
@@ -720,7 +725,7 @@ describe("typescript transform", () => {
         new(): Foo;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
 
 
@@ -736,7 +741,7 @@ describe("typescript transform", () => {
         b: 2,
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const o = {
         a: 1,
         b: 2,
@@ -750,7 +755,7 @@ describe("typescript transform", () => {
       `
       (a as b) = c;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       (a ) = c;
     `,
     );
@@ -763,7 +768,7 @@ describe("typescript transform", () => {
       new C<T>();
       type A = T<T>;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       f();
       new C();
       
@@ -776,7 +781,7 @@ describe("typescript transform", () => {
       `
       let y: unique symbol;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       let y;
     `,
     );
@@ -788,7 +793,7 @@ describe("typescript transform", () => {
       const foo = async (...args: any[]) => {}
       const bar = async (...args?: any[]) => {}
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const foo = async (...args) => {}
       const bar = async (...args) => {}
     `,
@@ -800,7 +805,7 @@ describe("typescript transform", () => {
       `
       type A = B extends C ? D : E;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
     `,
     );
@@ -811,7 +816,7 @@ describe("typescript transform", () => {
       `
       type Element<T> = T extends (infer U)[] ? U : T;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       
     `,
     );
@@ -827,7 +832,7 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {
         
         getFoo() {
@@ -844,7 +849,7 @@ describe("typescript transform", () => {
       let map: { +readonly [P in string]+?: number; };
       let map2: { -readonly [P in string]-?: number };
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       let map;
       let map2;
     `,
@@ -872,7 +877,7 @@ describe("typescript transform", () => {
         );
       }
     `,
-      `"use strict";${JSX_PREFIX}${IMPORT_PREFIX}
+      `"use strict";${JSX_PREFIX}${IMPORT_DEFAULT_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
       
       var _Foo = require('./Foo'); var _Foo2 = _interopRequireDefault(_Foo);

@@ -1,4 +1,4 @@
-import {ESMODULE_PREFIX, IMPORT_PREFIX} from "./prefixes";
+import {ESMODULE_PREFIX, IMPORT_DEFAULT_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
 /**
@@ -48,7 +48,7 @@ describe("sucrase", () => {
         delete: new KeywordTokenType("delete", { beforeExpr, prefix, startsExpr }),
       };
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        exports.keywords = {
         break: new KeywordTokenType("break"),
         case: new KeywordTokenType("case", { beforeExpr }),
@@ -99,7 +99,7 @@ describe("sucrase", () => {
         function: 3,
       };
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const o = {
         function: 3,
       };
@@ -115,7 +115,7 @@ describe("sucrase", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {
         [b]() {
         }
@@ -136,7 +136,7 @@ describe("sucrase", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {
         get foo() {
           return 3;
@@ -155,7 +155,7 @@ describe("sucrase", () => {
       if (foo.case === 3) {
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       if (foo.case === 3) {
       }
     `,
@@ -173,7 +173,7 @@ describe("sucrase", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       function foo() {
         outer: switch (a) {
           default:
@@ -196,7 +196,7 @@ describe("sucrase", () => {
         const x = 3;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       /**
        * This is a JSDoc comment.
        */
@@ -219,7 +219,7 @@ describe("sucrase", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {
         get() {
         }
@@ -239,7 +239,7 @@ describe("sucrase", () => {
         }
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {
         async foo() {
         }
@@ -255,7 +255,7 @@ describe("sucrase", () => {
       const n = 1_000_000;
       const x = 12_34.56_78;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const n = 1000000;
       const x = 1234.5678;
     `,
@@ -268,7 +268,7 @@ describe("sucrase", () => {
       `
       export {Import as import};
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
       exports.import = Import;
     `,
       {transforms: ["jsx", "imports", "typescript"]},
@@ -282,7 +282,7 @@ describe("sucrase", () => {
         static x = 3;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class A {
         
       } A.x = 3;
@@ -298,7 +298,7 @@ describe("sucrase", () => {
         static x = 3;
       }
     `,
-      `"use strict";${IMPORT_PREFIX} var _class;
+      `"use strict"; var _class;
       const A = (_class = class {
         
       }, _class.x = 3, _class)
@@ -314,7 +314,7 @@ describe("sucrase", () => {
         static x = 3;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}
        class C {
         
       } C.x = 3; exports.default = C;
@@ -333,7 +333,7 @@ describe("sucrase", () => {
         static b = B;
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
       var _A = require('A'); var _A2 = _interopRequireDefault(_A);
       var _B = require('B'); var _B2 = _interopRequireDefault(_B);
       class C {constructor() { this.a = _A2.default; }
@@ -351,7 +351,7 @@ describe("sucrase", () => {
       console.log("Hello");
     `,
       `#!/usr/bin/env node
-"use strict";${IMPORT_PREFIX}      console.log("Hello");
+"use strict";      console.log("Hello");
     `,
       {transforms: ["jsx", "imports", "typescript"]},
     );
@@ -367,7 +367,7 @@ describe("sucrase", () => {
         console.log("Failed!");
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const e = 3;
       try {
         console.log(e);
@@ -384,7 +384,7 @@ describe("sucrase", () => {
       `
       [a] = b;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       [a] = b;
     `,
       {transforms: ["jsx", "imports", "typescript"]},
@@ -396,7 +396,7 @@ describe("sucrase", () => {
       `
       const x = +(y);
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const x = +(y);
     `,
       {transforms: ["jsx", "imports", "typescript"]},
@@ -411,7 +411,7 @@ describe("sucrase", () => {
         }
       };
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const o = {
         async f() {
         }
@@ -426,7 +426,7 @@ describe("sucrase", () => {
       `
       const s = 'ab\\'cd';
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const s = 'ab\\'cd';
     `,
       {transforms: ["jsx", "imports", "typescript"]},
@@ -457,7 +457,7 @@ describe("sucrase", () => {
       c ||= d;
       e ??= f;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       a &&= b;
       c ||= d;
       e ??= f;
@@ -479,7 +479,7 @@ describe("sucrase", () => {
         outerMethod() {}
       }
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       class Bar{
         @(
           @classDec class { 
@@ -499,7 +499,7 @@ describe("sucrase", () => {
       `
       const createReactClass = 3;
     `,
-      `"use strict";${IMPORT_PREFIX}
+      `"use strict";
       const createReactClass = 3;
     `,
       {transforms: ["jsx", "imports", "typescript"]},

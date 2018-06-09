@@ -1,16 +1,27 @@
-const tslintRules = require("./tslint.json");
-
 module.exports = {
   extends: ["airbnb-base", "prettier"],
   parser: "typescript-eslint-parser",
   // Add typescript plugin but don't use it, since that tells WebStorm to run
   // ESLint for .ts files.
-  plugins: ["prettier", "tslint", "typescript"],
+  plugins: ["prettier", "typescript"],
   rules: {
     camelcase: "off",
     "class-methods-use-this": "off",
     "func-names": "off",
     "import/extensions": "off",
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        devDependencies: [
+          "**/benchmark/**",
+          "**/example-runner/**",
+          "**/generator/**",
+          "**/test/**",
+          "**/script/**",
+        ],
+        optionalDependencies: false,
+      },
+    ],
     "import/no-mutable-exports": "off",
     "import/prefer-default-export": "off",
     "no-await-in-loop": "off",
@@ -33,7 +44,6 @@ module.exports = {
     "no-useless-constructor": "off",
     "prefer-destructuring": "off",
     "prettier/prettier": "error",
-    "tslint/config": ["error", tslintRules],
   },
   settings: {
     "import/extensions": [".js", ".ts"],

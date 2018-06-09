@@ -1,7 +1,7 @@
-#!/usr/bin/env node
+#!./script/sucrase-node
 /* eslint-disable no-console */
 import {exists, readFile} from "mz/fs";
-import run from "./run";
+import run from "../script/run";
 
 const EXAMPLES = {
   decaffeinate: "https://github.com/decaffeinate/decaffeinate.git",
@@ -62,7 +62,7 @@ async function runProject(project: string, shouldSave: boolean): Promise<boolean
   const originalCwd = process.cwd();
   const repoDir = `./example-runner/example-repos/${project}`;
 
-  if (!await exists(repoDir)) {
+  if (!(await exists(repoDir))) {
     console.log(`Directory ${repoDir} not found, cloning a new one.`);
     await run(`git clone ${repoURL} ${repoDir}`);
   }
@@ -70,7 +70,7 @@ async function runProject(project: string, shouldSave: boolean): Promise<boolean
 
   const revPath = `../../example-configs/${project}.revision`;
   const patchPath = `../../example-configs/${project}.patch`;
-  if (!await exists(revPath) || !await exists(patchPath) || shouldSave) {
+  if (!(await exists(revPath)) || !(await exists(patchPath)) || shouldSave) {
     console.log(`Generating metadata for ${project}`);
     await run(`git rev-parse HEAD > ${revPath}`);
     await run(`git diff HEAD > ${patchPath}`);
@@ -108,9 +108,7 @@ async function runProject(project: string, shouldSave: boolean): Promise<boolean
   return passed;
 }
 
-if (require.main === module) {
-  main().catch((e) => {
-    console.error("Unhandled error:");
-    console.error(e);
-  });
-}
+main().catch((e) => {
+  console.error("Unhandled error:");
+  console.error(e);
+});

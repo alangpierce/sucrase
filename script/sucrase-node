@@ -1,0 +1,10 @@
+#!/usr/bin/env node
+
+// Hacky wrapper around Sucrase for internal scripts. Not yet part of the
+// published package since that requires more work to get right.
+require("sucrase/register");
+
+const file = process.argv[2];
+process.argv.splice(1, 1);
+// eslint-disable-next-line import/no-dynamic-require
+require(`../${file}`);

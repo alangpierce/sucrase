@@ -1,11 +1,11 @@
-#!/usr/bin/env node
-/* eslint-disable import/no-extraneous-dependencies */
+#!./script/sucrase-node
+/* eslint-disable no-console */
 // @ts-ignore: new babel-core package missing types.
 import * as babel from "@babel/core";
 import * as fs from "fs";
 import * as TypeScript from "typescript";
-
-import * as sucrase from "../src/index";
+// @ts-ignore: May not be built, just ignore for now.
+import * as sucrase from "../dist/index"; // eslint-disable-line import/no-unresolved
 
 function main(): void {
   const sampleFile = process.argv[2] || "sample.tsx";
@@ -44,6 +44,4 @@ function runBenchmark(name: string, runTrial: () => void): void {
   console.timeEnd(name);
 }
 
-if (require.main === module) {
-  main();
-}
+main();

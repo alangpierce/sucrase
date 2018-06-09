@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-import * as sucrase from "../src/index";
+/* eslint-disable no-console */
+// @ts-ignore: May not be built, just ignore for now.
+import * as sucrase from "../dist/index"; // eslint-disable-line import/no-unresolved
 import {loadReactFiles} from "./loadReactFiles";
 
 async function main(): Promise<void> {
@@ -19,9 +21,7 @@ async function main(): Promise<void> {
   (console as any).profileEnd("Sucrase React");
 }
 
-if (require.main === module) {
-  main().catch((e) => {
-    console.error(e);
-    process.exitCode = 1;
-  });
-}
+main().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+});

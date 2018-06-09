@@ -11,20 +11,19 @@
     "sucrase": "./bin/sucrase"
   },
   "scripts": {
-    "build": "script/build",
+    "build": "script/sucrase-node script/build.ts",
+    "fast-build": "script/sucrase-node script/build.ts --fast",
     "clean": "rm -rf ./build ./dist ./example-runner/example-repos",
-    "generate": "ts-node ./generator/generate.ts",
-    "self-build": "script/self-build",
-    "self-test": "mocha test/**/*.ts --opts test/mocha-self-test.opts",
-    "benchmark": "node ./build/benchmark/benchmark.js",
-    "benchmark-react": "node ./build/benchmark/benchmark-react.js",
-    "lint": "eslint './src/**/*.ts' './test/**/*.ts' './integrations/gulp-plugin/src/**/*.ts'",
-    "profile": "node --inspect-brk ./build/benchmark/profile.js",
-    "profile-react": "node --inspect-brk ./build/benchmark/profile-react.js",
+    "generate": "script/sucrase-node generator/generate.ts",
+    "benchmark": "script/sucrase-node benchmark/benchmark.ts",
+    "benchmark-react": "script/sucrase-node benchmark/benchmark-react.ts",
+    "lint": "script/sucrase-node script/lint.ts",
+    "profile": "node --inspect-brk script/sucrase-node ./benchmark/profile",
+    "profile-react": "node --inspect-brk script/sucrase-node ./benchmark/profile-react.js",
     "prepublish": "yarn clean && yarn build",
-    "run-examples": "ts-node ./example-runner/example-runner.ts",
-    "test": "yarn lint && tsc --noEmit && tsc --project ./integrations/gulp-plugin --noEmit && mocha test",
-    "test-dist": "./node_modules/.bin/mocha build/test --opts test/mocha-self-test.opts"
+    "run-examples": "script/sucrase-node example-runner/example-runner.ts",
+    "test": "yarn lint && yarn test-only",
+    "test-only": "mocha './test/**/*.ts'"
   },
   "repository": {
     "type": "git",
@@ -49,32 +48,29 @@
     "@babel/preset-flow": "^7.0.0-beta.39",
     "@babel/preset-react": "7.0.0-beta.39",
     "@babel/preset-typescript": "^7.0.0-beta.36",
-    "@babel/register": "^7.0.0-beta.35",
     "@types/babel-core": "^6.25.3",
     "@types/mocha": "^2.2.43",
+    "@types/mz": "^0.0.32",
     "@types/node": "^8.0.31",
     "eslint": "^4.13.1",
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-import": "^2.8.0",
     "eslint-plugin-prettier": "^2.4.0",
-    "eslint-plugin-tslint": "^2.1.0",
-    "eslint-plugin-typescript": "^0.8.1",
+    "eslint-plugin-typescript": "^0.12.0",
     "mocha": "^3.5.3",
     "prettier": "^1.12.1",
-    "ts-node": "^4.0.2",
+    "sucrase": "^2.2.0",
     "tslint": "^5.9.1",
     "tslint-language-service": "^0.9.9",
-    "typescript": "^2.8.3",
-    "typescript-eslint-parser": "^15.0.0"
+    "typescript": "^2.9.1",
+    "typescript-eslint-parser": "^16.0.0"
   },
   "dependencies": {
-    "@types/mz": "^0.0.32",
     "commander": "^2.12.2",
     "lines-and-columns": "^1.1.6",
     "mz": "^2.7.0",
-    "pirates": "^3.0.2",
-    "tslib": "^1.9.0"
+    "pirates": "^3.0.2"
   },
   "engines": {
     "node": ">=8"

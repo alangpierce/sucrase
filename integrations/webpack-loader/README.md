@@ -6,11 +6,10 @@
 This is a simple Webpack loader that makes it easy to use
 [Sucrase](https://github.com/alangpierce/sucrase) in your build.
 
-**Note: Sucrase does not transform object rest/spread syntax (e.g.
-`{...a, b: c}`), and the syntax is not yet supported by Webpack. If you use that
-syntax, you should use the
+**Note: Object rest/spread syntax (e.g. `{...a, b: c}`) requires Webpack 4. For
+earlier Webpack versions, you can use
 [webpack-object-rest-spread-plugin](https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-object-rest-spread-plugin)
-package alongside this loader, and add both to your webpack config.**
+alongside this loader.**
 
 ## Usage
 

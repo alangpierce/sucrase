@@ -4,10 +4,11 @@
 [![MIT License](https://img.shields.io/npm/l/express.svg?maxAge=2592000)](LICENSE)
 
 This is a Webpack plugin that hacks the Webpack parser to allow object
-rest/spread syntax (e.g. `{...a, b: c}`). If you want to package source code
-using this syntax (e.g. when using [Sucrase](https://github.com/alangpierce/sucrase)),
-you'll need this plugin until Acorn (the parser that Webpack uses) starts
-officially supporting the syntax.
+rest/spread syntax (e.g. `{...a, b: c}`) in Webpack 3 and earlier.
+
+**Note: This plugin is only necessary when using Webpack 3 or earlier. Webpack 4
+natively supports object rest/spread. See https://github.com/webpack/webpack/issues/5548
+for troubleshooting tips.**
 
 ## Usage
 

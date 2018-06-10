@@ -1,7 +1,7 @@
-#!/usr/bin/env node
-
+#!./script/sucrase-node
+/* eslint-disable no-console */
 import {writeFile} from "mz/fs";
-import run from "../example-runner/run";
+import run from "../script/run";
 import generateReadWord from "./generateReadWord";
 import generateTokenTypes from "./generateTokenTypes";
 

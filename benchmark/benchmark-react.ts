@@ -1,9 +1,10 @@
-#!/usr/bin/env node
-/* eslint-disable import/no-extraneous-dependencies, no-console */
+#!./script/sucrase-node
+/* eslint-disable no-console */
 // @ts-ignore: new babel-core package missing types.
 import * as babel from "@babel/core";
 
-import * as sucrase from "../src/index";
+// @ts-ignore: May not be built, just ignore for now.
+import * as sucrase from "../dist/index"; // eslint-disable-line import/no-unresolved
 import {loadReactFiles} from "./loadReactFiles";
 
 async function main(): Promise<void> {
@@ -32,9 +33,7 @@ async function main(): Promise<void> {
   console.timeEnd("Babel");
 }
 
-if (require.main === module) {
-  main().catch((e) => {
-    console.error(e);
-    process.exitCode = 1;
-  });
-}
+main().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+});

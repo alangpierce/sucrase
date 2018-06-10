@@ -1,7 +1,9 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 import * as fs from "fs";
 
-import * as sucrase from "../src/index";
+// @ts-ignore: May not be built, just ignore for now.
+import * as sucrase from "../dist/index"; // eslint-disable-line import/no-unresolved
 
 function main(): void {
   const sampleFile = process.argv[2] || "sample.tsx";
@@ -20,6 +22,4 @@ function main(): void {
   (console as any).profileEnd("Sucrase");
 }
 
-if (require.main === module) {
-  main();
-}
+main();

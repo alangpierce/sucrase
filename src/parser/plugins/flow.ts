@@ -1,36 +1,5 @@
 /* eslint max-len: 0 */
 
-import {input, state} from "../parser/base";
-import {
-  baseParseMaybeAssign,
-  baseParseSubscripts,
-  parseArrow,
-  parseArrowExpression,
-  parseExprAtom,
-  parseExpression,
-  parseFunctionBody,
-  parseIdentifier,
-  parseLiteral,
-} from "../parser/expression";
-import {
-  baseParseExportStar,
-  parseExport,
-  parseExportFrom,
-  parseExportSpecifiers,
-  parseFunctionParams,
-  parseImport,
-  parseStatement,
-} from "../parser/statement";
-import {
-  canInsertSemicolon,
-  eatContextual,
-  expect,
-  expectContextual,
-  isContextual,
-  isLookaheadContextual,
-  semicolon,
-  unexpected,
-} from "../parser/util";
 import {
   ContextualKeyword,
   eat,
@@ -41,8 +10,39 @@ import {
   popTypeContext,
   pushTypeContext,
   TypeAndKeyword,
-} from "../tokenizer";
+} from "../tokenizer/index";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
+import {input, state} from "../traverser/base";
+import {
+  baseParseMaybeAssign,
+  baseParseSubscripts,
+  parseArrow,
+  parseArrowExpression,
+  parseExprAtom,
+  parseExpression,
+  parseFunctionBody,
+  parseIdentifier,
+  parseLiteral,
+} from "../traverser/expression";
+import {
+  baseParseExportStar,
+  parseExport,
+  parseExportFrom,
+  parseExportSpecifiers,
+  parseFunctionParams,
+  parseImport,
+  parseStatement,
+} from "../traverser/statement";
+import {
+  canInsertSemicolon,
+  eatContextual,
+  expect,
+  expectContextual,
+  isContextual,
+  isLookaheadContextual,
+  semicolon,
+  unexpected,
+} from "../traverser/util";
 
 function isMaybeDefaultImport(lookahead: TypeAndKeyword): boolean {
   return (

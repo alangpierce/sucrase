@@ -1,5 +1,5 @@
-import {ContextualKeyword, Token} from "../../sucrase-babylon/tokenizer";
-import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
+import {ContextualKeyword, Token} from "../parser/tokenizer";
+import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "../transformers/RootTransformer";
 

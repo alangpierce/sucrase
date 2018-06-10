@@ -1,6 +1,6 @@
-import {IdentifierRole} from "../sucrase-babylon/tokenizer";
-import {Scope} from "../sucrase-babylon/tokenizer/state";
-import {TokenType as tt} from "../sucrase-babylon/tokenizer/types";
+import {IdentifierRole} from "./parser/tokenizer";
+import {Scope} from "./parser/tokenizer/state";
+import {TokenType as tt} from "./parser/tokenizer/types";
 import TokenProcessor from "./TokenProcessor";
 
 /**

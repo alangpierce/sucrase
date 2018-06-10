@@ -9,10 +9,10 @@ import generateTokenTypes from "./generateTokenTypes";
  * Use code generation.
  */
 async function generate(): Promise<void> {
-  await writeFile("./sucrase-babylon/tokenizer/types.ts", generateTokenTypes());
-  await run("./node_modules/.bin/prettier --write ./sucrase-babylon/tokenizer/types.ts");
-  await writeFile("./sucrase-babylon/tokenizer/readWord.ts", generateReadWord());
-  await run("./node_modules/.bin/prettier --write ./sucrase-babylon/tokenizer/readWord.ts");
+  await writeFile("./src/parser/tokenizer/types.ts", generateTokenTypes());
+  await run("./node_modules/.bin/prettier --write ./src/parser/tokenizer/types.ts");
+  await writeFile("./src/parser/tokenizer/readWord.ts", generateReadWord());
+  await run("./node_modules/.bin/prettier --write ./src/parser/tokenizer/readWord.ts");
   console.log("Done with code generation.");
 }
 

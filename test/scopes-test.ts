@@ -1,6 +1,6 @@
 import * as assert from "assert";
-import {parse} from "../sucrase-babylon";
-import {Scope} from "../sucrase-babylon/tokenizer/state";
+import {parse} from "../src/parser";
+import {Scope} from "../src/parser/tokenizer/state";
 
 function assertScopes(code: string, expectedScopes: Array<Scope>): void {
   assert.deepEqual(parse(code, false, false, false).scopes, expectedScopes);

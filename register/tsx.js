@@ -1,1 +1,1 @@
-require("../dist/src/register").registerTSX();
+require("../dist/register").registerTSX();

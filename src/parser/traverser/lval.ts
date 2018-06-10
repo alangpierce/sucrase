@@ -12,7 +12,7 @@ import {
   next,
   popTypeContext,
   pushTypeContext,
-} from "../tokenizer";
+} from "../tokenizer/index";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {isFlowEnabled, isTypeScriptEnabled, state} from "./base";
 import {parseIdentifier, parseMaybeAssign, parseObj} from "./expression";

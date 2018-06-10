@@ -1,6 +1,6 @@
 import LinesAndColumns from "lines-and-columns";
-import {Token} from "../../sucrase-babylon/tokenizer";
-import {formatTokenType} from "../../sucrase-babylon/tokenizer/types";
+import {Token} from "../parser/tokenizer";
+import {formatTokenType} from "../parser/tokenizer/types";
 
 export default function formatTokens(code: string, tokens: Array<Token>): string {
   if (tokens.length === 0) {

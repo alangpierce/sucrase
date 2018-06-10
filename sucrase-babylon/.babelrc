@@ -1,9 +1,0 @@
-{
-  "presets": [
-    "@babel/flow"
-  ],
-  "plugins": [
-    "@babel/transform-modules-commonjs",
-    "transform-charcodes"
-  ]
-}

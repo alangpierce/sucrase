@@ -1,7 +1,7 @@
-import {parseFile} from "./parser";
-import {initParser} from "./parser/base";
-import {Token} from "./tokenizer";
+import {Token} from "./tokenizer/index";
 import {Scope} from "./tokenizer/state";
+import {initParser} from "./traverser/base";
+import {parseFile} from "./traverser/index";
 
 export class File {
   tokens: Array<Token>;

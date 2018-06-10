@@ -27,7 +27,7 @@ import {
   flowStartParseAsyncArrowFromCallExpression,
   flowStartParseObjPropValue,
 } from "../plugins/flow";
-import {jsxParseElement} from "../plugins/jsx";
+import {jsxParseElement} from "../plugins/jsx/index";
 import {typedParseConditional, typedParseParenItem} from "../plugins/types";
 import {
   tsParseArrow,
@@ -51,7 +51,7 @@ import {
   popTypeContext,
   pushTypeContext,
   retokenizeSlashAsRegex,
-} from "../tokenizer";
+} from "../tokenizer/index";
 import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {

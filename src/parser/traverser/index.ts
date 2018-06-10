@@ -1,5 +1,5 @@
 import {File} from "../index";
-import {nextToken, skipLineComment} from "../tokenizer";
+import {nextToken, skipLineComment} from "../tokenizer/index";
 import {input, state} from "./base";
 import {parseTopLevel} from "./statement";
 

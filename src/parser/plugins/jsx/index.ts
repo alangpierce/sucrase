@@ -1,6 +1,3 @@
-import {input, raise, state} from "../../parser/base";
-import {parseExpression, parseMaybeAssign} from "../../parser/expression";
-import {expect, unexpected} from "../../parser/util";
 import {
   eat,
   finishToken,
@@ -11,8 +8,11 @@ import {
   next,
   skipSpace,
   Token,
-} from "../../tokenizer";
+} from "../../tokenizer/index";
 import {TokenType as tt} from "../../tokenizer/types";
+import {input, raise, state} from "../../traverser/base";
+import {parseExpression, parseMaybeAssign} from "../../traverser/expression";
+import {expect, unexpected} from "../../traverser/util";
 import {charCodes} from "../../util/charcodes";
 import {isIdentifierChar, isIdentifierStart} from "../../util/identifier";
 

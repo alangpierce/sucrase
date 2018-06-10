@@ -1,6 +1,6 @@
-import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import {Options, SucraseContext, Transform} from "../index";
 import NameManager from "../NameManager";
+import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import getClassInfo, {ClassInfo} from "../util/getClassInfo";
 import CJSImportTransformer from "./CJSImportTransformer";

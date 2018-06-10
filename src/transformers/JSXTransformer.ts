@@ -1,8 +1,8 @@
-import XHTMLEntities from "../../sucrase-babylon/plugins/jsx/xhtml";
-import {TokenType as tt} from "../../sucrase-babylon/tokenizer/types";
 import CJSImportProcessor from "../CJSImportProcessor";
 import {Options} from "../index";
 import NameManager from "../NameManager";
+import XHTMLEntities from "../parser/plugins/jsx/xhtml";
+import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";

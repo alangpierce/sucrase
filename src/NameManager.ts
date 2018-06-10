@@ -1,4 +1,4 @@
-import {TokenType as tt} from "../sucrase-babylon/tokenizer/types";
+import {TokenType as tt} from "./parser/tokenizer/types";
 import TokenProcessor from "./TokenProcessor";
 
 export default class NameManager {

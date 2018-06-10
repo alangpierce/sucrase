@@ -1,1 +1,1 @@
-require("../dist/src/register").registerTSLegacyModuleInterop();
+require("../dist/register").registerTSLegacyModuleInterop();

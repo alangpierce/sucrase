@@ -1,7 +1,7 @@
 import * as assert from "assert";
-import {parse} from "../sucrase-babylon";
-import {IdentifierRole, Token} from "../sucrase-babylon/tokenizer";
-import {TokenType as tt} from "../sucrase-babylon/tokenizer/types";
+import {parse} from "../src/parser";
+import {IdentifierRole, Token} from "../src/parser/tokenizer";
+import {TokenType as tt} from "../src/parser/tokenizer/types";
 
 type SimpleToken = Token & {label?: string};
 type TokenExpectation = {[K in keyof SimpleToken]?: SimpleToken[K]};

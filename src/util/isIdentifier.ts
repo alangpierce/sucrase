@@ -1,4 +1,4 @@
-import {isIdentifierChar, isIdentifierStart} from "../../sucrase-babylon/util/identifier";
+import {isIdentifierChar, isIdentifierStart} from "../parser/util/identifier";
 
 export default function isIdentifier(name: string): boolean {
   if (name.length === 0) {

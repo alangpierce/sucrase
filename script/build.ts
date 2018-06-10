@@ -32,6 +32,8 @@ async function buildSucrase(): Promise<void> {
   await run(`${SUCRASE} ./src -d ./dist --transforms imports,typescript`);
   if (!fast) {
     await run(`${TSC} --emitDeclarationOnly --project ./src --outDir ./dist`);
+    // Link all integrations to Sucrase so that all building/linting/testing is up to date.
+    await run("yarn link");
   }
 }
 
@@ -41,6 +43,7 @@ async function buildIntegration(path: string): Promise<void> {
     const originalDir = process.cwd();
     process.chdir(path);
     await run("yarn");
+    await run("yarn link sucrase");
     process.chdir(originalDir);
   }
 

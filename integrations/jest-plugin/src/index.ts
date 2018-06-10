@@ -14,7 +14,7 @@ function getTransforms(filename: string): Array<Transform> | null {
 export function process(src: string, filename: string): string {
   const transforms = getTransforms(filename);
   if (transforms !== null) {
-    return transform(src, {transforms, filePath: filename});
+    return transform(src, {transforms, filePath: filename}).code;
   } else {
     return src;
   }

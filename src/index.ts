@@ -18,6 +18,10 @@ export type Options = {
   filePath?: string;
 };
 
+export type TransformResult = {
+  code: string;
+};
+
 export type SucraseContext = {
   tokenProcessor: TokenProcessor;
   scopes: Array<Scope>;
@@ -30,15 +34,18 @@ export function getVersion(): string {
   return require("../../package.json").version;
 }
 
-export function transform(code: string, options: Options): string {
+export function transform(code: string, options: Options): TransformResult {
   try {
     const sucraseContext = getSucraseContext(code, options);
-    return new RootTransformer(
+    const transformer = new RootTransformer(
       sucraseContext,
       options.transforms,
       Boolean(options.enableLegacyBabel5ModuleInterop),
       options,
-    ).transform();
+    );
+    return {
+      code: transformer.transform(),
+    };
   } catch (e) {
     if (options.filePath) {
       e.message = `Error transforming ${options.filePath}: ${e.message}`;

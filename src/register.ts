@@ -4,7 +4,7 @@ import {Options, transform} from "./index";
 
 export function addHook(extension: string, options: Options): void {
   pirates.addHook(
-    (code: string, filePath: string): string => transform(code, {...options, filePath}),
+    (code: string, filePath: string): string => transform(code, {...options, filePath}).code,
     {exts: [extension]},
   );
 }

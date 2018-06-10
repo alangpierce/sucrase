@@ -1,4 +1,4 @@
-import {ContextualKeyword, eat, lookaheadTypeAndKeyword, match} from "../tokenizer";
+import {ContextualKeyword, eat, lookaheadTypeAndKeyword, match} from "../tokenizer/index";
 import {formatTokenType, TokenType, TokenType as tt} from "../tokenizer/types";
 import {lineBreak} from "../util/whitespace";
 import {input, raise, state} from "./base";

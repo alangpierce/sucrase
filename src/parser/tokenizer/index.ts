@@ -1,7 +1,7 @@
 /* eslint max-len: 0 */
 
-import {input, isFlowEnabled, raise, state} from "../parser/base";
-import {unexpected} from "../parser/util";
+import {input, isFlowEnabled, raise, state} from "../traverser/base";
+import {unexpected} from "../traverser/util";
 import {charCodes} from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart} from "../util/identifier";
 import {nonASCIIwhitespace} from "../util/whitespace";

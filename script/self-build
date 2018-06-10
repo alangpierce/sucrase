@@ -13,9 +13,6 @@ echo 'Building CommonJS version.'
 bin/sucrase ./src -d "${OUT_DIR}/src" --transforms imports,typescript
 bin/sucrase ./test -d "${OUT_DIR}/test" --transforms imports,typescript
 bin/sucrase ./benchmark -d ${OUT_DIR}/benchmark --transforms imports,typescript
-bin/sucrase ./sucrase-babylon -d "${OUT_DIR}/sucrase-babylon" --transforms imports,typescript
 
 rm -rf ./dist
-mkdir -p ./dist
 cp -r build/src dist
-cp -r build/sucrase-babylon dist

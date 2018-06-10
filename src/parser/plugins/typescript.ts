@@ -1,4 +1,15 @@
-import {isJSXEnabled, state} from "../parser/base";
+import {
+  ContextualKeyword,
+  eat,
+  lookaheadType,
+  lookaheadTypeAndKeyword,
+  match,
+  next,
+  popTypeContext,
+  pushTypeContext,
+} from "../tokenizer/index";
+import {TokenType, TokenType as tt} from "../tokenizer/types";
+import {isJSXEnabled, state} from "../traverser/base";
 import {
   atPossibleAsync,
   baseParseMaybeAssign,
@@ -13,8 +24,8 @@ import {
   parseMaybeUnary,
   parsePropertyName,
   StopState,
-} from "../parser/expression";
-import {parseBindingList} from "../parser/lval";
+} from "../traverser/expression";
+import {parseBindingList} from "../traverser/lval";
 import {
   parseBlockBody,
   parseClass,
@@ -25,7 +36,7 @@ import {
   parsePostMemberNameModifiers,
   parseStatement,
   parseVarStatement,
-} from "../parser/statement";
+} from "../traverser/statement";
 import {
   canInsertSemicolon,
   eatContextual,
@@ -37,18 +48,7 @@ import {
   isLookaheadContextual,
   semicolon,
   unexpected,
-} from "../parser/util";
-import {
-  ContextualKeyword,
-  eat,
-  lookaheadType,
-  lookaheadTypeAndKeyword,
-  match,
-  next,
-  popTypeContext,
-  pushTypeContext,
-} from "../tokenizer";
-import {TokenType, TokenType as tt} from "../tokenizer/types";
+} from "../traverser/util";
 
 function assert(x: boolean): void {
   if (!x) {

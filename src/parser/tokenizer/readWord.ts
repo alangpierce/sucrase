@@ -1,6 +1,6 @@
 // Generated file, do not edit! Run "yarn generate" to re-generate this file.
 /* eslint-disable default-case */
-import {input, state} from "../parser/base";
+import {input, state} from "../traverser/base";
 import {charCodes} from "../util/charcodes";
 import {isIdentifierChar} from "../util/identifier";
 import {ContextualKeyword, finishToken} from "./index";

@@ -1,7 +1,7 @@
-import {isFlowEnabled, isTypeScriptEnabled, state} from "../parser/base";
-import {baseParseConditional} from "../parser/expression";
-import {eat, match} from "../tokenizer";
+import {eat, match} from "../tokenizer/index";
 import {TokenType as tt} from "../tokenizer/types";
+import {isFlowEnabled, isTypeScriptEnabled, state} from "../traverser/base";
+import {baseParseConditional} from "../traverser/expression";
 import {flowParseTypeAnnotation} from "./flow";
 import {tsParseTypeAnnotation} from "./typescript";
 

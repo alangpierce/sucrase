@@ -41,7 +41,7 @@ import {
   lookaheadTypeAndKeyword,
   match,
   next,
-} from "../tokenizer";
+} from "../tokenizer/index";
 import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {getNextContextId, isFlowEnabled, isTypeScriptEnabled, state} from "./base";

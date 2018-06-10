@@ -1,1 +1,1 @@
-require("../dist/src/register").registerTS();
+require("../dist/register").registerTS();

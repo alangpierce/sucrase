@@ -1,5 +1,5 @@
-import {ContextualKeyword, Token} from "../sucrase-babylon/tokenizer";
-import {TokenType, TokenType as tt} from "../sucrase-babylon/tokenizer/types";
+import {ContextualKeyword, Token} from "./parser/tokenizer";
+import {TokenType, TokenType as tt} from "./parser/tokenizer/types";
 
 export type TokenProcessorSnapshot = {
   resultCode: string;

@@ -7,7 +7,6 @@ TSC="${TSC:-node_modules/.bin/tsc}"
 # The build dir has all build artifacts, including the benchmark. The dist dir
 # is the subset that's shipped as part of the package.
 mkdir -p ./build
-mkdir -p ./dist
 
 echo 'Building ES module version.'
 "${TSC}" \
@@ -27,8 +26,8 @@ echo 'Building CommonJS version.'
   --module commonjs \
   --moduleResolution node
 
+rm -rf ./dist
 cp -r build/src dist
-cp -r build/sucrase-babylon dist
 
 echo 'Building @sucrase/gulp-plugin'
 cd ./integrations/gulp-plugin

@@ -1,12 +1,12 @@
 {
   "name": "@sucrase/jest-plugin",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "Jest plugin for Sucrase",
   "main": "dist/index.js",
   "repository": "https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin",
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "sucrase": "^1.12.1"
+    "sucrase": "^3.0.0"
   }
 }

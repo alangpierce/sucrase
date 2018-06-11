@@ -1,3 +1,7 @@
+# 3.0.1 (2018-06-11)
+
+* Fix crash in `getVersion`.
+
 # 3.0.0 (2018-06-10)
 
 ### Breaking Changes

@@ -1,5 +1,8 @@
 #!./script/sucrase-node
 /* eslint-disable no-console */
+import {readdir, rename, stat} from "mz/fs";
+import {join} from "path";
+
 import run from "./run";
 
 const SUCRASE = "./node_modules/.bin/sucrase";
@@ -29,6 +32,10 @@ async function main(): Promise<void> {
 async function buildSucrase(): Promise<void> {
   console.log("Building Sucrase");
   await run(`rm -rf ./dist`);
+  if (!fast) {
+    await run(`${SUCRASE} ./src -d ./dist --transforms typescript`);
+    await renameToMJS("./dist");
+  }
   await run(`${SUCRASE} ./src -d ./dist --transforms imports,typescript`);
   if (!fast) {
     await run(`${TSC} --emitDeclarationOnly --project ./src --outDir ./dist`);
@@ -52,6 +59,17 @@ async function buildIntegration(path: string): Promise<void> {
 
   if (!fast) {
     await run(`${TSC} --emitDeclarationOnly --project ${path} --outDir ${path}/dist`);
+  }
+}
+
+async function renameToMJS(dirPath: string): Promise<void> {
+  for (const child of await readdir(dirPath)) {
+    const childPath = join(dirPath, child);
+    if ((await stat(childPath)).isDirectory()) {
+      await renameToMJS(childPath);
+    } else if (childPath.endsWith(".js")) {
+      await rename(childPath, `${childPath.slice(0, childPath.length - 3)}.mjs`);
+    }
   }
 }
 

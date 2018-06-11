@@ -31,7 +31,7 @@ export type SucraseContext = {
 
 export function getVersion(): string {
   // eslint-disable-next-line
-  return require("../../package.json").version;
+  return require("../package.json").version;
 }
 
 export function transform(code: string, options: Options): TransformResult {

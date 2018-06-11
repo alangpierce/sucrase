@@ -63,8 +63,10 @@ function getFilePath() {
 }
 
 function runSucrase() {
-  return runAndProfile(() =>
-    Sucrase.transform(config.code, {transforms: getSelectedTransforms(), filePath: getFilePath()}),
+  return runAndProfile(
+    () =>
+      Sucrase.transform(config.code, {transforms: getSelectedTransforms(), filePath: getFilePath()})
+        .code,
   );
 }
 

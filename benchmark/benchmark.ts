@@ -27,6 +27,7 @@ function main(): void {
   );
   runBenchmark("Babel", () =>
     babel.transform(code, {
+      filename: "sample.tsx",
       presets: ["@babel/preset-react", "@babel/preset-typescript"],
       plugins: ["@babel/plugin-transform-modules-commonjs"],
     }),

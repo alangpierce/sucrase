@@ -2,14 +2,14 @@ const isAssign = true;
 const prefix = true;
 const postfix = true;
 
-type TokenOptions = {
+interface TokenOptions {
   keyword?: string;
   rightAssociative?: boolean;
   isAssign?: boolean;
   prefix?: boolean;
   postfix?: boolean;
   binop?: number;
-};
+}
 
 class TokenType {
   label: string;

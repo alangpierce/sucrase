@@ -1,10 +1,20 @@
 // @ts-ignore: no types available.
 import * as pirates from "pirates";
+
 import {Options, transform} from "./index";
 
 export function addHook(extension: string, options: Options): void {
   pirates.addHook(
-    (code: string, filePath: string): string => transform(code, {...options, filePath}).code,
+    (code: string, filePath: string): string => {
+      const {code: transformedCode, sourceMap} = transform(code, {
+        ...options,
+        computeSourceMap: true,
+        filePath,
+      });
+      const mapBase64 = Buffer.from(JSON.stringify(sourceMap)).toString("base64");
+      const suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+      return `${transformedCode}\n${suffix}`;
+    },
     {exts: [extension]},
   );
 }

@@ -1,10 +1,10 @@
 import {readdir, readFile, stat} from "mz/fs";
 import {join} from "path";
 
-export type FileInfo = {
+export interface FileInfo {
   path: string;
   code: string;
-};
+}
 
 export async function loadReactFiles(): Promise<Array<FileInfo>> {
   const results: Array<FileInfo> = [];

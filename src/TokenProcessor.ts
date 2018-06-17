@@ -1,10 +1,10 @@
 import {ContextualKeyword, Token} from "./parser/tokenizer";
 import {TokenType, TokenType as tt} from "./parser/tokenizer/types";
 
-export type TokenProcessorSnapshot = {
+export interface TokenProcessorSnapshot {
   resultCode: string;
   tokenIndex: number;
-};
+}
 
 export default class TokenProcessor {
   private resultCode: string = "";

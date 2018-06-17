@@ -3,7 +3,7 @@
     "adjacent-overload-signatures": true,
     "array-type": [true, "generic"],
     "await-promise": true,
-    "ordered-imports": true,
+    "interface-over-type-literal": true,
     "no-any": true,
     "no-empty-interface": true,
     "no-floating-promises": true,
@@ -13,6 +13,7 @@
     "no-namespace": true,
     "no-internal-module": true,
     "no-unnecessary-type-assertion": true,
+    "ordered-imports": true,
     "typedef": [true, "call-signature", "parameter", "property-declaration"]
   }
 }

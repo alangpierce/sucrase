@@ -9,25 +9,25 @@ import formatTokens from "./util/formatTokens";
 
 export type Transform = "jsx" | "typescript" | "flow" | "imports";
 
-export type Options = {
+export interface Options {
   transforms: Array<Transform>;
   jsxPragma?: string;
   jsxFragmentPragma?: string;
   enableLegacyTypeScriptModuleInterop?: boolean;
   enableLegacyBabel5ModuleInterop?: boolean;
   filePath?: string;
-};
+}
 
-export type TransformResult = {
+export interface TransformResult {
   code: string;
-};
+}
 
-export type SucraseContext = {
+export interface SucraseContext {
   tokenProcessor: TokenProcessor;
   scopes: Array<Scope>;
   nameManager: NameManager;
   importProcessor: CJSImportProcessor | null;
-};
+}
 
 export function getVersion(): string {
   // eslint-disable-next-line

@@ -4,12 +4,12 @@ import {TokenType as tt} from "./parser/tokenizer/types";
 import TokenProcessor from "./TokenProcessor";
 import {getNonTypeIdentifiers} from "./util/getNonTypeIdentifiers";
 
-type NamedImport = {
+interface NamedImport {
   importedName: string;
   localName: string;
-};
+}
 
-type ImportInfo = {
+interface ImportInfo {
   defaultNames: Array<string>;
   wildcardNames: Array<string>;
   namedImports: Array<NamedImport>;
@@ -17,7 +17,7 @@ type ImportInfo = {
   hasBareImport: boolean;
   exportStarNames: Array<string>;
   hasStarExport: boolean;
-};
+}
 
 /**
  * Class responsible for preprocessing and bookkeeping import and export declarations within the

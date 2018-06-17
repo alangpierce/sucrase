@@ -3,13 +3,13 @@ import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "../transformers/RootTransformer";
 
-export type ClassHeaderInfo = {
+export interface ClassHeaderInfo {
   isExpression: boolean;
   className: string | null;
   hasSuperclass: boolean;
-};
+}
 
-export type ClassInfo = {
+export interface ClassInfo {
   headerInfo: ClassHeaderInfo;
   // Array of non-semicolon-delimited code strings to go in the constructor, after super if
   // necessary.
@@ -21,7 +21,7 @@ export type ClassInfo = {
   // constructor, or after the super call), or null if there was no constructor.
   constructorInsertPos: number | null;
   fieldRanges: Array<{start: number; end: number}>;
-};
+}
 
 /**
  * Get information about the class fields for this class, given a token processor pointing to the

@@ -118,11 +118,11 @@ export default function readWord(): void {
 }
 `;
 
-type Keyword = {
+interface Keyword {
   name: string;
   remainingName: string;
   isContextual: boolean;
-};
+}
 
 const ALL_KEYWORDS: Array<Keyword> = [
   ...KEYWORDS.map((name) => ({name, remainingName: name, isContextual: false})),

@@ -1,4 +1,6 @@
+import {RawSourceMap} from "source-map";
 import CJSImportProcessor from "./CJSImportProcessor";
+import computeSourceMap from "./computeSourceMap";
 import identifyShadowedGlobals from "./identifyShadowedGlobals";
 import NameManager from "./NameManager";
 import {parse} from "./parser";
@@ -11,15 +13,37 @@ export type Transform = "jsx" | "typescript" | "flow" | "imports";
 
 export interface Options {
   transforms: Array<Transform>;
+  /**
+   * If specified, function name to use in place of React.createClass when compiling JSX.
+   */
   jsxPragma?: string;
+  /**
+   * If specified, function name to use in place of React.Fragment when compiling JSX.
+   */
   jsxFragmentPragma?: string;
+  /**
+   * If true, replicate the import behavior of TypeScript's esModuleInterop: false.
+   */
   enableLegacyTypeScriptModuleInterop?: boolean;
+  /**
+   * If true, replicate the import behavior Babel 5 and babel-plugin-add-module-exports.
+   */
   enableLegacyBabel5ModuleInterop?: boolean;
+  /**
+   * If true, we also return a RawSourceMap object alongside the code. Currently, source maps simply
+   * map each line to the original line without any mappings within lines, since Sucrase preserves
+   * line numbers. filePath must be specified if this option is enabled.
+   */
+  computeSourceMap?: boolean;
+  /**
+   * File path to use in error messages, React display names, and source maps.
+   */
   filePath?: string;
 }
 
 export interface TransformResult {
   code: string;
+  sourceMap?: RawSourceMap;
 }
 
 export interface SucraseContext {
@@ -43,9 +67,14 @@ export function transform(code: string, options: Options): TransformResult {
       Boolean(options.enableLegacyBabel5ModuleInterop),
       options,
     );
-    return {
-      code: transformer.transform(),
-    };
+    let result: TransformResult = {code: transformer.transform()};
+    if (options.computeSourceMap) {
+      if (!options.filePath) {
+        throw new Error("filePath must be specified when generating a source map.");
+      }
+      result = {...result, sourceMap: computeSourceMap(result.code, options.filePath)};
+    }
+    return result;
   } catch (e) {
     if (options.filePath) {
       e.message = `Error transforming ${options.filePath}: ${e.message}`;

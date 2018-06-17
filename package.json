@@ -59,6 +59,7 @@
     "eslint-plugin-prettier": "^2.4.0",
     "eslint-plugin-typescript": "^0.12.0",
     "mocha": "^3.5.3",
+    "nyc": "^12.0.2",
     "prettier": "^1.12.1",
     "sucrase": "^2.2.0",
     "tslint": "^5.9.1",
@@ -70,7 +71,8 @@
     "commander": "^2.12.2",
     "lines-and-columns": "^1.1.6",
     "mz": "^2.7.0",
-    "pirates": "^3.0.2"
+    "pirates": "^3.0.2",
+    "source-map": "^0.7.3"
   },
   "engines": {
     "node": ">=8"

@@ -4,3 +4,4 @@ self-build
 dist
 example-runner/example-repos
 integrations/gulp-plugin/dist
+.nyc_output

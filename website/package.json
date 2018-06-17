@@ -6,6 +6,7 @@
   "dependencies": {
     "@babel/plugin-proposal-numeric-separator": "^7.0.0-beta.37",
     "@babel/standalone": "^7.0.0-beta.44",
+    "@sucrase/webpack-object-rest-spread-plugin": "^1.0.1",
     "autoprefixer": "7.1.2",
     "babel-core": "6.25.0",
     "babel-eslint": "7.2.3",
@@ -58,7 +59,7 @@
   },
   "scripts": {
     "start": "node scripts/start.js",
-    "build": "node scripts/build.js",
+    "build": "node --max-old-space-size=8192 scripts/build.js",
     "test": "node scripts/test.js --env=jsdom",
     "publish-website": "scripts/publish.sh"
   },

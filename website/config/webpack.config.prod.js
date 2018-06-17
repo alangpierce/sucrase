@@ -12,6 +12,7 @@ const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin');
 const SWPrecacheWebpackPlugin = require('sw-precache-webpack-plugin');
 const eslintFormatter = require('react-dev-utils/eslintFormatter');
 const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
+const ObjectRestSpreadPlugin = require('@sucrase/webpack-object-rest-spread-plugin');
 const paths = require('./paths');
 const getClientEnvironment = require('./env');
 
@@ -235,6 +236,7 @@ module.exports = {
     ],
   },
   plugins: [
+    new ObjectRestSpreadPlugin(),
     // Makes some environment variables available in index.html.
     // The public URL is available as %PUBLIC_URL% in index.html, e.g.:
     // <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">

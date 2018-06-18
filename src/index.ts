@@ -1,6 +1,5 @@
-import {RawSourceMap} from "source-map";
 import CJSImportProcessor from "./CJSImportProcessor";
-import computeSourceMap from "./computeSourceMap";
+import computeSourceMap, {RawSourceMap} from "./computeSourceMap";
 import identifyShadowedGlobals from "./identifyShadowedGlobals";
 import NameManager from "./NameManager";
 import {parse} from "./parser";

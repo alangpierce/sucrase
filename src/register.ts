@@ -8,7 +8,7 @@ export function addHook(extension: string, options: Options): void {
     (code: string, filePath: string): string => {
       const {code: transformedCode, sourceMap} = transform(code, {
         ...options,
-        computeSourceMap: true,
+        sourceMapOptions: {compiledFilename: filePath},
         filePath,
       });
       const mapBase64 = Buffer.from(JSON.stringify(sourceMap)).toString("base64");

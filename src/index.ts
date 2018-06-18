@@ -11,6 +11,14 @@ import formatTokens from "./util/formatTokens";
 
 export type Transform = "jsx" | "typescript" | "flow" | "imports";
 
+export interface SourceMapOptions {
+  /**
+   * The name to use in the "file" field of the source map. This should be the name of the compiled
+   * file.
+   */
+  compiledFilename: string;
+}
+
 export interface Options {
   transforms: Array<Transform>;
   /**
@@ -30,11 +38,11 @@ export interface Options {
    */
   enableLegacyBabel5ModuleInterop?: boolean;
   /**
-   * If true, we also return a RawSourceMap object alongside the code. Currently, source maps simply
-   * map each line to the original line without any mappings within lines, since Sucrase preserves
-   * line numbers. filePath must be specified if this option is enabled.
+   * If specified, we also return a RawSourceMap object alongside the code. Currently, source maps
+   * simply map each line to the original line without any mappings within lines, since Sucrase
+   * preserves line numbers. filePath must be specified if this option is enabled.
    */
-  computeSourceMap?: boolean;
+  sourceMapOptions?: SourceMapOptions;
   /**
    * File path to use in error messages, React display names, and source maps.
    */
@@ -68,11 +76,14 @@ export function transform(code: string, options: Options): TransformResult {
       options,
     );
     let result: TransformResult = {code: transformer.transform()};
-    if (options.computeSourceMap) {
+    if (options.sourceMapOptions) {
       if (!options.filePath) {
         throw new Error("filePath must be specified when generating a source map.");
       }
-      result = {...result, sourceMap: computeSourceMap(result.code, options.filePath)};
+      result = {
+        ...result,
+        sourceMap: computeSourceMap(result.code, options.filePath, options.sourceMapOptions),
+      };
     }
     return result;
   } catch (e) {

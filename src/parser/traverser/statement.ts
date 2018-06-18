@@ -41,7 +41,9 @@ import {
   lookaheadTypeAndKeyword,
   match,
   next,
-} from "../tokenizer/index";
+  popTypeContext,
+  pushTypeContext,
+} from "../tokenizer";
 import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {getNextContextId, isFlowEnabled, isTypeScriptEnabled, state} from "./base";
@@ -747,7 +749,9 @@ export function parseClassPropertyName(classContextId: number): void {
 
 export function parsePostMemberNameModifiers(): void {
   if (isTypeScriptEnabled) {
+    const oldIsType = pushTypeContext(0);
     eat(tt.question);
+    popTypeContext(oldIsType);
   }
 }
 

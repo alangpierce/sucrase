@@ -958,4 +958,19 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("properly handles optional class fields with default values", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        n?: number = 3;
+      }
+    `,
+      `"use strict";
+      class A {constructor() { this.n = 3; }
+        
+      }
+    `,
+    );
+  });
 });

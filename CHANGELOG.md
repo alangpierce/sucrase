@@ -1,3 +1,7 @@
+# 3.1.0 (2018-06-18)
+
+* Add basic support for source maps ([#257], [#261])
+
 # 3.0.1 (2018-06-11)
 
 * Fix crash in `getVersion`.
@@ -30,3 +34,5 @@
 [#237]: https://github.com/alangpierce/sucrase/pull/237
 [#243]: https://github.com/alangpierce/sucrase/pull/243
 [#244]: https://github.com/alangpierce/sucrase/pull/244
+[#257]: https://github.com/alangpierce/sucrase/pull/257
+[#261]: https://github.com/alangpierce/sucrase/pull/261

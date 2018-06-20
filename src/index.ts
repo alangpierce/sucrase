@@ -47,6 +47,11 @@ export interface Options {
    * File path to use in error messages, React display names, and source maps.
    */
   filePath?: string;
+  /**
+   * If specified, we generate a few less things (for example the jsx
+   * transformer does not add debug props).
+   */
+  production?: boolean;
 }
 
 export interface TransformResult {

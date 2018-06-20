@@ -267,6 +267,9 @@ function nextJSXTagToken(): void {
       case charCodes.greaterThan:
         finishToken(tt.jsxTagEnd);
         break;
+      case charCodes.lessThan:
+        finishToken(tt.jsxTagStart);
+        break;
       case charCodes.slash:
         finishToken(tt.slash);
         break;

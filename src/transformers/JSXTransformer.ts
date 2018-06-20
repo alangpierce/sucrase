@@ -102,6 +102,8 @@ export default class JSXTransformer extends Transformer {
           this.tokens.replaceToken("");
           this.rootTransformer.processBalancedCode();
           this.tokens.replaceToken("");
+        } else if (this.tokens.matches1(tt.jsxTagStart)) {
+          this.processJSXTag();
         } else {
           this.processStringPropValue();
         }

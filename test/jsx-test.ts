@@ -62,6 +62,17 @@ describe("transform JSX", () => {
     );
   });
 
+  it("handles element property values", () => {
+    assertResult(
+      `
+      <A foo=<B /> />
+    `,
+      `${JSX_PREFIX}
+      React.createElement(A, { foo: React.createElement(B, {${devProps(2)}} ), ${devProps(2)}} )
+    `,
+    );
+  });
+
   it("handles inline comments", () => {
     assertResult(
       `

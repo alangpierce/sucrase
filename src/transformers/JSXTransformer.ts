@@ -102,6 +102,8 @@ export default class JSXTransformer extends Transformer {
           this.tokens.replaceToken("");
           this.rootTransformer.processBalancedCode();
           this.tokens.replaceToken("");
+        } else if (this.tokens.matches1(tt.jsxTagStart)) {
+          this.processJSXTag();
         } else {
           this.processStringPropValue();
         }
@@ -214,9 +216,7 @@ export default class JSXTransformer extends Transformer {
         ? this.importProcessor.getIdentifierReplacement(jsxFragmentPragmaBase) ||
           jsxFragmentPragmaBase
         : jsxFragmentPragmaBase;
-      this.tokens.replaceToken(
-        `${resolvedFragmentPragmaBaseName}${jsxFragmentPragmaSuffix}, null, `,
-      );
+      this.tokens.replaceToken(`${resolvedFragmentPragmaBaseName}${jsxFragmentPragmaSuffix}, null`);
       // Tag with children.
       this.processChildren();
       while (!this.tokens.matches1(tt.jsxTagEnd)) {

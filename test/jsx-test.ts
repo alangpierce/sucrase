@@ -62,6 +62,30 @@ describe("transform JSX", () => {
     );
   });
 
+  it("handles element property values", () => {
+    assertResult(
+      `
+      <A foo=<B /> />
+    `,
+      `${JSX_PREFIX}
+      React.createElement(A, { foo: React.createElement(B, {${devProps(2)}} ), ${devProps(2)}} )
+    `,
+    );
+  });
+
+  it("handles fragment property values", () => {
+    assertResult(
+      `
+      <A foo=<>Hi</> />
+    `,
+      `${JSX_PREFIX}
+      React.createElement(A, { foo: React.createElement(React.Fragment, null, "Hi"), ${devProps(
+        2,
+      )}} )
+    `,
+    );
+  });
+
   it("handles inline comments", () => {
     assertResult(
       `
@@ -311,7 +335,7 @@ describe("transform JSX", () => {
     `,
       `${JSX_PREFIX}
       const f = (
-        React.createElement(React.Fragment, null, 
+        React.createElement(React.Fragment, null
           , React.createElement('div', {${devProps(4)}} )
           , React.createElement('span', {${devProps(5)}} )
         )
@@ -334,7 +358,7 @@ describe("transform JSX", () => {
       `"use strict";${JSX_PREFIX}${IMPORT_DEFAULT_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
       const f = (
-        _react2.default.createElement(_react2.default.Fragment, null, 
+        _react2.default.createElement(_react2.default.Fragment, null
           , _react2.default.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 5}} )
           , _react2.default.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 6}} )
         )
@@ -356,7 +380,7 @@ describe("transform JSX", () => {
     `,
       `${JSX_PREFIX}
       const f = (
-        h(Fragment, null, 
+        h(Fragment, null
           , h('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 4}} )
           , h('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 5}} )
         )
@@ -380,7 +404,7 @@ describe("transform JSX", () => {
       `"use strict";${JSX_PREFIX}
       var _preact = require('preact');
       const f = (
-        _preact.h(_preact.Fragment, null, 
+        _preact.h(_preact.Fragment, null
           , _preact.h('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 5}} )
           , _preact.h('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 6}} )
         )

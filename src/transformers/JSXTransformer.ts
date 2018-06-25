@@ -83,9 +83,15 @@ export default class JSXTransformer extends Transformer {
 
   processProps(firstTokenStart: number): void {
     const lineNumber = this.getLineNumberForIndex(firstTokenStart);
-    const devProps = `__self: this, __source: {fileName: ${this.getFilenameVarName()}, lineNumber: ${lineNumber}}`;
+    const devProps = this.options.production
+      ? ""
+      : `__self: this, __source: {fileName: ${this.getFilenameVarName()}, lineNumber: ${lineNumber}}`;
     if (!this.tokens.matches1(tt.jsxName) && !this.tokens.matches1(tt.braceL)) {
-      this.tokens.appendCode(`, {${devProps}}`);
+      if (devProps) {
+        this.tokens.appendCode(`, {${devProps}}`);
+      } else {
+        this.tokens.appendCode(`, null`);
+      }
       return;
     }
     this.tokens.appendCode(`, {`);
@@ -119,7 +125,11 @@ export default class JSXTransformer extends Transformer {
       }
       this.tokens.appendCode(",");
     }
-    this.tokens.appendCode(` ${devProps}}`);
+    if (devProps) {
+      this.tokens.appendCode(` ${devProps}}`);
+    } else {
+      this.tokens.appendCode("}");
+    }
   }
 
   processStringPropValue(): void {

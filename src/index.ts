@@ -47,6 +47,10 @@ export interface Options {
    * File path to use in error messages, React display names, and source maps.
    */
   filePath?: string;
+  /**
+   * If specified, omit any development-specific code in the output.
+   */
+  production?: boolean;
 }
 
 export interface TransformResult {

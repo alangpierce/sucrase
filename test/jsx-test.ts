@@ -11,10 +11,16 @@ function assertResult(
     extraTransforms,
     jsxPragma,
     jsxFragmentPragma,
-  }: {extraTransforms?: Array<Transform>; jsxPragma?: string; jsxFragmentPragma?: string} = {},
+    production,
+  }: {
+    extraTransforms?: Array<Transform>;
+    jsxPragma?: string;
+    jsxFragmentPragma?: string;
+    production?: boolean;
+  } = {},
 ): void {
   const transforms: Array<Transform> = ["jsx", ...(extraTransforms || [])];
-  util.assertResult(code, expectedResult, {transforms, jsxPragma, jsxFragmentPragma});
+  util.assertResult(code, expectedResult, {transforms, jsxPragma, jsxFragmentPragma, production});
 }
 
 describe("transform JSX", () => {
@@ -412,5 +418,67 @@ describe("transform JSX", () => {
     `,
       {extraTransforms: ["imports"], jsxPragma: "h", jsxFragmentPragma: "Fragment"},
     );
+  });
+
+  describe("with production true", () => {
+    it("handles no props", () => {
+      assertResult(
+        `
+      <A />
+    `,
+        `
+      React.createElement(A, null )
+    `,
+        {production: true},
+      );
+    });
+
+    it("handles props", () => {
+      assertResult(
+        `
+      <A a="b" />
+    `,
+        `
+      React.createElement(A, { a: "b",} )
+    `,
+        {production: true},
+      );
+    });
+
+    it("handles bool props", () => {
+      assertResult(
+        `
+      <A a />
+    `,
+        `
+      React.createElement(A, { a: true,} )
+    `,
+        {production: true},
+      );
+    });
+
+    it("handles spread props", () => {
+      assertResult(
+        `
+        <A {...obj} />
+    `,
+        `
+        React.createElement(A, { ...obj,} )
+    `,
+        {production: true},
+      );
+    });
+
+    it("handles fragment", () => {
+      assertResult(
+        `
+      <>Hi</>
+    `,
+        `
+      React.createElement(React.Fragment, null, "Hi")
+    `,
+        {production: true},
+      );
+    });
   });
 });

@@ -95,16 +95,8 @@ export default class JSXTransformer extends Transformer {
       return;
     }
     this.tokens.appendCode(`, {`);
-    let firstProperty = true;
-    const appendComma = () => {
-      if (!firstProperty) {
-        this.tokens.appendCode(",");
-      }
-      firstProperty = false;
-    };
     while (true) {
       if (this.tokens.matches2(tt.jsxName, tt.eq)) {
-        appendComma();
         const keyName = this.tokens.identifierName();
         if (keyName.includes("-")) {
           this.tokens.replaceToken(`'${keyName}'`);
@@ -122,20 +114,18 @@ export default class JSXTransformer extends Transformer {
           this.processStringPropValue();
         }
       } else if (this.tokens.matches1(tt.jsxName)) {
-        appendComma();
         this.tokens.copyToken();
         this.tokens.appendCode(": true");
       } else if (this.tokens.matches1(tt.braceL)) {
-        appendComma();
         this.tokens.replaceToken("");
         this.rootTransformer.processBalancedCode();
         this.tokens.replaceToken("");
       } else {
         break;
       }
+      this.tokens.appendCode(",");
     }
     if (devProps) {
-      appendComma();
       this.tokens.appendCode(` ${devProps}}`);
     } else {
       this.tokens.appendCode("}");

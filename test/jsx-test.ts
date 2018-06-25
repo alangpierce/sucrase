@@ -439,7 +439,7 @@ describe("transform JSX", () => {
       <A a="b" />
     `,
         `
-      React.createElement(A, { a: "b"} )
+      React.createElement(A, { a: "b",} )
     `,
         {production: true},
       );
@@ -451,7 +451,7 @@ describe("transform JSX", () => {
       <A a />
     `,
         `
-      React.createElement(A, { a: true} )
+      React.createElement(A, { a: true,} )
     `,
         {production: true},
       );
@@ -463,7 +463,7 @@ describe("transform JSX", () => {
         <A {...obj} />
     `,
         `
-        React.createElement(A, { ...obj} )
+        React.createElement(A, { ...obj,} )
     `,
         {production: true},
       );

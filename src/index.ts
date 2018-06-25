@@ -48,8 +48,7 @@ export interface Options {
    */
   filePath?: string;
   /**
-   * If specified, we generate a few less things (for example the jsx
-   * transformer does not add debug props).
+   * If specified, omit any development-specific code in the output.
    */
   production?: boolean;
 }

@@ -305,6 +305,8 @@ function tsTryParseIndexSignature(): boolean {
     return false;
   }
 
+  const oldIsType = pushTypeContext(0);
+
   expect(tt.bracketL);
   parseIdentifier();
   tsParseTypeAnnotation();
@@ -312,6 +314,8 @@ function tsTryParseIndexSignature(): boolean {
 
   tsTryParseTypeAnnotation();
   tsParseTypeMemberSemicolon();
+
+  popTypeContext(oldIsType);
   return true;
 }
 

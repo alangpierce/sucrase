@@ -52,6 +52,8 @@ export default function getClassInfo(
       ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
     } else if (tokens.matches1(tt.semi)) {
       tokens.nextToken();
+    } else if (tokens.currentToken().isType) {
+      tokens.nextToken();
     } else {
       // Either a method or a field. Skip to the identifier part.
       const statementStartIndex = tokens.currentIndex();

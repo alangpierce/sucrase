@@ -990,4 +990,25 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows index signatures in classes", () => {
+    assertTypeScriptResult(
+      `
+      export class Foo {
+          f() {
+          }
+          [name: string]: any;
+          x = 1;
+      }
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       class Foo {constructor() { this.x = 1; }
+          f() {
+          }
+          
+          ;
+      } exports.Foo = Foo;
+    `,
+    );
+  });
 });

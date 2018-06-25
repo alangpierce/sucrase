@@ -9,10 +9,6 @@ import Transformer from "./Transformer";
 /**
  * Implementation of babel-plugin-transform-react-display-name, which adds a
  * display name to usages of React.createClass and createReactClass.
- *
- * This implementation has the following limitations compared with the
- * - It does not handle `export default React.createClass`, using the filename,
- *   since Sucrase currently does not know the name of the current file.
  */
 export default class ReactDisplayNameTransformer extends Transformer {
   constructor(
@@ -83,12 +79,9 @@ export default class ReactDisplayNameTransformer extends Transformer {
   }
 
   private findDisplayName(startIndex: number): string | null {
-    if (
-      this.tokens.matchesAtIndex(startIndex - 2, [tt.name, tt.eq]) &&
-      !this.tokens.matchesAtIndex(startIndex - 3, [tt.dot])
-    ) {
-      // This is an assignment (or declaration) with an identifier LHS, so use
-      // that identifier name.
+    if (this.tokens.matchesAtIndex(startIndex - 2, [tt.name, tt.eq])) {
+      // This is an assignment (or declaration) and the LHS is either an identifier or a member
+      // expression ending in an identifier, so use that identifier name.
       return this.tokens.identifierNameAtIndex(startIndex - 2);
     }
     if (

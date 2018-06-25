@@ -715,8 +715,6 @@ export function parseObj(isPattern: boolean, isBlockScope: boolean): void {
           unexpected(firstRestLocation, "Cannot have multiple rest elements when destructuring");
         } else if (eat(tt.braceR)) {
           break;
-        } else if (match(tt.comma) && lookaheadType() === tt.braceR) {
-          unexpected(position, "A trailing comma is not permitted after the rest element");
         } else {
           firstRestLocation = position;
           continue;

@@ -973,4 +973,21 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  // TODO: TypeScript 2.9 makes this required, so we can drop support for this syntax when we don't
+  // need to support older versions of TypeScript.
+  it("allows trailing commas after rest elements", () => {
+    assertTypeScriptResult(
+      `
+      function foo(a, ...b,) {}
+      const {a, ...b,} = c;
+      const [a, ...b,] = c;
+    `,
+      `"use strict";
+      function foo(a, ...b,) {}
+      const {a, ...b,} = c;
+      const [a, ...b,] = c;
+    `,
+    );
+  });
 });

@@ -98,6 +98,8 @@ export function parseBindingList(
     } else if (match(tt.ellipsis)) {
       parseRest(isBlockScope);
       parseAssignableListItemTypes();
+      // Support rest element trailing commas allowed by TypeScript <2.9.
+      eat(TokenType.comma);
       expect(close);
       break;
     } else {

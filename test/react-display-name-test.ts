@@ -175,4 +175,26 @@ describe("transform react-display-name", () => {
       {transforms: ["jsx", "imports"], filePath: "MyComponent.js"},
     );
   });
+
+  it("properly reads a MemberExpression assignee", () => {
+    assertResult(
+      `
+      import React from 'react';
+      a.b.c = React.createClass({
+        render() {
+          return <a/>
+        }
+      });
+    `,
+      `"use strict";const _jsxFileName = "MyComponent.js";${IMPORT_DEFAULT_PREFIX}
+      var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+      a.b.c = _react2.default.createClass({displayName: 'c',
+        render() {
+          return _react2.default.createElement('a', {${devProps(5)}})
+        }
+      });
+    `,
+      {transforms: ["jsx", "imports"], filePath: "MyComponent.js"},
+    );
+  });
 });

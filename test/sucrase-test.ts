@@ -284,7 +284,7 @@ describe("sucrase", () => {
     `,
       `"use strict";
       class A {
-        
+        ;
       } A.x = 3;
     `,
       {transforms: ["jsx", "imports", "typescript"]},
@@ -300,7 +300,7 @@ describe("sucrase", () => {
     `,
       `"use strict"; var _class;
       const A = (_class = class {
-        
+        ;
       }, _class.x = 3, _class)
     `,
       {transforms: ["jsx", "imports", "typescript"]},
@@ -316,7 +316,7 @@ describe("sucrase", () => {
     `,
       `"use strict";${ESMODULE_PREFIX}
        class C {
-        
+        ;
       } C.x = 3; exports.default = C;
     `,
       {transforms: ["jsx", "imports", "typescript"]},
@@ -337,8 +337,8 @@ describe("sucrase", () => {
       var _A = require('A'); var _A2 = _interopRequireDefault(_A);
       var _B = require('B'); var _B2 = _interopRequireDefault(_B);
       class C {constructor() { this.a = _A2.default; }
-        
-        
+        ;
+        ;
       } C.b = _B2.default;
     `,
       {transforms: ["jsx", "imports", "typescript"]},
@@ -503,6 +503,52 @@ describe("sucrase", () => {
       const createReactClass = 3;
     `,
       {transforms: ["jsx", "imports", "typescript"]},
+    );
+  });
+
+  it("handles a static class field without a semicolon", () => {
+    assertResult(
+      `
+      class A {
+        static b = {}
+        c () {
+          const d = 1;
+        }
+      }
+    `,
+      `"use strict";
+      class A {
+        
+        c () {
+          const d = 1;
+        }
+      } A.b = {};
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
+  it("handles a class with class field bound methods", () => {
+    assertResult(
+      `
+      export class Observer {
+        update = (v: any) => {}
+        complete = () => {}
+        error = (err: any) => {}
+      }
+      
+      export default function() {}
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       class Observer {constructor() { this.update = (v) => {};this.complete = () => {};this.error = (err) => {}; }
+        
+        
+        
+      } exports.Observer = Observer;
+      
+      exports. default = function() {}
+    `,
+      {transforms: ["imports", "typescript"]},
     );
   });
 });

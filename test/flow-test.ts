@@ -54,8 +54,8 @@ describe("transform flow", () => {
     `,
       `"use strict";
       class C {
-        
-        
+        ;
+        ;
       }
     `,
     );

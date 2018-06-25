@@ -104,7 +104,6 @@ export default function getClassInfo(
           classInitializers.push(`this${nameCode} =${expressionCode}`);
         }
       }
-      tokens.nextToken();
       fieldRanges.push({start: statementStartIndex, end: tokens.currentIndex()});
     }
   }

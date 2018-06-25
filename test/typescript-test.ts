@@ -53,7 +53,7 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       class A {
-        
+        ;
          c() {
           return "hi";
         }
@@ -74,7 +74,7 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       class A {
-        
+        ;
         constructor() {;this.x = 1;
           this.y = 2;
         }
@@ -95,7 +95,7 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       class A extends B {
-        
+        ;
         constructor(a) {
           super(a);this.x = 1;;
         }
@@ -113,7 +113,7 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       class A {constructor() { this.x = 1; }
-        
+        ;
       }
     `,
     );
@@ -128,7 +128,7 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       class A extends B {constructor(...args) { super(...args); this.x = 1; }
-        
+        ;
       }
     `,
     );
@@ -143,7 +143,7 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       class A extends B {constructor(...args2) { super(...args2); this.args = 1; }
-        
+        ;
       }
     `,
     );
@@ -307,8 +307,8 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       class A {constructor() { this.f = function() {}; }
-        
-        
+        ;
+        ;
       }
     `,
     );
@@ -362,9 +362,9 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       class A {constructor() { this[a + b] = 3;this[0] = 1;this["Hello, world"] = 2; }
-        
-        
-        
+        ;
+        ;
+        ;
       }
     `,
     );
@@ -698,7 +698,7 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       class A {
-        
+        ;
          constructor() {;this.x = 1;
         }
       }
@@ -834,7 +834,7 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       class A {
-        
+        ;
         getFoo() {
           return foo;
         }
@@ -968,7 +968,7 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       class A {constructor() { this.n = 3; }
-        
+        ;
       }
     `,
     );

@@ -1258,9 +1258,7 @@ export function tsAfterParseClassSuper(hasSuper: boolean): void {
 }
 
 export function tsStartParseObjPropValue(): void {
-  if (match(tt.lessThan)) {
-    throw new Error("TODO");
-  }
+  tsTryParseTypeParameters();
 }
 
 export function tsStartParseFunctionParams(): void {

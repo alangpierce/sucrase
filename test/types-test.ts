@@ -141,7 +141,7 @@ describe("type transforms", () => {
     );
   });
 
-  it.skip("removes function type parameters", () => {
+  it("removes function type parameters", () => {
     assertTypeScriptAndFlowResult(
       `
       function f<T>(t: T): void {

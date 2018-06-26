@@ -420,6 +420,30 @@ describe("transform JSX", () => {
     );
   });
 
+  it("allows empty fragments", () => {
+    assertResult(
+      `
+      const c = <></>;
+    `,
+      `
+      const c = React.createElement(React.Fragment, null);
+    `,
+    );
+  });
+
+  it("allows fragments without whitespace", () => {
+    assertResult(
+      `
+      const c = <><a/></>;
+    `,
+      `${JSX_PREFIX}
+      const c = React.createElement(React.Fragment, null, React.createElement('a', {${devProps(
+        2,
+      )}}));
+    `,
+    );
+  });
+
   describe("with production true", () => {
     it("handles no props", () => {
       assertResult(

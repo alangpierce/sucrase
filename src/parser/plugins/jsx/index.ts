@@ -171,7 +171,6 @@ function jsxParseAttribute(): void {
 // Does not parse the last token.
 function jsxParseOpeningElement(): boolean {
   if (match(tt.jsxTagEnd)) {
-    nextJSXExprToken();
     // This is an open-fragment.
     return false;
   }

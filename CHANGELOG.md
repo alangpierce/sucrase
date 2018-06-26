@@ -49,3 +49,11 @@
 [#244]: https://github.com/alangpierce/sucrase/pull/244
 [#257]: https://github.com/alangpierce/sucrase/pull/257
 [#261]: https://github.com/alangpierce/sucrase/pull/261
+[#264]: https://github.com/alangpierce/sucrase/pull/264
+[#268]: https://github.com/alangpierce/sucrase/pull/268
+[#270]: https://github.com/alangpierce/sucrase/pull/270
+[#271]: https://github.com/alangpierce/sucrase/pull/271
+[#272]: https://github.com/alangpierce/sucrase/pull/272
+[#273]: https://github.com/alangpierce/sucrase/pull/273
+[#274]: https://github.com/alangpierce/sucrase/pull/274
+[#275]: https://github.com/alangpierce/sucrase/pull/275

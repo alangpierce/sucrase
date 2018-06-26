@@ -1,3 +1,16 @@
+# 3.2.0 (2018-06-25)
+
+* Fix crash when using JSX elements as props. ([#268]) (Erik Arvidsson)
+* Fix incorrect compilation of TypeScript optional class properties with an
+  initializer. ([#264])
+* Fix crash on class fields that don't end in a semicolon. ([#271])
+* Allow trailing commas after rest elements. ([#272])
+* Don't crash on class bodies with an index signature. ([#273])
+* Allow member expression identifiers when determining React displayName.
+  ([#274])
+* Add production option and use it for JSX. ([#270]) (Erik Arvidsson)
+* Fix off-by-one error in parsing JSX fragments. ([#275])
+
 # 3.1.0 (2018-06-18)
 
 * Add basic support for source maps ([#257], [#261])

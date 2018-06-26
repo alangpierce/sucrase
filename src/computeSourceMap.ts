@@ -1,4 +1,5 @@
 import {SourceMapOptions} from "./index";
+import {charCodes} from "./parser/util/charcodes";
 
 export interface RawSourceMap {
   version: number;
@@ -20,7 +21,7 @@ export default function computeSourceMap(
 ): RawSourceMap {
   let mappings = "AAAA";
   for (let i = 0; i < code.length; i++) {
-    if (code[i] === "\n") {
+    if (code.charCodeAt(i) === charCodes.lineFeed) {
       mappings += ";AACA";
     }
   }

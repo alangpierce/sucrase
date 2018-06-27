@@ -70,8 +70,7 @@
     "commander": "^2.12.2",
     "lines-and-columns": "^1.1.6",
     "mz": "^2.7.0",
-    "pirates": "^3.0.2",
-    "source-map": "^0.7.3"
+    "pirates": "^3.0.2"
   },
   "engines": {
     "node": ">=8"

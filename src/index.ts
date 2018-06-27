@@ -123,7 +123,7 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
   const tokens = file.tokens;
   const scopes = file.scopes;
 
-  const tokenProcessor = new TokenProcessor(code, tokens);
+  const tokenProcessor = new TokenProcessor(code, tokens, isFlowEnabled);
   const nameManager = new NameManager(tokenProcessor);
   nameManager.preprocessNames();
   const enableLegacyTypeScriptModuleInterop = Boolean(options.enableLegacyTypeScriptModuleInterop);

@@ -1,3 +1,11 @@
+# 3.2.1 (2018-06-27)
+
+* Allow TS type parameters on object member methods. ([#276])
+* Simplify identity source map generator. ([#265])
+* Fix crash on destructured params in arrow function types. ([#278])
+* Remove @flow directives from comments when the flow transform is enabled.
+  ([#279])
+
 # 3.2.0 (2018-06-25)
 
 * Fix crash when using JSX elements as props. ([#268]) (Erik Arvidsson)
@@ -50,6 +58,7 @@
 [#257]: https://github.com/alangpierce/sucrase/pull/257
 [#261]: https://github.com/alangpierce/sucrase/pull/261
 [#264]: https://github.com/alangpierce/sucrase/pull/264
+[#265]: https://github.com/alangpierce/sucrase/pull/265
 [#268]: https://github.com/alangpierce/sucrase/pull/268
 [#270]: https://github.com/alangpierce/sucrase/pull/270
 [#271]: https://github.com/alangpierce/sucrase/pull/271
@@ -57,3 +66,6 @@
 [#273]: https://github.com/alangpierce/sucrase/pull/273
 [#274]: https://github.com/alangpierce/sucrase/pull/274
 [#275]: https://github.com/alangpierce/sucrase/pull/275
+[#276]: https://github.com/alangpierce/sucrase/pull/276
+[#278]: https://github.com/alangpierce/sucrase/pull/278
+[#279]: https://github.com/alangpierce/sucrase/pull/279

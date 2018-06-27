@@ -2770,15 +2770,14 @@ strip-json-comments@~2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
 
-sucrase@^3.2.0:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.2.0.tgz#8f0c28320d987d97fcac920e67eb4ba99d1d54a9"
+sucrase@^3.2.1:
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.2.1.tgz#dab6bdf86a9630517102355ef0555cfce150de11"
   dependencies:
     commander "^2.12.2"
     lines-and-columns "^1.1.6"
     mz "^2.7.0"
     pirates "^3.0.2"
-    source-map "^0.7.3"
 
 supports-color@3.1.2:
   version "3.1.2"

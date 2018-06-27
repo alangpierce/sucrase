@@ -21,6 +21,7 @@
     "profile": "node --inspect-brk script/sucrase-node ./benchmark/profile",
     "profile-react": "node --inspect-brk script/sucrase-node ./benchmark/profile-react.js",
     "prepublishOnly": "yarn clean && yarn build",
+    "release": "script/sucrase-node script/release.ts",
     "run-examples": "script/sucrase-node example-runner/example-runner.ts",
     "test": "yarn lint && yarn test-only",
     "test-only": "mocha './test/**/*.ts'"

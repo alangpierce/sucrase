@@ -548,6 +548,21 @@ function tsSkipParameterStart(): boolean {
     next();
     return true;
   }
+  // If this is a possible array/object destructure, walk to the matching bracket/brace.
+  // The next token after will tell us definitively whether this is a function param.
+  if (match(tt.braceL) || match(tt.bracketL)) {
+    let depth = 1;
+    next();
+    while (depth > 0) {
+      if (match(tt.braceL) || match(tt.bracketL)) {
+        depth++;
+      } else if (match(tt.braceR) || match(tt.bracketR)) {
+        depth--;
+      }
+      next();
+    }
+    return true;
+  }
   return false;
 }
 

@@ -1011,4 +1011,21 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows destructured params in function types", () => {
+    assertTypeScriptResult(
+      `
+      const f: ({a}: {a: number}) => void = () => {};
+      const g: ([a]: Array<number>) => void = () => {};
+      const h: ({a: {b: [c]}}: any) => void = () => {};
+      const o: ({a: {b: c}}) = {};
+    `,
+      `"use strict";
+      const f = () => {};
+      const g = () => {};
+      const h = () => {};
+      const o = {};
+    `,
+    );
+  });
 });

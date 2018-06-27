@@ -216,4 +216,25 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("removes @flow directives", () => {
+    assertFlowResult(
+      `
+      /* Hello @flow */
+      // World @flow
+      function foo(): number {
+        return 3;
+      }
+      // @flow
+    `,
+      `"use strict";
+      /* Hello  */
+      // World 
+      function foo() {
+        return 3;
+      }
+      // 
+    `,
+    );
+  });
 });

@@ -10,7 +10,11 @@ export default class TokenProcessor {
   private resultCode: string = "";
   private tokenIndex = 0;
 
-  constructor(readonly code: string, readonly tokens: Array<Token>) {}
+  constructor(
+    readonly code: string,
+    readonly tokens: Array<Token>,
+    readonly isFlowEnabled: boolean,
+  ) {}
 
   /**
    * Make a new TokenProcessor for things like lookahead.
@@ -135,10 +139,14 @@ export default class TokenProcessor {
   }
 
   previousWhitespace(): string {
-    return this.code.slice(
+    let whitespaceAndComments = this.code.slice(
       this.tokenIndex > 0 ? this.tokens[this.tokenIndex - 1].end : 0,
-      this.tokens[this.tokenIndex].start,
+      this.tokenIndex < this.tokens.length ? this.tokens[this.tokenIndex].start : this.code.length,
     );
+    if (this.isFlowEnabled) {
+      whitespaceAndComments = whitespaceAndComments.replace(/@flow/g, "");
+    }
+    return whitespaceAndComments;
   }
 
   replaceToken(newCode: string): void {
@@ -169,8 +177,9 @@ export default class TokenProcessor {
   }
 
   copyToken(): void {
+    this.resultCode += this.previousWhitespace();
     this.resultCode += this.code.slice(
-      this.tokenIndex > 0 ? this.tokens[this.tokenIndex - 1].end : 0,
+      this.tokens[this.tokenIndex].start,
       this.tokens[this.tokenIndex].end,
     );
     this.tokenIndex++;
@@ -216,7 +225,7 @@ export default class TokenProcessor {
     if (this.tokenIndex !== this.tokens.length) {
       throw new Error("Tried to finish processing tokens before reaching the end.");
     }
-    this.resultCode += this.code.slice(this.tokens[this.tokens.length - 1].end);
+    this.resultCode += this.previousWhitespace();
     return this.resultCode;
   }
 

@@ -13,6 +13,7 @@ export default function run(): void {
       "-d, --out-dir <out>",
       "Compile an input directory of modules into an output directory.",
     )
+    .option("--out-extension <extension>", "File extension to use for all output files.", "js")
     .option("--exclude-dirs <paths>", "Names of directories that should not be traversed.")
     .option("-t, --transforms <transforms>", "Comma-separated list of transforms to run.")
     .option(
@@ -38,6 +39,7 @@ export default function run(): void {
   }
 
   const outDir = commander.outDir;
+  const outExtension = commander.outExtension;
   const srcDir = commander.args[0];
   const excludeDirs = commander.excludeDirs ? commander.excludeDirs.split(",") : [];
 
@@ -47,7 +49,7 @@ export default function run(): void {
     enableLegacyBabel5ModuleInterop: commander.enableLegacyBabel5ModuleInterop,
   };
 
-  buildDirectory(srcDir, outDir, excludeDirs, options).catch((e) => {
+  buildDirectory(srcDir, outDir, outExtension, excludeDirs, options).catch((e) => {
     process.exitCode = 1;
     console.error(e);
   });
@@ -56,6 +58,7 @@ export default function run(): void {
 async function buildDirectory(
   srcDirPath: string,
   outDirPath: string,
+  outExtension: string,
   excludeDirs: Array<string>,
   options: Options,
 ): Promise<void> {
@@ -70,9 +73,12 @@ async function buildDirectory(
     const srcChildPath = join(srcDirPath, child);
     const outChildPath = join(outDirPath, child);
     if ((await stat(srcChildPath)).isDirectory()) {
-      await buildDirectory(srcChildPath, outChildPath, excludeDirs, options);
+      await buildDirectory(srcChildPath, outChildPath, outExtension, excludeDirs, options);
     } else if (srcChildPath.endsWith(extension)) {
-      const outPath = `${outChildPath.substr(0, outChildPath.length - 3)}.js`;
+      const outPath = `${outChildPath.substr(
+        0,
+        outChildPath.length - extension.length,
+      )}.${outExtension}`;
       await buildFile(srcChildPath, outPath, options);
     }
   }

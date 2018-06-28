@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import {readFile} from "mz/fs";
 import run from "./run";
 import sleep from "./sleep";

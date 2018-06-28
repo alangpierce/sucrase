@@ -1,11 +1,9 @@
 #!./script/sucrase-node
 /* eslint-disable no-console */
-import {readdir, rename, stat} from "mz/fs";
-import {join} from "path";
-
 import run from "./run";
 
 const SUCRASE = "./node_modules/.bin/sucrase";
+const SUCRASE_SELF = "./bin/sucrase";
 const TSC = "./node_modules/.bin/tsc";
 
 // Fast mode is useful for development. It runs all builds in parallel and does not generate types
@@ -32,12 +30,26 @@ async function main(): Promise<void> {
 async function buildSucrase(): Promise<void> {
   console.log("Building Sucrase");
   await run(`rm -rf ./dist`);
-  if (!fast) {
-    await run(`${SUCRASE} ./src -d ./dist --transforms typescript`);
-    await renameToMJS("./dist");
-  }
   await run(`${SUCRASE} ./src -d ./dist --transforms imports,typescript`);
   if (!fast) {
+    await run(`rm -rf ./dist-self-build`);
+    // The installed Sucrase version is always the previous version, but released versions of
+    // Sucrase should be self-compiled, so we do a multi-phase compilation. We compile Sucrase with
+    // the previous version, then use it to compile the current code, then use that to compile the
+    // code again. The second and third outputs should be exactly identical; otherwise we may have a
+    // problem where it miscompiled itself.
+    await run(`${SUCRASE_SELF} ./src -d ./dist-self-build --transforms imports,typescript`);
+    await run(
+      `${SUCRASE_SELF} ./src -d ./dist-self-build --transforms typescript --out-extension mjs`,
+    );
+    await run("rm -rf ./dist");
+    await run("mv ./dist-self-build ./dist");
+    await run(`${SUCRASE_SELF} ./src -d ./dist-self-build --transforms imports,typescript`);
+    await run(
+      `${SUCRASE_SELF} ./src -d ./dist-self-build --transforms typescript --out-extension mjs`,
+    );
+    await run("diff -r ./dist ./dist-self-build");
+    // Also add in .d.ts files from tsc, which only need to be compiled once.
     await run(`${TSC} --emitDeclarationOnly --project ./src --outDir ./dist`);
     // Link all integrations to Sucrase so that all building/linting/testing is up to date.
     await run("yarn link");
@@ -59,17 +71,6 @@ async function buildIntegration(path: string): Promise<void> {
 
   if (!fast) {
     await run(`${TSC} --emitDeclarationOnly --project ${path} --outDir ${path}/dist`);
-  }
-}
-
-async function renameToMJS(dirPath: string): Promise<void> {
-  for (const child of await readdir(dirPath)) {
-    const childPath = join(dirPath, child);
-    if ((await stat(childPath)).isDirectory()) {
-      await renameToMJS(childPath);
-    } else if (childPath.endsWith(".js")) {
-      await rename(childPath, `${childPath.slice(0, childPath.length - 3)}.mjs`);
-    }
   }
 }
 

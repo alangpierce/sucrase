@@ -13,7 +13,7 @@
   "scripts": {
     "build": "script/sucrase-node script/build.ts",
     "fast-build": "script/sucrase-node script/build.ts --fast",
-    "clean": "rm -rf ./build ./dist ./example-runner/example-repos",
+    "clean": "rm -rf ./build ./dist ./dist-self-build ./example-runner/example-repos",
     "generate": "script/sucrase-node generator/generate.ts",
     "benchmark": "script/sucrase-node benchmark/benchmark.ts",
     "benchmark-react": "script/sucrase-node benchmark/benchmark-react.ts",

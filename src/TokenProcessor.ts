@@ -138,7 +138,7 @@ export default class TokenProcessor {
     return this.matches1(type) && this.currentToken().contextId === contextId;
   }
 
-  previousWhitespace(): string {
+  previousWhitespaceAndComments(): string {
     let whitespaceAndComments = this.code.slice(
       this.tokenIndex > 0 ? this.tokens[this.tokenIndex - 1].end : 0,
       this.tokenIndex < this.tokens.length ? this.tokens[this.tokenIndex].start : this.code.length,
@@ -150,13 +150,13 @@ export default class TokenProcessor {
   }
 
   replaceToken(newCode: string): void {
-    this.resultCode += this.previousWhitespace();
+    this.resultCode += this.previousWhitespaceAndComments();
     this.resultCode += newCode;
     this.tokenIndex++;
   }
 
   replaceTokenTrimmingLeftWhitespace(newCode: string): void {
-    this.resultCode += this.previousWhitespace().replace(/[\t ]/g, "");
+    this.resultCode += this.previousWhitespaceAndComments().replace(/[^\r\n]/g, "");
     this.resultCode += newCode;
     this.tokenIndex++;
   }
@@ -177,7 +177,7 @@ export default class TokenProcessor {
   }
 
   copyToken(): void {
-    this.resultCode += this.previousWhitespace();
+    this.resultCode += this.previousWhitespaceAndComments();
     this.resultCode += this.code.slice(
       this.tokens[this.tokenIndex].start,
       this.tokens[this.tokenIndex].end,
@@ -225,7 +225,7 @@ export default class TokenProcessor {
     if (this.tokenIndex !== this.tokens.length) {
       throw new Error("Tried to finish processing tokens before reaching the end.");
     }
-    this.resultCode += this.previousWhitespace();
+    this.resultCode += this.previousWhitespaceAndComments();
     return this.resultCode;
   }
 

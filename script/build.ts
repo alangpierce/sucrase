@@ -30,7 +30,7 @@ async function main(): Promise<void> {
 async function buildSucrase(): Promise<void> {
   console.log("Building Sucrase");
   await run(`rm -rf ./dist`);
-  await run(`${SUCRASE} ./src -d ./dist --transforms imports,typescript`);
+  await run(`${SUCRASE} ./src -d ./dist --transforms imports,typescript -q`);
   if (!fast) {
     await run(`rm -rf ./dist-self-build`);
     // The installed Sucrase version is always the previous version, but released versions of
@@ -38,15 +38,15 @@ async function buildSucrase(): Promise<void> {
     // the previous version, then use it to compile the current code, then use that to compile the
     // code again. The second and third outputs should be exactly identical; otherwise we may have a
     // problem where it miscompiled itself.
-    await run(`${SUCRASE_SELF} ./src -d ./dist-self-build --transforms imports,typescript`);
+    await run(`${SUCRASE_SELF} ./src -d ./dist-self-build --transforms imports,typescript -q`);
     await run(
-      `${SUCRASE_SELF} ./src -d ./dist-self-build --transforms typescript --out-extension mjs`,
+      `${SUCRASE_SELF} ./src -d ./dist-self-build --transforms typescript --out-extension mjs -q`,
     );
     await run("rm -rf ./dist");
     await run("mv ./dist-self-build ./dist");
-    await run(`${SUCRASE_SELF} ./src -d ./dist-self-build --transforms imports,typescript`);
+    await run(`${SUCRASE_SELF} ./src -d ./dist-self-build --transforms imports,typescript -q`);
     await run(
-      `${SUCRASE_SELF} ./src -d ./dist-self-build --transforms typescript --out-extension mjs`,
+      `${SUCRASE_SELF} ./src -d ./dist-self-build --transforms typescript --out-extension mjs -q`,
     );
     await run("diff -r ./dist ./dist-self-build");
     // Also add in .d.ts files from tsc, which only need to be compiled once.
@@ -67,7 +67,7 @@ async function buildIntegration(path: string): Promise<void> {
   }
 
   await run(`rm -rf ${path}/dist`);
-  await run(`${SUCRASE} ${path}/src -d ${path}/dist --transforms imports,typescript`);
+  await run(`${SUCRASE} ${path}/src -d ${path}/dist --transforms imports,typescript -q`);
 
   if (!fast) {
     await run(`${TSC} --emitDeclarationOnly --project ${path} --outDir ${path}/dist`);

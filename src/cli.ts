@@ -5,6 +5,13 @@ import {join} from "path";
 
 import {Options, transform} from "./index";
 
+interface CLIOptions {
+  outExtension: string;
+  excludeDirs: Array<string>;
+  quiet: boolean;
+  sucraseOptions: Options;
+}
+
 export default function run(): void {
   commander
     .description(`Sucrase: super-fast Babel alternative.`)
@@ -16,6 +23,7 @@ export default function run(): void {
     .option("--out-extension <extension>", "File extension to use for all output files.", "js")
     .option("--exclude-dirs <paths>", "Names of directories that should not be traversed.")
     .option("-t, --transforms <transforms>", "Comma-separated list of transforms to run.")
+    .option("-q, --quiet", "Don't print the names of converted files.")
     .option(
       "--enable-legacy-typescript-module-interop",
       "Use default TypeScript ESM/CJS interop strategy.",
@@ -39,17 +47,20 @@ export default function run(): void {
   }
 
   const outDir = commander.outDir;
-  const outExtension = commander.outExtension;
   const srcDir = commander.args[0];
-  const excludeDirs = commander.excludeDirs ? commander.excludeDirs.split(",") : [];
 
-  const options: Options = {
-    transforms: commander.transforms.split(","),
-    enableLegacyTypeScriptModuleInterop: commander.enableLegacyTypescriptModuleInterop,
-    enableLegacyBabel5ModuleInterop: commander.enableLegacyBabel5ModuleInterop,
+  const options: CLIOptions = {
+    outExtension: commander.outExtension,
+    excludeDirs: commander.excludeDirs ? commander.excludeDirs.split(",") : [],
+    quiet: commander.quiet,
+    sucraseOptions: {
+      transforms: commander.transforms.split(","),
+      enableLegacyTypeScriptModuleInterop: commander.enableLegacyTypescriptModuleInterop,
+      enableLegacyBabel5ModuleInterop: commander.enableLegacyBabel5ModuleInterop,
+    },
   };
 
-  buildDirectory(srcDir, outDir, outExtension, excludeDirs, options).catch((e) => {
+  buildDirectory(srcDir, outDir, options).catch((e) => {
     process.exitCode = 1;
     console.error(e);
   });
@@ -58,35 +69,34 @@ export default function run(): void {
 async function buildDirectory(
   srcDirPath: string,
   outDirPath: string,
-  outExtension: string,
-  excludeDirs: Array<string>,
-  options: Options,
+  options: CLIOptions,
 ): Promise<void> {
-  const extension = options.transforms.includes("typescript") ? ".ts" : ".js";
+  const extension = options.sucraseOptions.transforms.includes("typescript") ? ".ts" : ".js";
   if (!(await exists(outDirPath))) {
     await mkdir(outDirPath);
   }
   for (const child of await readdir(srcDirPath)) {
-    if (["node_modules", ".git"].includes(child) || excludeDirs.includes(child)) {
+    if (["node_modules", ".git"].includes(child) || options.excludeDirs.includes(child)) {
       continue;
     }
     const srcChildPath = join(srcDirPath, child);
     const outChildPath = join(outDirPath, child);
     if ((await stat(srcChildPath)).isDirectory()) {
-      await buildDirectory(srcChildPath, outChildPath, outExtension, excludeDirs, options);
+      await buildDirectory(srcChildPath, outChildPath, options);
     } else if (srcChildPath.endsWith(extension)) {
-      const outPath = `${outChildPath.substr(
-        0,
-        outChildPath.length - extension.length,
-      )}.${outExtension}`;
+      const outPath = `${outChildPath.substr(0, outChildPath.length - extension.length)}.${
+        options.outExtension
+      }`;
       await buildFile(srcChildPath, outPath, options);
     }
   }
 }
 
-async function buildFile(srcPath: string, outPath: string, options: Options): Promise<void> {
-  console.log(`${srcPath} -> ${outPath}`);
+async function buildFile(srcPath: string, outPath: string, options: CLIOptions): Promise<void> {
+  if (!options.quiet) {
+    console.log(`${srcPath} -> ${outPath}`);
+  }
   const code = (await readFile(srcPath)).toString();
-  const transformedCode = transform(code, {...options, filePath: srcPath}).code;
+  const transformedCode = transform(code, {...options.sucraseOptions, filePath: srcPath}).code;
   await writeFile(outPath, transformedCode);
 }

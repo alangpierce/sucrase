@@ -284,7 +284,7 @@ describe("sucrase", () => {
     `,
       `"use strict";
       class A {
-        ;
+        
       } A.x = 3;
     `,
       {transforms: ["jsx", "imports", "typescript"]},
@@ -300,7 +300,7 @@ describe("sucrase", () => {
     `,
       `"use strict"; var _class;
       const A = (_class = class {
-        ;
+        
       }, _class.x = 3, _class)
     `,
       {transforms: ["jsx", "imports", "typescript"]},
@@ -316,7 +316,7 @@ describe("sucrase", () => {
     `,
       `"use strict";${ESMODULE_PREFIX}
        class C {
-        ;
+        
       } C.x = 3; exports.default = C;
     `,
       {transforms: ["jsx", "imports", "typescript"]},
@@ -337,8 +337,8 @@ describe("sucrase", () => {
       var _A = require('A'); var _A2 = _interopRequireDefault(_A);
       var _B = require('B'); var _B2 = _interopRequireDefault(_B);
       class C {constructor() { this.a = _A2.default; }
-        ;
-        ;
+        
+        
       } C.b = _B2.default;
     `,
       {transforms: ["jsx", "imports", "typescript"]},
@@ -547,6 +547,22 @@ describe("sucrase", () => {
       } exports.Observer = Observer;
       
       exports. default = function() {}
+    `,
+      {transforms: ["imports", "typescript"]},
+    );
+  });
+
+  it("removes semicolons from class bodies", () => {
+    assertResult(
+      `
+      class A {
+        ;
+      }
+    `,
+      `"use strict";
+      class A {
+        
+      }
     `,
       {transforms: ["imports", "typescript"]},
     );

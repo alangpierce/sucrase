@@ -51,6 +51,7 @@ export default function getClassInfo(
     if (tokens.matchesContextual(ContextualKeyword._constructor)) {
       ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
     } else if (tokens.matches1(tt.semi)) {
+      fieldRanges.push({start: tokens.currentIndex(), end: tokens.currentIndex() + 1});
       tokens.nextToken();
     } else if (tokens.currentToken().isType) {
       tokens.nextToken();

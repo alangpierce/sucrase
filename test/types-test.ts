@@ -119,8 +119,8 @@ describe("type transforms", () => {
     `,
       `"use strict";
       class A {constructor() { this.x = 2;this.y = {}; }
-        ;
-        ;
+        
+        
       }
     `,
     );
@@ -135,7 +135,7 @@ describe("type transforms", () => {
     `,
       `"use strict";
       class A {
-        ;
+        
       }
     `,
     );

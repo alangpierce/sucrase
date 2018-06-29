@@ -1,3 +1,10 @@
+# 3.3.0 (2018-06-28)
+
+* Add a --out-extension option to the CLI. ([#282])
+* Add a -q/--quiet option in the CLI and use it in the build script. ([#284])
+* Don't emit semicolons in class bodies. ([#285])
+* Fix ugly emitted comments when removing code between tokens. ([#286])
+
 # 3.2.1 (2018-06-27)
 
 * Allow TS type parameters on object member methods. ([#276])
@@ -69,3 +76,7 @@
 [#276]: https://github.com/alangpierce/sucrase/pull/276
 [#278]: https://github.com/alangpierce/sucrase/pull/278
 [#279]: https://github.com/alangpierce/sucrase/pull/279
+[#282]: https://github.com/alangpierce/sucrase/pull/282
+[#284]: https://github.com/alangpierce/sucrase/pull/284
+[#285]: https://github.com/alangpierce/sucrase/pull/285
+[#286]: https://github.com/alangpierce/sucrase/pull/286

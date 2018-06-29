@@ -567,4 +567,20 @@ describe("sucrase", () => {
       {transforms: ["imports", "typescript"]},
     );
   });
+
+  it("removes comments within removed ranges rather than removing all whitespace", () => {
+    assertResult(
+      `
+      interface A {
+        // This is a comment.
+      }
+    `,
+      `"use strict";
+      
+
+
+    `,
+      {transforms: ["imports", "typescript"]},
+    );
+  });
 });

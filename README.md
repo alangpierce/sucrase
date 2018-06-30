@@ -159,6 +159,9 @@ to have nearly the scope and versatility of Babel. Some specific examples:
   mostly beneficial in development, and in many cases, Babel or tsc will be more
   suitable for production builds.
 
+See the [Project Vision](./docs/PROJECT_VISION.md) document for more details on
+the philosophy behind Sucrase.
+
 ## Motivation
 
 As JavaScript implementations mature, it becomes more and more reasonable to
@@ -205,40 +208,11 @@ TypeScript: 3782.414ms
 Babel: 9591.515ms
 ```
 
-## Project vision and future work
+## Contributing
 
-### Performance improvements
-
-* Rewrite the code to run in WebAssembly, either by changing it to be valid
-  [AssemblyScript](https://github.com/AssemblyScript/assemblyscript) or by
-  rewriting it in Rust.
-* Explore the idea of a JIT to optimize the various token patterns that need to
-  be matched as part of code transformation.
-
-### New features
-
-* Implement more integrations, like a Browserify plugin.
-* Emit proper source maps. (The line numbers already match up, but this would
-  help with debuggers and other tools.)
-* Rethink configuration and try to simplify it as much as possible, and allow
-  loading Babel/TypeScript configurations.
-* Explore the idea of a tool that patches a Babel/TypeScript installation to
-  use Sucrase instead, to make it even easier to try Sucrase on an existing
-  codebase.
-* Explore the idea of extending this approach to other tools, e.g. module
-  bundlers.
-
-### Correctness and stability
-
-* Add more open source projects to the suite of projects that are tested
-  automatically.
-* Set up a test suite that runs the compiled code and ensures that it is
-  correct.
-* Add integrity checks to compare intermediate Sucrase results (like tokens and
-  the role of each identifier and pair of curly braces) with the equivalent
-  information from Babel.
-* Fix some known correctness loose ends, like import hoisting and fully
-  replicating the small differences between Babel and the TypeScript compiler.
+Contributions are welcome, whether they be bug reports, PRs, docs, tests, or
+anything else! Please take a look through the [Contributing Guide](./CONTRIBUTING.md)
+to learn how to get started.
 
 ## License and attribution
 

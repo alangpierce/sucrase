@@ -101,13 +101,19 @@ Run on a directory:
 sucrase ./srcDir -d ./outDir --transforms typescript,imports
 ```
 
-Register a require hook with some [reasonable defaults](src/register.ts):
+Compile on-the-fly via a require hook with some [reasonable defaults](src/register.ts):
 
 ```js
 // Register just one extension.
 import "sucrase/register/ts";
 // Or register all at once.
 import "sucrase/register";
+```
+
+Compile on-the-fly via a drop-in replacement for node:
+
+```
+sucrase-node index.ts
 ```
 
 Call from JS directly:

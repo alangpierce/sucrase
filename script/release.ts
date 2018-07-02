@@ -27,7 +27,7 @@ async function main(): Promise<void> {
   await run("yarn add sucrase@latest");
   await run("yarn publish-website");
   process.chdir("..");
-  await run("git commit --amend --no-edit");
+  await run("git commit -a --amend --no-edit");
   console.log("Done! Please sanity-check the commit, then push.");
 }
 

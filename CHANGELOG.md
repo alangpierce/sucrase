@@ -1,3 +1,8 @@
+# 3.4.0 (2018-07-01)
+
+* Add a sucrase-node CLI that wraps node. ([#288])
+* Allow exported generator functions. ([#290])
+
 # 3.3.0 (2018-06-28)
 
 * Add a --out-extension option to the CLI. ([#282])
@@ -80,3 +85,5 @@
 [#284]: https://github.com/alangpierce/sucrase/pull/284
 [#285]: https://github.com/alangpierce/sucrase/pull/285
 [#286]: https://github.com/alangpierce/sucrase/pull/286
+[#288]: https://github.com/alangpierce/sucrase/pull/288
+[#290]: https://github.com/alangpierce/sucrase/pull/290

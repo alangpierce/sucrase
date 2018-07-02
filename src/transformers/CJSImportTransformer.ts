@@ -230,6 +230,7 @@ export default class CJSImportTransformer extends Transformer {
       return true;
     } else if (
       this.tokens.matches2(tt._export, tt._function) ||
+      // export async function
       this.tokens.matches3(tt._export, tt.name, tt._function)
     ) {
       this.processExportFunction();
@@ -355,6 +356,9 @@ export default class CJSImportTransformer extends Transformer {
         throw new Error("Expected async keyword in function export.");
       }
       this.tokens.copyToken();
+      this.tokens.copyToken();
+    }
+    if (this.tokens.matches1(tt.star)) {
       this.tokens.copyToken();
     }
     if (!this.tokens.matches1(tt.name)) {

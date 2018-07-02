@@ -988,4 +988,21 @@ module.exports = exports.default;
     `,
     );
   });
+
+  it("allows exported generator functions", () => {
+    assertResult(
+      `
+      export function* foo() {}
+      export async function* bar() {}
+      export default function* baz() {}
+      export default async function* qux() {}
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       function* foo() {} exports.foo = foo;
+       async function* bar() {} exports.bar = bar;
+      exports. default = function* baz() {}
+      exports. default = async function* qux() {}
+    `,
+    );
+  });
 });

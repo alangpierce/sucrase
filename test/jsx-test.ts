@@ -92,6 +92,28 @@ describe("transform JSX", () => {
     );
   });
 
+  it("handles property keys that require quoting", () => {
+    assertResult(
+      `
+      <A foo-bar={true} />
+    `,
+      `${JSX_PREFIX}
+      React.createElement(A, { 'foo-bar': true, ${devProps(2)}} )
+    `,
+    );
+  });
+
+  it("handles shorthand property keys that require quoting", () => {
+    assertResult(
+      `
+      <A foo-bar />
+    `,
+      `${JSX_PREFIX}
+      React.createElement(A, { 'foo-bar': true, ${devProps(2)}} )
+    `,
+    );
+  });
+
   it("handles inline comments", () => {
     assertResult(
       `

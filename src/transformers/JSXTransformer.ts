@@ -97,12 +97,7 @@ export default class JSXTransformer extends Transformer {
     this.tokens.appendCode(`, {`);
     while (true) {
       if (this.tokens.matches2(tt.jsxName, tt.eq)) {
-        const keyName = this.tokens.identifierName();
-        if (keyName.includes("-")) {
-          this.tokens.replaceToken(`'${keyName}'`);
-        } else {
-          this.tokens.copyToken();
-        }
+        this.processPropKeyName();
         this.tokens.replaceToken(": ");
         if (this.tokens.matches1(tt.braceL)) {
           this.tokens.replaceToken("");
@@ -114,7 +109,7 @@ export default class JSXTransformer extends Transformer {
           this.processStringPropValue();
         }
       } else if (this.tokens.matches1(tt.jsxName)) {
-        this.tokens.copyToken();
+        this.processPropKeyName();
         this.tokens.appendCode(": true");
       } else if (this.tokens.matches1(tt.braceL)) {
         this.tokens.replaceToken("");
@@ -129,6 +124,15 @@ export default class JSXTransformer extends Transformer {
       this.tokens.appendCode(` ${devProps}}`);
     } else {
       this.tokens.appendCode("}");
+    }
+  }
+
+  processPropKeyName(): void {
+    const keyName = this.tokens.identifierName();
+    if (keyName.includes("-")) {
+      this.tokens.replaceToken(`'${keyName}'`);
+    } else {
+      this.tokens.copyToken();
     }
   }
 

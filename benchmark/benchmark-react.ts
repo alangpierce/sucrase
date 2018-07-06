@@ -1,4 +1,4 @@
-#!./script/sucrase-node
+#!./node_modules/.bin/sucrase-node
 /* eslint-disable no-console */
 // @ts-ignore: new babel-core package missing types.
 import * as babel from "@babel/core";

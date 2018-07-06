@@ -1,4 +1,4 @@
-#!./script/sucrase-node
+#!./node_modules/.bin/sucrase-node
 /* eslint-disable no-console */
 import {exists, readFile} from "mz/fs";
 import run from "../script/run";

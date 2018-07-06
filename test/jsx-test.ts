@@ -1,4 +1,6 @@
-import {Transform} from "../src";
+import {throws} from "assert";
+
+import {transform, Transform} from "../src";
 import {IMPORT_DEFAULT_PREFIX, JSX_PREFIX} from "./prefixes";
 import * as util from "./util";
 
@@ -464,6 +466,10 @@ describe("transform JSX", () => {
       )}}));
     `,
     );
+  });
+
+  it("does not infinite loop on incomplete JSX", () => {
+    throws(() => transform("const x = <", {transforms: ["jsx"]}));
   });
 
   describe("with production true", () => {

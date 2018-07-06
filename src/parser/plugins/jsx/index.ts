@@ -73,6 +73,9 @@ function jsxReadString(quote: number): void {
 function jsxReadWord(): void {
   let ch: number;
   do {
+    if (state.pos > input.length) {
+      unexpected(null, "Unexpectedly reached the end of input.");
+    }
     ch = input.charCodeAt(++state.pos);
   } while (isIdentifierChar(ch) || ch === charCodes.dash);
   finishToken(tt.jsxName);

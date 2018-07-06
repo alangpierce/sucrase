@@ -1,4 +1,4 @@
-#!./script/sucrase-node
+#!./node_modules/.bin/sucrase-node
 /* eslint-disable no-console */
 import run from "./run";
 

@@ -1,3 +1,8 @@
+# 3.4.1 (2018-07-06)
+
+* Quote shorthand prop keys that contain a hyphen ([#292]) (Kevin Gao)
+* Fix infinite loop on incomplete JSX. ([#296])
+
 # 3.4.0 (2018-07-01)
 
 * Add a sucrase-node CLI that wraps node. ([#288])
@@ -87,3 +92,5 @@
 [#286]: https://github.com/alangpierce/sucrase/pull/286
 [#288]: https://github.com/alangpierce/sucrase/pull/288
 [#290]: https://github.com/alangpierce/sucrase/pull/290
+[#292]: https://github.com/alangpierce/sucrase/pull/292
+[#296]: https://github.com/alangpierce/sucrase/pull/296

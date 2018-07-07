@@ -1,5 +1,5 @@
 diff --git a/Gulpfile.js b/Gulpfile.js
-index dcdf818e3..acfa8f4f4 100644
+index a03b34f15..b8a30ddae 100644
 --- a/Gulpfile.js
 +++ b/Gulpfile.js
 @@ -4,7 +4,7 @@ const plumber = require("gulp-plumber");
@@ -8,102 +8,83 @@ index dcdf818e3..acfa8f4f4 100644
  const newer = require("gulp-newer");
 -const babel = require("gulp-babel");
 +const sucrase = require("@sucrase/gulp-plugin");
- const watch = require("gulp-watch");
+ const gulpWatch = require("gulp-watch");
  const gutil = require("gulp-util");
  const filter = require("gulp-filter");
-@@ -33,7 +33,7 @@ gulp.task("build", function() {
-   return merge(
-     sources.map(source => {
-       const base = path.join(__dirname, source);
--      const f = filter(["**", "!**/packages/babylon/**"]);
-+      const f = filter(["**"]);
- 
-       return gulp
-         .src(getGlobFromSource(source), { base: base })
-@@ -57,7 +57,7 @@ gulp.task("build", function() {
-             callback(null, file);
-           })
-         )
+@@ -15,7 +15,6 @@ const merge = require("merge-stream");
+ const rollup = require("rollup-stream");
+ const source = require("vinyl-source-stream");
+ const buffer = require("vinyl-buffer");
+-const rollupBabel = require("rollup-plugin-babel");
+ const rollupNodeResolve = require("rollup-plugin-node-resolve");
+ const registerStandalonePackageTask = require("./scripts/gulp-tasks")
+   .registerStandalonePackageTask;
+@@ -79,7 +78,7 @@ function buildBabel(exclude) {
+         .pipe(errorsLogger())
+         .pipe(newer({ dest: base, map: swapSrcWithLib }))
+         .pipe(compilationLogger())
 -        .pipe(babel())
-+        .pipe(sucrase({transforms: ["imports", "flow"]}))
++        .pipe(sucrase({transforms: ["flow", "imports"]}))
          .pipe(
-           through.obj(function(file, enc, callback) {
-             // Passing 'file.relative' because newer() above uses a relative
+           // Passing 'file.relative' because newer() above uses a relative
+           // path and this keeps it consistent.
+@@ -113,9 +112,7 @@ function buildRollup(packages) {
+ }
+ 
+ gulp.task("build", function() {
+-  const bundles = ["packages/babel-parser"];
+-
+-  return merge([buildBabel(/* exclude */ bundles), buildRollup(bundles)]);
++  return buildBabel();
+ });
+ 
+ gulp.task("default", gulp.series("build"));
 diff --git a/Makefile b/Makefile
-index 9f07ae0e2..64cd4c94e 100644
+index a23354d7b..0f5e4b6f8 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -14,7 +14,7 @@ SOURCES = packages codemods
- build: clean
- 	make clean-lib
-   # Build babylon before building all other projects
--	make build-babylon
-+	# make build-babylon
- 	./node_modules/.bin/gulp build
- 	node ./packages/babel-types/scripts/generateTypeHelpers.js
- 	# call build again as the generated files might need to be compiled again.
-@@ -72,7 +72,10 @@ test-only:
- 	./scripts/test.sh
+@@ -66,7 +66,9 @@ test-only:
+ 	BABEL_ENV=test ./scripts/test.sh
  	make test-clean
  
 -test: lint test-only
 +test:
 +	make bootstrap
-+	./scripts/test.sh
-+	make test-clean
++	make test-only
  
- test-ci:
- 	make bootstrap
-@@ -129,8 +132,9 @@ publish:
+ test-ci: bootstrap test-only
+ 
+@@ -116,8 +118,13 @@ publish:
+ 	./node_modules/.bin/lerna publish --force-publish=* --exact --skip-temp-tag
  	make clean
  
- bootstrap:
--	make clean-all
- 	yarn
+-bootstrap: clean-all
++bootstrap:
+ 	yarn --ignore-engines
 +	yarn link sucrase
 +	yarn link @sucrase/gulp-plugin
- 	./node_modules/.bin/lerna bootstrap
++	yarn link @sucrase/jest-plugin
++	yarn link @sucrase/webpack-loader
++	yarn link @sucrase/webpack-object-rest-spread-plugin
+ 	./node_modules/.bin/lerna bootstrap -- --ignore-engines
  	make build
  	cd packages/babel-runtime; \
-diff --git a/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/input.js b/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/input.js
-deleted file mode 100644
-index f791cb876..000000000
---- a/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/input.js
-+++ /dev/null
-@@ -1,7 +0,0 @@
--var func = function * (){
--  yield obj
--      .method()
--      .method2();
--
--  const actual = true;
--};
-diff --git a/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/options.json b/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/options.json
-deleted file mode 100644
-index 21fd7445e..000000000
---- a/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/options.json
-+++ /dev/null
-@@ -1,6 +0,0 @@
--{
--  "plugins": [
--    "transform-regenerator"
--  ],
--  "retainLines": true
--}
-diff --git a/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/output.js b/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/output.js
-deleted file mode 100644
-index 8c4effa02..000000000
---- a/packages/babel-plugin-transform-regenerator/test/fixtures/variable-renaming/retain-lines/output.js
-+++ /dev/null
-@@ -1,6 +0,0 @@
--var func = /*#__PURE__*/regeneratorRuntime.mark(function _callee() {var actual;return regeneratorRuntime.wrap(function _callee$(_context) {while (1) switch (_context.prev = _context.next) {case 0:_context.next = 2;return (
--          obj.
--          method().
--          method2());case 2:
--
--        actual = true;case 3:case "end":return _context.stop();}}, _callee, this);});
+diff --git a/package.json b/package.json
+index 2ef4be29b..cdcb4632d 100644
+--- a/package.json
++++ b/package.json
+@@ -77,6 +77,9 @@
+     ]
+   },
+   "jest": {
++    "transform": {
++      ".js": "@sucrase/jest-plugin"
++    },
+     "collectCoverageFrom": [
+       "packages/*/src/**/*.mjs",
+       "packages/*/src/**/*.js",
 diff --git a/scripts/gulp-tasks.js b/scripts/gulp-tasks.js
-index 2e4891efb..5c4d51602 100644
+index f3c696de5..5eab2452a 100644
 --- a/scripts/gulp-tasks.js
 +++ b/scripts/gulp-tasks.js
 @@ -19,6 +19,7 @@ const RootMostResolvePlugin = require("webpack-dependency-suite")
@@ -114,60 +95,22 @@ index 2e4891efb..5c4d51602 100644
  
  function webpackBuild(opts) {
    const plugins = opts.plugins || [];
-@@ -38,47 +39,18 @@ function webpackBuild(opts) {
+@@ -37,12 +38,8 @@ function webpackBuild(opts) {
+       rules: [
          {
            test: /\.js$/,
-           include: /node_modules/,
 -          loader: "babel-loader",
 -          options: {
--            // Some of the node_modules may have their own "babel" section in
--            // their project.json (or a ".babelrc" file). We need to ignore
--            // those as we're using our own Babel options.
--            babelrc: false,
--            presets: [
--              [
--                "@babel/env",
--                {
--                  loose: true,
--                  exclude: ["transform-typeof-symbol"],
--                },
--              ],
--            ],
--          },
-+          loader: "@sucrase/webpack-loader",
-+          options: {transforms: ["imports", "flow"]},
-         },
-         {
-           test: /\.js$/,
-           exclude: /node_modules/,
--          loader: "babel-loader",
--          options: {
--            // Some of the node_modules may have their own "babel" section in
--            // their project.json (or a ".babelrc" file). We need to ignore
--            // those as we're using our own Babel options.
--            babelrc: false,
--            presets: [
--              [
--                "@babel/env",
--                {
--                  loose: true,
--                  exclude: ["transform-typeof-symbol"],
--                },
--              ],
--              ["@babel/stage-0", { loose: true }],
--            ],
+-            // Use the bundled config so that module syntax is passed through
+-            // for Webpack.
+-            envName: "standalone",
 -          },
 +          loader: "@sucrase/webpack-loader",
 +          options: {transforms: ["imports", "flow"]},
          },
        ],
-       // babylon is already bundled and does not require parsing
--      noParse: [/babylon\/lib/],
-+      // noParse: [/babylon\/lib/],
      },
-     node: {
-       // Mock Node.js modules that Babel require()s but that we don't
-@@ -93,6 +65,7 @@ function webpackBuild(opts) {
+@@ -59,6 +56,7 @@ function webpackBuild(opts) {
        libraryTarget: "umd",
      },
      plugins: [
@@ -175,19 +118,12 @@ index 2e4891efb..5c4d51602 100644
        new webpack.DefinePlugin({
          "process.env.NODE_ENV": '"production"',
          "process.env": JSON.stringify({ NODE_ENV: "production" }),
-@@ -149,7 +122,7 @@ function registerStandalonePackageTask(
-           plugins,
-         }),
+@@ -117,7 +115,7 @@ function registerStandalonePackageTask(
          gulp.dest(standalonePath),
--        uglify(),
-+        // uglify(),
+       ].concat(
+         // Minification is super slow, so we skip it in CI.
+-        process.env.CI ? [] : uglify(),
++        // process.env.CI ? [] : uglify(),
          rename({ extname: ".min.js" }),
-         gulp.dest(standalonePath),
-       ],
-diff --git a/test/mocha.opts b/test/mocha.opts
-index 939595b1b..20955e894 100644
---- a/test/mocha.opts
-+++ b/test/mocha.opts
-@@ -1 +1 @@
----reporter dot --ui tdd --timeout 10000 --compilers js:@babel/register
-+--reporter dot --ui tdd --timeout 10000 --compilers js:sucrase/register/js
+         gulp.dest(standalonePath)
+       ),

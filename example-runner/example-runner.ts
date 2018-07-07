@@ -39,6 +39,7 @@ async function main(): Promise<void> {
   await run("yarn link");
   for (const integration of INTEGRATIONS) {
     process.chdir(`./integrations/${integration}`);
+    await run("yarn");
     await run("yarn link sucrase");
     await run("yarn link");
     process.chdir(originalCwd);

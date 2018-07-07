@@ -1,4 +1,8 @@
-import {IdentifierRole} from "./parser/tokenizer";
+import {
+  isBlockScopedDeclaration,
+  isDeclaration,
+  isFunctionScopedDeclaration,
+} from "./parser/tokenizer";
 import {Scope} from "./parser/tokenizer/state";
 import {TokenType as tt} from "./parser/tokenizer/types";
 import TokenProcessor from "./TokenProcessor";
@@ -26,8 +30,7 @@ function hasShadowedGlobals(tokens: TokenProcessor, globalNames: Set<string>): b
   for (const token of tokens.tokens) {
     if (
       token.type === tt.name &&
-      (token.identifierRole === IdentifierRole.FunctionScopedDeclaration ||
-        token.identifierRole === IdentifierRole.BlockScopedDeclaration) &&
+      isDeclaration(token) &&
       globalNames.has(tokens.identifierNameForToken(token))
     ) {
       return true;
@@ -61,9 +64,9 @@ function markShadowedGlobals(
     const token = tokens.tokens[i];
     const name = tokens.identifierNameForToken(token);
     if (scopeStack.length > 1 && token.type === tt.name && globalNames.has(name)) {
-      if (token.identifierRole === IdentifierRole.BlockScopedDeclaration) {
+      if (isBlockScopedDeclaration(token)) {
         markShadowedForScope(scopeStack[scopeStack.length - 1], tokens, name);
-      } else if (token.identifierRole === IdentifierRole.FunctionScopedDeclaration) {
+      } else if (isFunctionScopedDeclaration(token)) {
         let stackIndex = scopeStack.length - 1;
         while (stackIndex > 0 && !scopeStack[stackIndex].isFunctionScope) {
           stackIndex--;

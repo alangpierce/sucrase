@@ -693,7 +693,6 @@ export function parseObj(isPattern: boolean, isBlockScope: boolean): void {
   next();
   state.tokens[state.tokens.length - 1].contextId = contextId;
 
-  let firstRestLocation = null;
   while (!eat(tt.braceR)) {
     if (first) {
       first = false;
@@ -706,22 +705,20 @@ export function parseObj(isPattern: boolean, isBlockScope: boolean): void {
 
     let isGenerator = false;
     if (match(tt.ellipsis)) {
-      // Note that this is labeled as an access on the token even though it might be an
-      // assignment.
+      const previousIndex = state.tokens.length;
       parseSpread();
       if (isPattern) {
-        const position = state.start;
-        if (firstRestLocation !== null) {
-          unexpected(firstRestLocation, "Cannot have multiple rest elements when destructuring");
-        } else if (eat(tt.braceR)) {
-          break;
-        } else {
-          firstRestLocation = position;
-          continue;
+        // Mark role when the only thing being spread over is an identifier.
+        if (state.tokens.length === previousIndex + 2) {
+          state.tokens[state.tokens.length - 1].identifierRole = isBlockScope
+            ? IdentifierRole.BlockScopedDeclaration
+            : IdentifierRole.FunctionScopedDeclaration;
         }
-      } else {
-        continue;
+        if (eat(tt.braceR)) {
+          break;
+        }
       }
+      continue;
     }
 
     if (!isPattern) {
@@ -807,11 +804,11 @@ function parseObjectProperty(isPattern: boolean, isBlockScope: boolean): void {
 
   // If we're in a destructuring, we've now discovered that the key was actually an assignee, so
   // we need to tag it as a declaration with the appropriate scope. Otherwise, we might need to
-  // transform it on access, so mark it as an object shorthand.
+  // transform it on access, so mark it as a normal object shorthand.
   if (isPattern) {
     state.tokens[state.tokens.length - 1].identifierRole = isBlockScope
-      ? IdentifierRole.BlockScopedDeclaration
-      : IdentifierRole.FunctionScopedDeclaration;
+      ? IdentifierRole.ObjectShorthandBlockScopedDeclaration
+      : IdentifierRole.ObjectShorthandFunctionScopedDeclaration;
   } else {
     state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ObjectShorthand;
   }

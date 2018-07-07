@@ -509,7 +509,9 @@ function parseVar(isFor: boolean, kind: TokenType): void {
     const isBlockScope = kind === tt._const || kind === tt._let;
     parseVarHead(isBlockScope);
     if (eat(tt.eq)) {
+      const eqIndex = state.tokens.length - 1;
       parseMaybeAssign(isFor);
+      state.tokens[eqIndex].rhsEndIndex = state.tokens.length;
     }
     if (!eat(tt.comma)) break;
   }

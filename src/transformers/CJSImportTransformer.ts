@@ -1,5 +1,5 @@
 import CJSImportProcessor from "../CJSImportProcessor";
-import {ContextualKeyword, IdentifierRole} from "../parser/tokenizer";
+import {ContextualKeyword, IdentifierRole, isDeclaration} from "../parser/tokenizer";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
@@ -314,23 +314,80 @@ export default class CJSImportTransformer extends Transformer {
   }
 
   /**
-   * Transform this:
-   * export const x = 1;
-   * into this:
-   * exports.x = 1;
+   * Transforms normal declaration exports, including handling destructuring.
+   * For example, this:
+   * export const {x: [a = 2, b], c} = d;
+   * becomes this:
+   * ({x: [exports.a = 2, exports.b], c: exports.c} = d;)
    */
   private processExportVar(): void {
     this.tokens.removeInitialToken();
     this.tokens.removeToken();
-    if (!this.tokens.matches1(tt.name)) {
-      throw new Error("Expected a regular identifier after export var/let/const.");
+    const needsParens = this.tokens.matches1(tt.braceL);
+    if (needsParens) {
+      this.tokens.appendCode("(");
     }
-    const name = this.tokens.identifierName();
-    const replacement = this.importProcessor.getIdentifierReplacement(name);
-    if (replacement === null) {
-      throw new Error("Expected a replacement for `export var` syntax..");
+
+    let depth = 0;
+    while (true) {
+      if (
+        this.tokens.matches1(tt.braceL) ||
+        this.tokens.matches1(tt.dollarBraceL) ||
+        this.tokens.matches1(tt.bracketL)
+      ) {
+        depth++;
+        this.tokens.copyToken();
+      } else if (this.tokens.matches1(tt.braceR) || this.tokens.matches1(tt.bracketR)) {
+        depth--;
+        this.tokens.copyToken();
+      } else if (
+        depth === 0 &&
+        !this.tokens.matches1(tt.name) &&
+        !this.tokens.currentToken().isType
+      ) {
+        break;
+      } else if (this.tokens.matches1(tt.eq)) {
+        // Default values might have assignments in the RHS that we want to ignore, so skip past
+        // them.
+        const endIndex = this.tokens.currentToken().rhsEndIndex;
+        if (endIndex == null) {
+          throw new Error("Expected = token with an end index.");
+        }
+        while (this.tokens.currentIndex() < endIndex) {
+          this.rootTransformer.processToken();
+        }
+      } else {
+        const token = this.tokens.currentToken();
+        if (isDeclaration(token)) {
+          const name = this.tokens.identifierName();
+          let replacement = this.importProcessor.getIdentifierReplacement(name);
+          if (replacement === null) {
+            throw new Error(`Expected a replacement for ${name} in \`export var\` syntax.`);
+          }
+          if (
+            token.identifierRole === IdentifierRole.ObjectShorthandBlockScopedDeclaration ||
+            token.identifierRole === IdentifierRole.ObjectShorthandFunctionScopedDeclaration
+          ) {
+            replacement = `${name}: ${replacement}`;
+          }
+          this.tokens.replaceToken(replacement);
+        } else {
+          this.rootTransformer.processToken();
+        }
+      }
     }
-    this.tokens.replaceToken(replacement);
+
+    if (needsParens) {
+      // Seek to the end of the RHS.
+      const endIndex = this.tokens.currentToken().rhsEndIndex;
+      if (endIndex == null) {
+        throw new Error("Expected = token with an end index.");
+      }
+      while (this.tokens.currentIndex() < endIndex) {
+        this.rootTransformer.processToken();
+      }
+      this.tokens.appendCode(")");
+    }
   }
 
   /**

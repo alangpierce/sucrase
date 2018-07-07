@@ -13,8 +13,36 @@ export enum IdentifierRole {
   ExportAccess,
   FunctionScopedDeclaration,
   BlockScopedDeclaration,
+  ObjectShorthandFunctionScopedDeclaration,
+  ObjectShorthandBlockScopedDeclaration,
   ObjectShorthand,
   ObjectKey,
+}
+
+export function isDeclaration(token: Token): boolean {
+  const role = token.identifierRole;
+  return (
+    role === IdentifierRole.FunctionScopedDeclaration ||
+    role === IdentifierRole.BlockScopedDeclaration ||
+    role === IdentifierRole.ObjectShorthandFunctionScopedDeclaration ||
+    role === IdentifierRole.ObjectShorthandBlockScopedDeclaration
+  );
+}
+
+export function isBlockScopedDeclaration(token: Token): boolean {
+  const role = token.identifierRole;
+  return (
+    role === IdentifierRole.BlockScopedDeclaration ||
+    role === IdentifierRole.ObjectShorthandBlockScopedDeclaration
+  );
+}
+
+export function isFunctionScopedDeclaration(token: Token): boolean {
+  const role = token.identifierRole;
+  return (
+    role === IdentifierRole.FunctionScopedDeclaration ||
+    role === IdentifierRole.ObjectShorthandFunctionScopedDeclaration
+  );
 }
 
 export const enum ContextualKeyword {

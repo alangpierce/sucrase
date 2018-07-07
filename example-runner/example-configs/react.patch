@@ -1,10 +1,12 @@
 diff --git a/package.json b/package.json
-index e12b9ccd9..60ab40224 100644
+index e12b9ccd9..d047834e9 100644
 --- a/package.json
 +++ b/package.json
-@@ -108,7 +108,7 @@
+@@ -106,9 +106,8 @@
+     "linc": "node ./scripts/tasks/linc.js",
+     "lint": "node ./scripts/tasks/eslint.js",
      "lint-build": "node ./scripts/rollup/validate/index.js",
-     "postinstall": "node node_modules/fbjs-scripts/node/check-dev-engines.js package.json",
+-    "postinstall": "node node_modules/fbjs-scripts/node/check-dev-engines.js package.json",
      "debug-test": "cross-env NODE_ENV=development node --inspect-brk node_modules/.bin/jest --config ./scripts/jest/config.source.js --runInBand",
 -    "test": "cross-env NODE_ENV=development jest --config ./scripts/jest/config.source.js",
 +    "test": "cross-env NODE_ENV=development jest --config ./scripts/jest/config.source.js --no-cache --runInBand",

@@ -24,7 +24,7 @@ export default class RootTransformer {
     sucraseContext: SucraseContext,
     transforms: Array<Transform>,
     enableLegacyBabel5ModuleInterop: boolean,
-    options: Options,
+    private options: Options,
   ) {
     this.nameManager = sucraseContext.nameManager;
     const {tokenProcessor, importProcessor} = sucraseContext;
@@ -210,24 +210,30 @@ export default class RootTransformer {
       }
     }
 
-    while (!this.tokens.matchesContextIdAndLabel(tt.braceR, classContextId)) {
-      if (
-        fieldIndex < fieldRanges.length &&
-        this.tokens.currentIndex() === fieldRanges[fieldIndex].start
-      ) {
-        this.tokens.removeInitialToken();
-        while (this.tokens.currentIndex() < fieldRanges[fieldIndex].end) {
-          this.tokens.removeToken();
-        }
-        fieldIndex++;
-      } else if (this.tokens.currentIndex() === constructorInsertPos) {
-        this.tokens.copyToken();
-        if (initializerStatements.length > 0) {
-          this.tokens.appendCode(`;${initializerStatements.join(";")};`);
-        }
+    if (this.options.disableLegacyClassFieldSupport) {
+      while (!this.tokens.matchesContextIdAndLabel(tt.braceR, classContextId)) {
         this.processToken();
-      } else {
-        this.processToken();
+      }
+    } else {
+      while (!this.tokens.matchesContextIdAndLabel(tt.braceR, classContextId)) {
+        if (
+          fieldIndex < fieldRanges.length &&
+          this.tokens.currentIndex() === fieldRanges[fieldIndex].start
+        ) {
+          this.tokens.removeInitialToken();
+          while (this.tokens.currentIndex() < fieldRanges[fieldIndex].end) {
+            this.tokens.removeToken();
+          }
+          fieldIndex++;
+        } else if (this.tokens.currentIndex() === constructorInsertPos) {
+          this.tokens.copyToken();
+          if (initializerStatements.length > 0) {
+            this.tokens.appendCode(`;${initializerStatements.join(";")};`);
+          }
+          this.processToken();
+        } else {
+          this.processToken();
+        }
       }
     }
     this.tokens.copyExpectedToken(tt.braceR);

@@ -1,5 +1,5 @@
 import NameManager from "./NameManager";
-import {ContextualKeyword} from "./parser/tokenizer";
+import {ContextualKeyword, isDeclaration} from "./parser/tokenizer";
 import {TokenType as tt} from "./parser/tokenizer/types";
 import TokenProcessor from "./TokenProcessor";
 import {getNonTypeIdentifiers} from "./util/getNonTypeIdentifiers";
@@ -281,8 +281,7 @@ get: () => ${primaryImportName}[key]}); });`;
       this.tokens.matchesAtIndex(index, [tt._export, tt._let]) ||
       this.tokens.matchesAtIndex(index, [tt._export, tt._const])
     ) {
-      const exportName = this.tokens.identifierNameAtIndex(index + 2);
-      this.identifierReplacements.set(exportName, `exports.${exportName}`);
+      this.preprocessVarExportAtIndex(index);
     } else if (
       this.tokens.matchesAtIndex(index, [tt._export, tt._function]) ||
       this.tokens.matchesAtIndex(index, [tt._export, tt._class])
@@ -296,6 +295,39 @@ get: () => ${primaryImportName}[key]}); });`;
       this.preprocessNamedExportAtIndex(index);
     } else if (this.tokens.matchesAtIndex(index, [tt._export, tt.star])) {
       this.preprocessExportStarAtIndex(index);
+    }
+  }
+
+  private preprocessVarExportAtIndex(index: number): void {
+    let depth = 0;
+    // Handle cases like `export let {x} = y;`, starting at the open-brace in that case.
+    for (let i = index + 2; ; i++) {
+      if (
+        this.tokens.matchesAtIndex(i, [tt.braceL]) ||
+        this.tokens.matchesAtIndex(i, [tt.dollarBraceL]) ||
+        this.tokens.matchesAtIndex(i, [tt.bracketL])
+      ) {
+        depth++;
+      } else if (
+        this.tokens.matchesAtIndex(i, [tt.braceR]) ||
+        this.tokens.matchesAtIndex(i, [tt.bracketR])
+      ) {
+        depth--;
+      } else if (depth === 0 && !this.tokens.matchesAtIndex(i, [tt.name])) {
+        break;
+      } else if (this.tokens.matchesAtIndex(1, [tt.eq])) {
+        const endIndex = this.tokens.currentToken().rhsEndIndex;
+        if (endIndex == null) {
+          throw new Error("Expected = token with an end index.");
+        }
+        i = endIndex - 1;
+      } else {
+        const token = this.tokens.tokens[i];
+        if (isDeclaration(token)) {
+          const exportName = this.tokens.identifierNameAtIndex(i);
+          this.identifierReplacements.set(exportName, `exports.${exportName}`);
+        }
+      }
     }
   }
 

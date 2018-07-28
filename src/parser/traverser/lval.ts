@@ -135,5 +135,7 @@ export function parseMaybeDefault(isBlockScope: boolean, leftAlreadyParsed: bool
   if (!eat(tt.eq)) {
     return;
   }
+  const eqIndex = state.tokens.length - 1;
   parseMaybeAssign();
+  state.tokens[eqIndex].rhsEndIndex = state.tokens.length;
 }

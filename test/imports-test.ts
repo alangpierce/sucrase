@@ -1005,4 +1005,28 @@ module.exports = exports.default;
     `,
     );
   });
+
+  it("allows exported destructure operations", () => {
+    assertResult(
+      `
+      export let {a = 2, b: [c, d], ...e} = f;
+      export var [g = 3, ...h] = i;
+      export const {j} = k;
+      export let {l = () => {const m = 3;}} = {};
+      export let x;
+      x = 2;
+      export let {y}: Foo = z;
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      ( {a: exports.a = 2, b: [exports.c, exports.d], ...exports.e} = f);
+       [exports.g = 3, ...exports.h] = i;
+      ( {j: exports.j} = k);
+      ( {l: exports.l = () => {const m = 3;}} = {});
+       exports.x;
+      exports.x = 2;
+      ( {y: exports.y} = z);
+    `,
+      {transforms: ["imports", "typescript"]},
+    );
+  });
 });

@@ -62,7 +62,7 @@
     "mocha": "^3.5.3",
     "nyc": "^12.0.2",
     "prettier": "^1.12.1",
-    "sucrase": "^3.4.1",
+    "sucrase": "^3.4.2",
     "tslint": "^5.9.1",
     "tslint-language-service": "^0.9.9",
     "typescript": "^2.9.1",

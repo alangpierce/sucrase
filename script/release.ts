@@ -20,7 +20,7 @@ async function main(): Promise<void> {
   console.log(`Version ${version} is valid and found in changelog.`);
   await run("npm publish");
   console.log("Taking a quick nap to make sure we update with the right version.");
-  await sleep(15000);
+  await sleep(30000);
   await run("yarn add sucrase@latest");
   process.chdir("./website");
   await run("yarn add sucrase@latest");

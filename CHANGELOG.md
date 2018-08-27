@@ -1,3 +1,8 @@
+# 3.4.2 (2018-08-27)
+
+* Implement destructuring in export declarations ([#305])
+* Properly handle function name inference in named exports ([#308])
+
 # 3.4.1 (2018-07-06)
 
 * Quote shorthand prop keys that contain a hyphen ([#292]) (Kevin Gao)
@@ -94,3 +99,5 @@
 [#290]: https://github.com/alangpierce/sucrase/pull/290
 [#292]: https://github.com/alangpierce/sucrase/pull/292
 [#296]: https://github.com/alangpierce/sucrase/pull/296
+[#305]: https://github.com/alangpierce/sucrase/pull/305
+[#308]: https://github.com/alangpierce/sucrase/pull/308

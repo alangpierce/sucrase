@@ -314,13 +314,81 @@ export default class CJSImportTransformer extends Transformer {
   }
 
   /**
-   * Transforms normal declaration exports, including handling destructuring.
+   * Transform a declaration like `export var`, `export let`, or `export const`.
+   */
+  private processExportVar(): void {
+    if (this.isSimpleExportVar()) {
+      this.processSimpleExportVar();
+    } else {
+      this.processComplexExportVar();
+    }
+  }
+
+  /**
+   * Determine if the export is of the form:
+   * export var/let/const [varName] = [expr];
+   * In other words, determine if function name inference might apply.
+   */
+  private isSimpleExportVar(): boolean {
+    let tokenIndex = this.tokens.currentIndex();
+    // export
+    tokenIndex++;
+    // var/let/const
+    tokenIndex++;
+    if (!this.tokens.matchesAtIndex(tokenIndex, [tt.name])) {
+      return false;
+    }
+    tokenIndex++;
+    while (tokenIndex < this.tokens.tokens.length && this.tokens.tokens[tokenIndex].isType) {
+      tokenIndex++;
+    }
+    if (!this.tokens.matchesAtIndex(tokenIndex, [tt.eq])) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Transform an `export var` declaration initializing a single variable.
+   *
+   * For example, this:
+   * export const f = () => {};
+   * becomes this:
+   * const f = () => {}; exports.f = f;
+   *
+   * The variable is unused (e.g. exports.f has the true value of the export).
+   * We need to produce an assignment of this form so that the function will
+   * have an inferred name of "f", which wouldn't happen in the more general
+   * case below.
+   */
+  private processSimpleExportVar(): void {
+    // export
+    this.tokens.removeInitialToken();
+    // var/let/const
+    this.tokens.copyToken();
+    const varName = this.tokens.identifierName();
+    // x: number  ->  x
+    while (!this.tokens.matches1(tt.eq)) {
+      this.rootTransformer.processToken();
+    }
+    const endIndex = this.tokens.currentToken().rhsEndIndex;
+    if (endIndex == null) {
+      throw new Error("Expected = token with an end index.");
+    }
+    while (this.tokens.currentIndex() < endIndex) {
+      this.rootTransformer.processToken();
+    }
+    this.tokens.appendCode(`; exports.${varName} = ${varName}`);
+  }
+
+  /**
+   * Transform normal declaration exports, including handling destructuring.
    * For example, this:
    * export const {x: [a = 2, b], c} = d;
    * becomes this:
    * ({x: [exports.a = 2, exports.b], c: exports.c} = d;)
    */
-  private processExportVar(): void {
+  private processComplexExportVar(): void {
     this.tokens.removeInitialToken();
     this.tokens.removeToken();
     const needsParens = this.tokens.matches1(tt.braceL);

@@ -49,7 +49,7 @@ describe("sucrase", () => {
       };
     `,
       `"use strict";${ESMODULE_PREFIX}
-       exports.keywords = {
+       const keywords = {
         break: new KeywordTokenType("break"),
         case: new KeywordTokenType("case", { beforeExpr }),
         catch: new KeywordTokenType("catch"),
@@ -87,7 +87,7 @@ describe("sucrase", () => {
         typeof: new KeywordTokenType("typeof", { beforeExpr, prefix, startsExpr }),
         void: new KeywordTokenType("void", { beforeExpr, prefix, startsExpr }),
         delete: new KeywordTokenType("delete", { beforeExpr, prefix, startsExpr }),
-      };
+      }; exports.keywords = keywords;
     `,
     );
   });

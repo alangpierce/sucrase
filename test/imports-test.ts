@@ -78,9 +78,9 @@ describe("transform imports", () => {
       export const z = 3;
     `,
       `"use strict";${ESMODULE_PREFIX}
-       exports.x = 1;
-       exports.y = 2;
-       exports.z = 3;
+       var x = 1; exports.x = x;
+       let y = 2; exports.y = y;
+       const z = 3; exports.z = z;
     `,
     );
   });
@@ -623,7 +623,7 @@ module.exports = exports.default;
       export default 4;
     `,
       `"use strict";${ESMODULE_PREFIX}
-       exports.x = 1;
+       const x = 1; exports.x = x;
       exports. default = 4;
     `,
       {transforms: ["imports"], enableLegacyBabel5ModuleInterop: true},
@@ -981,7 +981,7 @@ module.exports = exports.default;
       console.log(a);
     `,
       `"use strict";${ESMODULE_PREFIX}
-       exports.a = 1;
+       let a = 1; exports.a = a;
       ({a: exports.a} = 2);
       exports.a = 3;
       console.log(exports.a);
@@ -1025,6 +1025,20 @@ module.exports = exports.default;
        exports.x;
       exports.x = 2;
       ( {y: exports.y} = z);
+    `,
+      {transforms: ["imports", "typescript"]},
+    );
+  });
+
+  it("allows function name inference for direct named exports", () => {
+    assertResult(
+      `
+      export let f = () => {};
+      export const g = () => {};
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       let f = () => {}; exports.f = f;
+       const g = () => {}; exports.g = g;
     `,
       {transforms: ["imports", "typescript"]},
     );

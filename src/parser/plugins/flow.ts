@@ -15,14 +15,17 @@ import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {input, state} from "../traverser/base";
 import {
   baseParseMaybeAssign,
+  baseParseSubscript,
   baseParseSubscripts,
   parseArrow,
   parseArrowExpression,
+  parseCallExpressionArguments,
   parseExprAtom,
   parseExpression,
   parseFunctionBody,
   parseIdentifier,
   parseLiteral,
+  StopState,
 } from "../traverser/expression";
 import {
   baseParseExportStar,
@@ -328,6 +331,16 @@ function flowParseTypeParameterInstantiation(): void {
   popTypeContext(oldIsType);
 }
 
+function flowParseInterfaceType(): void {
+  expectContextual(ContextualKeyword._interface);
+  if (eat(tt._extends)) {
+    do {
+      flowParseInterfaceExtends();
+    } while (eat(tt.comma));
+  }
+  flowParseObjectType(true, false);
+}
+
 function flowParseObjectPropertyKey(): void {
   if (match(tt.num) || match(tt.string)) {
     parseExprAtom();
@@ -337,7 +350,7 @@ function flowParseObjectPropertyKey(): void {
 }
 
 function flowParseObjectTypeIndexer(): void {
-  expect(tt.bracketL);
+  // Note: bracketL has already been consumed
   if (lookaheadType() === tt.colon) {
     flowParseObjectPropertyKey();
     flowParseTypeInitialiser();
@@ -346,6 +359,19 @@ function flowParseObjectTypeIndexer(): void {
   }
   expect(tt.bracketR);
   flowParseTypeInitialiser();
+}
+
+function flowParseObjectTypeInternalSlot(): void {
+  // Note: both bracketL have already been consumed
+  flowParseObjectPropertyKey();
+  expect(tt.bracketR);
+  expect(tt.bracketR);
+  if (match(tt.lessThan) || match(tt.parenL)) {
+    flowParseObjectTypeMethodish();
+  } else {
+    eat(tt.question);
+    flowParseTypeInitialiser();
+  }
 }
 
 function flowParseObjectTypeMethodish(): void {
@@ -383,14 +409,21 @@ function flowParseObjectType(allowStatic: boolean, allowExact: boolean): void {
   }
 
   while (!match(endDelim)) {
-    if (allowStatic && isContextual(ContextualKeyword._static) && lookaheadType() !== tt.colon) {
-      next();
+    if (allowStatic && isContextual(ContextualKeyword._static)) {
+      const lookahead = lookaheadType();
+      if (lookahead !== tt.colon && lookahead !== tt.question) {
+        next();
+      }
     }
 
     flowParseVariance();
 
-    if (match(tt.bracketL)) {
-      flowParseObjectTypeIndexer();
+    if (eat(tt.bracketL)) {
+      if (eat(tt.bracketL)) {
+        flowParseObjectTypeInternalSlot();
+      } else {
+        flowParseObjectTypeIndexer();
+      }
     } else if (match(tt.parenL) || match(tt.lessThan)) {
       flowParseObjectTypeCallProperty();
     } else {
@@ -498,6 +531,10 @@ function flowParsePrimaryType(): void {
 
   switch (state.type) {
     case tt.name: {
+      if (isContextual(ContextualKeyword._interface)) {
+        flowParseInterfaceType();
+        return;
+      }
       parseIdentifier();
       flowParseGenericType();
       return;
@@ -664,6 +701,54 @@ export function flowParseFunctionBodyAndFinish(
   }
 
   parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);
+}
+
+export function flowParseSubscript(
+  startPos: number,
+  noCalls: boolean | null,
+  stopState: StopState,
+): void {
+  if (match(tt.questionDot) && lookaheadType() === tt.lessThan) {
+    if (noCalls) {
+      stopState.stop = true;
+      return;
+    }
+    next();
+    flowParseTypeParameterInstantiation();
+    expect(tt.parenL);
+    parseCallExpressionArguments(tt.parenR);
+    return;
+  } else if (!noCalls && match(tt.lessThan)) {
+    const snapshot = state.snapshot();
+    try {
+      flowParseTypeParameterInstantiation();
+      expect(tt.parenL);
+      parseCallExpressionArguments(tt.parenR);
+      return;
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        state.restoreFromSnapshot(snapshot);
+      } else {
+        throw e;
+      }
+    }
+  }
+  baseParseSubscript(startPos, noCalls, stopState);
+}
+
+export function flowStartParseNewArguments(): void {
+  if (match(tt.lessThan)) {
+    const snapshot = state.snapshot();
+    try {
+      flowParseTypeParameterInstantiation();
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        state.restoreFromSnapshot(snapshot);
+      } else {
+        throw e;
+      }
+    }
+  }
 }
 
 // interfaces

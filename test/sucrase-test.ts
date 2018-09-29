@@ -282,10 +282,10 @@ describe("sucrase", () => {
         static x = 3;
       }
     `,
-      `"use strict";
+      `"use strict";const __initStatic = Symbol();
       class A {
-        
-      } A.x = 3;
+        static [__initStatic]() {this.x = 3}
+      } A[__initStatic]();
     `,
       {transforms: ["jsx", "imports", "typescript"]},
     );
@@ -298,10 +298,10 @@ describe("sucrase", () => {
         static x = 3;
       }
     `,
-      `"use strict"; var _class;
+      `"use strict"; var _class;const __initStatic = Symbol();
       const A = (_class = class {
-        
-      }, _class.x = 3, _class)
+        static [__initStatic]() {this.x = 3}
+      }, _class[__initStatic](), _class)
     `,
       {transforms: ["jsx", "imports", "typescript"]},
     );
@@ -314,10 +314,10 @@ describe("sucrase", () => {
         static x = 3;
       }
     `,
-      `"use strict";${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}const __initStatic = Symbol();
        class C {
-        
-      } C.x = 3; exports.default = C;
+        static [__initStatic]() {this.x = 3}
+      } C[__initStatic](); exports.default = C;
     `,
       {transforms: ["jsx", "imports", "typescript"]},
     );
@@ -333,13 +333,13 @@ describe("sucrase", () => {
         static b = B;
       }
     `,
-      `"use strict";${IMPORT_DEFAULT_PREFIX}
+      `"use strict";${IMPORT_DEFAULT_PREFIX}const __init = Symbol();const __initStatic = Symbol();
       var _A = require('A'); var _A2 = _interopRequireDefault(_A);
       var _B = require('B'); var _B2 = _interopRequireDefault(_B);
-      class C {constructor() { this.a = _A2.default; }
-        
-        
-      } C.b = _B2.default;
+      class C {constructor() { this[__init](); }
+        [__init]() {this.a = _A2.default}
+        static [__initStatic]() {this.b = _B2.default}
+      } C[__initStatic]();
     `,
       {transforms: ["jsx", "imports", "typescript"]},
     );
@@ -516,13 +516,13 @@ describe("sucrase", () => {
         }
       }
     `,
-      `"use strict";
+      `"use strict";const __initStatic = Symbol();
       class A {
-        
+        static [__initStatic]() {this.b = {}}
         c () {
           const d = 1;
         }
-      } A.b = {};
+      } A[__initStatic]();
     `,
       {transforms: ["imports"]},
     );
@@ -539,11 +539,11 @@ describe("sucrase", () => {
       
       export default function() {}
     `,
-      `"use strict";${ESMODULE_PREFIX}
-       class Observer {constructor() { this.update = (v) => {};this.complete = () => {};this.error = (err) => {}; }
-        
-        
-        
+      `"use strict";${ESMODULE_PREFIX}const __init = Symbol();const __init2 = Symbol();const __init3 = Symbol();
+       class Observer {constructor() { this[__init]();this[__init2]();this[__init3](); }
+        [__init]() {this.update = (v) => {}}
+        [__init2]() {this.complete = () => {}}
+        [__init3]() {this.error = (err) => {}}
       } exports.Observer = Observer;
       
       exports. default = function() {}
@@ -579,6 +579,52 @@ describe("sucrase", () => {
       
 
 
+    `,
+      {transforms: ["imports", "typescript"]},
+    );
+  });
+
+  it("handles static class fields with non-identifier names", () => {
+    assertResult(
+      `
+      class C {
+        static [f] = 3;
+        static 5 = 'Hello';
+        static "test" = "value";
+      }
+    `,
+      `"use strict";const __initStatic = Symbol();const __initStatic2 = Symbol();const __initStatic3 = Symbol();
+      class C {
+        static [__initStatic]() {this[f] = 3}
+        static [__initStatic2]() {this[5] = 'Hello'}
+        static [__initStatic3]() {this["test"] = "value"}
+      } C[__initStatic](); C[__initStatic2](); C[__initStatic3]();
+    `,
+      {transforms: ["imports", "typescript"]},
+    );
+  });
+
+  it("preserves line numbers for multiline fields", () => {
+    assertResult(
+      `
+      class C {
+        f() {
+        }
+        g = () => {
+          console.log(1);
+          console.log(2);
+        }
+      }
+    `,
+      `"use strict";const __init = Symbol();
+      class C {constructor() { this[__init](); }
+        f() {
+        }
+        [__init]() {this.g = () => {
+          console.log(1);
+          console.log(2);
+        }}
+      }
     `,
       {transforms: ["imports", "typescript"]},
     );

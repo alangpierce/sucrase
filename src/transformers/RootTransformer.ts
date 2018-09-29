@@ -83,6 +83,7 @@ export default class RootTransformer {
       prefix += transformer.getPrefixCode();
     }
     prefix += this.generatedVariables.map((v) => ` var ${v};`).join("");
+    prefix += this.nameManager.getInjectedSymbolCode();
     let suffix = "";
     for (const transformer of this.transformers) {
       suffix += transformer.getSuffixCode();
@@ -151,7 +152,7 @@ export default class RootTransformer {
   }
 
   processClass(): void {
-    const classInfo = getClassInfo(this, this.tokens);
+    const classInfo = getClassInfo(this, this.tokens, this.nameManager);
 
     const needsCommaExpression =
       classInfo.headerInfo.isExpression && classInfo.staticInitializerSuffixes.length > 0;
@@ -190,8 +191,15 @@ export default class RootTransformer {
    * when some JS implementations support class fields, this should be made optional.
    */
   processClassBody(classInfo: ClassInfo): void {
-    const {headerInfo, constructorInsertPos, initializerStatements, fieldRanges} = classInfo;
+    const {
+      headerInfo,
+      constructorInsertPos,
+      initializerStatements,
+      fields,
+      rangesToRemove,
+    } = classInfo;
     let fieldIndex = 0;
+    let rangeToRemoveIndex = 0;
     const classContextId = this.tokens.currentToken().contextId;
     if (classContextId == null) {
       throw new Error("Expected non-null context ID on class.");
@@ -211,15 +219,33 @@ export default class RootTransformer {
     }
 
     while (!this.tokens.matchesContextIdAndLabel(tt.braceR, classContextId)) {
-      if (
-        fieldIndex < fieldRanges.length &&
-        this.tokens.currentIndex() === fieldRanges[fieldIndex].start
+      if (fieldIndex < fields.length && this.tokens.currentIndex() === fields[fieldIndex].start) {
+        let needsCloseBrace = false;
+        if (this.tokens.matches1(tt.bracketL)) {
+          this.tokens.copyTokenWithPrefix(`[${fields[fieldIndex].initializerName}]() {this`);
+        } else if (this.tokens.matches1(tt.string) || this.tokens.matches1(tt.num)) {
+          this.tokens.copyTokenWithPrefix(`[${fields[fieldIndex].initializerName}]() {this[`);
+          needsCloseBrace = true;
+        } else {
+          this.tokens.copyTokenWithPrefix(`[${fields[fieldIndex].initializerName}]() {this.`);
+        }
+        while (this.tokens.currentIndex() < fields[fieldIndex].end) {
+          if (needsCloseBrace && this.tokens.currentIndex() === fields[fieldIndex].equalsIndex) {
+            this.tokens.appendCode("]");
+          }
+          this.processToken();
+        }
+        this.tokens.appendCode("}");
+        fieldIndex++;
+      } else if (
+        rangeToRemoveIndex < rangesToRemove.length &&
+        this.tokens.currentIndex() === rangesToRemove[rangeToRemoveIndex].start
       ) {
         this.tokens.removeInitialToken();
-        while (this.tokens.currentIndex() < fieldRanges[fieldIndex].end) {
+        while (this.tokens.currentIndex() < rangesToRemove[rangeToRemoveIndex].end) {
           this.tokens.removeToken();
         }
-        fieldIndex++;
+        rangeToRemoveIndex++;
       } else if (this.tokens.currentIndex() === constructorInsertPos) {
         this.tokens.copyToken();
         if (initializerStatements.length > 0) {

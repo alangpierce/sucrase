@@ -117,10 +117,10 @@ describe("type transforms", () => {
         y: {} = {};
       }
     `,
-      `"use strict";
-      class A {constructor() { this.x = 2;this.y = {}; }
-        
-        
+      `"use strict";const __init = Symbol();const __init2 = Symbol();
+      class A {constructor() { this[__init]();this[__init2](); }
+        [__init]() {this.x = 2}
+        [__init2]() {this.y = {}}
       }
     `,
     );

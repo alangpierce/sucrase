@@ -1,3 +1,4 @@
+import NameManager from "../NameManager";
 import {ContextualKeyword, Token} from "../parser/tokenizer";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
@@ -9,6 +10,20 @@ export interface ClassHeaderInfo {
   hasSuperclass: boolean;
 }
 
+export interface TokenRange {
+  start: number;
+  end: number;
+}
+
+export interface FieldInfo extends TokenRange {
+  equalsIndex: number;
+  initializerName: string;
+}
+
+/**
+ * Information about a class returned to inform the implementation of class fields and constructor
+ * initializers.
+ */
 export interface ClassInfo {
   headerInfo: ClassHeaderInfo;
   // Array of non-semicolon-delimited code strings to go in the constructor, after super if
@@ -20,7 +35,8 @@ export interface ClassInfo {
   // Token index after which we should insert initializer statements (either the start of the
   // constructor, or after the super call), or null if there was no constructor.
   constructorInsertPos: number | null;
-  fieldRanges: Array<{start: number; end: number}>;
+  fields: Array<FieldInfo>;
+  rangesToRemove: Array<TokenRange>;
 }
 
 /**
@@ -30,6 +46,7 @@ export interface ClassInfo {
 export default function getClassInfo(
   rootTransformer: RootTransformer,
   tokens: TokenProcessor,
+  nameManager: NameManager,
 ): ClassInfo {
   const snapshot = tokens.snapshot();
 
@@ -39,7 +56,8 @@ export default function getClassInfo(
   const classInitializers: Array<string> = [];
   const staticInitializerSuffixes: Array<string> = [];
   let constructorInsertPos = null;
-  const fieldRanges = [];
+  const fields: Array<FieldInfo> = [];
+  const rangesToRemove: Array<TokenRange> = [];
 
   const classContextId = tokens.currentToken().contextId;
   if (classContextId == null) {
@@ -51,7 +69,7 @@ export default function getClassInfo(
     if (tokens.matchesContextual(ContextualKeyword._constructor)) {
       ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
     } else if (tokens.matches1(tt.semi)) {
-      fieldRanges.push({start: tokens.currentIndex(), end: tokens.currentIndex() + 1});
+      rangesToRemove.push({start: tokens.currentIndex(), end: tokens.currentIndex() + 1});
       tokens.nextToken();
     } else if (tokens.currentToken().isType) {
       tokens.nextToken();
@@ -69,7 +87,8 @@ export default function getClassInfo(
         ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
         continue;
       }
-      const nameCode = getNameCode(tokens);
+      const nameStartIndex = tokens.currentIndex();
+      skipFieldName(tokens);
       if (tokens.matches1(tt.lessThan) || tokens.matches1(tt.parenL)) {
         // This is a method, so just skip to the next method/field. To do that, we seek forward to
         // the next start of a class name (either an open bracket or an identifier, or the closing
@@ -87,27 +106,35 @@ export default function getClassInfo(
         tokens.nextToken();
       }
       if (tokens.matches1(tt.eq)) {
+        const equalsIndex = tokens.currentIndex();
+        // This is an initializer, so we need to wrap in an initializer method.
         const valueEnd = tokens.currentToken().rhsEndIndex;
         if (valueEnd == null) {
           throw new Error("Expected rhsEndIndex on class field assignment.");
         }
         tokens.nextToken();
-        const resultCodeStart = tokens.getResultCodeIndex();
-        // We can't just take this code directly; we need to transform it as well, so delegate to
-        // the root transformer, which has the same backing token stream. This will append to the
-        // code, but the snapshot restore later will restore that.
         while (tokens.currentIndex() < valueEnd) {
           rootTransformer.processToken();
         }
-        // Note that this can adjust line numbers in the case of multiline expressions.
-        const expressionCode = tokens.getCodeInsertedSinceIndex(resultCodeStart);
+        let initializerName;
         if (isStatic) {
-          staticInitializerSuffixes.push(`${nameCode} =${expressionCode}`);
+          initializerName = nameManager.claimSymbol("__initStatic");
+          staticInitializerSuffixes.push(`[${initializerName}]()`);
         } else {
-          classInitializers.push(`this${nameCode} =${expressionCode}`);
+          initializerName = nameManager.claimSymbol("__init");
+          classInitializers.push(`this[${initializerName}]()`);
         }
+        // Fields start at the name, so `static x = 1;` has a field range of `x = 1;`.
+        fields.push({
+          initializerName,
+          equalsIndex,
+          start: nameStartIndex,
+          end: tokens.currentIndex(),
+        });
+      } else {
+        // This is just a declaration, so doesn't need to produce any code in the output.
+        rangesToRemove.push({start: statementStartIndex, end: tokens.currentIndex()});
       }
-      fieldRanges.push({start: statementStartIndex, end: tokens.currentIndex()});
     }
   }
 
@@ -117,7 +144,8 @@ export default function getClassInfo(
     initializerStatements: [...constructorInitializers, ...classInitializers],
     staticInitializerSuffixes,
     constructorInsertPos,
-    fieldRanges,
+    fields,
+    rangesToRemove,
   };
 }
 
@@ -222,11 +250,9 @@ function isAccessModifier(token: Token): boolean {
 
 /**
  * The next token or set of tokens is either an identifier or an expression in square brackets, for
- * a method or field name. Get the code that would follow `this` to access this value. Note that a
- * more correct implementation would precompute computed field and method names, but that's harder,
- * and TypeScript doesn't do it, so we won't either.
+ * a method or field name.
  */
-function getNameCode(tokens: TokenProcessor): string {
+function skipFieldName(tokens: TokenProcessor): void {
   if (tokens.matches1(tt.bracketL)) {
     const startToken = tokens.currentToken();
     const classContextId = startToken.contextId;
@@ -236,16 +262,8 @@ function getNameCode(tokens: TokenProcessor): string {
     while (!tokens.matchesContextIdAndLabel(tt.bracketR, classContextId)) {
       tokens.nextToken();
     }
-    const endToken = tokens.currentToken();
     tokens.nextToken();
-    return tokens.code.slice(startToken.start, endToken.end);
   } else {
-    const nameToken = tokens.currentToken();
     tokens.nextToken();
-    if (nameToken.type === tt.string || nameToken.type === tt.num) {
-      return `[${tokens.code.slice(nameToken.start, nameToken.end)}]`;
-    } else {
-      return `.${tokens.identifierNameForToken(nameToken)}`;
-    }
   }
 }

@@ -32,10 +32,6 @@ export default class TokenProcessor {
     return this.resultCode.length;
   }
 
-  getCodeInsertedSinceIndex(initialResultCodeIndex: number): string {
-    return this.resultCode.slice(initialResultCodeIndex);
-  }
-
   reset(): void {
     this.resultCode = "";
     this.tokenIndex = 0;
@@ -178,6 +174,16 @@ export default class TokenProcessor {
 
   copyToken(): void {
     this.resultCode += this.previousWhitespaceAndComments();
+    this.resultCode += this.code.slice(
+      this.tokens[this.tokenIndex].start,
+      this.tokens[this.tokenIndex].end,
+    );
+    this.tokenIndex++;
+  }
+
+  copyTokenWithPrefix(prefix: string): void {
+    this.resultCode += this.previousWhitespaceAndComments();
+    this.resultCode += prefix;
     this.resultCode += this.code.slice(
       this.tokens[this.tokenIndex].start,
       this.tokens[this.tokenIndex].end,

@@ -3,6 +3,7 @@ import TokenProcessor from "./TokenProcessor";
 
 export default class NameManager {
   private readonly usedNames: Set<string> = new Set();
+  private symbolNames: Array<string> = [];
 
   constructor(readonly tokens: TokenProcessor) {}
 
@@ -29,5 +30,18 @@ export default class NameManager {
       suffixNum++;
     }
     return name + suffixNum;
+  }
+
+  /**
+   * Get an identifier such that the identifier will be a valid reference to a symbol after codegen.
+   */
+  claimSymbol(name: string): string {
+    const newName = this.claimFreeName(name);
+    this.symbolNames.push(newName);
+    return newName;
+  }
+
+  getInjectedSymbolCode(): string {
+    return this.symbolNames.map((name) => `const ${name} = Symbol();`).join("");
   }
 }

@@ -23,6 +23,7 @@ import {
   parseMaybeAssign,
   parseMaybeUnary,
   parsePropertyName,
+  parseTemplate,
   StopState,
 } from "../traverser/expression";
 import {parseBindingList} from "../traverser/lval";
@@ -49,6 +50,7 @@ import {
   semicolon,
   unexpected,
 } from "../traverser/util";
+import {nextJSXTagToken} from "./jsx";
 
 function assert(x: boolean): void {
   if (!x) {
@@ -673,17 +675,15 @@ export function tsParseTypeAssertion(): void {
   parseMaybeUnary();
 }
 
-// Returns true if parsing was successful.
-function tsTryParseTypeArgumentsInExpression(): boolean {
-  return tsTryParseAndCatch(() => {
-    const oldIsType = pushTypeContext(0);
-    expect(tt.lessThan);
+export function tsTryParseJSXTypeArgument(): void {
+  if (eat(tt.jsxTagStart)) {
     state.tokens[state.tokens.length - 1].type = tt.typeParameterStart;
+    const oldIsType = pushTypeContext(1);
     tsParseDelimitedList(ParsingContext.TypeParametersOrArguments, tsParseType);
-    expect(tt.greaterThan);
+    // Process >, but the one after needs to be parsed JSX-style.
+    nextJSXTagToken();
     popTypeContext(oldIsType);
-    expect(tt.parenL);
-  });
+  }
 }
 
 function tsParseHeritageClause(): void {
@@ -1093,22 +1093,32 @@ export function tsParseSubscript(
     return;
   }
 
-  if (!noCalls && match(tt.lessThan)) {
-    if (atPossibleAsync()) {
-      // Almost certainly this is a generic async function `async <T>() => ...
-      // But it might be a call with a type argument `async<T>();`
-      const asyncArrowFn = tsTryParseGenericAsyncArrowFunction();
-      if (asyncArrowFn) {
+  // There are number of things we are going to "maybe" parse, like type arguments on
+  // tagged template expressions. If any of them fail, walk it back and continue.
+  const success = tsTryParseAndCatch(() => {
+    if (match(tt.lessThan)) {
+      if (!noCalls && atPossibleAsync()) {
+        // Almost certainly this is a generic async function `async <T>() => ...
+        // But it might be a call with a type argument `async<T>();`
+        const asyncArrowFn = tsTryParseGenericAsyncArrowFunction();
+        if (asyncArrowFn) {
+          return;
+        }
+      }
+      tsParseTypeArguments();
+      if (!noCalls && eat(tt.parenL)) {
+        parseCallExpressionArguments(tt.parenR);
+        return;
+      } else if (match(tt.backQuote)) {
+        // Tagged template with a type argument.
+        parseTemplate();
         return;
       }
     }
-
-    // May be passing type arguments. But may just be the `<` operator.
-    const typeArguments = tsTryParseTypeArgumentsInExpression(); // Also eats the "("
-    if (typeArguments) {
-      // possibleAsync always false here, because we would have handled it above.
-      parseCallExpressionArguments(tt.parenR);
-    }
+    unexpected();
+  });
+  if (success) {
+    return;
   }
   baseParseSubscript(startPos, noCalls, stopState);
 }
@@ -1155,6 +1165,13 @@ export function tsTryParseExportDefaultExpression(): boolean {
     state.type = tt._abstract;
     next(); // Skip "abstract"
     parseClass(true, true);
+    return true;
+  }
+  if (isContextual(ContextualKeyword._interface)) {
+    // Make sure "export default" are considered type tokens so the whole thing is removed.
+    const oldIsType = pushTypeContext(2);
+    tsParseDeclaration(ContextualKeyword._interface, true);
+    popTypeContext(oldIsType);
     return true;
   }
   return false;

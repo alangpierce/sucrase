@@ -242,7 +242,7 @@ function flowParseInterfaceish(isClass: boolean = false): void {
     } while (eat(tt.comma));
   }
 
-  flowParseObjectType(true, false, isClass);
+  flowParseObjectType(isClass, false, isClass);
 }
 
 function flowParseInterfaceExtends(): void {
@@ -338,7 +338,7 @@ function flowParseInterfaceType(): void {
       flowParseInterfaceExtends();
     } while (eat(tt.comma));
   }
-  flowParseObjectType(true, false, false);
+  flowParseObjectType(false, false, false);
 }
 
 function flowParseObjectPropertyKey(): void {

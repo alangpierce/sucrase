@@ -298,4 +298,34 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("allows interface methods named 'static'", () => {
+    assertFlowResult(
+      `
+      type T = interface { static(): number }
+    `,
+      `"use strict";
+      
+    `,
+    );
+  });
+
+  // Note that we don't actually transform private fields at the moment, this just makes sure it
+  // parses.
+  it("allows private properties with type annotations", () => {
+    assertFlowResult(
+      `
+      class A {
+        #prop1: string;
+        #prop2: number = value;
+      }
+    `,
+      `"use strict";const __init = Symbol();
+      class A {constructor() { this[__init](); }
+        
+        [__init]() {this.prop2 = value}
+      }
+    `,
+    );
+  });
 });

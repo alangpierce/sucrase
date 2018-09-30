@@ -150,15 +150,18 @@ export default class JSXTransformer extends Transformer {
   processTagIntro(): void {
     // Walk forward until we see one of these patterns:
     // jsxName to start the first prop, preceded by another jsxName to end the tag name.
+    // jsxName to start the first prop, preceded by greaterThan to end the type argument.
     // [open brace] to start the first prop.
     // [jsxTagEnd] to end the open-tag.
     // [slash, jsxTagEnd] to end the self-closing tag.
     let introEnd = this.tokens.currentIndex() + 1;
     while (
-      !this.tokens.matchesAtIndex(introEnd - 1, [tt.jsxName, tt.jsxName]) &&
-      !this.tokens.matchesAtIndex(introEnd, [tt.braceL]) &&
-      !this.tokens.matchesAtIndex(introEnd, [tt.jsxTagEnd]) &&
-      !this.tokens.matchesAtIndex(introEnd, [tt.slash, tt.jsxTagEnd])
+      this.tokens.tokens[introEnd].isType ||
+      (!this.tokens.matchesAtIndex(introEnd - 1, [tt.jsxName, tt.jsxName]) &&
+        !this.tokens.matchesAtIndex(introEnd - 1, [tt.greaterThan, tt.jsxName]) &&
+        !this.tokens.matchesAtIndex(introEnd, [tt.braceL]) &&
+        !this.tokens.matchesAtIndex(introEnd, [tt.jsxTagEnd]) &&
+        !this.tokens.matchesAtIndex(introEnd, [tt.slash, tt.jsxTagEnd]))
     ) {
       introEnd++;
     }

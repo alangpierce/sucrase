@@ -669,7 +669,7 @@ function parseNewArguments(): void {
   }
 }
 
-function parseTemplate(): void {
+export function parseTemplate(): void {
   // Finish `, read quasi
   nextTemplateToken();
   // Finish quasi, read ${

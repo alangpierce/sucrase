@@ -24,11 +24,12 @@ matrix:
         - yarn fast-build
         - yarn run-examples tslint apollo-client
     - script:
-        - yarn test
         - yarn build
+        - yarn test
         - yarn run-examples decaffeinate decaffeinate-parser coffee-lex
     - node_js: '8'
       script:
+        - yarn build
         - yarn test
   # Exclude the default build; we only want to run explicitly-included builds.
   exclude:

@@ -22,9 +22,11 @@ import {
   flowParseArrow,
   flowParseFunctionBodyAndFinish,
   flowParseMaybeAssign,
+  flowParseSubscript,
   flowParseSubscripts,
   flowParseVariance,
   flowStartParseAsyncArrowFromCallExpression,
+  flowStartParseNewArguments,
   flowStartParseObjPropValue,
 } from "../plugins/flow";
 import {jsxParseElement} from "../plugins/jsx/index";
@@ -215,11 +217,6 @@ function parseExprOp(minPrec: number, noIn: boolean | null): void {
       const op = state.type;
       next();
 
-      if (op === tt.pipeline) {
-        // Support syntax such as 10 |> x => x + 1
-        state.potentialArrowAt = state.start;
-      }
-
       parseMaybeUnary();
       parseExprOp(op & TokenType.IS_RIGHT_ASSOCIATIVE ? prec - 1 : prec, noIn);
       parseExprOp(minPrec, noIn);
@@ -281,6 +278,8 @@ export function baseParseSubscripts(startPos: number, noCalls: boolean | null = 
 function parseSubscript(startPos: number, noCalls: boolean | null, stopState: StopState): void {
   if (isTypeScriptEnabled) {
     tsParseSubscript(startPos, noCalls, stopState);
+  } else if (isFlowEnabled) {
+    flowParseSubscript(startPos, noCalls, stopState);
   } else {
     baseParseSubscript(startPos, noCalls, stopState);
   }
@@ -662,6 +661,8 @@ function parseNew(): void {
 function parseNewArguments(): void {
   if (isTypeScriptEnabled) {
     tsStartParseNewArguments();
+  } else if (isFlowEnabled) {
+    flowStartParseNewArguments();
   }
   if (eat(tt.parenL)) {
     parseExprList(tt.parenR);

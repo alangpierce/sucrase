@@ -237,4 +237,50 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("handles internal slot syntax", () => {
+    assertFlowResult(
+      `
+      type T = { [[foo]]: X }
+    `,
+      `"use strict";
+      
+    `,
+    );
+  });
+
+  it("handles optional internal slot syntax", () => {
+    assertFlowResult(
+      `
+      type T = { [[foo]]?: X }
+    `,
+      `"use strict";
+      
+    `,
+    );
+  });
+
+  it("handles flow type arguments", () => {
+    assertFlowResult(
+      `
+      f<T>();
+      new C<T>();
+    `,
+      `"use strict";
+      f();
+      new C();
+    `,
+    );
+  });
+
+  it("handles flow inline interfaces", () => {
+    assertFlowResult(
+      `
+      type T = interface { p: string }
+    `,
+      `"use strict";
+      
+    `,
+    );
+  });
 });

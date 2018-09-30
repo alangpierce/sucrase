@@ -722,18 +722,31 @@ export default function readWord(): void {
               }
               break;
             case charCodes.lowercaseO:
-              if (
-                input.charCodeAt(state.pos++) === charCodes.lowercaseT &&
-                input.charCodeAt(state.pos++) === charCodes.lowercaseE &&
-                input.charCodeAt(state.pos++) === charCodes.lowercaseC &&
-                input.charCodeAt(state.pos++) === charCodes.lowercaseT &&
-                input.charCodeAt(state.pos++) === charCodes.lowercaseE &&
-                input.charCodeAt(state.pos++) === charCodes.lowercaseD &&
-                !isIdentifierChar(input.charCodeAt(state.pos)) &&
-                input.charCodeAt(state.pos) !== charCodes.backslash
-              ) {
-                finishToken(tt.name, ContextualKeyword._protected);
-                return;
+              if (input.charCodeAt(state.pos++) === charCodes.lowercaseT) {
+                switch (input.charCodeAt(state.pos++)) {
+                  case charCodes.lowercaseE:
+                    if (
+                      input.charCodeAt(state.pos++) === charCodes.lowercaseC &&
+                      input.charCodeAt(state.pos++) === charCodes.lowercaseT &&
+                      input.charCodeAt(state.pos++) === charCodes.lowercaseE &&
+                      input.charCodeAt(state.pos++) === charCodes.lowercaseD &&
+                      !isIdentifierChar(input.charCodeAt(state.pos)) &&
+                      input.charCodeAt(state.pos) !== charCodes.backslash
+                    ) {
+                      finishToken(tt.name, ContextualKeyword._protected);
+                      return;
+                    }
+                    break;
+                  case charCodes.lowercaseO:
+                    if (
+                      !isIdentifierChar(input.charCodeAt(state.pos)) &&
+                      input.charCodeAt(state.pos) !== charCodes.backslash
+                    ) {
+                      finishToken(tt.name, ContextualKeyword._proto);
+                      return;
+                    }
+                    break;
+                }
               }
               break;
           }

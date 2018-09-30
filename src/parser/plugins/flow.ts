@@ -215,7 +215,7 @@ function flowParseDeclareInterface(): void {
 
 // Interfaces
 
-function flowParseInterfaceish(isClass?: boolean): void {
+function flowParseInterfaceish(isClass: boolean = false): void {
   flowParseRestrictedIdentifier();
 
   if (match(tt.lessThan)) {
@@ -242,7 +242,7 @@ function flowParseInterfaceish(isClass?: boolean): void {
     } while (eat(tt.comma));
   }
 
-  flowParseObjectType(true, false);
+  flowParseObjectType(true, false, isClass);
 }
 
 function flowParseInterfaceExtends(): void {
@@ -338,7 +338,7 @@ function flowParseInterfaceType(): void {
       flowParseInterfaceExtends();
     } while (eat(tt.comma));
   }
-  flowParseObjectType(true, false);
+  flowParseObjectType(true, false, false);
 }
 
 function flowParseObjectPropertyKey(): void {
@@ -398,7 +398,7 @@ function flowParseObjectTypeCallProperty(): void {
   flowParseObjectTypeMethodish();
 }
 
-function flowParseObjectType(allowStatic: boolean, allowExact: boolean): void {
+function flowParseObjectType(allowStatic: boolean, allowExact: boolean, allowProto: boolean): void {
   let endDelim: TokenType;
   if (allowExact && match(tt.braceBarL)) {
     expect(tt.braceBarL);
@@ -409,6 +409,13 @@ function flowParseObjectType(allowStatic: boolean, allowExact: boolean): void {
   }
 
   while (!match(endDelim)) {
+    if (allowProto && isContextual(ContextualKeyword._proto)) {
+      const lookahead = lookaheadType();
+      if (lookahead !== tt.colon && lookahead !== tt.question) {
+        next();
+        allowStatic = false;
+      }
+    }
     if (allowStatic && isContextual(ContextualKeyword._static)) {
       const lookahead = lookaheadType();
       if (lookahead !== tt.colon && lookahead !== tt.question) {
@@ -541,11 +548,11 @@ function flowParsePrimaryType(): void {
     }
 
     case tt.braceL:
-      flowParseObjectType(false, false);
+      flowParseObjectType(false, false, false);
       return;
 
     case tt.braceBarL:
-      flowParseObjectType(false, true);
+      flowParseObjectType(false, true, false);
       return;
 
     case tt.bracketL:

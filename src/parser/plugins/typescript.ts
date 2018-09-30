@@ -79,6 +79,7 @@ function tsNextTokenCanFollowModifier(): boolean {
   return (
     !hasPrecedingLineBreak() &&
     !match(tt.parenL) &&
+    !match(tt.parenR) &&
     !match(tt.colon) &&
     !match(tt.eq) &&
     !match(tt.question)

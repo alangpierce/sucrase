@@ -71,6 +71,7 @@ export const enum ContextualKeyword {
   _opaque,
   _private,
   _protected,
+  _proto,
   _public,
   _readonly,
   _require,
@@ -495,7 +496,7 @@ function readToken_question(): void {
   // '?'
   const nextChar = input.charCodeAt(state.pos + 1);
   const nextChar2 = input.charCodeAt(state.pos + 2);
-  if (nextChar === charCodes.questionMark) {
+  if (nextChar === charCodes.questionMark && !state.isType) {
     if (nextChar2 === charCodes.equalsTo) {
       // '??='
       finishOp(tt.assign, 3);

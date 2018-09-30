@@ -283,4 +283,19 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("handles the proto keyword in class declarations", () => {
+    assertFlowResult(
+      `
+      declare class A {
+        proto x: T;
+      }
+    `,
+      `"use strict";
+      
+
+
+    `,
+    );
+  });
 });

@@ -63,6 +63,7 @@ const CONTEXTUAL_KEYWORDS = [
   "opaque",
   "private",
   "protected",
+  "proto",
   "public",
   "readonly",
   "require",

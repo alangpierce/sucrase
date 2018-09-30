@@ -503,6 +503,23 @@ describe("typescript transform", () => {
     );
   });
 
+  it("properly allows modifier names as params", () => {
+    assertTypeScriptResult(
+      `
+      class Foo {
+        constructor(set, readonly) {}
+        constructor(set: any, readonly: boolean) {}
+      }
+    `,
+      `"use strict";
+      class Foo {
+        constructor(set, readonly) {}
+        constructor(set, readonly) {}
+      }
+    `,
+    );
+  });
+
   it("properly handles method parameters named readonly", () => {
     assertTypeScriptResult(
       `

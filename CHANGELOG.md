@@ -1,3 +1,10 @@
+# 3.5.0 (2018-09-30)
+
+* Change class field implementation to use initializer methods ([#313])
+* Update TypeScript and Flow support to include new language features recently
+  supported by Babel. ([#314], [#315], [#316])
+* Properly handle function name inference in named exports ([#317])
+
 # 3.4.2 (2018-08-27)
 
 * Implement destructuring in export declarations ([#305])
@@ -101,3 +108,8 @@
 [#296]: https://github.com/alangpierce/sucrase/pull/296
 [#305]: https://github.com/alangpierce/sucrase/pull/305
 [#308]: https://github.com/alangpierce/sucrase/pull/308
+[#313]: https://github.com/alangpierce/sucrase/pull/313
+[#314]: https://github.com/alangpierce/sucrase/pull/314
+[#315]: https://github.com/alangpierce/sucrase/pull/315
+[#316]: https://github.com/alangpierce/sucrase/pull/316
+[#317]: https://github.com/alangpierce/sucrase/pull/317

@@ -4,7 +4,7 @@
   "description": "Super-fast alternative to Babel for when you can target modern JS runtimes",
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
-  "main": "dist/index.js",
+  "main": "dist/index",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "bin": {

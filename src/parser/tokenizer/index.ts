@@ -4,7 +4,7 @@ import {input, isFlowEnabled, raise, state} from "../traverser/base";
 import {unexpected} from "../traverser/util";
 import {charCodes} from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart} from "../util/identifier";
-import {nonASCIIwhitespace} from "../util/whitespace";
+import {isWhitespace} from "../util/whitespace";
 import readWord from "./readWord";
 import {TokenType, TokenType as tt} from "./types";
 
@@ -267,11 +267,6 @@ export function skipSpace(): void {
   while (state.pos < input.length) {
     const ch = input.charCodeAt(state.pos);
     switch (ch) {
-      case charCodes.space:
-      case charCodes.nonBreakingSpace:
-        ++state.pos;
-        break;
-
       case charCodes.carriageReturn:
         if (input.charCodeAt(state.pos + 1) === charCodes.lineFeed) {
           ++state.pos;
@@ -299,10 +294,7 @@ export function skipSpace(): void {
         break;
 
       default:
-        if (
-          (ch > charCodes.backSpace && ch < charCodes.shiftOut) ||
-          (ch >= charCodes.oghamSpaceMark && nonASCIIwhitespace.test(String.fromCharCode(ch)))
-        ) {
+        if (isWhitespace(ch)) {
           ++state.pos;
         } else {
           return;

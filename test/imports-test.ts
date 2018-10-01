@@ -1043,4 +1043,20 @@ module.exports = exports.default;
       {transforms: ["imports", "typescript"]},
     );
   });
+
+  // Skipping since this is reasonably obscure and seems hard to implement right in Sucrase.
+  // Babel fix: https://github.com/babel/babel/pull/8698
+  it.skip("treats 'export default async' as a complete statement", () => {
+    assertResult(
+      `
+      export default async
+      function bar() {}
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      exports. default = async
+      function bar() {}
+    `,
+      {transforms: ["imports", "typescript"]},
+    );
+  });
 });

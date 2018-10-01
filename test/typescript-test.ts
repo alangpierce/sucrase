@@ -1045,4 +1045,43 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows type arguments in JSX elements", () => {
+    assertTypeScriptResult(
+      `
+      const e1 = <Foo<number> x="1" />
+      const e2 = <Foo<string>><span>Hello</span></Foo>
+    `,
+      `"use strict";const _jsxFileName = "";
+      const e1 = React.createElement(Foo, { x: "1", __self: this, __source: {fileName: _jsxFileName, lineNumber: 2}} )
+      const e2 = React.createElement(Foo, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 3}}, React.createElement('span', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 3}}, "Hello"))
+    `,
+    );
+  });
+
+  it("allows type arguments tagged templates", () => {
+    assertTypeScriptResult(
+      `
+      f<T>\`\`;
+      new C<T>
+      \`\`;
+    `,
+      `"use strict";
+      f\`\`;
+      new C
+      \`\`;
+    `,
+    );
+  });
+
+  it("allows export default interface", () => {
+    assertTypeScriptResult(
+      `
+      export default interface A {}
+    `,
+      `"use strict";
+      
+    `,
+    );
+  });
 });

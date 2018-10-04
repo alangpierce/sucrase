@@ -25,7 +25,7 @@ matrix:
         - yarn run-examples tslint apollo-client
     - script:
         - yarn build
-        - yarn test
+        - 'yarn test && yarn coverage'
         - yarn run-examples decaffeinate decaffeinate-parser coffee-lex
     - node_js: '8'
       script:

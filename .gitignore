@@ -5,3 +5,4 @@ dist-self-build
 example-runner/example-repos
 integrations/gulp-plugin/dist
 .nyc_output
+coverage.lcov

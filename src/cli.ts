@@ -29,7 +29,7 @@ export default function run(): void {
       "Use default TypeScript ESM/CJS interop strategy.",
     )
     .option("--enable-legacy-babel5-module-interop", "Use Babel 5 ESM/CJS interop strategy.")
-    .option("--jsxPragma <string>", "Element creation function, defaults to `React.createElement`")
+    .option("--jsx-pragma <string>", "Element creation function, defaults to `React.createElement`")
     .option("--jsxFragmentPragma <string>", "Fragment component, defaults to `React.Fragment`")
     .parse(process.argv);
 

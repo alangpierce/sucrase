@@ -30,7 +30,7 @@ export default function run(): void {
     )
     .option("--enable-legacy-babel5-module-interop", "Use Babel 5 ESM/CJS interop strategy.")
     .option("--jsx-pragma <string>", "Element creation function, defaults to `React.createElement`")
-    .option("--jsxFragmentPragma <string>", "Fragment component, defaults to `React.Fragment`")
+    .option("--jsx-fragment-pragma <string>", "Fragment component, defaults to `React.Fragment`")
     .parse(process.argv);
 
   if (!commander.outDir) {

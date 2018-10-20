@@ -29,6 +29,8 @@ export default function run(): void {
       "Use default TypeScript ESM/CJS interop strategy.",
     )
     .option("--enable-legacy-babel5-module-interop", "Use Babel 5 ESM/CJS interop strategy.")
+    .option("--jsxPragma <string>", "Element creation function, defaults to `React.createElement`")
+    .option("--jsxFragmentPragma <string>", "Fragment component, defaults to `React.Fragment`")
     .parse(process.argv);
 
   if (!commander.outDir) {
@@ -57,6 +59,8 @@ export default function run(): void {
       transforms: commander.transforms.split(","),
       enableLegacyTypeScriptModuleInterop: commander.enableLegacyTypescriptModuleInterop,
       enableLegacyBabel5ModuleInterop: commander.enableLegacyBabel5ModuleInterop,
+      jsxPragma: commander.jsxPragma || "React.createElement",
+      jsxFragmentPragma: command.jsxFragmentPragma || "React.Fragment",
     },
   };
 

@@ -60,7 +60,7 @@ export default function run(): void {
       enableLegacyTypeScriptModuleInterop: commander.enableLegacyTypescriptModuleInterop,
       enableLegacyBabel5ModuleInterop: commander.enableLegacyBabel5ModuleInterop,
       jsxPragma: commander.jsxPragma || "React.createElement",
-      jsxFragmentPragma: command.jsxFragmentPragma || "React.Fragment",
+      jsxFragmentPragma: commander.jsxFragmentPragma || "React.Fragment",
     },
   };
 

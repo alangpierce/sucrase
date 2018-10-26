@@ -211,19 +211,17 @@ function processConstructor(
   // Advance through body looking for a super call.
   let foundSuperCall = false;
   while (!tokens.matchesContextIdAndLabel(tt.braceR, constructorContextId)) {
-    if (!foundSuperCall && tokens.matches1(tt._super)) {
+    if (!foundSuperCall && tokens.matches2(tt._super, tt.parenL)) {
       tokens.nextToken();
-      if (tokens.matches1(tt.parenL)) {
-        const superCallContextId = tokens.currentToken().contextId;
-        if (superCallContextId == null) {
-          throw new Error("Expected a context ID on the super call");
-        }
-        while (!tokens.matchesContextIdAndLabel(tt.parenR, superCallContextId)) {
-          tokens.nextToken();
-        }
-        constructorInsertPos = tokens.currentIndex();
-        foundSuperCall = true;
+      const superCallContextId = tokens.currentToken().contextId;
+      if (superCallContextId == null) {
+        throw new Error("Expected a context ID on the super call");
       }
+      while (!tokens.matchesContextIdAndLabel(tt.parenR, superCallContextId)) {
+        tokens.nextToken();
+      }
+      constructorInsertPos = tokens.currentIndex();
+      foundSuperCall = true;
     }
     tokens.nextToken();
   }

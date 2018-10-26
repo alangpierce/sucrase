@@ -104,6 +104,125 @@ describe("typescript transform", () => {
     );
   });
 
+  it("handles class field assignment after a constructor with multiple super calls", () => {
+    assertTypeScriptResult(
+      `
+      class A extends B {
+        x = 1;
+        constructor(a) {
+          super(a);
+          super(b);
+        }
+      }
+    `,
+      `"use strict";const __init = Symbol();
+      class A extends B {
+        [__init]() {this.x = 1}
+        constructor(a) {
+          super(a);this[__init]();;
+          super(b);
+        }
+      }
+    `,
+    );
+  });
+
+  it("handles class field assignment after a constructor with super and super method call", () => {
+    assertTypeScriptResult(
+      `
+      class A extends B {
+        x = 1;
+        constructor(a) {
+          super(a);
+          super.b();
+        }
+      }
+    `,
+      `"use strict";const __init = Symbol();
+      class A extends B {
+        [__init]() {this.x = 1}
+        constructor(a) {
+          super(a);this[__init]();;
+          super.b();
+        }
+      }
+    `,
+    );
+  });
+
+  it("handles class field assignment after a constructor with invalid super method before super call", () => {
+    assertTypeScriptResult(
+      `
+      class A extends B {
+        x = 1;
+        constructor(a) {
+          super.b();
+          super(a);
+        }
+      }
+    `,
+      `"use strict";const __init = Symbol();
+      class A extends B {
+        [__init]() {this.x = 1}
+        constructor(a) {
+          super.b();
+          super(a);this[__init]();;
+        }
+      }
+    `,
+    );
+  });
+
+  it("handles class field assignment after a constructor with super prop", () => {
+    assertTypeScriptResult(
+      `
+      class A extends B {
+        x = 1;
+        constructor(a) {
+          super();
+          super.a;
+          super.b = 1;
+        }
+      }
+    `,
+      `"use strict";const __init = Symbol();
+      class A extends B {
+        [__init]() {this.x = 1}
+        constructor(a) {
+          super();this[__init]();;
+          super.a;
+          super.b = 1;
+        }
+      }
+    `,
+    );
+  });
+
+  it("handles class field assignment after a constructor with invalid super prop before super call", () => {
+    assertTypeScriptResult(
+      `
+      class A extends B {
+        x = 1;
+        constructor(a) {
+          super.a;
+          super.b = 1;
+          super();
+        }
+      }
+    `,
+      `"use strict";const __init = Symbol();
+      class A extends B {
+        [__init]() {this.x = 1}
+        constructor(a) {
+          super.a;
+          super.b = 1;
+          super();this[__init]();;
+        }
+      }
+    `,
+    );
+  });
+
   it("handles class field assignment with no constructor", () => {
     assertTypeScriptResult(
       `

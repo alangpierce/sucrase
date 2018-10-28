@@ -209,8 +209,9 @@ function processConstructor(
   let constructorInsertPos = tokens.currentIndex();
 
   // Advance through body looking for a super call.
+  let foundSuperCall = false;
   while (!tokens.matchesContextIdAndLabel(tt.braceR, constructorContextId)) {
-    if (tokens.matches1(tt._super)) {
+    if (!foundSuperCall && tokens.matches2(tt._super, tt.parenL)) {
       tokens.nextToken();
       const superCallContextId = tokens.currentToken().contextId;
       if (superCallContextId == null) {
@@ -220,6 +221,7 @@ function processConstructor(
         tokens.nextToken();
       }
       constructorInsertPos = tokens.currentIndex();
+      foundSuperCall = true;
     }
     tokens.nextToken();
   }

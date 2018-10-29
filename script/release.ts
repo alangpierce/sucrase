@@ -18,6 +18,11 @@ async function main(): Promise<void> {
     throw new Error("Release notes must be already added to changelog.");
   }
   console.log(`Version ${version} is valid and found in changelog.`);
+  try {
+    await run("npm whoami");
+  } catch (e) {
+    await run("npm login");
+  }
   await run("npm publish");
   console.log("Taking a quick nap to make sure we update with the right version.");
   await sleep(30000);

@@ -1,3 +1,8 @@
+# 3.6.0 (2018-10-29)
+
+* Add CLI support for jsx pragmas ([#321]) (Josiah Savary)
+* Allow super.method() calls in constructor ([#324]) (Erik Arvidsson)
+
 # 3.5.0 (2018-09-30)
 
 * Change class field implementation to use initializer methods ([#313])
@@ -113,3 +118,5 @@
 [#315]: https://github.com/alangpierce/sucrase/pull/315
 [#316]: https://github.com/alangpierce/sucrase/pull/316
 [#317]: https://github.com/alangpierce/sucrase/pull/317
+[#321]: https://github.com/alangpierce/sucrase/pull/321
+[#324]: https://github.com/alangpierce/sucrase/pull/324

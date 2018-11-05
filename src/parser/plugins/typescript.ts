@@ -1093,10 +1093,10 @@ export function tsParseSubscript(
     return;
   }
 
-  // There are number of things we are going to "maybe" parse, like type arguments on
-  // tagged template expressions. If any of them fail, walk it back and continue.
-  const success = tsTryParseAndCatch(() => {
-    if (match(tt.lessThan)) {
+  if (match(tt.lessThan)) {
+    // There are number of things we are going to "maybe" parse, like type arguments on
+    // tagged template expressions. If any of them fail, walk it back and continue.
+    const success = tsTryParseAndCatch(() => {
       if (!noCalls && atPossibleAsync()) {
         // Almost certainly this is a generic async function `async <T>() => ...
         // But it might be a call with a type argument `async<T>();`
@@ -1108,17 +1108,14 @@ export function tsParseSubscript(
       tsParseTypeArguments();
       if (!noCalls && eat(tt.parenL)) {
         parseCallExpressionArguments(tt.parenR);
-        return;
       } else if (match(tt.backQuote)) {
         // Tagged template with a type argument.
         parseTemplate();
-        return;
       }
+    });
+    if (success) {
+      return;
     }
-    unexpected();
-  });
-  if (success) {
-    return;
   }
   baseParseSubscript(startPos, noCalls, stopState);
 }

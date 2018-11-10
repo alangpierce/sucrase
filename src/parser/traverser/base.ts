@@ -18,13 +18,20 @@ export function getNextContextId(): number {
 // of the error message, and then raises a `SyntaxError` with that
 // message.
 export function raise(pos: number, message: string): never {
-  const loc = locationForIndex(pos);
-  message += ` (${loc.line}:${loc.column})`;
   // tslint:disable-next-line no-any
   const err: any = new SyntaxError(message);
   err.pos = pos;
-  err.loc = loc;
   throw err;
+}
+
+// tslint:disable-next-line no-any
+export function augmentError(error: any): any {
+  if ("pos" in error) {
+    const loc = locationForIndex(error.pos);
+    error.message += ` (${loc.line}:${loc.column})`;
+    error.loc = loc;
+  }
+  return error;
 }
 
 export class Loc {
@@ -40,7 +47,7 @@ export function locationForIndex(pos: number): Loc {
   let line = 1;
   let column = 1;
   for (let i = 0; i < pos; i++) {
-    if (input.charCodeAt(pos) === charCodes.lineFeed) {
+    if (input.charCodeAt(i) === charCodes.lineFeed) {
       line++;
       column = 1;
     } else {

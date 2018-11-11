@@ -8,7 +8,6 @@
     "no-empty-interface": true,
     "no-floating-promises": true,
     "no-misused-new": true,
-    "no-unused-variable": true,
     "no-void-expression": true,
     "no-namespace": true,
     "no-internal-module": true,

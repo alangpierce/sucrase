@@ -38,4 +38,5 @@ async function main(): Promise<void> {
 main().catch((e) => {
   console.error("Unhandled error:");
   console.error(e);
+  process.exitCode = 1;
 });

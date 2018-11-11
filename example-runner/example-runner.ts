@@ -112,4 +112,5 @@ async function runProject(project: string, shouldSave: boolean): Promise<boolean
 main().catch((e) => {
   console.error("Unhandled error:");
   console.error(e);
+  process.exitCode = 1;
 });

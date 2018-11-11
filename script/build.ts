@@ -77,4 +77,5 @@ async function buildIntegration(path: string): Promise<void> {
 main().catch((e) => {
   console.error("Unhandled error:");
   console.error(e);
+  process.exitCode = 1;
 });

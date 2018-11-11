@@ -328,4 +328,55 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("allows explicit inexact types", () => {
+    assertFlowResult(
+      `
+      type T = {...};
+      type U = {x: number, ...};
+      type V = {x: number, ...V, ...U};
+    `,
+      `"use strict";
+      
+
+
+    `,
+    );
+  });
+
+  it("allows function types as type parameters", () => {
+    assertFlowResult(
+      `
+      type T = Array<(string) => number> 
+    `,
+      `"use strict";
+       
+    `,
+    );
+  });
+
+  it("allows underscore type arguments in invocations", () => {
+    assertFlowResult(
+      `
+      test<
+        _,
+        _,
+        number,
+        _,
+        _,
+      >();
+      new test<_>(); 
+    `,
+      `"use strict";
+      test
+
+
+
+
+
+();
+      new test(); 
+    `,
+    );
+  });
 });

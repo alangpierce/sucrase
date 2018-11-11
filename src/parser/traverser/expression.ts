@@ -449,7 +449,12 @@ export function parseExprAtom(): boolean {
         next();
         parseFunction(functionStart, false, false);
         return false;
-      } else if (canBeArrow && contextualKeyword === ContextualKeyword._async && match(tt.name)) {
+      } else if (
+        canBeArrow &&
+        !canInsertSemicolon() &&
+        contextualKeyword === ContextualKeyword._async &&
+        match(tt.name)
+      ) {
         parseIdentifier();
         expect(tt.arrow);
         // let foo = bar => {};

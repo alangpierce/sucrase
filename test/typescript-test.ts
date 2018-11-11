@@ -1203,4 +1203,39 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("parses type arguments on decorators", () => {
+    assertTypeScriptResult(
+      `
+      @decorator<string>()
+      class Test {}
+    `,
+      `"use strict";
+      @decorator()
+      class Test {}
+    `,
+    );
+  });
+
+  it("properly parses tuple types with optional values", () => {
+    assertTypeScriptResult(
+      `
+      let x: [string, number?, (string | number)?];
+    `,
+      `"use strict";
+      let x;
+    `,
+    );
+  });
+
+  it("allows a rest element on a tuple type", () => {
+    assertTypeScriptResult(
+      `
+      let x: [string, ...number[]];
+    `,
+      `"use strict";
+      let x;
+    `,
+    );
+  });
 });

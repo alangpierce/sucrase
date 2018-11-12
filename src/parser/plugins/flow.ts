@@ -453,6 +453,13 @@ function flowParseObjectType(allowStatic: boolean, allowExact: boolean, allowPro
 function flowParseObjectTypeProperty(): void {
   if (match(tt.ellipsis)) {
     expect(tt.ellipsis);
+    if (!eat(tt.comma)) {
+      eat(tt.semi);
+    }
+    // Explicit inexact object syntax.
+    if (match(tt.braceR)) {
+      return;
+    }
     flowParseType();
   } else {
     flowParseObjectPropertyKey();

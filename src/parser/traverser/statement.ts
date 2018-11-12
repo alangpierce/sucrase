@@ -25,6 +25,7 @@ import {
   tsParseExportDeclaration,
   tsParseIdentifierStatement,
   tsParseImportEqualsDeclaration,
+  tsParseMaybeDecoratorArguments,
   tsStartParseFunctionParams,
   tsTryParseClassMemberWithIsStatic,
   tsTryParseExport,
@@ -243,6 +244,18 @@ function parseDecorator(): void {
       parseIdentifier();
     }
   }
+  parseMaybeDecoratorArguments();
+}
+
+function parseMaybeDecoratorArguments(): void {
+  if (isTypeScriptEnabled) {
+    tsParseMaybeDecoratorArguments();
+  } else {
+    baseParseMaybeDecoratorArguments();
+  }
+}
+
+export function baseParseMaybeDecoratorArguments(): void {
   if (eat(tt.parenL)) {
     parseCallExpressionArguments(tt.parenR);
   }

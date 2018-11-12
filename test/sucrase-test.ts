@@ -629,4 +629,78 @@ describe("sucrase", () => {
       {transforms: ["imports", "typescript"]},
     );
   });
+
+  it("allows a class expression followed by a division operator", () => {
+    assertResult(
+      `
+      x = class {} / foo
+    `,
+      `
+      x = class {} / foo
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("handles newline after async in paren-less arrow function", () => {
+    assertResult(
+      `
+      import async from 'foo';
+      async
+      x => x
+    `,
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
+      var _foo = require('foo'); var _foo2 = _interopRequireDefault(_foo);
+      _foo2.default
+      x => x
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
+  it("handles various parser edge cases around regexes", () => {
+    assertResult(
+      `
+      for (const {a} of /b/) {}
+      
+      for (let {a} of /b/) {}
+      
+      for (var {a} of /b/) {}
+      
+      function *f() { yield
+      {}/1/g
+      }
+      
+      function* bar() { yield class {} }
+      
+      <>
+      <Select prop={{ function: 'test' }} />
+      <Select prop={{ class: 'test' }} />
+      <Select prop={{ delete: 'test' }} />
+      <Select prop={{ enum: 'test' }} />
+      </>
+    `,
+      `const _jsxFileName = "";
+      for (const {a} of /b/) {}
+      
+      for (let {a} of /b/) {}
+      
+      for (var {a} of /b/) {}
+      
+      function *f() { yield
+      {}/1/g
+      }
+      
+      function* bar() { yield class {} }
+      
+      React.createElement(React.Fragment, null
+      , React.createElement(Select, { prop: { function: 'test' }, __self: this, __source: {fileName: _jsxFileName, lineNumber: 15}} )
+      , React.createElement(Select, { prop: { class: 'test' }, __self: this, __source: {fileName: _jsxFileName, lineNumber: 16}} )
+      , React.createElement(Select, { prop: { delete: 'test' }, __self: this, __source: {fileName: _jsxFileName, lineNumber: 17}} )
+      , React.createElement(Select, { prop: { enum: 'test' }, __self: this, __source: {fileName: _jsxFileName, lineNumber: 18}} )
+      )
+    `,
+      {transforms: ["jsx"]},
+    );
+  });
 });

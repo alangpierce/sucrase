@@ -28,6 +28,7 @@ import {
 } from "../traverser/expression";
 import {parseBindingList} from "../traverser/lval";
 import {
+  baseParseMaybeDecoratorArguments,
   parseBlockBody,
   parseClass,
   parseClassProperty,
@@ -418,10 +419,21 @@ function tsParseMappedType(): void {
 function tsParseTupleType(): void {
   tsParseBracketedList(
     ParsingContext.TupleElementTypes,
-    tsParseType,
+    tsParseTupleElementType,
     /* bracket */ true,
     /* skipFirstToken */ false,
   );
+}
+
+function tsParseTupleElementType(): void {
+  // parses `...TsType[]`
+  if (eat(tt.ellipsis)) {
+    tsParseType();
+    return;
+  }
+  // parses `TsType?`
+  tsParseType();
+  eat(tt.question);
 }
 
 function tsParseParenthesizedType(): void {
@@ -1401,4 +1413,11 @@ export function tsParseAssignableListItemTypes(): void {
   eat(tt.question);
   tsTryParseTypeAnnotation();
   popTypeContext(oldIsType);
+}
+
+export function tsParseMaybeDecoratorArguments(): void {
+  if (match(tt.lessThan)) {
+    tsParseTypeArguments();
+  }
+  baseParseMaybeDecoratorArguments();
 }

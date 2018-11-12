@@ -6236,9 +6236,10 @@ style-loader@0.18.2:
     loader-utils "^1.0.2"
     schema-utils "^0.3.0"
 
-sucrase@^3.6.0:
-  version "3.6.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.6.0.tgz#2b3cf5d39bb2da58efc171b90b3cd367e85b3c04"
+sucrase@^3.7.0:
+  version "3.7.0"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.7.0.tgz#d167b54498b8278f7cd874037b25b5489b6671a2"
+  integrity sha512-VFKLwscIt5Y8wtjpiYOHtdrMZz1VmUNNVSpXmHVDHPi7eRW8mkP9ISlQjv/X8ranYmvvPqt5hvLHKymG7o4ikQ==
   dependencies:
     commander "^2.12.2"
     lines-and-columns "^1.1.6"

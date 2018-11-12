@@ -1,3 +1,9 @@
+# 3.7.0 (2018-11-21)
+
+* Fix perf regression in TypeScript parsing ([#327])
+* Fix broken line numbers in syntax errors, improve parser backtracking performance ([#331])
+* Add Parser features and bugfixes from the Babel parser, including TypeScript 3.0 support ([#333])
+
 # 3.6.0 (2018-10-29)
 
 * Add CLI support for jsx pragmas ([#321]) (Josiah Savary)
@@ -120,3 +126,6 @@
 [#317]: https://github.com/alangpierce/sucrase/pull/317
 [#321]: https://github.com/alangpierce/sucrase/pull/321
 [#324]: https://github.com/alangpierce/sucrase/pull/324
+[#327]: https://github.com/alangpierce/sucrase/pull/327
+[#331]: https://github.com/alangpierce/sucrase/pull/331
+[#333]: https://github.com/alangpierce/sucrase/pull/333

@@ -594,6 +594,19 @@ describe("typescript transform", () => {
     );
   });
 
+  it("handles and removes `declare global` syntax", () => {
+    assertTypeScriptResult(
+      `
+      declare global {
+      }
+    `,
+      `"use strict";
+      
+
+    `,
+    );
+  });
+
   it("handles and removes `export declare class` syntax", () => {
     assertTypeScriptResult(
       `

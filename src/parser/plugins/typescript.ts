@@ -892,7 +892,6 @@ function tsTryParseDeclare(): boolean {
       if (contextualKeyword === ContextualKeyword._global) {
         tsParseAmbientExternalModuleDeclaration();
         matched = true;
-        return true;
       } else {
         matched = tsParseDeclaration(contextualKeyword, /* isBeforeToken */ true);
       }

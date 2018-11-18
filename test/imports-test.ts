@@ -393,6 +393,48 @@ var _moduleName = require('moduleName');
     );
   });
 
+  it("never breaks weird call expressions", () => {
+    assertResult(
+      `
+      import a from 'a';
+      import b from 'b';
+      a();
+      (a)();
+      ((a))();
+      a(b)();
+      (a + b)();
+      `,
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
+      var _a = require('a'); var _a2 = _interopRequireDefault(_a);
+      var _b = require('b'); var _b2 = _interopRequireDefault(_b);
+      (0, _a2.default)();
+      ((0, _a2.default))();
+      (((0, _a2.default)))();
+      (0, _a2.default)((0, _b2.default))();
+      (_a2.default + (0, _b2.default))();
+      `,
+    );
+  });
+
+  describe("ASI interop", () => {
+    it("prevents accidental invocation for imported functions", () => {
+      assertResult(
+        `
+        import {fun} from 'my-module'
+
+        let arr = []
+        fun()
+        `,
+        `"use strict";
+        var _mymodule = require('my-module');
+
+        let arr = []
+        (0, _mymodule.fun)()
+        `,
+      );
+    });
+  });
+
   it("uses wildcard name on default access when possible", () => {
     assertResult(
       `

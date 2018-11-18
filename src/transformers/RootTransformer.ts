@@ -101,9 +101,9 @@ export default class RootTransformer {
     }
   }
 
-  processBalancedCode(): void {
-    let braceDepth = 0;
-    let parenDepth = 0;
+  processBalancedCode(initialBraceDepth: number = 0, initialParenDepth: number = 0): void {
+    let braceDepth = initialBraceDepth;
+    let parenDepth = initialParenDepth;
     while (!this.tokens.isAtEnd()) {
       if (this.tokens.matches1(tt.braceL) || this.tokens.matches1(tt.dollarBraceL)) {
         braceDepth++;

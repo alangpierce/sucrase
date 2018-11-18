@@ -5,13 +5,16 @@ import * as babel from "@babel/core";
 
 // @ts-ignore: May not be built, just ignore for now.
 import * as sucrase from "../dist/index"; // eslint-disable-line import/no-unresolved
-import {loadReactFiles} from "./loadReactFiles";
+import {loadProjectFiles} from "./loadProjectFiles";
 
 async function main(): Promise<void> {
   console.log(`Compiling React codebase:`);
-  const reactFiles = await loadReactFiles();
+  const reactFiles = await loadProjectFiles("./example-runner/example-repos/react/packages");
   console.time("Sucrase");
   for (const {code, path} of reactFiles) {
+    if (path.endsWith(".ts")) {
+      continue;
+    }
     sucrase.transform(code, {
       transforms: ["jsx", "imports", "flow"],
       filePath: path,
@@ -20,7 +23,10 @@ async function main(): Promise<void> {
   console.timeEnd("Sucrase");
 
   console.time("Babel");
-  for (const {code} of reactFiles) {
+  for (const {code, path} of reactFiles) {
+    if (path.endsWith(".ts")) {
+      continue;
+    }
     babel.transform(code, {
       presets: ["@babel/preset-react", "@babel/preset-flow"],
       plugins: [

@@ -18,9 +18,10 @@
     "generate": "sucrase-node generator/generate.ts",
     "benchmark": "sucrase-node benchmark/benchmark.ts",
     "benchmark-react": "sucrase-node benchmark/benchmark-react.ts",
+    "benchmark-project": "sucrase-node benchmark/benchmark-project.ts",
     "lint": "sucrase-node script/lint.ts",
     "profile": "node --inspect-brk ./node_modules/.bin/sucrase-node ./benchmark/profile",
-    "profile-react": "node --inspect-brk ./node_modules/.bin/sucrase-node ./benchmark/profile-react.ts",
+    "profile-project": "node --inspect-brk ./node_modules/.bin/sucrase-node ./benchmark/benchmark-project.ts --profile",
     "prepublishOnly": "yarn clean && yarn build",
     "release": "sucrase-node script/release.ts",
     "run-examples": "sucrase-node example-runner/example-runner.ts",
@@ -54,7 +55,8 @@
     "@babel/preset-typescript": "7.0.0-beta.51",
     "@types/mocha": "^2.2.43",
     "@types/mz": "^0.0.32",
-    "@types/node": "^8.0.31",
+    "@types/node": "^10.12.9",
+    "@types/yargs-parser": "^11.0.0",
     "codecov": "^3.1.0",
     "eslint": "^4.13.1",
     "eslint-config-airbnb-base": "^12.1.0",
@@ -69,7 +71,8 @@
     "tslint": "^5.9.1",
     "tslint-language-service": "^0.9.9",
     "typescript": "^2.9.1",
-    "typescript-eslint-parser": "^16.0.0"
+    "typescript-eslint-parser": "^16.0.0",
+    "yargs-parser": "^11.1.0"
   },
   "dependencies": {
     "commander": "^2.12.2",

@@ -174,27 +174,22 @@ export default class CJSImportTransformer extends Transformer {
     const replacement = this.importProcessor.getIdentifierReplacement(
       this.tokens.identifierNameForToken(token),
     );
-    if (!replacement) {
-      return false;
-    }
-    // We need to change to (0, f) if this is a function call, so that it won't be interpreted as a
-    // method access. This can also happen in situations like (f)(), so a following close-paren
-    // should trigger this behavior as well if it eventually has an open-paren. In some cases, like
-    // export assignees, we must NOT turn the identifier into a normal expression, so we need to
-    // just to the regular replacement.
-    let possibleOpenParenIndex = this.tokens.currentIndex() + 1;
-    while (
-      possibleOpenParenIndex < this.tokens.tokens.length &&
-      this.tokens.tokens[possibleOpenParenIndex].type === tt.parenR
-    ) {
-      possibleOpenParenIndex++;
-    }
-    if (this.tokens.tokens[possibleOpenParenIndex].type === tt.parenL) {
-      this.tokens.replaceToken(`(0, ${replacement})`);
-    } else {
+    if (replacement) {
       this.tokens.replaceToken(replacement);
+
+      // Any number of closing parens is tolerated.
+      while (!this.tokens.isAtEnd() && this.tokens.currentToken().type === tt.parenR) {
+        this.rootTransformer.processToken();
+      }
+
+      // Avoid treating imported functions as methods of their `exports` object by using
+      // the `call` method with a falsy context (which is coerced into the global context).
+      if (!this.tokens.isAtEnd() && this.tokens.currentToken().type === tt.parenL) {
+        this.tokens.replaceToken(`.call(0, `);
+        return true;
+      }
     }
-    return true;
+    return false;
   }
 
   processObjectShorthand(): boolean {

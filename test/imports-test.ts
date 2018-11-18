@@ -398,7 +398,6 @@ var _moduleName = require('moduleName');
       `
       import a from 'a';
       import b from 'b';
-      a();
       (a)();
       ((a))();
       a(b)();
@@ -407,7 +406,6 @@ var _moduleName = require('moduleName');
       `"use strict";${IMPORT_DEFAULT_PREFIX}
       var _a = require('a'); var _a2 = _interopRequireDefault(_a);
       var _b = require('b'); var _b2 = _interopRequireDefault(_b);
-      (0, _a2.default)();
       ((0, _a2.default))();
       (((0, _a2.default)))();
       (0, _a2.default)((0, _b2.default))();
@@ -424,12 +422,14 @@ var _moduleName = require('moduleName');
 
         let arr = []
         fun()
+        fun(1, 2)
         `,
         `"use strict";
         var _mymodule = require('my-module');
 
         let arr = []
-        (0, _mymodule.fun)()
+        _mymodule.fun.call()
+        _mymodule.fun.call(void 0, 1, 2)
         `,
       );
     });

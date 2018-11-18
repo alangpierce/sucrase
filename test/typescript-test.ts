@@ -1251,4 +1251,23 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("allows overloads for constructors", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        constructor(s: string)
+        constructor(n: number)
+        constructor(sn: string | number) {}
+      }
+    `,
+      `"use strict";
+      class A {
+        
+
+        constructor(sn) {}
+      }
+    `,
+    );
+  });
 });

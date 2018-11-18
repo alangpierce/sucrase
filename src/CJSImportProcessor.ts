@@ -387,6 +387,11 @@ get: () => ${primaryImportName}[key]}); });`;
   private getNamedImports(index: number): {newIndex: number; namedImports: Array<NamedImport>} {
     const namedImports = [];
     while (true) {
+      if (this.tokens.matchesAtIndex(index, [tt.braceR])) {
+        index++;
+        break;
+      }
+
       // Flow type imports should just be ignored.
       let isTypeImport = false;
       if (

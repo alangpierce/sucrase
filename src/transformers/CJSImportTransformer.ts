@@ -540,6 +540,11 @@ export default class CJSImportTransformer extends Transformer {
 
     const exportStatements = [];
     while (true) {
+      if (this.tokens.matches1(tt.braceR)) {
+        this.tokens.removeToken();
+        break;
+      }
+
       const localName = this.tokens.identifierName();
       let exportedName;
       this.tokens.removeToken();

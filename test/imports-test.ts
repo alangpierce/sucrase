@@ -204,6 +204,17 @@ describe("transform imports", () => {
     );
   });
 
+  it("allows an empty export statement", () => {
+    assertResult(
+      `
+      export {};
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      
+    `,
+    );
+  });
+
   it("allows trailing commas in exported names", () => {
     assertResult(
       `
@@ -310,6 +321,17 @@ return obj && obj.__esModule ? obj : { default: obj }; }
     `,
       `"use strict";
       var _moduleName = require('moduleName');
+    `,
+    );
+  });
+
+  it("allows an import statement with no import bindings", () => {
+    assertResult(
+      `
+      import {} from 'moduleName';
+    `,
+      `"use strict";
+      
     `,
     );
   });

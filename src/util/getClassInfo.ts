@@ -66,7 +66,7 @@ export default function getClassInfo(
 
   tokens.nextToken();
   while (!tokens.matchesContextIdAndLabel(tt.braceR, classContextId)) {
-    if (tokens.matchesContextual(ContextualKeyword._constructor)) {
+    if (tokens.matchesContextual(ContextualKeyword._constructor) && !tokens.currentToken().isType) {
       ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
     } else if (tokens.matches1(tt.semi)) {
       rangesToRemove.push({start: tokens.currentIndex(), end: tokens.currentIndex() + 1});
@@ -83,7 +83,10 @@ export default function getClassInfo(
         }
         tokens.nextToken();
       }
-      if (tokens.matchesContextual(ContextualKeyword._constructor)) {
+      if (
+        tokens.matchesContextual(ContextualKeyword._constructor) &&
+        !tokens.currentToken().isType
+      ) {
         ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
         continue;
       }

@@ -388,7 +388,7 @@ var _moduleName = require('moduleName');
       `"use strict";
       var _mymodule = require('my-module');
       
-      (0, _mymodule.bar)();
+      _mymodule.bar.call(void 0, );
     `,
     );
   });
@@ -408,7 +408,7 @@ var _moduleName = require('moduleName');
       var _b = require('b'); var _b2 = _interopRequireDefault(_b);
       ((0, _a2.default))();
       (((0, _a2.default)))();
-      (0, _a2.default)((0, _b2.default))();
+      _a2.default.call(void 0, ((0, _b2.default))();
       (_a2.default + (0, _b2.default))();
       `,
     );
@@ -428,7 +428,7 @@ var _moduleName = require('moduleName');
         var _mymodule = require('my-module');
 
         let arr = []
-        _mymodule.fun.call()
+        _mymodule.fun.call(void 0, )
         _mymodule.fun.call(void 0, 1, 2)
         `,
       );
@@ -495,7 +495,7 @@ var _moduleName = require('moduleName');
       
       class A {
         constructor() {
-          this.val = (0, _foo2.default)();
+          this.val = _foo2.default.call(void 0, );
         }
       }
     `,
@@ -749,13 +749,13 @@ module.exports = exports.default;
       
       const o = {
         f() {
-          (0, _foo.foo)(3);
+          _foo.foo.call(void 0, 3);
         }
       }
       
       class C {
         g() {
-          (0, _foo.foo)(4);
+          _foo.foo.call(void 0, 4);
         }
       }
     `,
@@ -808,7 +808,7 @@ module.exports = exports.default;
           return \`interpolated \${value}\`;
         }
         m2(id) {
-          (0, _things.foo)();
+          _things.foo.call(void 0, );
         }
       }
     `,
@@ -843,7 +843,7 @@ module.exports = exports.default;
       var _a = require('a');
       
       {
-        (0, _a.a)();
+        _a.a.call(void 0, );
       }
     `,
     );
@@ -865,7 +865,7 @@ module.exports = exports.default;
       
       switch (foo) {
         case 1: {
-          (0, _a.a)();
+          _a.a.call(void 0, );
         }
       }
     `,
@@ -888,7 +888,7 @@ module.exports = exports.default;
       
       switch (foo) {
         default: {
-          (0, _a.a)();
+          _a.a.call(void 0, );
         }
       }
     `,

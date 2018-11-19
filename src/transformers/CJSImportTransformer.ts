@@ -177,46 +177,32 @@ export default class CJSImportTransformer extends Transformer {
     if (!replacement) {
       return false;
     }
-    let openParenIndex = this.tokens.currentIndex();
-    while (++openParenIndex < this.tokens.tokens.length) {
-      const token = this.tokens.tokens[openParenIndex];
-      if (token.type === tt.parenL) {
-        // Avoid treating imported functions as methods of their `exports` object
-        // by using `(0, f)` when the identifier is in a paren expression. Else
-        // use `Function.prototype.call` when the identifier is a guaranteed
-        // function call. When using `call`, pass undefined as the context.
-        switch (this.tokens.tokenAtRelativeIndex(1).type) {
-          case tt.parenL: {
-            // We can use `(0, f)` when the previous token is an open brace,
-            // semicolon, or equal operator. This saves space for function calls
-            // with arguments, because then `void 0` is omitted.
-            const prevToken = this.tokens.tokenAtRelativeIndex(-1);
-            if (
-              prevToken.type !== tt.braceL &&
-              prevToken.type !== tt.semi &&
-              prevToken.type !== tt.eq
-            ) {
-              // NOTE: This line inserts a new parenthesis, which must be accounted
-              // for by recursively calling the `processBalancedCode` method of the
-              // root transformer.
-              const hasArgs = this.tokens.tokenAtRelativeIndex(2).type !== tt.parenR;
-              this.tokens.replaceToken(`${replacement}.call(` + (hasArgs ? "void 0, " : ""));
-              this.tokens.removeToken(); // Remove the old paren.
-              this.rootTransformer.processBalancedCode(0, 1);
-              return true;
-            }
-          }
-          case tt.parenR:
-            // See here: http://2ality.com/2015/12/references.html
-            this.tokens.replaceToken(`(0, ${replacement})`);
-            return true;
-        }
-        break;
+    // Tolerate any number of closing parens while looking for an opening paren
+    // that indicates a function call.
+    let possibleOpenParenIndex = this.tokens.currentIndex() + 1;
+    while (
+      possibleOpenParenIndex < this.tokens.tokens.length &&
+      this.tokens.tokens[possibleOpenParenIndex].type === tt.parenR
+    ) {
+      possibleOpenParenIndex++;
+    }
+    // Avoid treating imported functions as methods of their `exports` object
+    // by using `(0, f)` when the identifier is in a paren expression. Else
+    // use `Function.prototype.call` when the identifier is a guaranteed
+    // function call. When using `call`, pass undefined as the context.
+    if (this.tokens.tokens[possibleOpenParenIndex].type === tt.parenL) {
+      if (this.tokens.tokenAtRelativeIndex(1).type == tt.parenL) {
+        this.tokens.replaceToken(`${replacement}.call(void 0, `);
+        // Remove the old paren.
+        this.tokens.removeToken();
+        // Balance out the new paren.
+        this.rootTransformer.processBalancedCode();
+        this.tokens.copyExpectedToken(tt.parenR);
+        return true;
       }
-      // Tolerate any number of closing parens.
-      if (token.type !== tt.parenR) {
-        break;
-      }
+      // See here: http://2ality.com/2015/12/references.html
+      this.tokens.replaceToken(`(0, ${replacement})`);
+      return true;
     }
     this.tokens.replaceToken(replacement);
     return true;

@@ -191,7 +191,10 @@ export default class CJSImportTransformer extends Transformer {
     // use `Function.prototype.call` when the identifier is a guaranteed
     // function call. When using `call`, pass undefined as the context.
     if (this.tokens.tokens[possibleOpenParenIndex].type === tt.parenL) {
-      if (this.tokens.tokenAtRelativeIndex(1).type == tt.parenL) {
+      if (
+        this.tokens.tokenAtRelativeIndex(1).type === tt.parenL &&
+        this.tokens.tokenAtRelativeIndex(-1).type !== tt._new
+      ) {
         this.tokens.replaceToken(`${replacement}.call(void 0, `);
         // Remove the old paren.
         this.tokens.removeToken();

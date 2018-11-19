@@ -7,6 +7,7 @@ import {Scope} from "./parser/tokenizer/state";
 import TokenProcessor from "./TokenProcessor";
 import RootTransformer from "./transformers/RootTransformer";
 import formatTokens from "./util/formatTokens";
+import getTSImportedNames from "./util/getTSImportedNames";
 
 export type Transform = "jsx" | "typescript" | "flow" | "imports";
 
@@ -136,10 +137,14 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
       enableLegacyTypeScriptModuleInterop,
     );
     importProcessor.preprocessTokens();
+    // We need to mark shadowed globals after processing imports so we know that the globals are,
+    // but before type-only import pruning, since that relies on shadowing information.
+    identifyShadowedGlobals(tokenProcessor, scopes, importProcessor.getGlobalNames());
     if (options.transforms.includes("typescript")) {
       importProcessor.pruneTypeOnlyImports();
     }
-    identifyShadowedGlobals(tokenProcessor, scopes, importProcessor.getGlobalNames());
+  } else if (options.transforms.includes("typescript")) {
+    identifyShadowedGlobals(tokenProcessor, scopes, getTSImportedNames(tokenProcessor));
   }
   return {tokenProcessor, scopes, nameManager, importProcessor};
 }

@@ -12,7 +12,8 @@ export function getNonTypeIdentifiers(tokens: TokenProcessor): Set<string> {
       !token.isType &&
       (token.identifierRole === IdentifierRole.Access ||
         token.identifierRole === IdentifierRole.ObjectShorthand ||
-        token.identifierRole === IdentifierRole.ExportAccess)
+        token.identifierRole === IdentifierRole.ExportAccess) &&
+      !token.shadowsGlobal
     ) {
       nonTypeIdentifiers.add(tokens.identifierNameForToken(token));
     }

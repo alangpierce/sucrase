@@ -177,11 +177,8 @@ export default class CJSImportTransformer extends Transformer {
     if (!replacement) {
       return false;
     }
-    // We need to change to (0, f) if this is a function call, so that it won't be interpreted as a
-    // method access. This can also happen in situations like (f)(), so a following close-paren
-    // should trigger this behavior as well if it eventually has an open-paren. In some cases, like
-    // export assignees, we must NOT turn the identifier into a normal expression, so we need to
-    // just to the regular replacement.
+    // Tolerate any number of closing parens while looking for an opening paren
+    // that indicates a function call.
     let possibleOpenParenIndex = this.tokens.currentIndex() + 1;
     while (
       possibleOpenParenIndex < this.tokens.tokens.length &&
@@ -189,8 +186,25 @@ export default class CJSImportTransformer extends Transformer {
     ) {
       possibleOpenParenIndex++;
     }
+    // Avoid treating imported functions as methods of their `exports` object
+    // by using `(0, f)` when the identifier is in a paren expression. Else
+    // use `Function.prototype.call` when the identifier is a guaranteed
+    // function call. When using `call`, pass undefined as the context.
     if (this.tokens.tokens[possibleOpenParenIndex].type === tt.parenL) {
-      this.tokens.replaceToken(`(0, ${replacement})`);
+      if (
+        this.tokens.tokenAtRelativeIndex(1).type === tt.parenL &&
+        this.tokens.tokenAtRelativeIndex(-1).type !== tt._new
+      ) {
+        this.tokens.replaceToken(`${replacement}.call(void 0, `);
+        // Remove the old paren.
+        this.tokens.removeToken();
+        // Balance out the new paren.
+        this.rootTransformer.processBalancedCode();
+        this.tokens.copyExpectedToken(tt.parenR);
+      } else {
+        // See here: http://2ality.com/2015/12/references.html
+        this.tokens.replaceToken(`(0, ${replacement})`);
+      }
     } else {
       this.tokens.replaceToken(replacement);
     }

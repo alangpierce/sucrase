@@ -652,7 +652,7 @@ function parseParenItem(): void {
 // argument to parseSubscripts to prevent it from consuming the
 // argument list.
 function parseNew(): void {
-  parseIdentifier();
+  expect(tt._new);
   if (eat(tt.dot)) {
     // new.target
     parseMetaProperty();

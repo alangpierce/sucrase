@@ -402,14 +402,16 @@ var _moduleName = require('moduleName');
       ((a))();
       a(b)();
       (a + b)();
+      new (a)();
       `,
       `"use strict";${IMPORT_DEFAULT_PREFIX}
       var _a = require('a'); var _a2 = _interopRequireDefault(_a);
       var _b = require('b'); var _b2 = _interopRequireDefault(_b);
       ((0, _a2.default))();
       (((0, _a2.default)))();
-      _a2.default.call(void 0, ((0, _b2.default))();
+      _a2.default.call(void 0, (0, _b2.default))();
       (_a2.default + (0, _b2.default))();
+      new ((0, _a2.default))();
       `,
     );
   });

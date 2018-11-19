@@ -198,13 +198,13 @@ export default class CJSImportTransformer extends Transformer {
         // Balance out the new paren.
         this.rootTransformer.processBalancedCode();
         this.tokens.copyExpectedToken(tt.parenR);
-        return true;
+      } else {
+        // See here: http://2ality.com/2015/12/references.html
+        this.tokens.replaceToken(`(0, ${replacement})`);
       }
-      // See here: http://2ality.com/2015/12/references.html
-      this.tokens.replaceToken(`(0, ${replacement})`);
-      return true;
+    } else {
+      this.tokens.replaceToken(replacement);
     }
-    this.tokens.replaceToken(replacement);
     return true;
   }
 

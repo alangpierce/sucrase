@@ -1270,4 +1270,58 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("properly elides CJS imports that only have value references in shadowed names", () => {
+    assertTypeScriptResult(
+      `
+      import T from './T';
+      
+      const x: T = 3;
+
+      function foo() {
+        let T = 3;
+        console.log(T);
+      }
+    `,
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
+      
+      
+      const x = 3;
+
+      function foo() {
+        let T = 3;
+        console.log(T);
+      }
+    `,
+    );
+  });
+
+  it("properly elides ESM imports that only have value references in shadowed names", () => {
+    assertTypeScriptESMResult(
+      `
+      import T, {a as b, c} from './T';
+      import {d, e} from './foo';
+      
+      const x: T = 3;
+      console.log(e);
+
+      function foo() {
+        let T = 3, b = 4, c = 5, d = 6;
+        console.log(T, b, c, d);
+      }
+    `,
+      `
+
+      import { e} from './foo';
+      
+      const x = 3;
+      console.log(e);
+
+      function foo() {
+        let T = 3, b = 4, c = 5, d = 6;
+        console.log(T, b, c, d);
+      }
+    `,
+    );
+  });
 });

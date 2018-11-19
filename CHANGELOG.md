@@ -1,8 +1,20 @@
-# 3.7.0 (2018-11-21)
+# 3.7.1 (2018-11-18)
+
+* Fix crash on empty export expressions ([#338])
+* Fix crash on TypeScript `declare global` ([#339])
+* Fix crash when using overloaded constructors in TypeScript ([#340])
+* Fix TypeScript import elision when imported names are shadowed by variables
+  ([#342])
+* Fix import name transform to work in code without semicolons ([#337])
+  (Alec Larson)
+
+# 3.7.0 (2018-11-11)
 
 * Fix perf regression in TypeScript parsing ([#327])
-* Fix broken line numbers in syntax errors, improve parser backtracking performance ([#331])
-* Add Parser features and bugfixes from the Babel parser, including TypeScript 3.0 support ([#333])
+* Fix broken line numbers in syntax errors, improve parser backtracking
+  performance ([#331])
+* Add Parser features and bugfixes from the Babel parser, including TypeScript
+  3.0 support ([#333])
 
 # 3.6.0 (2018-10-29)
 
@@ -129,3 +141,8 @@
 [#327]: https://github.com/alangpierce/sucrase/pull/327
 [#331]: https://github.com/alangpierce/sucrase/pull/331
 [#333]: https://github.com/alangpierce/sucrase/pull/333
+[#337]: https://github.com/alangpierce/sucrase/pull/337
+[#338]: https://github.com/alangpierce/sucrase/pull/338
+[#339]: https://github.com/alangpierce/sucrase/pull/339
+[#340]: https://github.com/alangpierce/sucrase/pull/340
+[#342]: https://github.com/alangpierce/sucrase/pull/342

@@ -1,20 +1,16 @@
-// Matches a whole line break (where CRLF is considered a single
-// line break). Used to count lines.
 import {charCodes} from "./charcodes";
 
-export const lineBreak = /\r\n?|\n|\u2028|\u2029/;
-
-const WHITESPACE = new Uint8Array(128);
-WHITESPACE[0x0009] = 1;
-WHITESPACE[0x000b] = 1;
-WHITESPACE[0x000c] = 1;
-WHITESPACE[charCodes.space] = 1;
+const WHITESPACE_TABLE = new Uint8Array(128);
+WHITESPACE_TABLE[0x0009] = 1;
+WHITESPACE_TABLE[0x000b] = 1;
+WHITESPACE_TABLE[0x000c] = 1;
+WHITESPACE_TABLE[charCodes.space] = 1;
 
 // https://tc39.github.io/ecma262/#sec-white-space
 export function isWhitespace(code: number): number {
   // Fast path for ASCII using a pre-computed table.
   if (!(code >>> 7)) {
-    return WHITESPACE[code];
+    return WHITESPACE_TABLE[code];
   }
   switch (code) {
     case 0x0009: // CHARACTER TABULATION

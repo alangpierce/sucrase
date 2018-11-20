@@ -1,6 +1,6 @@
 import {ContextualKeyword, eat, lookaheadTypeAndKeyword, match} from "../tokenizer/index";
 import {formatTokenType, TokenType, TokenType as tt} from "../tokenizer/types";
-import {lineBreak} from "../util/whitespace";
+import {charCodes} from "../util/charcodes";
 import {input, raise, state} from "./base";
 
 // ## Parser utilities
@@ -35,7 +35,18 @@ export function canInsertSemicolon(): boolean {
 export function hasPrecedingLineBreak(): boolean {
   const prevToken = state.tokens[state.tokens.length - 1];
   const lastTokEnd = prevToken ? prevToken.end : 0;
-  return lineBreak.test(input.slice(lastTokEnd, state.start));
+  for (let i = lastTokEnd; i < state.start; i++) {
+    const code = input.charCodeAt(i);
+    if (
+      code === charCodes.lineFeed ||
+      code === charCodes.carriageReturn ||
+      code === 0x2028 ||
+      code === 0x2029
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function isLineTerminator(): boolean {

@@ -3,8 +3,7 @@
 // @ts-ignore: new babel-core package missing types.
 import * as babel from "@babel/core";
 
-// @ts-ignore: May not be built, just ignore for now.
-import * as sucrase from "../dist/index"; // eslint-disable-line import/no-unresolved
+import * as sucrase from "../src/index";
 import {loadProjectFiles} from "./loadProjectFiles";
 
 async function main(): Promise<void> {

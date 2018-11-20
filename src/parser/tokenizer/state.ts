@@ -51,7 +51,7 @@ export class StateSnapshot {
 }
 
 export default class State {
-  init(): void {
+  constructor() {
     this.potentialArrowAt = -1;
     this.noAnonFunctionType = false;
     this.tokens = [];

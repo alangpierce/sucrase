@@ -2,8 +2,7 @@
 /* eslint-disable no-console */
 import * as fs from "fs";
 
-// @ts-ignore: May not be built, just ignore for now.
-import * as sucrase from "../dist/index"; // eslint-disable-line import/no-unresolved
+import * as sucrase from "../src/index";
 
 function main(): void {
   const sampleFile = process.argv[2] || "sample.tsx";

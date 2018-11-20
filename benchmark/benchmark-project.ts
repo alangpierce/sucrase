@@ -2,8 +2,7 @@
 /* eslint-disable no-console */
 import parseArgs from "yargs-parser";
 
-// @ts-ignore: May not be built, just ignore for now.
-import * as sucrase from "../dist/index"; // eslint-disable-line import/no-unresolved
+import * as sucrase from "../src/index";
 import {FileInfo, loadProjectFiles} from "./loadProjectFiles";
 
 async function main(): Promise<void> {

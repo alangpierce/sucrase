@@ -65,7 +65,6 @@ export function initParser(
 ): void {
   input = inputCode;
   state = new State();
-  state.init();
   nextContextId = 1;
   isJSXEnabled = isJSXEnabledArg;
   isTypeScriptEnabled = isTypeScriptEnabledArg;

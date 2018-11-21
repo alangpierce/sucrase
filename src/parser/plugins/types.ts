@@ -1,4 +1,4 @@
-import {eat, match} from "../tokenizer/index";
+import {eat, lookaheadType, match} from "../tokenizer/index";
 import {TokenType as tt} from "../tokenizer/types";
 import {isFlowEnabled, isTypeScriptEnabled, state} from "../traverser/base";
 import {baseParseConditional} from "../traverser/expression";
@@ -11,24 +11,12 @@ import {tsParseTypeAnnotation} from "./typescript";
 
 // An apparent conditional expression could actually be an optional parameter in an arrow function.
 export function typedParseConditional(noIn: boolean | null, startPos: number): void {
-  // only do the expensive clone if there is a question mark
-  // and if we come from inside parens
-  if (!match(tt.question)) {
-    baseParseConditional(noIn, startPos);
+  // If we see ?:, this can't possibly be a valid conditional. typedParseParenItem will be called
+  // later to finish off the arrow parameter.
+  if (match(tt.question) && lookaheadType() === tt.colon) {
     return;
   }
-
-  const snapshot = state.snapshot();
-  try {
-    baseParseConditional(noIn, startPos);
-    return;
-  } catch (err) {
-    if (!(err instanceof SyntaxError)) {
-      // istanbul ignore next: no such error is expected
-      throw err;
-    }
-    state.restoreFromSnapshot(snapshot);
-  }
+  baseParseConditional(noIn, startPos);
 }
 
 // Note: These "type casts" are *not* valid TS expressions.

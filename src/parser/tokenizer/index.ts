@@ -1,6 +1,6 @@
 /* eslint max-len: 0 */
 
-import {input, isFlowEnabled, raise, state} from "../traverser/base";
+import {input, isFlowEnabled, state} from "../traverser/base";
 import {unexpected} from "../traverser/util";
 import {charCodes} from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart} from "../util/identifier";
@@ -241,7 +241,9 @@ function readToken(code: number): void {
 
 function skipBlockComment(): void {
   const end = input.indexOf("*/", (state.pos += 2));
-  if (end === -1) raise(state.pos - 2, "Unterminated comment");
+  if (end === -1) {
+    unexpected(state.pos - 2, "Unterminated comment");
+  }
 
   state.pos = end + 2;
 }
@@ -666,7 +668,7 @@ export function getTokenFromCode(code: number): void {
       break;
   }
 
-  raise(state.pos, `Unexpected character '${String.fromCharCode(code)}'`);
+  unexpected(state.pos, `Unexpected character '${String.fromCharCode(code)}'`);
 }
 
 function finishOp(type: TokenType, size: number): void {
@@ -680,7 +682,8 @@ function readRegexp(): void {
   let inClass = false;
   for (;;) {
     if (state.pos >= input.length) {
-      raise(start, "Unterminated regular expression");
+      unexpected(start, "Unterminated regular expression");
+      return;
     }
     const ch = input.charAt(state.pos);
     if (escaped) {
@@ -781,7 +784,8 @@ function readString(quote: number): void {
   state.pos++;
   for (;;) {
     if (state.pos >= input.length) {
-      raise(state.start, "Unterminated string constant");
+      unexpected(state.start, "Unterminated string constant");
+      return;
     }
     const ch = input.charCodeAt(state.pos);
     if (ch === charCodes.backslash) {
@@ -799,7 +803,8 @@ function readString(quote: number): void {
 function readTmplToken(): void {
   for (;;) {
     if (state.pos >= input.length) {
-      raise(state.start, "Unterminated template");
+      unexpected(state.start, "Unterminated template");
+      return;
     }
     const ch = input.charCodeAt(state.pos);
     if (
@@ -839,7 +844,10 @@ export function skipWord(): void {
       // \u
       state.pos += 2;
       if (input.charCodeAt(state.pos) === charCodes.leftCurlyBrace) {
-        while (input.charCodeAt(state.pos) !== charCodes.leftCurlyBrace) {
+        while (
+          state.pos < input.length &&
+          input.charCodeAt(state.pos) !== charCodes.rightCurlyBrace
+        ) {
           state.pos++;
         }
         state.pos++;

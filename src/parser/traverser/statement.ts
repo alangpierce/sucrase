@@ -372,7 +372,7 @@ function parseSwitchStatement(): void {
   expect(tt.braceL);
 
   // Don't bother validation; just go through any sequence of cases, defaults, and statements.
-  while (!match(tt.braceR)) {
+  while (!match(tt.braceR) && !state.error) {
     if (match(tt._case) || match(tt._default)) {
       const isCase = match(tt._case);
       next();
@@ -479,7 +479,7 @@ export function parseBlock(
 }
 
 export function parseBlockBody(topLevel: boolean, end: TokenType): void {
-  while (!eat(end)) {
+  while (!eat(end) && !state.error) {
     parseStatement(true, topLevel);
   }
 }
@@ -526,7 +526,9 @@ function parseVar(isFor: boolean, kind: TokenType): void {
       parseMaybeAssign(isFor);
       state.tokens[eqIndex].rhsEndIndex = state.tokens.length;
     }
-    if (!eat(tt.comma)) break;
+    if (!eat(tt.comma)) {
+      break;
+    }
   }
 }
 
@@ -621,6 +623,9 @@ export function parseClass(isStatement: boolean, optionalId: boolean = false): v
   parseClassSuper();
   const openBraceIndex = state.tokens.length;
   parseClassBody(contextId);
+  if (state.error) {
+    return;
+  }
   state.tokens[openBraceIndex].contextId = contextId;
   state.tokens[state.tokens.length - 1].contextId = contextId;
   if (nameScopeStartTokenIndex !== null) {
@@ -640,7 +645,7 @@ function isClassMethod(): boolean {
 function parseClassBody(classContextId: number): void {
   expect(tt.braceL);
 
-  while (!eat(tt.braceR)) {
+  while (!eat(tt.braceR) && !state.error) {
     if (eat(tt.semi)) {
       continue;
     }
@@ -987,12 +992,14 @@ export function parseExportSpecifiers(): void {
   // export { x, y as z } [from '...']
   expect(tt.braceL);
 
-  while (!eat(tt.braceR)) {
+  while (!eat(tt.braceR) && !state.error) {
     if (first) {
       first = false;
     } else {
       expect(tt.comma);
-      if (eat(tt.braceR)) break;
+      if (eat(tt.braceR)) {
+        break;
+      }
     }
 
     parseIdentifier();
@@ -1055,7 +1062,7 @@ function parseImportSpecifiers(): void {
   }
 
   expect(tt.braceL);
-  while (!eat(tt.braceR)) {
+  while (!eat(tt.braceR) && !state.error) {
     if (first) {
       first = false;
     } else {
@@ -1068,7 +1075,9 @@ function parseImportSpecifiers(): void {
       }
 
       expect(tt.comma);
-      if (eat(tt.braceR)) break;
+      if (eat(tt.braceR)) {
+        break;
+      }
     }
 
     parseImportSpecifier();

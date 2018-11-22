@@ -1,7 +1,13 @@
-import {ContextualKeyword, eat, lookaheadTypeAndKeyword, match} from "../tokenizer/index";
+import {
+  ContextualKeyword,
+  eat,
+  finishToken,
+  lookaheadTypeAndKeyword,
+  match,
+} from "../tokenizer/index";
 import {formatTokenType, TokenType, TokenType as tt} from "../tokenizer/types";
 import {charCodes} from "../util/charcodes";
-import {input, raise, state} from "./base";
+import {input, state} from "./base";
 
 // ## Parser utilities
 
@@ -68,8 +74,18 @@ export function expect(type: TokenType, pos?: number | null): void {
   }
 }
 
-// Raise an unexpected token error. Can take the expected token type
-// instead of a message string.
-export function unexpected(pos: number | null = null, message: string = "Unexpected token"): never {
-  throw raise(pos != null ? pos : state.start, message);
+/**
+ * Transition the parser to an error state. All code needs to be written to naturally unwind in this
+ * state, which allows us to backtrack without exceptions and without error plumbing everywhere.
+ */
+export function unexpected(pos: number | null = null, message: string = "Unexpected token"): void {
+  if (state.error) {
+    return;
+  }
+  // tslint:disable-next-line no-any
+  const err: any = new SyntaxError(message);
+  err.pos = pos != null ? pos : state.start;
+  state.error = err;
+  state.pos = input.length;
+  finishToken(tt.eof);
 }

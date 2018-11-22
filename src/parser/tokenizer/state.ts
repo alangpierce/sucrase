@@ -14,78 +14,54 @@ export class Scope {
 }
 
 export class StateSnapshot {
-  potentialArrowAt: number;
-  noAnonFunctionType: boolean;
-  tokensLength: number;
-  scopesLength: number;
-  pos: number;
-  type: TokenType;
-  contextualKeyword: ContextualKeyword;
-  start: number;
-  end: number;
-  isType: boolean;
-
   constructor(
-    potentialArrowAt: number,
-    noAnonFunctionType: boolean,
-    tokensLength: number,
-    scopesLength: number,
-    pos: number,
-    type: TokenType,
-    contextualKeyword: ContextualKeyword,
-    start: number,
-    end: number,
-    isType: boolean,
-  ) {
-    this.potentialArrowAt = potentialArrowAt;
-    this.noAnonFunctionType = noAnonFunctionType;
-    this.tokensLength = tokensLength;
-    this.scopesLength = scopesLength;
-    this.pos = pos;
-    this.type = type;
-    this.contextualKeyword = contextualKeyword;
-    this.start = start;
-    this.end = end;
-    this.isType = isType;
-  }
+    readonly potentialArrowAt: number,
+    readonly noAnonFunctionType: boolean,
+    readonly tokensLength: number,
+    readonly scopesLength: number,
+    readonly pos: number,
+    readonly type: TokenType,
+    readonly contextualKeyword: ContextualKeyword,
+    readonly start: number,
+    readonly end: number,
+    readonly isType: boolean,
+    readonly error: Error | null,
+  ) {}
 }
 
 export default class State {
-  constructor() {
-    this.potentialArrowAt = -1;
-    this.noAnonFunctionType = false;
-    this.tokens = [];
-    this.scopes = [];
-    this.pos = 0;
-    this.type = tt.eof;
-    this.start = this.pos;
-    this.end = this.pos;
-
-    this.isType = false;
-  }
-
   // Used to signify the start of a potential arrow function
-  potentialArrowAt: number;
+  potentialArrowAt: number = -1;
 
   // Used by Flow to handle an edge case involving function type parsing.
-  noAnonFunctionType: boolean;
+  noAnonFunctionType: boolean = false;
 
   // Token store.
-  tokens: Array<Token>;
+  tokens: Array<Token> = [];
 
   // Array of all observed scopes, ordered by their ending position.
-  scopes: Array<Scope>;
+  scopes: Array<Scope> = [];
 
   // The current position of the tokenizer in the input.
-  pos: number;
+  pos: number = 0;
 
   // Information about the current token.
-  type: TokenType;
-  contextualKeyword: ContextualKeyword;
-  start: number;
-  end: number;
+  type: TokenType = tt.eof;
+  contextualKeyword: ContextualKeyword = ContextualKeyword.NONE;
+  start: number = 0;
+  end: number = 0;
 
-  isType: boolean;
+  isType: boolean = false;
+
+  /**
+   * If the parser is in an error state, then the token is always tt.eof and all functions can
+   * keep executing but should be written so they don't get into an infinite loop in this situation.
+   *
+   * This approach, combined with the ability to snapshot and restore state, allows us to implement
+   * backtracking without exceptions and without needing to explicitly propagate error states
+   * everywhere.
+   */
+  error: Error | null = null;
 
   snapshot(): StateSnapshot {
     return new StateSnapshot(
@@ -99,6 +75,7 @@ export default class State {
       this.start,
       this.end,
       this.isType,
+      this.error,
     );
   }
 
@@ -113,5 +90,6 @@ export default class State {
     this.start = snapshot.start;
     this.end = snapshot.end;
     this.isType = snapshot.isType;
+    this.error = snapshot.error;
   }
 }

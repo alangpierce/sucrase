@@ -1027,7 +1027,10 @@ export default function readWord(): void {
       // \u
       state.pos += 2;
       if (input.charCodeAt(state.pos) === charCodes.leftCurlyBrace) {
-        while (input.charCodeAt(state.pos) !== charCodes.leftCurlyBrace) {
+        while (
+          state.pos < input.length &&
+          input.charCodeAt(state.pos) !== charCodes.rightCurlyBrace
+        ) {
           state.pos++;
         }
         state.pos++;

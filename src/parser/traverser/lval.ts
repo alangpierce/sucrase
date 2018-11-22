@@ -64,7 +64,7 @@ export function parseBindingAtom(isBlockScope: boolean): void {
       return;
 
     default:
-      throw unexpected();
+      unexpected();
   }
 }
 
@@ -79,7 +79,7 @@ export function parseBindingList(
   let hasRemovedComma = false;
   const firstItemTokenIndex = state.tokens.length;
 
-  while (!eat(close)) {
+  while (!eat(close) && !state.error) {
     if (first) {
       first = false;
     } else {

@@ -977,11 +977,11 @@ export function flowStartParseAsyncArrowFromCallExpression(): void {
 //    parse the rest, make sure the rest is an arrow function, and go from
 //    there
 // 3. This is neither. Just call the super method
-export function flowParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Function): boolean {
+export function flowParseMaybeAssign(noIn: boolean = false, isWithinParens: boolean): boolean {
   let jsxError = null;
   if (match(tt.lessThan)) {
     const snapshot = state.snapshot();
-    const wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
+    const wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
     if (state.error) {
       jsxError = state.error;
       state.restoreFromSnapshot(snapshot);
@@ -995,7 +995,7 @@ export function flowParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Fun
     const oldIsType = pushTypeContext(0);
     flowParseTypeParameterDeclaration();
     popTypeContext(oldIsType);
-    const wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
+    const wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
 
     if (state.error) {
       state.error = jsxError;
@@ -1007,7 +1007,7 @@ export function flowParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Fun
     unexpected();
   }
 
-  return baseParseMaybeAssign(noIn, afterLeftParse);
+  return baseParseMaybeAssign(noIn, isWithinParens);
 }
 
 // handle return types for arrow functions

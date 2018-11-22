@@ -379,4 +379,15 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("allows type casts in function invocations", () => {
+    assertFlowResult(
+      `
+      foo(n : number);
+    `,
+      `"use strict";
+      foo(n );
+    `,
+    );
+  });
 });

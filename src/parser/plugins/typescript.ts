@@ -1313,7 +1313,7 @@ export function tsStartParseAsyncArrowFromCallExpression(): void {
 }
 
 // Returns true if the expression was an arrow function.
-export function tsParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Function): boolean {
+export function tsParseMaybeAssign(noIn: boolean = false, isWithinParens: boolean): boolean {
   // Note: When the JSX plugin is on, type assertions (`<T> x`) aren't valid syntax.
 
   let jsxError: SyntaxError | null = null;
@@ -1321,7 +1321,7 @@ export function tsParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Funct
   if (match(tt.lessThan) && isJSXEnabled) {
     // Prefer to parse JSX if possible. But may be an arrow fn.
     const snapshot = state.snapshot();
-    const wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
+    const wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
     if (state.error) {
       jsxError = state.error;
       state.restoreFromSnapshot(snapshot);
@@ -1332,7 +1332,7 @@ export function tsParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Funct
   }
 
   if (jsxError === null && !match(tt.lessThan)) {
-    return baseParseMaybeAssign(noIn, afterLeftParse);
+    return baseParseMaybeAssign(noIn, isWithinParens);
   }
 
   // Either way, we're looking at a '<': tt.typeParameterStart or relational.
@@ -1343,7 +1343,7 @@ export function tsParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Funct
   const oldIsType = pushTypeContext(0);
   tsParseTypeParameters();
   popTypeContext(oldIsType);
-  const wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
+  const wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
   if (!wasArrow) {
     unexpected();
   }
@@ -1362,7 +1362,7 @@ export function tsParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Funct
     state.restoreFromSnapshot(snapshot);
     // This will start with a type assertion (via parseMaybeUnary).
     // But don't directly call `tsParseTypeAssertion` because we want to handle any binary after it.
-    return baseParseMaybeAssign(noIn, afterLeftParse);
+    return baseParseMaybeAssign(noIn, isWithinParens);
   }
   return wasArrow;
 }

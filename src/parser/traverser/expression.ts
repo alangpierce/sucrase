@@ -56,14 +56,7 @@ import {
 } from "../tokenizer/index";
 import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
-import {
-  getNextContextId,
-  isFlowEnabled,
-  isJSXEnabled,
-  isTypeScriptEnabled,
-  raise,
-  state,
-} from "./base";
+import {getNextContextId, isFlowEnabled, isJSXEnabled, isTypeScriptEnabled, state} from "./base";
 import {parseMaybeDefault, parseRest, parseSpread} from "./lval";
 import {
   parseBlock,
@@ -272,7 +265,7 @@ export function baseParseSubscripts(startPos: number, noCalls: boolean | null = 
   const stopState = new StopState(false);
   do {
     parseSubscript(startPos, noCalls, stopState);
-  } while (!stopState.stop);
+  } while (!stopState.stop && !state.error);
 }
 
 function parseSubscript(startPos: number, noCalls: boolean | null, stopState: StopState): void {
@@ -356,7 +349,7 @@ export function atPossibleAsync(): boolean {
 
 export function parseCallExpressionArguments(close: TokenType): void {
   let first = true;
-  while (!eat(close)) {
+  while (!eat(close) && !state.error) {
     if (first) {
       first = false;
     } else {
@@ -518,7 +511,8 @@ export function parseExprAtom(): boolean {
     }
 
     default:
-      throw unexpected();
+      unexpected();
+      return false;
   }
 }
 
@@ -572,7 +566,7 @@ function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
   let spreadStart = 0;
   let optionalCommaStart = 0;
 
-  while (!match(tt.parenR)) {
+  while (!match(tt.parenR) && !state.error) {
     if (first) {
       first = false;
     } else {
@@ -589,7 +583,7 @@ function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
       parseParenItem();
 
       if (match(tt.comma) && lookaheadType() === tt.parenR) {
-        raise(state.start, "A trailing comma is not permitted after the rest element");
+        unexpected(state.start, "A trailing comma is not permitted after the rest element");
       }
 
       break;
@@ -679,7 +673,7 @@ export function parseTemplate(): void {
   nextTemplateToken();
   // Finish quasi, read ${
   nextTemplateToken();
-  while (!match(tt.backQuote)) {
+  while (!match(tt.backQuote) && !state.error) {
     expect(tt.dollarBraceL);
     parseExpression();
     // Finish }, read quasi
@@ -699,7 +693,7 @@ export function parseObj(isPattern: boolean, isBlockScope: boolean): void {
   next();
   state.tokens[state.tokens.length - 1].contextId = contextId;
 
-  while (!eat(tt.braceR)) {
+  while (!eat(tt.braceR) && !state.error) {
     if (first) {
       first = false;
     } else {
@@ -931,7 +925,7 @@ export function parseFunctionBody(
 
 function parseExprList(close: TokenType, allowEmpty: boolean | null = null): void {
   let first = true;
-  while (!eat(close)) {
+  while (!eat(close) && !state.error) {
     if (first) {
       first = false;
     } else {

@@ -128,7 +128,7 @@ function flowParseDeclare(): void {
   } else if (match(tt._export)) {
     flowParseDeclareExportDeclaration();
   } else {
-    throw unexpected();
+    unexpected();
   }
 }
 
@@ -148,7 +148,7 @@ function flowParseDeclareModule(): void {
   }
 
   expect(tt.braceL);
-  while (!match(tt.braceR)) {
+  while (!match(tt.braceR) && !state.error) {
     if (match(tt._import)) {
       next();
       parseImport();
@@ -186,7 +186,7 @@ function flowParseDeclareExportDeclaration(): void {
   ) {
     parseExport();
   } else {
-    throw unexpected();
+    unexpected();
   }
 }
 
@@ -313,7 +313,7 @@ export function flowParseTypeParameterDeclaration(): void {
     if (!match(tt.greaterThan)) {
       expect(tt.comma);
     }
-  } while (!match(tt.greaterThan));
+  } while (!match(tt.greaterThan) && !state.error);
   expect(tt.greaterThan);
   popTypeContext(oldIsType);
 }
@@ -321,7 +321,7 @@ export function flowParseTypeParameterDeclaration(): void {
 function flowParseTypeParameterInstantiation(): void {
   const oldIsType = pushTypeContext(0);
   expect(tt.lessThan);
-  while (!match(tt.greaterThan)) {
+  while (!match(tt.greaterThan) && !state.error) {
     flowParseType();
     if (!match(tt.greaterThan)) {
       expect(tt.comma);
@@ -380,7 +380,7 @@ function flowParseObjectTypeMethodish(): void {
   }
 
   expect(tt.parenL);
-  while (!match(tt.parenR) && !match(tt.ellipsis)) {
+  while (!match(tt.parenR) && !match(tt.ellipsis) && !state.error) {
     flowParseFunctionTypeParam();
     if (!match(tt.parenR)) {
       expect(tt.comma);
@@ -408,7 +408,7 @@ function flowParseObjectType(allowStatic: boolean, allowExact: boolean, allowPro
     endDelim = tt.braceR;
   }
 
-  while (!match(endDelim)) {
+  while (!match(endDelim) && !state.error) {
     if (allowProto && isContextual(ContextualKeyword._proto)) {
       const lookahead = lookaheadType();
       if (lookahead !== tt.colon && lookahead !== tt.question) {
@@ -525,7 +525,7 @@ function flowParseFunctionTypeParam(): void {
 }
 
 function flowParseFunctionTypeParams(): void {
-  while (!match(tt.parenR) && !match(tt.ellipsis)) {
+  while (!match(tt.parenR) && !match(tt.ellipsis) && !state.error) {
     flowParseFunctionTypeParam();
     if (!match(tt.parenR)) {
       expect(tt.comma);
@@ -636,7 +636,7 @@ function flowParsePrimaryType(): void {
       }
   }
 
-  throw unexpected();
+  unexpected();
 }
 
 function flowParsePostfixType(): void {
@@ -734,17 +734,13 @@ export function flowParseSubscript(
     return;
   } else if (!noCalls && match(tt.lessThan)) {
     const snapshot = state.snapshot();
-    try {
-      flowParseTypeParameterInstantiation();
-      expect(tt.parenL);
-      parseCallExpressionArguments(tt.parenR);
+    flowParseTypeParameterInstantiation();
+    expect(tt.parenL);
+    parseCallExpressionArguments(tt.parenR);
+    if (state.error) {
+      state.restoreFromSnapshot(snapshot);
+    } else {
       return;
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        state.restoreFromSnapshot(snapshot);
-      } else {
-        throw e;
-      }
     }
   }
   baseParseSubscript(startPos, noCalls, stopState);
@@ -753,14 +749,9 @@ export function flowParseSubscript(
 export function flowStartParseNewArguments(): void {
   if (match(tt.lessThan)) {
     const snapshot = state.snapshot();
-    try {
-      flowParseTypeParameterInstantiation();
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        state.restoreFromSnapshot(snapshot);
-      } else {
-        throw e;
-      }
+    flowParseTypeParameterInstantiation();
+    if (state.error) {
+      state.restoreFromSnapshot(snapshot);
     }
   }
 }
@@ -994,29 +985,24 @@ export function flowParseMaybeAssign(noIn?: boolean | null, afterLeftParse?: Fun
   let jsxError = null;
   if (match(tt.lessThan)) {
     const snapshot = state.snapshot();
-    try {
-      return baseParseMaybeAssign(noIn, afterLeftParse);
-    } catch (err) {
-      if (err instanceof SyntaxError) {
-        state.restoreFromSnapshot(snapshot);
-        state.type = tt.typeParameterStart;
-        jsxError = err;
-      } else {
-        // istanbul ignore next: no such error is expected
-        throw err;
-      }
+    const wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
+    if (state.error) {
+      jsxError = state.error;
+      state.restoreFromSnapshot(snapshot);
+      state.type = tt.typeParameterStart;
+    } else {
+      return wasArrow;
     }
   }
 
   if (jsxError != null || match(tt.lessThan)) {
-    let wasArrow = false;
-    try {
-      const oldIsType = pushTypeContext(0);
-      flowParseTypeParameterDeclaration();
-      popTypeContext(oldIsType);
-      wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
-    } catch (err) {
-      throw jsxError || err;
+    const oldIsType = pushTypeContext(0);
+    flowParseTypeParameterDeclaration();
+    popTypeContext(oldIsType);
+    const wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
+
+    if (state.error) {
+      state.error = jsxError;
     }
 
     if (wasArrow) {
@@ -1033,21 +1019,17 @@ export function flowParseArrow(): boolean {
   if (match(tt.colon)) {
     const oldIsType = pushTypeContext(0);
     const snapshot = state.snapshot();
-    try {
-      const oldNoAnonFunctionType = state.noAnonFunctionType;
-      state.noAnonFunctionType = true;
-      flowParseTypeAndPredicateInitialiser();
-      state.noAnonFunctionType = oldNoAnonFunctionType;
 
-      if (canInsertSemicolon()) unexpected();
-      if (!match(tt.arrow)) unexpected();
-    } catch (err) {
-      if (err instanceof SyntaxError) {
-        state.restoreFromSnapshot(snapshot);
-      } else {
-        // istanbul ignore next: no such error is expected
-        throw err;
-      }
+    const oldNoAnonFunctionType = state.noAnonFunctionType;
+    state.noAnonFunctionType = true;
+    flowParseTypeAndPredicateInitialiser();
+    state.noAnonFunctionType = oldNoAnonFunctionType;
+
+    if (canInsertSemicolon()) unexpected();
+    if (!match(tt.arrow)) unexpected();
+
+    if (state.error) {
+      state.restoreFromSnapshot(snapshot);
     }
     popTypeContext(oldIsType);
   }
@@ -1061,22 +1043,22 @@ export function flowParseSubscripts(startPos: number, noCalls?: boolean | null):
   ) {
     const snapshot = state.snapshot();
     let error;
-    try {
-      const wasArrow = parseAsyncArrowWithTypeParameters(startPos);
-      if (wasArrow) {
-        return;
-      }
-    } catch (e) {
-      error = e;
+
+    const wasArrow = parseAsyncArrowWithTypeParameters(startPos);
+    if (wasArrow) {
+      return;
+    }
+    if (state.error) {
+      error = state.error;
     }
 
     state.restoreFromSnapshot(snapshot);
-    try {
-      baseParseSubscripts(startPos, noCalls);
-      return;
-    } catch (e) {
-      throw error || e;
+
+    baseParseSubscripts(startPos, noCalls);
+    if (state.error) {
+      state.error = error || state.error;
     }
+    return;
   }
 
   baseParseSubscripts(startPos, noCalls);

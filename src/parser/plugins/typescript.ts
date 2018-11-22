@@ -148,7 +148,7 @@ function tsIsListTerminator(kind: ParsingContext): boolean {
 }
 
 function tsParseList(kind: ParsingContext, parseElement: () => void): void {
-  while (!tsIsListTerminator(kind)) {
+  while (!tsIsListTerminator(kind) && !state.error) {
     // Skipping "parseListElement" from the TS source since that's just for error handling.
     parseElement();
   }
@@ -163,7 +163,7 @@ function tsParseDelimitedList(kind: ParsingContext, parseElement: () => void): v
  * If expectSuccess, parseElement should always return a defined value.
  */
 function tsParseDelimitedListWorker(kind: ParsingContext, parseElement: () => void): void {
-  while (true) {
+  while (!state.error) {
     if (tsIsListTerminator(kind)) {
       break;
     }
@@ -500,7 +500,7 @@ function tsParseNonArrayType(): void {
       break;
   }
 
-  throw unexpected();
+  unexpected();
 }
 
 function tsParseArrayTypeOrHigher(): void {
@@ -568,7 +568,7 @@ function tsSkipParameterStart(): boolean {
   if (match(tt.braceL) || match(tt.bracketL)) {
     let depth = 1;
     next();
-    while (depth > 0) {
+    while (depth > 0 && !state.error) {
       if (match(tt.braceL) || match(tt.bracketL)) {
         depth++;
       } else if (match(tt.braceR) || match(tt.bracketR)) {
@@ -803,7 +803,7 @@ function tsParseExternalModuleReference(): void {
   expectContextual(ContextualKeyword._require);
   expect(tt.parenL);
   if (!match(tt.string)) {
-    throw unexpected();
+    unexpected();
   }
   parseLiteral();
   expect(tt.parenR);
@@ -821,15 +821,12 @@ function tsLookAhead<T>(f: () => T): T {
 // Returns true if parsing was successful.
 function tsTryParseAndCatch<T>(f: () => void): boolean {
   const snapshot = state.snapshot();
-  try {
-    f();
+  f();
+  if (state.error) {
+    state.restoreFromSnapshot(snapshot);
+    return false;
+  } else {
     return true;
-  } catch (e) {
-    if (e instanceof SyntaxError) {
-      state.restoreFromSnapshot(snapshot);
-      return false;
-    }
-    throw e;
   }
 }
 
@@ -1331,17 +1328,13 @@ export function tsParseMaybeAssign(
   if (match(tt.lessThan) && isJSXEnabled) {
     // Prefer to parse JSX if possible. But may be an arrow fn.
     const snapshot = state.snapshot();
-    try {
-      return baseParseMaybeAssign(noIn, afterLeftParse);
-    } catch (err) {
-      if (!(err instanceof SyntaxError)) {
-        // istanbul ignore next: no such error is expected
-        throw err;
-      }
-
+    const wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
+    if (state.error) {
+      jsxError = state.error;
       state.restoreFromSnapshot(snapshot);
       state.type = tt.typeParameterStart;
-      jsxError = err;
+    } else {
+      return wasArrow;
     }
   }
 
@@ -1351,25 +1344,21 @@ export function tsParseMaybeAssign(
 
   // Either way, we're looking at a '<': tt.typeParameterStart or relational.
 
-  let wasArrow = false;
   const snapshot = state.snapshot();
-  try {
-    // This is similar to TypeScript's `tryParseParenthesizedArrowFunctionExpression`.
-    const oldIsType = pushTypeContext(0);
-    tsParseTypeParameters();
-    popTypeContext(oldIsType);
-    wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
-    if (!wasArrow) {
-      unexpected(); // Go to the catch block (needs a SyntaxError).
-    }
-  } catch (err) {
-    if (!(err instanceof SyntaxError)) {
-      // istanbul ignore next: no such error is expected
-      throw err;
-    }
 
+  // This is similar to TypeScript's `tryParseParenthesizedArrowFunctionExpression`.
+  const oldIsType = pushTypeContext(0);
+  tsParseTypeParameters();
+  popTypeContext(oldIsType);
+  const wasArrow = baseParseMaybeAssign(noIn, afterLeftParse);
+  if (!wasArrow) {
+    unexpected();
+  }
+
+  if (state.error) {
     if (jsxError) {
-      throw jsxError;
+      state.error = jsxError;
+      return false;
     }
 
     // Try parsing a type cast instead of an arrow function.
@@ -1390,17 +1379,13 @@ export function tsParseArrow(): boolean {
     // This is different from how the TS parser does it.
     // TS uses lookahead. Babylon parses it as a parenthesized expression and converts.
     const snapshot = state.snapshot();
-    try {
-      tsParseTypeOrTypePredicateAnnotation(tt.colon);
-      if (canInsertSemicolon()) unexpected();
-      if (!match(tt.arrow)) unexpected();
-    } catch (err) {
-      if (err instanceof SyntaxError) {
-        state.restoreFromSnapshot(snapshot);
-      } else {
-        // istanbul ignore next: no such error is expected
-        throw err;
-      }
+
+    tsParseTypeOrTypePredicateAnnotation(tt.colon);
+    if (canInsertSemicolon()) unexpected();
+    if (!match(tt.arrow)) unexpected();
+
+    if (state.error) {
+      state.restoreFromSnapshot(snapshot);
     }
   }
   return eat(tt.arrow);

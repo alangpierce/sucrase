@@ -10,7 +10,7 @@ import {
   Token,
 } from "../../tokenizer/index";
 import {TokenType as tt} from "../../tokenizer/types";
-import {input, isTypeScriptEnabled, raise, state} from "../../traverser/base";
+import {input, isTypeScriptEnabled, state} from "../../traverser/base";
 import {parseExpression, parseMaybeAssign} from "../../traverser/expression";
 import {expect, unexpected} from "../../traverser/util";
 import {charCodes} from "../../util/charcodes";
@@ -21,7 +21,8 @@ import {tsTryParseJSXTypeArgument} from "../typescript";
 function jsxReadToken(): void {
   for (;;) {
     if (state.pos >= input.length) {
-      raise(state.start, "Unterminated JSX contents");
+      unexpected(state.start, "Unterminated JSX contents");
+      return;
     }
 
     const ch = input.charCodeAt(state.pos);
@@ -51,7 +52,8 @@ function jsxReadString(quote: number): void {
   state.pos++;
   for (;;) {
     if (state.pos >= input.length) {
-      raise(state.start, "Unterminated string constant");
+      unexpected(state.start, "Unterminated string constant");
+      return;
     }
 
     const ch = input.charCodeAt(state.pos);
@@ -76,6 +78,7 @@ function jsxReadWord(): void {
   do {
     if (state.pos > input.length) {
       unexpected(null, "Unexpectedly reached the end of input.");
+      return;
     }
     ch = input.charCodeAt(++state.pos);
   } while (isIdentifierChar(ch) || ch === charCodes.dash);
@@ -127,7 +130,7 @@ function jsxParseAttributeValue(): void {
       return;
 
     default:
-      throw raise(state.start, "JSX value should be either an expression or a quoted JSX text");
+      unexpected(state.start, "JSX value should be either an expression or a quoted JSX text");
   }
 }
 
@@ -182,7 +185,7 @@ function jsxParseOpeningElement(): boolean {
   if (isTypeScriptEnabled) {
     tsTryParseJSXTypeArgument();
   }
-  while (!match(tt.slash) && !match(tt.jsxTagEnd)) {
+  while (!match(tt.slash) && !match(tt.jsxTagEnd) && !state.error) {
     jsxParseAttribute();
   }
   const isSelfClosing = match(tt.slash);
@@ -239,7 +242,8 @@ function jsxParseElementAt(): void {
 
         // istanbul ignore next - should never happen
         default:
-          throw unexpected();
+          unexpected();
+          return;
       }
     }
   }

@@ -415,4 +415,37 @@ describe("type transforms", () => {
     `,
     );
   });
+
+  it("handles an ambiguous consequent or arrow function", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      a ? (b) : c;
+    `,
+      `"use strict";
+      a ? (b) : c;
+    `,
+    );
+  });
+
+  it("handles an ambiguous consequent or arrow function without a semicolon", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      a ? (b) : c
+    `,
+      `"use strict";
+      a ? (b) : c
+    `,
+    );
+  });
+
+  it("handles an ambiguous consequent or arrow function with an invalid non-type", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      a ? (b) : [1 + 1];
+    `,
+      `"use strict";
+      a ? (b) : [1 + 1];
+    `,
+    );
+  });
 });

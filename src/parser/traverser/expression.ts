@@ -88,13 +88,6 @@ export class StopState {
 // the functions will simply let the function (s) below them parse,
 // and, *if* the syntactic construct they handle is present, wrap
 // the AST node that the inner parser gave them in another node.
-
-// Parse a full expression. The optional arguments are used to
-// forbid the `in` operator (in for loops initialization expressions)
-// and provide reference for storing '=' operator inside shorthand
-// property assignment in contexts where both object expression
-// and object pattern might appear (so it's possible to raise
-// delayed syntax error at correct position).
 export function parseExpression(noIn: boolean = false): void {
   parseMaybeAssign(noIn);
   if (match(tt.comma)) {
@@ -104,25 +97,29 @@ export function parseExpression(noIn: boolean = false): void {
   }
 }
 
-export function parseMaybeAssign(noIn: boolean = false, afterLeftParse?: Function): boolean {
+/**
+ * noIn is used when parsing a for loop so that we don't interpret a following "in" as the binary
+ * operatior.
+ * isWithinParens is used to indicate that we're parsing something that might be a comma expression
+ * or might be an arrow function or might be a Flow type assertion (which requires explicit parens).
+ * In these cases, we should allow : and ?: after the initial "left" part.
+ */
+export function parseMaybeAssign(noIn: boolean = false, isWithinParens: boolean = false): boolean {
   if (isTypeScriptEnabled) {
-    return tsParseMaybeAssign(noIn, afterLeftParse);
+    return tsParseMaybeAssign(noIn, isWithinParens);
   } else if (isFlowEnabled) {
-    return flowParseMaybeAssign(noIn, afterLeftParse);
+    return flowParseMaybeAssign(noIn, isWithinParens);
   } else {
-    return baseParseMaybeAssign(noIn, afterLeftParse);
+    return baseParseMaybeAssign(noIn, isWithinParens);
   }
 }
 
 // Parse an assignment expression. This includes applications of
 // operators like `+=`.
 // Returns true if the expression was an arrow function.
-export function baseParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Function): boolean {
+export function baseParseMaybeAssign(noIn: boolean, isWithinParens: boolean): boolean {
   if (match(tt._yield)) {
     parseYield();
-    if (afterLeftParse) {
-      afterLeftParse();
-    }
     return false;
   }
 
@@ -131,8 +128,8 @@ export function baseParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Fun
   }
 
   const wasArrow = parseMaybeConditional(noIn);
-  if (afterLeftParse) {
-    afterLeftParse();
+  if (isWithinParens) {
+    parseParenItem();
   }
   if (state.type & TokenType.IS_ASSIGN) {
     next();
@@ -145,24 +142,23 @@ export function baseParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Fun
 // Parse a ternary conditional (`?:`) operator.
 // Returns true if the expression was an arrow function.
 function parseMaybeConditional(noIn: boolean): boolean {
-  const startPos = state.start;
   const wasArrow = parseExprOps(noIn);
   if (wasArrow) {
     return true;
   }
-  parseConditional(noIn, startPos);
+  parseConditional(noIn);
   return false;
 }
 
-function parseConditional(noIn: boolean, startPos: number): void {
+function parseConditional(noIn: boolean): void {
   if (isTypeScriptEnabled || isFlowEnabled) {
-    typedParseConditional(noIn, startPos);
+    typedParseConditional(noIn);
   } else {
-    baseParseConditional(noIn, startPos);
+    baseParseConditional(noIn);
   }
 }
 
-export function baseParseConditional(noIn: boolean, startPos: number): void {
+export function baseParseConditional(noIn: boolean): void {
   if (eat(tt.question)) {
     parseMaybeAssign();
     expect(tt.colon);
@@ -554,10 +550,7 @@ function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
   const startTokenIndex = state.tokens.length;
   expect(tt.parenL);
 
-  const exprList = [];
   let first = true;
-  let spreadStart = 0;
-  let optionalCommaStart = 0;
 
   while (!match(tt.parenR) && !state.error) {
     if (first) {
@@ -565,23 +558,16 @@ function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
     } else {
       expect(tt.comma);
       if (match(tt.parenR)) {
-        optionalCommaStart = state.start;
         break;
       }
     }
 
     if (match(tt.ellipsis)) {
-      spreadStart = state.start;
       parseRest(false /* isBlockScope */);
       parseParenItem();
-
-      if (match(tt.comma) && lookaheadType() === tt.parenR) {
-        unexpected(state.start, "A trailing comma is not permitted after the rest element");
-      }
-
       break;
     } else {
-      exprList.push(parseMaybeAssign(false, parseParenItem));
+      parseMaybeAssign(false, true);
     }
   }
 
@@ -595,7 +581,7 @@ function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
       state.restoreFromSnapshot(snapshot);
       // We don't need to worry about functionStart for arrow functions, so just use something.
       const functionStart = state.start;
-      // Don't specify a context ID because arrow function don't need a context ID.
+      // Don't specify a context ID because arrow functions don't need a context ID.
       parseFunctionParams();
       parseArrow();
       parseArrowExpression(functionStart, startTokenIndex);
@@ -603,12 +589,6 @@ function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
     }
   }
 
-  if (optionalCommaStart) {
-    unexpected(optionalCommaStart);
-  }
-  if (spreadStart) {
-    unexpected(spreadStart);
-  }
   return false;
 }
 
@@ -936,7 +916,7 @@ function parseExprListItem(allowEmpty: boolean): void {
     parseSpread();
     parseParenItem();
   } else {
-    parseMaybeAssign(false, parseParenItem);
+    parseMaybeAssign(false, true);
   }
 }
 

@@ -10,13 +10,13 @@ import {tsParseTypeAnnotation} from "./typescript";
  */
 
 // An apparent conditional expression could actually be an optional parameter in an arrow function.
-export function typedParseConditional(noIn: boolean, startPos: number): void {
+export function typedParseConditional(noIn: boolean): void {
   // If we see ?:, this can't possibly be a valid conditional. typedParseParenItem will be called
   // later to finish off the arrow parameter.
   if (match(tt.question) && lookaheadType() === tt.colon) {
     return;
   }
-  baseParseConditional(noIn, startPos);
+  baseParseConditional(noIn);
 }
 
 // Note: These "type casts" are *not* valid TS expressions.

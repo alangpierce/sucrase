@@ -703,4 +703,24 @@ describe("sucrase", () => {
       {transforms: ["jsx"]},
     );
   });
+
+  it("handles an arrow function with trailing comma params", () => {
+    assertResult(
+      `
+      const f = (
+        x: number,
+      ) => {
+        return x + 1;
+      }
+    `,
+      `
+      const f = (
+        x,
+      ) => {
+        return x + 1;
+      }
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
 });

@@ -751,8 +751,7 @@ function tsParseEnumDeclaration(): void {
 
 function tsParseModuleBlock(): void {
   expect(tt.braceL);
-  // Inside of a module block is considered "top-level", meaning it can have imports and exports.
-  parseBlockBody(/* topLevel */ true, /* end */ tt.braceR);
+  parseBlockBody(/* end */ tt.braceR);
 }
 
 function tsParseModuleOrNamespaceDeclaration(): void {
@@ -1111,7 +1110,7 @@ export function tsParseSubscript(startPos: number, noCalls: boolean, stopState: 
       }
       tsParseTypeArguments();
       if (!noCalls && eat(tt.parenL)) {
-        parseCallExpressionArguments(tt.parenR);
+        parseCallExpressionArguments();
       } else if (match(tt.backQuote)) {
         // Tagged template with a type argument.
         parseTemplate();

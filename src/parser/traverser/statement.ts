@@ -73,7 +73,7 @@ import {
 } from "./util";
 
 export function parseTopLevel(): File {
-  parseBlockBody(true, tt.eof);
+  parseBlockBody(tt.eof);
   state.scopes.push(new Scope(0, state.tokens.length, true));
   return new File(state.tokens, state.scopes);
 }
@@ -85,7 +85,7 @@ export function parseTopLevel(): File {
 // `if (foo) /blah/.exec(foo)`, where looking at the previous token
 // does not help.
 
-export function parseStatement(declaration: boolean, topLevel: boolean = false): void {
+export function parseStatement(declaration: boolean): void {
   if (isFlowEnabled) {
     if (flowTryParseStatement()) {
       return;
@@ -94,10 +94,10 @@ export function parseStatement(declaration: boolean, topLevel: boolean = false):
   if (match(tt.at)) {
     parseDecorators();
   }
-  parseStatementContent(declaration, topLevel);
+  parseStatementContent(declaration);
 }
 
-function parseStatementContent(declaration: boolean, topLevel: boolean): void {
+function parseStatementContent(declaration: boolean): void {
   if (isTypeScriptEnabled) {
     if (tsTryParseStatementContent()) {
       return;
@@ -257,7 +257,7 @@ function parseMaybeDecoratorArguments(): void {
 
 export function baseParseMaybeDecoratorArguments(): void {
   if (eat(tt.parenL)) {
-    parseCallExpressionArguments(tt.parenR);
+    parseCallExpressionArguments();
   }
 }
 
@@ -470,7 +470,7 @@ export function parseBlock(
   if (contextId) {
     state.tokens[state.tokens.length - 1].contextId = contextId;
   }
-  parseBlockBody(false, tt.braceR);
+  parseBlockBody(tt.braceR);
   if (contextId) {
     state.tokens[state.tokens.length - 1].contextId = contextId;
   }
@@ -478,9 +478,9 @@ export function parseBlock(
   state.scopes.push(new Scope(startTokenIndex, endTokenIndex, isFunctionScope));
 }
 
-export function parseBlockBody(topLevel: boolean, end: TokenType): void {
+export function parseBlockBody(end: TokenType): void {
   while (!eat(end) && !state.error) {
-    parseStatement(true, topLevel);
+    parseStatement(true);
   }
 }
 

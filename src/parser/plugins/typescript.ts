@@ -1062,7 +1062,7 @@ export function tsIsDeclarationStart(): boolean {
 export function tsParseFunctionBodyAndFinish(
   functionStart: number,
   isGenerator: boolean,
-  allowExpressionBody: boolean | null = null,
+  allowExpressionBody: boolean = false,
   funcContextId?: number,
 ): void {
   // For arrow functions, `parseArrow` handles the return type itself.
@@ -1091,11 +1091,7 @@ export function tsParseFunctionBodyAndFinish(
   parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);
 }
 
-export function tsParseSubscript(
-  startPos: number,
-  noCalls: boolean | null,
-  stopState: StopState,
-): void {
+export function tsParseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {
   if (!hasPrecedingLineBreak() && eat(tt.bang)) {
     state.tokens[state.tokens.length - 1].type = tt.nonNullAssertion;
     return;
@@ -1317,10 +1313,7 @@ export function tsStartParseAsyncArrowFromCallExpression(): void {
 }
 
 // Returns true if the expression was an arrow function.
-export function tsParseMaybeAssign(
-  noIn: boolean | null = null,
-  afterLeftParse?: Function,
-): boolean {
+export function tsParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Function): boolean {
   // Note: When the JSX plugin is on, type assertions (`<T> x`) aren't valid syntax.
 
   let jsxError: SyntaxError | null = null;

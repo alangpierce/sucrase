@@ -71,8 +71,8 @@ export function parseBindingAtom(isBlockScope: boolean): void {
 export function parseBindingList(
   close: TokenType,
   isBlockScope: boolean,
-  allowEmpty?: boolean,
-  allowModifiers: boolean | null = null,
+  allowEmpty: boolean = false,
+  allowModifiers: boolean = false,
 ): void {
   let first = true;
 
@@ -108,7 +108,7 @@ export function parseBindingList(
   }
 }
 
-function parseAssignableListItem(allowModifiers: boolean | null, isBlockScope: boolean): void {
+function parseAssignableListItem(allowModifiers: boolean, isBlockScope: boolean): void {
   if (allowModifiers) {
     tsParseAccessModifier();
     tsParseModifier([ContextualKeyword._readonly]);

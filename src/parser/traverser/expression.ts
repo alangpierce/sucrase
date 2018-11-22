@@ -94,8 +94,8 @@ export class StopState {
 // and provide reference for storing '=' operator inside shorthand
 // property assignment in contexts where both object expression
 // and object pattern might appear (so it's possible to raise
-// delayed syntax error at correct position).e
-export function parseExpression(noIn?: boolean): void {
+// delayed syntax error at correct position).
+export function parseExpression(noIn: boolean = false): void {
   parseMaybeAssign(noIn);
   if (match(tt.comma)) {
     while (eat(tt.comma)) {
@@ -104,7 +104,7 @@ export function parseExpression(noIn?: boolean): void {
   }
 }
 
-export function parseMaybeAssign(noIn: boolean | null = null, afterLeftParse?: Function): boolean {
+export function parseMaybeAssign(noIn: boolean = false, afterLeftParse?: Function): boolean {
   if (isTypeScriptEnabled) {
     return tsParseMaybeAssign(noIn, afterLeftParse);
   } else if (isFlowEnabled) {
@@ -117,10 +117,7 @@ export function parseMaybeAssign(noIn: boolean | null = null, afterLeftParse?: F
 // Parse an assignment expression. This includes applications of
 // operators like `+=`.
 // Returns true if the expression was an arrow function.
-export function baseParseMaybeAssign(
-  noIn: boolean | null = null,
-  afterLeftParse?: Function,
-): boolean {
+export function baseParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Function): boolean {
   if (match(tt._yield)) {
     parseYield();
     if (afterLeftParse) {
@@ -147,7 +144,7 @@ export function baseParseMaybeAssign(
 
 // Parse a ternary conditional (`?:`) operator.
 // Returns true if the expression was an arrow function.
-function parseMaybeConditional(noIn: boolean | null): boolean {
+function parseMaybeConditional(noIn: boolean): boolean {
   const startPos = state.start;
   const wasArrow = parseExprOps(noIn);
   if (wasArrow) {
@@ -157,7 +154,7 @@ function parseMaybeConditional(noIn: boolean | null): boolean {
   return false;
 }
 
-function parseConditional(noIn: boolean | null, startPos: number): void {
+function parseConditional(noIn: boolean, startPos: number): void {
   if (isTypeScriptEnabled || isFlowEnabled) {
     typedParseConditional(noIn, startPos);
   } else {
@@ -165,7 +162,7 @@ function parseConditional(noIn: boolean | null, startPos: number): void {
   }
 }
 
-export function baseParseConditional(noIn: boolean | null, startPos: number): void {
+export function baseParseConditional(noIn: boolean, startPos: number): void {
   if (eat(tt.question)) {
     parseMaybeAssign();
     expect(tt.colon);
@@ -175,7 +172,7 @@ export function baseParseConditional(noIn: boolean | null, startPos: number): vo
 
 // Start the precedence parser.
 // Returns true if this was an arrow function
-function parseExprOps(noIn: boolean | null): boolean {
+function parseExprOps(noIn: boolean): boolean {
   const wasArrow = parseMaybeUnary();
   if (wasArrow) {
     return true;
@@ -189,7 +186,7 @@ function parseExprOps(noIn: boolean | null): boolean {
 // `minPrec` provides context that allows the function to stop and
 // defer further parser to one of its callers when it encounters an
 // operator that has a lower precedence than the set it is parsing.
-function parseExprOp(minPrec: number, noIn: boolean | null): void {
+function parseExprOp(minPrec: number, noIn: boolean): void {
   if (
     isTypeScriptEnabled &&
     (tt._in & TokenType.PRECEDENCE_MASK) > minPrec &&
@@ -253,7 +250,7 @@ export function parseExprSubscripts(): boolean {
   return false;
 }
 
-function parseSubscripts(startPos: number, noCalls: boolean | null = null): void {
+function parseSubscripts(startPos: number, noCalls: boolean = false): void {
   if (isFlowEnabled) {
     flowParseSubscripts(startPos, noCalls);
   } else {
@@ -261,14 +258,14 @@ function parseSubscripts(startPos: number, noCalls: boolean | null = null): void
   }
 }
 
-export function baseParseSubscripts(startPos: number, noCalls: boolean | null = null): void {
+export function baseParseSubscripts(startPos: number, noCalls: boolean = false): void {
   const stopState = new StopState(false);
   do {
     parseSubscript(startPos, noCalls, stopState);
   } while (!stopState.stop && !state.error);
 }
 
-function parseSubscript(startPos: number, noCalls: boolean | null, stopState: StopState): void {
+function parseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {
   if (isTypeScriptEnabled) {
     tsParseSubscript(startPos, noCalls, stopState);
   } else if (isFlowEnabled) {
@@ -279,11 +276,7 @@ function parseSubscript(startPos: number, noCalls: boolean | null, stopState: St
 }
 
 /** Set 'state.stop = true' to indicate that we should stop parsing subscripts. */
-export function baseParseSubscript(
-  startPos: number,
-  noCalls: boolean | null,
-  stopState: StopState,
-): void {
+export function baseParseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {
   if (!noCalls && eat(tt.doubleColon)) {
     parseNoCallExpr();
     stopState.stop = true;
@@ -870,7 +863,7 @@ export function parseMethod(
   parseFunctionBodyAndFinish(
     functionStart,
     isGenerator,
-    null /* allowExpressionBody */,
+    false /* allowExpressionBody */,
     funcContextId,
   );
   const endTokenIndex = state.tokens.length;
@@ -889,7 +882,7 @@ export function parseArrowExpression(functionStart: number, startTokenIndex: num
 export function parseFunctionBodyAndFinish(
   functionStart: number,
   isGenerator: boolean,
-  allowExpressionBody: boolean | null = null,
+  allowExpressionBody: boolean = false,
   funcContextId?: number,
 ): void {
   if (isTypeScriptEnabled) {
@@ -905,7 +898,7 @@ export function parseFunctionBodyAndFinish(
 export function parseFunctionBody(
   functionStart: number,
   isGenerator: boolean,
-  allowExpression: boolean | null,
+  allowExpression: boolean,
   funcContextId?: number,
 ): void {
   const isExpression = allowExpression && !match(tt.braceL);
@@ -923,7 +916,7 @@ export function parseFunctionBody(
 // nothing in between them to be parsed as `null` (which is needed
 // for array literals).
 
-function parseExprList(close: TokenType, allowEmpty: boolean | null = null): void {
+function parseExprList(close: TokenType, allowEmpty: boolean = false): void {
   let first = true;
   while (!eat(close) && !state.error) {
     if (first) {
@@ -936,7 +929,7 @@ function parseExprList(close: TokenType, allowEmpty: boolean | null = null): voi
   }
 }
 
-function parseExprListItem(allowEmpty: boolean | null): void {
+function parseExprListItem(allowEmpty: boolean): void {
   if (allowEmpty && match(tt.comma)) {
     // Empty item; nothing more to parse for this item.
   } else if (match(tt.ellipsis)) {

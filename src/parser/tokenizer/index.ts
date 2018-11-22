@@ -97,10 +97,10 @@ export class Token {
     this.end = state.end;
     this.isType = state.isType;
     this.identifierRole = null;
-    this.shadowsGlobal = null;
+    this.shadowsGlobal = false;
     this.contextId = null;
     this.rhsEndIndex = null;
-    this.isExpression = null;
+    this.isExpression = false;
   }
 
   type: TokenType;
@@ -109,10 +109,13 @@ export class Token {
   end: number;
   isType: boolean;
   identifierRole: IdentifierRole | null;
-  shadowsGlobal: boolean | null;
+  // Initially false for all tokens, then may be computed in a follow-up step that does scope
+  // analysis.
+  shadowsGlobal: boolean;
   contextId: number | null;
   rhsEndIndex: number | null;
-  isExpression: boolean | null;
+  // For class tokens, records if the class is a class expression or a class statement.
+  isExpression: boolean;
 }
 
 // ## Tokenizer

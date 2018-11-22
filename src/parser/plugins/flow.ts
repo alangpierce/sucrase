@@ -706,7 +706,7 @@ export function flowParseVariance(): void {
 export function flowParseFunctionBodyAndFinish(
   functionStart: number,
   isGenerator: boolean,
-  allowExpressionBody: boolean | null = null,
+  allowExpressionBody: boolean = false,
   funcContextId?: number,
 ): void {
   // For arrow functions, `parseArrow` handles the return type itself.
@@ -717,11 +717,7 @@ export function flowParseFunctionBodyAndFinish(
   parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);
 }
 
-export function flowParseSubscript(
-  startPos: number,
-  noCalls: boolean | null,
-  stopState: StopState,
-): void {
+export function flowParseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {
   if (match(tt.questionDot) && lookaheadType() === tt.lessThan) {
     if (noCalls) {
       stopState.stop = true;
@@ -981,7 +977,7 @@ export function flowStartParseAsyncArrowFromCallExpression(): void {
 //    parse the rest, make sure the rest is an arrow function, and go from
 //    there
 // 3. This is neither. Just call the super method
-export function flowParseMaybeAssign(noIn?: boolean | null, afterLeftParse?: Function): boolean {
+export function flowParseMaybeAssign(noIn: boolean = false, afterLeftParse?: Function): boolean {
   let jsxError = null;
   if (match(tt.lessThan)) {
     const snapshot = state.snapshot();
@@ -1036,7 +1032,7 @@ export function flowParseArrow(): boolean {
   return eat(tt.arrow);
 }
 
-export function flowParseSubscripts(startPos: number, noCalls?: boolean | null): void {
+export function flowParseSubscripts(startPos: number, noCalls: boolean = false): void {
   if (
     state.tokens[state.tokens.length - 1].contextualKeyword === ContextualKeyword._async &&
     match(tt.lessThan)

@@ -547,8 +547,8 @@ function parseVarHead(isBlockScope: boolean): void {
 export function parseFunction(
   functionStart: number,
   isStatement: boolean,
-  allowExpressionBody?: boolean,
-  optionalId?: boolean,
+  allowExpressionBody: boolean = false,
+  optionalId: boolean = false,
 ): void {
   let isGenerator = false;
   if (match(tt.star)) {
@@ -584,7 +584,7 @@ export function parseFunction(
   }
 }
 
-export function parseFunctionParams(allowModifiers?: boolean, funcContextId?: number): void {
+export function parseFunctionParams(allowModifiers: boolean = false, funcContextId?: number): void {
   if (isTypeScriptEnabled) {
     tsStartParseFunctionParams();
   } else if (isFlowEnabled) {

@@ -557,6 +557,9 @@ function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
       first = false;
     } else {
       expect(tt.comma);
+      if (match(tt.parenR)) {
+        break;
+      }
     }
 
     if (match(tt.ellipsis)) {

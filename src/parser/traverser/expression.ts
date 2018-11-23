@@ -298,26 +298,33 @@ export function baseParseSubscript(startPos: number, noCalls: boolean, stopState
     parseExpression();
     expect(tt.bracketR);
   } else if (!noCalls && match(tt.parenL)) {
-    const possibleAsync = atPossibleAsync();
-    // We see "async", but it's possible it's a usage of the name "async". Parse as if it's a
-    // function call, and if we see an arrow later, backtrack and re-parse as a parameter list.
-    const snapshotForAsyncArrow = possibleAsync ? state.snapshot() : null;
-    const startTokenIndex = state.tokens.length;
-    next();
+    if (atPossibleAsync()) {
+      // We see "async", but it's possible it's a usage of the name "async". Parse as if it's a
+      // function call, and if we see an arrow later, backtrack and re-parse as a parameter list.
+      const snapshot = state.snapshot();
+      const startTokenIndex = state.tokens.length;
+      next();
 
-    const callContextId = getNextContextId();
+      const callContextId = getNextContextId();
 
-    state.tokens[state.tokens.length - 1].contextId = callContextId;
-    parseCallExpressionArguments();
-    state.tokens[state.tokens.length - 1].contextId = callContextId;
+      state.tokens[state.tokens.length - 1].contextId = callContextId;
+      parseCallExpressionArguments();
+      state.tokens[state.tokens.length - 1].contextId = callContextId;
 
-    if (possibleAsync && shouldParseAsyncArrow()) {
-      // We hit an arrow, so backtrack and start again parsing function parameters.
-      state.restoreFromSnapshot(snapshotForAsyncArrow!);
-      stopState.stop = true;
+      if (shouldParseAsyncArrow()) {
+        // We hit an arrow, so backtrack and start again parsing function parameters.
+        state.restoreFromSnapshot(snapshot);
+        stopState.stop = true;
 
-      parseFunctionParams();
-      parseAsyncArrowFromCallExpression(startPos, startTokenIndex);
+        parseFunctionParams();
+        parseAsyncArrowFromCallExpression(startPos, startTokenIndex);
+      }
+    } else {
+      next();
+      const callContextId = getNextContextId();
+      state.tokens[state.tokens.length - 1].contextId = callContextId;
+      parseCallExpressionArguments();
+      state.tokens[state.tokens.length - 1].contextId = callContextId;
     }
   } else if (match(tt.backQuote)) {
     // Tagged template expression.

@@ -53,12 +53,6 @@ import {
 } from "../traverser/util";
 import {nextJSXTagToken} from "./jsx";
 
-function assert(x: boolean): void {
-  if (!x) {
-    throw new Error("Assert fail");
-  }
-}
-
 function tsIsIdentifier(): boolean {
   // TODO: actually a bit more complex in TypeScript, but shouldn't matter.
   // See https://github.com/Microsoft/TypeScript/issues/15008
@@ -1238,58 +1232,63 @@ export function tsStartParseAsyncArrowFromCallExpression(): void {
 }
 
 // Returns true if the expression was an arrow function.
-export function tsParseMaybeAssign(noIn: boolean = false, isWithinParens: boolean): boolean {
+export function tsParseMaybeAssign(noIn: boolean, isWithinParens: boolean): boolean {
   // Note: When the JSX plugin is on, type assertions (`<T> x`) aren't valid syntax.
-
-  let jsxError: SyntaxError | null = null;
-
-  if (match(tt.lessThan) && isJSXEnabled) {
-    // Prefer to parse JSX if possible. But may be an arrow fn.
-    const snapshot = state.snapshot();
-    const wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
-    if (state.error) {
-      jsxError = state.error;
-      state.restoreFromSnapshot(snapshot);
-      state.type = tt.typeParameterStart;
-    } else {
-      return wasArrow;
-    }
+  if (isJSXEnabled) {
+    return tsParseMaybeAssignWithJSX(noIn, isWithinParens);
+  } else {
+    return tsParseMaybeAssignWithoutJSX(noIn, isWithinParens);
   }
+}
 
-  if (jsxError === null && !match(tt.lessThan)) {
+export function tsParseMaybeAssignWithJSX(noIn: boolean, isWithinParens: boolean): boolean {
+  if (!match(tt.lessThan)) {
     return baseParseMaybeAssign(noIn, isWithinParens);
   }
 
-  // Either way, we're looking at a '<': tt.typeParameterStart or relational.
-
+  // Prefer to parse JSX if possible. But may be an arrow fn.
   const snapshot = state.snapshot();
+  let wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
+  if (state.error) {
+    state.restoreFromSnapshot(snapshot);
+  } else {
+    return wasArrow;
+  }
 
+  // Otherwise, try as type-parameterized arrow function.
+  state.type = tt.typeParameterStart;
   // This is similar to TypeScript's `tryParseParenthesizedArrowFunctionExpression`.
-  const oldIsType = pushTypeContext(0);
   tsParseTypeParameters();
-  popTypeContext(oldIsType);
-  const wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
+  wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
   if (!wasArrow) {
     unexpected();
   }
 
-  if (state.error) {
-    if (jsxError) {
-      state.error = jsxError;
-      return false;
-    }
+  return wasArrow;
+}
 
-    // Try parsing a type cast instead of an arrow function.
-    // This will never happen outside of JSX.
-    // (Because in JSX the '<' should be a jsxTagStart and not a relational.
-    assert(!isJSXEnabled);
-    // Parsing an arrow function failed, so try a type cast.
-    state.restoreFromSnapshot(snapshot);
-    // This will start with a type assertion (via parseMaybeUnary).
-    // But don't directly call `tsParseTypeAssertion` because we want to handle any binary after it.
+export function tsParseMaybeAssignWithoutJSX(noIn: boolean, isWithinParens: boolean): boolean {
+  if (!match(tt.lessThan)) {
     return baseParseMaybeAssign(noIn, isWithinParens);
   }
-  return wasArrow;
+
+  const snapshot = state.snapshot();
+  // This is similar to TypeScript's `tryParseParenthesizedArrowFunctionExpression`.
+  tsParseTypeParameters();
+  const wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
+  if (!wasArrow) {
+    unexpected();
+  }
+  if (state.error) {
+    state.restoreFromSnapshot(snapshot);
+  } else {
+    return wasArrow;
+  }
+
+  // Try parsing a type cast instead of an arrow function.
+  // This will start with a type assertion (via parseMaybeUnary).
+  // But don't directly call `tsParseTypeAssertion` because we want to handle any binary after it.
+  return baseParseMaybeAssign(noIn, isWithinParens);
 }
 
 export function tsParseArrow(): boolean {

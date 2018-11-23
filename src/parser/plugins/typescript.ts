@@ -59,14 +59,6 @@ function assert(x: boolean): void {
   }
 }
 
-export enum ParsingContext {
-  EnumMembers,
-  HeritageClauseElement,
-  TupleElementTypes,
-  TypeMembers,
-  TypeParametersOrArguments,
-}
-
 function tsIsIdentifier(): boolean {
   // TODO: actually a bit more complex in TypeScript, but shouldn't matter.
   // See https://github.com/Microsoft/TypeScript/issues/15008
@@ -78,15 +70,23 @@ function tsNextTokenCanFollowModifier(): boolean {
   // more things are considered modifiers there.
   // This implementation only handles modifiers not handled by babylon itself. And "static".
   // TODO: Would be nice to avoid lookahead. Want a hasLineBreakUpNext() method...
+  const snapshot = state.snapshot();
+
   next();
-  return (
+  const canFollowModifier =
     !hasPrecedingLineBreak() &&
     !match(tt.parenL) &&
     !match(tt.parenR) &&
     !match(tt.colon) &&
     !match(tt.eq) &&
-    !match(tt.question)
-  );
+    !match(tt.question);
+
+  if (canFollowModifier) {
+    return true;
+  } else {
+    state.restoreFromSnapshot(snapshot);
+    return false;
+  }
 }
 
 /** Parses a modifier matching one the given modifier names. */
@@ -98,10 +98,7 @@ export function tsParseModifier(
   }
 
   const modifier = state.contextualKeyword;
-  if (
-    allowedModifiers.indexOf(modifier) !== -1 &&
-    tsTryParse(() => tsNextTokenCanFollowModifier())
-  ) {
+  if (allowedModifiers.indexOf(modifier) !== -1 && tsNextTokenCanFollowModifier()) {
     switch (modifier) {
       case ContextualKeyword._readonly:
         state.tokens[state.tokens.length - 1].type = tt._readonly;
@@ -127,77 +124,6 @@ export function tsParseModifier(
     return modifier;
   }
   return null;
-}
-
-function tsIsListTerminator(kind: ParsingContext): boolean {
-  switch (kind) {
-    case ParsingContext.EnumMembers:
-    case ParsingContext.TypeMembers:
-      return match(tt.braceR);
-    case ParsingContext.HeritageClauseElement:
-      return match(tt.braceL);
-    case ParsingContext.TupleElementTypes:
-      return match(tt.bracketR);
-    case ParsingContext.TypeParametersOrArguments:
-      return match(tt.greaterThan);
-    default:
-      break;
-  }
-
-  throw new Error("Unreachable");
-}
-
-function tsParseList(kind: ParsingContext, parseElement: () => void): void {
-  while (!tsIsListTerminator(kind) && !state.error) {
-    // Skipping "parseListElement" from the TS source since that's just for error handling.
-    parseElement();
-  }
-}
-
-function tsParseDelimitedList(kind: ParsingContext, parseElement: () => void): void {
-  tsParseDelimitedListWorker(kind, parseElement);
-}
-
-/**
- * If !expectSuccess, returns undefined instead of failing to parse.
- * If expectSuccess, parseElement should always return a defined value.
- */
-function tsParseDelimitedListWorker(kind: ParsingContext, parseElement: () => void): void {
-  while (!state.error) {
-    if (tsIsListTerminator(kind)) {
-      break;
-    }
-
-    parseElement();
-    if (eat(tt.comma)) {
-      continue;
-    }
-
-    if (tsIsListTerminator(kind)) {
-      break;
-    }
-  }
-}
-
-function tsParseBracketedList(
-  kind: ParsingContext,
-  parseElement: () => void,
-  bracket: boolean,
-  skipFirstToken: boolean,
-): void {
-  if (!skipFirstToken) {
-    if (bracket) {
-      expect(tt.bracketL);
-    } else {
-      expect(tt.lessThan);
-    }
-  }
-  tsParseDelimitedList(kind, parseElement);
-  if (bracket) {
-    expect(tt.bracketR);
-  } else {
-    expect(tt.greaterThan);
-  }
 }
 
 function tsParseEntityName(): void {
@@ -252,12 +178,10 @@ function tsParseTypeParameters(): void {
     unexpected();
   }
 
-  tsParseBracketedList(
-    ParsingContext.TypeParametersOrArguments,
-    tsParseTypeParameter,
-    /* bracket */ false,
-    /* skipFirstToken */ true,
-  );
+  while (!eat(tt.greaterThan) && !state.error) {
+    tsParseTypeParameter();
+    eat(tt.comma);
+  }
   popTypeContext(oldIsType);
 }
 
@@ -300,12 +224,15 @@ function tsParseSignatureMember(kind: SignatureMemberKind): void {
 }
 
 function tsIsUnambiguouslyIndexSignature(): boolean {
+  const snapshot = state.snapshot();
   next(); // Skip '{'
-  return eat(tt.name) && match(tt.colon);
+  const isIndexSignature = eat(tt.name) && match(tt.colon);
+  state.restoreFromSnapshot(snapshot);
+  return isIndexSignature;
 }
 
 function tsTryParseIndexSignature(): boolean {
-  if (!(match(tt.bracketL) && tsLookAhead(tsIsUnambiguouslyIndexSignature))) {
+  if (!(match(tt.bracketL) && tsIsUnambiguouslyIndexSignature())) {
     return false;
   }
 
@@ -341,7 +268,7 @@ function tsParseTypeMember(): void {
     tsParseSignatureMember(SignatureMemberKind.TSCallSignatureDeclaration);
     return;
   }
-  if (match(tt._new) && tsLookAhead(tsIsStartOfConstructSignature)) {
+  if (match(tt._new) && tsIsStartOfConstructSignature()) {
     tsParseSignatureMember(SignatureMemberKind.TSConstructSignatureDeclaration);
     return;
   }
@@ -355,8 +282,8 @@ function tsParseTypeMember(): void {
 }
 
 function tsIsStartOfConstructSignature(): boolean {
-  next();
-  return match(tt.parenL) || match(tt.lessThan);
+  const lookahead = lookaheadType();
+  return lookahead === tt.parenL || lookahead === tt.lessThan;
 }
 
 function tsParseTypeLiteral(): void {
@@ -365,8 +292,16 @@ function tsParseTypeLiteral(): void {
 
 function tsParseObjectTypeMembers(): void {
   expect(tt.braceL);
-  tsParseList(ParsingContext.TypeMembers, tsParseTypeMember);
-  expect(tt.braceR);
+  while (!eat(tt.braceR) && !state.error) {
+    tsParseTypeMember();
+  }
+}
+
+function tsLookaheadIsStartOfMappedType(): boolean {
+  const snapshot = state.snapshot();
+  const isStartOfMappedType = tsIsStartOfMappedType();
+  state.restoreFromSnapshot(snapshot);
+  return isStartOfMappedType;
 }
 
 function tsIsStartOfMappedType(): boolean {
@@ -417,12 +352,11 @@ function tsParseMappedType(): void {
 }
 
 function tsParseTupleType(): void {
-  tsParseBracketedList(
-    ParsingContext.TupleElementTypes,
-    tsParseTupleElementType,
-    /* bracket */ true,
-    /* skipFirstToken */ false,
-  );
+  expect(tt.bracketL);
+  while (!eat(tt.bracketR) && !state.error) {
+    tsParseTupleElementType();
+    eat(tt.comma);
+  }
 }
 
 function tsParseTupleElementType(): void {
@@ -484,7 +418,7 @@ function tsParseNonArrayType(): void {
       tsParseTypeQuery();
       return;
     case tt.braceL:
-      if (tsLookAhead(tsIsStartOfMappedType)) {
+      if (tsLookaheadIsStartOfMappedType()) {
         tsParseMappedType();
       } else {
         tsParseTypeLiteral();
@@ -530,32 +464,31 @@ function tsParseTypeOperatorOrHigher(): void {
   }
 }
 
-function tsParseUnionOrIntersectionType(
-  parseConstituentType: () => void,
-  operator: TokenType,
-): void {
-  eat(operator);
-  parseConstituentType();
-  if (match(operator)) {
-    while (eat(operator)) {
-      parseConstituentType();
+function tsParseIntersectionTypeOrHigher(): void {
+  eat(tt.bitwiseAND);
+  tsParseTypeOperatorOrHigher();
+  if (match(tt.bitwiseAND)) {
+    while (eat(tt.bitwiseAND)) {
+      tsParseTypeOperatorOrHigher();
     }
   }
 }
 
-function tsParseIntersectionTypeOrHigher(): void {
-  tsParseUnionOrIntersectionType(tsParseTypeOperatorOrHigher, tt.bitwiseAND);
-}
-
 function tsParseUnionTypeOrHigher(): void {
-  tsParseUnionOrIntersectionType(tsParseIntersectionTypeOrHigher, tt.bitwiseOR);
+  eat(tt.bitwiseOR);
+  tsParseIntersectionTypeOrHigher();
+  if (match(tt.bitwiseOR)) {
+    while (eat(tt.bitwiseOR)) {
+      tsParseIntersectionTypeOrHigher();
+    }
+  }
 }
 
 function tsIsStartOfFunctionType(): boolean {
   if (match(tt.lessThan)) {
     return true;
   }
-  return match(tt.parenL) && tsLookAhead(tsIsUnambiguouslyStartOfFunctionType);
+  return match(tt.parenL) && tsLookaheadIsUnambiguouslyStartOfFunctionType();
 }
 
 function tsSkipParameterStart(): boolean {
@@ -579,6 +512,13 @@ function tsSkipParameterStart(): boolean {
     return true;
   }
   return false;
+}
+
+function tsLookaheadIsUnambiguouslyStartOfFunctionType(): boolean {
+  const snapshot = state.snapshot();
+  const isUnambiguouslyStartOfFunctionType = tsIsUnambiguouslyStartOfFunctionType();
+  state.restoreFromSnapshot(snapshot);
+  return isUnambiguouslyStartOfFunctionType;
 }
 
 function tsIsUnambiguouslyStartOfFunctionType(): boolean {
@@ -610,7 +550,7 @@ function tsIsUnambiguouslyStartOfFunctionType(): boolean {
 function tsParseTypeOrTypePredicateAnnotation(returnToken: TokenType): void {
   const oldIsType = pushTypeContext(0);
   expect(returnToken);
-  tsTryParse(() => tsParseTypePredicatePrefix());
+  tsParseTypePredicatePrefix();
   // Regardless of whether we found an "is" token, there's now just a regular type in front of
   // us.
   tsParseType();
@@ -635,13 +575,14 @@ function tsTryParseType(): void {
   }
 }
 
-function tsParseTypePredicatePrefix(): boolean {
+function tsParseTypePredicatePrefix(): void {
+  const snapshot = state.snapshot();
   parseIdentifier();
   if (isContextual(ContextualKeyword._is) && !hasPrecedingLineBreak()) {
     next();
-    return true;
+  } else {
+    state.restoreFromSnapshot(snapshot);
   }
-  return false;
 }
 
 export function tsParseTypeAnnotation(): void {
@@ -691,7 +632,10 @@ export function tsTryParseJSXTypeArgument(): void {
   if (eat(tt.jsxTagStart)) {
     state.tokens[state.tokens.length - 1].type = tt.typeParameterStart;
     const oldIsType = pushTypeContext(1);
-    tsParseDelimitedList(ParsingContext.TypeParametersOrArguments, tsParseType);
+    while (!match(tt.greaterThan) && !state.error) {
+      tsParseType();
+      eat(tt.comma);
+    }
     // Process >, but the one after needs to be parsed JSX-style.
     nextJSXTagToken();
     popTypeContext(oldIsType);
@@ -699,7 +643,10 @@ export function tsTryParseJSXTypeArgument(): void {
 }
 
 function tsParseHeritageClause(): void {
-  tsParseDelimitedList(ParsingContext.HeritageClauseElement, tsParseExpressionWithTypeArguments);
+  while (!match(tt.braceL) && !state.error) {
+    tsParseExpressionWithTypeArguments();
+    eat(tt.comma);
+  }
 }
 
 function tsParseExpressionWithTypeArguments(): void {
@@ -745,8 +692,10 @@ function tsParseEnumMember(): void {
 function tsParseEnumDeclaration(): void {
   parseIdentifier();
   expect(tt.braceL);
-  tsParseDelimitedList(ParsingContext.EnumMembers, tsParseEnumMember);
-  expect(tt.braceR);
+  while (!eat(tt.braceR) && !state.error) {
+    tsParseEnumMember();
+    eat(tt.comma);
+  }
 }
 
 function tsParseModuleBlock(): void {
@@ -809,38 +758,6 @@ function tsParseExternalModuleReference(): void {
 }
 
 // Utilities
-
-function tsLookAhead<T>(f: () => T): T {
-  const snapshot = state.snapshot();
-  const res = f();
-  state.restoreFromSnapshot(snapshot);
-  return res;
-}
-
-// Returns true if parsing was successful.
-function tsTryParseAndCatch<T>(f: () => void): boolean {
-  const snapshot = state.snapshot();
-  f();
-  if (state.error) {
-    state.restoreFromSnapshot(snapshot);
-    return false;
-  } else {
-    return true;
-  }
-}
-
-// The function should return true if the parse was successful. If not, we revert the state to
-// before we started parsing.
-function tsTryParse<T>(f: () => boolean): boolean {
-  const snapshot = state.snapshot();
-  const wasSuccessful = f();
-  if (wasSuccessful) {
-    return true;
-  } else {
-    state.restoreFromSnapshot(snapshot);
-    return false;
-  }
-}
 
 // Returns true if a statement matched.
 function tsTryParseDeclare(): boolean {
@@ -1009,14 +926,15 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
 
 // Returns true if there was a generic async arrow function.
 function tsTryParseGenericAsyncArrowFunction(): boolean {
-  const matched = tsTryParseAndCatch(() => {
-    tsParseTypeParameters();
-    parseFunctionParams();
-    tsTryParseTypeOrTypePredicateAnnotation();
-    expect(tt.arrow);
-  });
+  const snapshot = state.snapshot();
 
-  if (!matched) {
+  tsParseTypeParameters();
+  parseFunctionParams();
+  tsTryParseTypeOrTypePredicateAnnotation();
+  expect(tt.arrow);
+
+  if (state.error) {
+    state.restoreFromSnapshot(snapshot);
     return false;
   }
 
@@ -1030,8 +948,10 @@ function tsTryParseGenericAsyncArrowFunction(): boolean {
 function tsParseTypeArguments(): void {
   const oldIsType = pushTypeContext(0);
   expect(tt.lessThan);
-  tsParseDelimitedList(ParsingContext.TypeParametersOrArguments, tsParseType);
-  expect(tt.greaterThan);
+  while (!eat(tt.greaterThan) && !state.error) {
+    tsParseType();
+    eat(tt.comma);
+  }
   popTypeContext(oldIsType);
 }
 
@@ -1099,24 +1019,27 @@ export function tsParseSubscript(startPos: number, noCalls: boolean, stopState: 
   if (match(tt.lessThan)) {
     // There are number of things we are going to "maybe" parse, like type arguments on
     // tagged template expressions. If any of them fail, walk it back and continue.
-    const success = tsTryParseAndCatch(() => {
-      if (!noCalls && atPossibleAsync()) {
-        // Almost certainly this is a generic async function `async <T>() => ...
-        // But it might be a call with a type argument `async<T>();`
-        const asyncArrowFn = tsTryParseGenericAsyncArrowFunction();
-        if (asyncArrowFn) {
-          return;
-        }
+    const snapshot = state.snapshot();
+
+    if (!noCalls && atPossibleAsync()) {
+      // Almost certainly this is a generic async function `async <T>() => ...
+      // But it might be a call with a type argument `async<T>();`
+      const asyncArrowFn = tsTryParseGenericAsyncArrowFunction();
+      if (asyncArrowFn) {
+        return;
       }
-      tsParseTypeArguments();
-      if (!noCalls && eat(tt.parenL)) {
-        parseCallExpressionArguments();
-      } else if (match(tt.backQuote)) {
-        // Tagged template with a type argument.
-        parseTemplate();
-      }
-    });
-    if (success) {
+    }
+    tsParseTypeArguments();
+    if (!noCalls && eat(tt.parenL)) {
+      parseCallExpressionArguments();
+    } else if (match(tt.backQuote)) {
+      // Tagged template with a type argument.
+      parseTemplate();
+    }
+
+    if (state.error) {
+      state.restoreFromSnapshot(snapshot);
+    } else {
       return;
     }
   }
@@ -1125,15 +1048,18 @@ export function tsParseSubscript(startPos: number, noCalls: boolean, stopState: 
 
 export function tsStartParseNewArguments(): void {
   if (match(tt.lessThan)) {
-    // tsTryParseAndCatch is expensive, so avoid if not necessary.
     // 99% certain this is `new C<T>();`. But may be `new C < T;`, which is also legal.
-    tsTryParseAndCatch(() => {
-      state.type = tt.typeParameterStart;
-      tsParseTypeArguments();
-      if (!match(tt.parenL)) {
-        unexpected();
-      }
-    });
+    const snapshot = state.snapshot();
+
+    state.type = tt.typeParameterStart;
+    tsParseTypeArguments();
+    if (!match(tt.parenL)) {
+      unexpected();
+    }
+
+    if (state.error) {
+      state.restoreFromSnapshot(snapshot);
+    }
   }
 }
 

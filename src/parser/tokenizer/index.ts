@@ -142,17 +142,6 @@ export function retokenizeSlashAsRegex(): void {
   readRegexp();
 }
 
-export function runInTypeContext<T>(existingTokensInType: number, func: () => T): T {
-  for (let i = state.tokens.length - existingTokensInType; i < state.tokens.length; i++) {
-    state.tokens[i].isType = true;
-  }
-  const oldIsType = state.isType;
-  state.isType = true;
-  const result = func();
-  state.isType = oldIsType;
-  return result;
-}
-
 export function pushTypeContext(existingTokensInType: number): boolean {
   for (let i = state.tokens.length - existingTokensInType; i < state.tokens.length; i++) {
     state.tokens[i].isType = true;

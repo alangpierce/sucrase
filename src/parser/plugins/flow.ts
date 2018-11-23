@@ -726,13 +726,13 @@ export function flowParseSubscript(startPos: number, noCalls: boolean, stopState
     next();
     flowParseTypeParameterInstantiation();
     expect(tt.parenL);
-    parseCallExpressionArguments(tt.parenR);
+    parseCallExpressionArguments();
     return;
   } else if (!noCalls && match(tt.lessThan)) {
     const snapshot = state.snapshot();
     flowParseTypeParameterInstantiation();
     expect(tt.parenL);
-    parseCallExpressionArguments(tt.parenR);
+    parseCallExpressionArguments();
     if (state.error) {
       state.restoreFromSnapshot(snapshot);
     } else {
@@ -898,13 +898,7 @@ export function flowParseAssignableListItemTypes(): void {
 
 // parse typeof and type imports
 export function flowStartParseImportSpecifiers(): void {
-  let kind = null;
-  if (match(tt._typeof)) {
-    kind = "typeof";
-  } else if (isContextual(ContextualKeyword._type)) {
-    kind = "type";
-  }
-  if (kind) {
+  if (match(tt._typeof) || isContextual(ContextualKeyword._type)) {
     const lh = lookaheadTypeAndKeyword();
     if (isMaybeDefaultImport(lh) || lh.type === tt.braceL || lh.type === tt.star) {
       next();

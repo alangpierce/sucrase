@@ -288,7 +288,7 @@ export function baseParseSubscript(startPos: number, noCalls: boolean, stopState
       parseExpression();
       expect(tt.bracketR);
     } else if (eat(tt.parenL)) {
-      parseCallExpressionArguments(tt.parenR);
+      parseCallExpressionArguments();
     } else {
       parseIdentifier();
     }
@@ -308,7 +308,7 @@ export function baseParseSubscript(startPos: number, noCalls: boolean, stopState
     const callContextId = getNextContextId();
 
     state.tokens[state.tokens.length - 1].contextId = callContextId;
-    parseCallExpressionArguments(tt.parenR);
+    parseCallExpressionArguments();
     state.tokens[state.tokens.length - 1].contextId = callContextId;
 
     if (possibleAsync && shouldParseAsyncArrow()) {
@@ -336,14 +336,16 @@ export function atPossibleAsync(): boolean {
   );
 }
 
-export function parseCallExpressionArguments(close: TokenType): void {
+export function parseCallExpressionArguments(): void {
   let first = true;
-  while (!eat(close) && !state.error) {
+  while (!eat(tt.parenR) && !state.error) {
     if (first) {
       first = false;
     } else {
       expect(tt.comma);
-      if (eat(close)) break;
+      if (eat(tt.parenR)) {
+        break;
+      }
     }
 
     parseExprListItem(false);

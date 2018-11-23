@@ -971,30 +971,21 @@ export function flowStartParseAsyncArrowFromCallExpression(): void {
 //    parse the rest, make sure the rest is an arrow function, and go from
 //    there
 // 3. This is neither. Just call the super method
-export function flowParseMaybeAssign(noIn: boolean = false, isWithinParens: boolean): boolean {
-  let jsxError = null;
+export function flowParseMaybeAssign(noIn: boolean, isWithinParens: boolean): boolean {
   if (match(tt.lessThan)) {
     const snapshot = state.snapshot();
-    const wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
+    let wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
     if (state.error) {
-      jsxError = state.error;
       state.restoreFromSnapshot(snapshot);
       state.type = tt.typeParameterStart;
     } else {
       return wasArrow;
     }
-  }
 
-  if (jsxError != null || match(tt.lessThan)) {
     const oldIsType = pushTypeContext(0);
     flowParseTypeParameterDeclaration();
     popTypeContext(oldIsType);
-    const wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
-
-    if (state.error) {
-      state.error = jsxError;
-    }
-
+    wasArrow = baseParseMaybeAssign(noIn, isWithinParens);
     if (wasArrow) {
       return true;
     }
@@ -1032,23 +1023,11 @@ export function flowParseSubscripts(startPos: number, noCalls: boolean = false):
     match(tt.lessThan)
   ) {
     const snapshot = state.snapshot();
-    let error;
-
     const wasArrow = parseAsyncArrowWithTypeParameters(startPos);
-    if (wasArrow) {
+    if (wasArrow && !state.error) {
       return;
     }
-    if (state.error) {
-      error = state.error;
-    }
-
     state.restoreFromSnapshot(snapshot);
-
-    baseParseSubscripts(startPos, noCalls);
-    if (state.error) {
-      state.error = error || state.error;
-    }
-    return;
   }
 
   baseParseSubscripts(startPos, noCalls);

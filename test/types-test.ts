@@ -448,4 +448,26 @@ describe("type transforms", () => {
     `,
     );
   });
+
+  it("handles a function call where the function is named 'async'", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      async (1, 2, 3);
+    `,
+      `"use strict";
+      async (1, 2, 3);
+    `,
+    );
+  });
+
+  it("handles a function call with a type argument where the function is named 'async'", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      async <T>(1, 2, 3);
+    `,
+      `"use strict";
+      async (1, 2, 3);
+    `,
+    );
+  });
 });

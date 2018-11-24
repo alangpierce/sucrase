@@ -463,7 +463,7 @@ function parseIdentifierStatement(contextualKeyword: ContextualKeyword): void {
 export function parseBlock(
   allowDirectives: boolean = false,
   isFunctionScope: boolean = false,
-  contextId?: number,
+  contextId: number = 0,
 ): void {
   const startTokenIndex = state.tokens.length;
   expect(tt.braceL);
@@ -584,7 +584,10 @@ export function parseFunction(
   }
 }
 
-export function parseFunctionParams(allowModifiers: boolean = false, funcContextId?: number): void {
+export function parseFunctionParams(
+  allowModifiers: boolean = false,
+  funcContextId: number = 0,
+): void {
   if (isTypeScriptEnabled) {
     tsStartParseFunctionParams();
   } else if (isFlowEnabled) {

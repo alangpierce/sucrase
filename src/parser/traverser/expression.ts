@@ -872,7 +872,7 @@ export function parseFunctionBodyAndFinish(
   functionStart: number,
   isGenerator: boolean,
   allowExpressionBody: boolean = false,
-  funcContextId?: number,
+  funcContextId: number = 0,
 ): void {
   if (isTypeScriptEnabled) {
     tsParseFunctionBodyAndFinish(functionStart, isGenerator, allowExpressionBody, funcContextId);
@@ -888,7 +888,7 @@ export function parseFunctionBody(
   functionStart: number,
   isGenerator: boolean,
   allowExpression: boolean,
-  funcContextId?: number,
+  funcContextId: number = 0,
 ): void {
   const isExpression = allowExpression && !match(tt.braceL);
 

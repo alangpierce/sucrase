@@ -1069,7 +1069,6 @@ function parseImportSpecifiers(): void {
       // Detect an attempt to deep destructure
       if (eat(tt.colon)) {
         unexpected(
-          null,
           "ES2015 named imports do not destructure. Use another statement for destructuring after the import.",
         );
       }

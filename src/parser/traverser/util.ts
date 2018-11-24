@@ -29,7 +29,7 @@ export function eatContextual(contextualKeyword: ContextualKeyword): boolean {
 // Asserts that following token is given contextual keyword.
 export function expectContextual(contextualKeyword: ContextualKeyword): void {
   if (!eatContextual(contextualKeyword)) {
-    unexpected(null);
+    unexpected();
   }
 }
 
@@ -62,15 +62,17 @@ export function isLineTerminator(): boolean {
 // Consume a semicolon, or, failing that, see if we are allowed to
 // pretend that there is a semicolon at this position.
 export function semicolon(): void {
-  if (!isLineTerminator()) unexpected(null, 'Unexpected token, expected";"');
+  if (!isLineTerminator()) {
+    unexpected('Unexpected token, expected ";"');
+  }
 }
 
 // Expect a token of a given type. If found, consume it, otherwise,
 // raise an unexpected token error at given pos.
-export function expect(type: TokenType, pos?: number | null): void {
+export function expect(type: TokenType): void {
   const matched = eat(type);
   if (!matched) {
-    unexpected(pos, `Unexpected token, expected "${formatTokenType(type)}"`);
+    unexpected(`Unexpected token, expected "${formatTokenType(type)}"`);
   }
 }
 
@@ -78,13 +80,13 @@ export function expect(type: TokenType, pos?: number | null): void {
  * Transition the parser to an error state. All code needs to be written to naturally unwind in this
  * state, which allows us to backtrack without exceptions and without error plumbing everywhere.
  */
-export function unexpected(pos: number | null = null, message: string = "Unexpected token"): void {
+export function unexpected(message: string = "Unexpected token", pos: number = state.start): void {
   if (state.error) {
     return;
   }
   // tslint:disable-next-line no-any
   const err: any = new SyntaxError(message);
-  err.pos = pos != null ? pos : state.start;
+  err.pos = pos;
   state.error = err;
   state.pos = input.length;
   finishToken(tt.eof);

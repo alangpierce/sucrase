@@ -209,7 +209,7 @@ export function nextToken(): void {
       tokens[tokens.length - 1].start >= input.length &&
       tokens[tokens.length - 2].start >= input.length
     ) {
-      unexpected(null, "Unexpectedly reached the end of input.");
+      unexpected("Unexpectedly reached the end of input.");
     }
     finishToken(tt.eof);
     return;
@@ -234,7 +234,7 @@ function readToken(code: number): void {
 function skipBlockComment(): void {
   const end = input.indexOf("*/", (state.pos += 2));
   if (end === -1) {
-    unexpected(state.pos - 2, "Unterminated comment");
+    unexpected("Unterminated comment", state.pos - 2);
   }
 
   state.pos = end + 2;
@@ -660,7 +660,7 @@ export function getTokenFromCode(code: number): void {
       break;
   }
 
-  unexpected(state.pos, `Unexpected character '${String.fromCharCode(code)}'`);
+  unexpected(`Unexpected character '${String.fromCharCode(code)}'`, state.pos);
 }
 
 function finishOp(type: TokenType, size: number): void {
@@ -674,7 +674,7 @@ function readRegexp(): void {
   let inClass = false;
   for (;;) {
     if (state.pos >= input.length) {
-      unexpected(start, "Unterminated regular expression");
+      unexpected("Unterminated regular expression", start);
       return;
     }
     const ch = input.charAt(state.pos);
@@ -776,7 +776,7 @@ function readString(quote: number): void {
   state.pos++;
   for (;;) {
     if (state.pos >= input.length) {
-      unexpected(state.start, "Unterminated string constant");
+      unexpected("Unterminated string constant");
       return;
     }
     const ch = input.charCodeAt(state.pos);
@@ -795,7 +795,7 @@ function readString(quote: number): void {
 function readTmplToken(): void {
   for (;;) {
     if (state.pos >= input.length) {
-      unexpected(state.start, "Unterminated template");
+      unexpected("Unterminated template");
       return;
     }
     const ch = input.charCodeAt(state.pos);

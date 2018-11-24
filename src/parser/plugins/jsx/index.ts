@@ -21,7 +21,7 @@ import {tsTryParseJSXTypeArgument} from "../typescript";
 function jsxReadToken(): void {
   for (;;) {
     if (state.pos >= input.length) {
-      unexpected(state.start, "Unterminated JSX contents");
+      unexpected("Unterminated JSX contents");
       return;
     }
 
@@ -52,7 +52,7 @@ function jsxReadString(quote: number): void {
   state.pos++;
   for (;;) {
     if (state.pos >= input.length) {
-      unexpected(state.start, "Unterminated string constant");
+      unexpected("Unterminated string constant");
       return;
     }
 
@@ -77,7 +77,7 @@ function jsxReadWord(): void {
   let ch: number;
   do {
     if (state.pos > input.length) {
-      unexpected(null, "Unexpectedly reached the end of input.");
+      unexpected("Unexpectedly reached the end of input.");
       return;
     }
     ch = input.charCodeAt(++state.pos);
@@ -130,7 +130,7 @@ function jsxParseAttributeValue(): void {
       return;
 
     default:
-      unexpected(state.start, "JSX value should be either an expression or a quoted JSX text");
+      unexpected("JSX value should be either an expression or a quoted JSX text");
   }
 }
 

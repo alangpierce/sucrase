@@ -8,7 +8,7 @@ import {isWhitespace} from "../util/whitespace";
 import readWord from "./readWord";
 import {TokenType, TokenType as tt} from "./types";
 
-export enum IdentifierRole {
+export const enum IdentifierRole {
   Access,
   ExportAccess,
   FunctionScopedDeclaration,
@@ -232,12 +232,17 @@ function readToken(code: number): void {
 }
 
 function skipBlockComment(): void {
-  const end = input.indexOf("*/", (state.pos += 2));
-  if (end === -1) {
-    unexpected("Unterminated comment", state.pos - 2);
+  while (
+    input.charCodeAt(state.pos) !== charCodes.asterisk ||
+    input.charCodeAt(state.pos + 1) !== charCodes.slash
+  ) {
+    state.pos++;
+    if (state.pos > input.length) {
+      unexpected("Unterminated comment", state.pos - 2);
+      return;
+    }
   }
-
-  state.pos = end + 2;
+  state.pos += 2;
 }
 
 export function skipLineComment(startSkip: number): void {
@@ -677,18 +682,18 @@ function readRegexp(): void {
       unexpected("Unterminated regular expression", start);
       return;
     }
-    const ch = input.charAt(state.pos);
+    const code = input.charCodeAt(state.pos);
     if (escaped) {
       escaped = false;
     } else {
-      if (ch === "[") {
+      if (code === charCodes.leftSquareBracket) {
         inClass = true;
-      } else if (ch === "]" && inClass) {
+      } else if (code === charCodes.rightSquareBracket && inClass) {
         inClass = false;
-      } else if (ch === "/" && !inClass) {
+      } else if (code === charCodes.slash && !inClass) {
         break;
       }
-      escaped = ch === "\\";
+      escaped = code === charCodes.backslash;
     }
     ++state.pos;
   }

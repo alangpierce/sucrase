@@ -707,7 +707,7 @@ export function flowParseFunctionBodyAndFinish(
   functionStart: number,
   isGenerator: boolean,
   allowExpressionBody: boolean = false,
-  funcContextId?: number,
+  funcContextId: number,
 ): void {
   // For arrow functions, `parseArrow` handles the return type itself.
   if (!allowExpressionBody && match(tt.colon)) {

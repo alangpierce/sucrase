@@ -884,7 +884,7 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
         tsParseAmbientExternalModuleDeclaration();
         popTypeContext(oldIsType);
         return true;
-      } else if (next || match(tt.name)) {
+      } else if (match(tt.name)) {
         const oldIsType = pushTypeContext(isBeforeToken ? 2 : 1);
         tsParseModuleOrNamespaceDeclaration();
         popTypeContext(oldIsType);
@@ -976,7 +976,7 @@ export function tsParseFunctionBodyAndFinish(
   functionStart: number,
   isGenerator: boolean,
   allowExpressionBody: boolean = false,
-  funcContextId?: number,
+  funcContextId: number,
 ): void {
   // For arrow functions, `parseArrow` handles the return type itself.
   if (!allowExpressionBody && match(tt.colon)) {

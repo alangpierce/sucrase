@@ -1,4 +1,5 @@
-import {ContextualKeyword, Token} from "./index";
+import {Token} from "./index";
+import {ContextualKeyword} from "./keywords";
 import {TokenType, TokenType as tt} from "./types";
 
 export class Scope {

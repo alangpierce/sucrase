@@ -43,7 +43,6 @@ import {
   tsStartParseObjPropValue,
 } from "../plugins/typescript";
 import {
-  ContextualKeyword,
   eat,
   IdentifierRole,
   lookaheadType,
@@ -54,6 +53,7 @@ import {
   pushTypeContext,
   retokenizeSlashAsRegex,
 } from "../tokenizer/index";
+import {ContextualKeyword} from "../tokenizer/keywords";
 import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {getNextContextId, isFlowEnabled, isJSXEnabled, isTypeScriptEnabled, state} from "./base";

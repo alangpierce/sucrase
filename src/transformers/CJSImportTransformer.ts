@@ -1,5 +1,6 @@
 import CJSImportProcessor from "../CJSImportProcessor";
-import {ContextualKeyword, IdentifierRole, isDeclaration} from "../parser/tokenizer";
+import {IdentifierRole, isDeclaration} from "../parser/tokenizer";
+import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";

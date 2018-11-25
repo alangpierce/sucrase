@@ -1,4 +1,5 @@
-import {ContextualKeyword, Token} from "./parser/tokenizer";
+import {Token} from "./parser/tokenizer";
+import {ContextualKeyword} from "./parser/tokenizer/keywords";
 import {TokenType, TokenType as tt} from "./parser/tokenizer/types";
 
 export interface TokenProcessorSnapshot {

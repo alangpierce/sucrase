@@ -1,7 +1,6 @@
 /* eslint max-len: 0 */
 
 import {
-  ContextualKeyword,
   eat,
   lookaheadType,
   lookaheadTypeAndKeyword,
@@ -11,6 +10,7 @@ import {
   pushTypeContext,
   TypeAndKeyword,
 } from "../tokenizer/index";
+import {ContextualKeyword} from "../tokenizer/keywords";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {input, state} from "../traverser/base";
 import {

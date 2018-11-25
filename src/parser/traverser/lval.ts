@@ -5,7 +5,6 @@ import {
   tsParseModifier,
 } from "../plugins/typescript";
 import {
-  ContextualKeyword,
   eat,
   IdentifierRole,
   match,
@@ -13,6 +12,7 @@ import {
   popTypeContext,
   pushTypeContext,
 } from "../tokenizer/index";
+import {ContextualKeyword} from "../tokenizer/keywords";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {isFlowEnabled, isTypeScriptEnabled, state} from "./base";
 import {parseIdentifier, parseMaybeAssign, parseObj} from "./expression";

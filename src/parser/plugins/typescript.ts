@@ -1,5 +1,4 @@
 import {
-  ContextualKeyword,
   eat,
   lookaheadType,
   lookaheadTypeAndKeyword,
@@ -8,6 +7,7 @@ import {
   popTypeContext,
   pushTypeContext,
 } from "../tokenizer/index";
+import {ContextualKeyword} from "../tokenizer/keywords";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {isJSXEnabled, state} from "../traverser/base";
 import {

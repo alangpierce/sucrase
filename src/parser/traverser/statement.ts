@@ -35,7 +35,6 @@ import {
   tsTryParseTypeParameters,
 } from "../plugins/typescript";
 import {
-  ContextualKeyword,
   eat,
   IdentifierRole,
   lookaheadType,
@@ -45,6 +44,7 @@ import {
   popTypeContext,
   pushTypeContext,
 } from "../tokenizer";
+import {ContextualKeyword} from "../tokenizer/keywords";
 import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {getNextContextId, isFlowEnabled, isTypeScriptEnabled, state} from "./base";

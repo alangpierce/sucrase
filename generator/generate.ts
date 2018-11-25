@@ -2,7 +2,7 @@
 /* eslint-disable no-console */
 import {writeFile} from "mz/fs";
 import run from "../script/run";
-import generateReadWord from "./generateReadWord";
+import generateReadWordTree from "./generateReadWordTree";
 import generateTokenTypes from "./generateTokenTypes";
 
 /**
@@ -11,8 +11,8 @@ import generateTokenTypes from "./generateTokenTypes";
 async function generate(): Promise<void> {
   await writeFile("./src/parser/tokenizer/types.ts", generateTokenTypes());
   await run("./node_modules/.bin/prettier --write ./src/parser/tokenizer/types.ts");
-  await writeFile("./src/parser/tokenizer/readWord.ts", generateReadWord());
-  await run("./node_modules/.bin/prettier --write ./src/parser/tokenizer/readWord.ts");
+  await writeFile("./src/parser/tokenizer/readWordTree.ts", generateReadWordTree());
+  await run("./node_modules/.bin/prettier --write ./src/parser/tokenizer/readWordTree.ts");
   console.log("Done with code generation.");
 }
 

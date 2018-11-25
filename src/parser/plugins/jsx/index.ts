@@ -14,7 +14,7 @@ import {input, isTypeScriptEnabled, state} from "../../traverser/base";
 import {parseExpression, parseMaybeAssign} from "../../traverser/expression";
 import {expect, unexpected} from "../../traverser/util";
 import {charCodes} from "../../util/charcodes";
-import {isIdentifierChar, isIdentifierStart} from "../../util/identifier";
+import {IS_IDENTIFIER_CHAR, IS_IDENTIFIER_START} from "../../util/identifier";
 import {tsTryParseJSXTypeArgument} from "../typescript";
 
 // Reads inline JSX contents token.
@@ -81,7 +81,7 @@ function jsxReadWord(): void {
       return;
     }
     ch = input.charCodeAt(++state.pos);
-  } while (isIdentifierChar(ch) || ch === charCodes.dash);
+  } while (IS_IDENTIFIER_CHAR[ch] || ch === charCodes.dash);
   finishToken(tt.jsxName);
 }
 
@@ -266,7 +266,7 @@ export function nextJSXTagToken(): void {
   state.start = state.pos;
   const code = input.charCodeAt(state.pos);
 
-  if (isIdentifierStart(code)) {
+  if (IS_IDENTIFIER_START[code]) {
     jsxReadWord();
   } else if (code === charCodes.quotationMark || code === charCodes.apostrophe) {
     jsxReadString(code);

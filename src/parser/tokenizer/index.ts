@@ -3,8 +3,9 @@
 import {input, isFlowEnabled, state} from "../traverser/base";
 import {unexpected} from "../traverser/util";
 import {charCodes} from "../util/charcodes";
-import {isIdentifierChar, isIdentifierStart} from "../util/identifier";
-import {isWhitespace} from "../util/whitespace";
+import {IS_IDENTIFIER_CHAR, IS_IDENTIFIER_START} from "../util/identifier";
+import {IS_WHITESPACE} from "../util/whitespace";
+import {ContextualKeyword} from "./keywords";
 import readWord from "./readWord";
 import {TokenType, TokenType as tt} from "./types";
 
@@ -43,42 +44,6 @@ export function isFunctionScopedDeclaration(token: Token): boolean {
     role === IdentifierRole.FunctionScopedDeclaration ||
     role === IdentifierRole.ObjectShorthandFunctionScopedDeclaration
   );
-}
-
-export const enum ContextualKeyword {
-  NONE,
-  _abstract,
-  _as,
-  _async,
-  _await,
-  _checks,
-  _constructor,
-  _declare,
-  _enum,
-  _exports,
-  _from,
-  _get,
-  _global,
-  _implements,
-  _infer,
-  _interface,
-  _is,
-  _keyof,
-  _mixins,
-  _module,
-  _namespace,
-  _of,
-  _opaque,
-  _private,
-  _protected,
-  _proto,
-  _public,
-  _readonly,
-  _require,
-  _set,
-  _static,
-  _type,
-  _unique,
 }
 
 // Object type used to represent tokens. Note that normally, tokens
@@ -216,7 +181,7 @@ function readToken(code: number): void {
   // Identifier or keyword. '\uXXXX' sequences are allowed in
   // identifiers, so '\' also dispatches to that.
   if (
-    isIdentifierStart(code) ||
+    IS_IDENTIFIER_START[code] ||
     code === charCodes.backslash ||
     (code === charCodes.atSign && input.charCodeAt(state.pos + 1) === charCodes.atSign)
   ) {
@@ -288,7 +253,7 @@ export function skipSpace(): void {
         break;
 
       default:
-        if (isWhitespace(ch)) {
+        if (IS_WHITESPACE[ch]) {
           ++state.pos;
         } else {
           return;
@@ -830,7 +795,7 @@ function readTmplToken(): void {
 export function skipWord(): void {
   while (state.pos < input.length) {
     const ch = input.charCodeAt(state.pos);
-    if (isIdentifierChar(ch)) {
+    if (IS_IDENTIFIER_CHAR[ch]) {
       state.pos++;
     } else if (ch === charCodes.backslash) {
       // \u

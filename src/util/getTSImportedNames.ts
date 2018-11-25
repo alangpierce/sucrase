@@ -1,4 +1,4 @@
-import {ContextualKeyword} from "../parser/tokenizer";
+import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 

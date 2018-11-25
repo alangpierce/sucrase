@@ -25,7 +25,7 @@ export function parse(
   initParser(input, isJSXEnabled, isTypeScriptEnabled, isFlowEnabled);
   const result = parseFile();
   if (state.error) {
-    throw augmentError(state.error);
+    trace("Parse failed!");
   }
   return result;
 }

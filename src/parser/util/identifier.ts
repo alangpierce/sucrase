@@ -1,7 +1,7 @@
 import {isWhitespace} from "./whitespace";
 
 // Test whether a given character code starts an identifier.
-export function isIdentifierStart(code: number): boolean {
+export function isIdentifierStart(code: i32): boolean {
   if (code < 65) return code === 36;
   if (code < 91) return true;
   if (code < 97) return code === 95;
@@ -14,7 +14,7 @@ export function isIdentifierStart(code: number): boolean {
 }
 
 // Test whether a given character is part of an identifier.
-export function isIdentifierChar(code: number): boolean {
+export function isIdentifierChar(code: i32): boolean {
   if (code < 48) return code === 36;
   if (code < 58) return true;
   if (code < 65) return false;

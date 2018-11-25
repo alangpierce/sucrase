@@ -12,7 +12,7 @@ import {TokenType as tt} from "./types";
  * keywords, so that we don't need to do any string allocations or hash table lookups to tell when
  * a name token is a keyword.
  */
-export default function readWord(): void {
+export function readWord(): void {
   switch (input.charCodeAt(state.pos++)) {
     case charCodes.uppercaseR:
       if (

@@ -54,7 +54,7 @@ function isMaybeDefaultImport(lookahead: TypeAndKeyword): boolean {
   );
 }
 
-function flowParseTypeInitialiser(tok?: TokenType): void {
+function flowParseTypeInitialiser(tok: TokenType = 0): void {
   const oldIsType = pushTypeContext(0);
   expect(tok || tt.colon);
   flowParseType();
@@ -704,10 +704,10 @@ export function flowParseVariance(): void {
 // ==================================
 
 export function flowParseFunctionBodyAndFinish(
-  functionStart: number,
+  functionStart: i32,
   isGenerator: boolean,
-  allowExpressionBody: boolean = false,
-  funcContextId: number,
+  allowExpressionBody: boolean,
+  funcContextId: i32,
 ): void {
   // For arrow functions, `parseArrow` handles the return type itself.
   if (!allowExpressionBody && match(tt.colon)) {
@@ -717,7 +717,7 @@ export function flowParseFunctionBodyAndFinish(
   parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);
 }
 
-export function flowParseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {
+export function flowParseSubscript(startPos: i32, noCalls: boolean, stopState: StopState): void {
   if (match(tt.questionDot) && lookaheadType() === tt.lessThan) {
     if (noCalls) {
       stopState.stop = true;
@@ -1017,7 +1017,7 @@ export function flowParseArrow(): boolean {
   return eat(tt.arrow);
 }
 
-export function flowParseSubscripts(startPos: number, noCalls: boolean = false): void {
+export function flowParseSubscripts(startPos: i32, noCalls: boolean = false): void {
   if (
     state.tokens[state.tokens.length - 1].contextualKeyword === ContextualKeyword._async &&
     match(tt.lessThan)
@@ -1034,7 +1034,7 @@ export function flowParseSubscripts(startPos: number, noCalls: boolean = false):
 }
 
 // Returns true if there was an arrow function here.
-function parseAsyncArrowWithTypeParameters(startPos: number): boolean {
+function parseAsyncArrowWithTypeParameters(startPos: i32): boolean {
   const startTokenIndex = state.tokens.length;
   parseFunctionParams();
   if (!parseArrow()) {

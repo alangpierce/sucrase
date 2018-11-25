@@ -182,7 +182,7 @@ function parseExprOps(noIn: boolean): boolean {
 // `minPrec` provides context that allows the function to stop and
 // defer further parser to one of its callers when it encounters an
 // operator that has a lower precedence than the set it is parsing.
-function parseExprOp(minPrec: number, noIn: boolean): void {
+function parseExprOp(minPrec: i32, noIn: boolean): void {
   if (
     isTypeScriptEnabled &&
     (tt._in & TokenType.PRECEDENCE_MASK) > minPrec &&
@@ -246,7 +246,7 @@ export function parseExprSubscripts(): boolean {
   return false;
 }
 
-function parseSubscripts(startPos: number, noCalls: boolean = false): void {
+function parseSubscripts(startPos: i32, noCalls: boolean = false): void {
   if (isFlowEnabled) {
     flowParseSubscripts(startPos, noCalls);
   } else {
@@ -254,14 +254,14 @@ function parseSubscripts(startPos: number, noCalls: boolean = false): void {
   }
 }
 
-export function baseParseSubscripts(startPos: number, noCalls: boolean = false): void {
+export function baseParseSubscripts(startPos: i32, noCalls: boolean = false): void {
   const stopState = new StopState(false);
   do {
     parseSubscript(startPos, noCalls, stopState);
   } while (!stopState.stop && !state.error);
 }
 
-function parseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {
+function parseSubscript(startPos: i32, noCalls: boolean, stopState: StopState): void {
   if (isTypeScriptEnabled) {
     tsParseSubscript(startPos, noCalls, stopState);
   } else if (isFlowEnabled) {
@@ -272,7 +272,7 @@ function parseSubscript(startPos: number, noCalls: boolean, stopState: StopState
 }
 
 /** Set 'state.stop = true' to indicate that we should stop parsing subscripts. */
-export function baseParseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {
+export function baseParseSubscript(startPos: i32, noCalls: boolean, stopState: StopState): void {
   if (!noCalls && eat(tt.doubleColon)) {
     parseNoCallExpr();
     stopState.stop = true;
@@ -363,7 +363,7 @@ function shouldParseAsyncArrow(): boolean {
   return match(tt.colon) || match(tt.arrow);
 }
 
-function parseAsyncArrowFromCallExpression(functionStart: number, startTokenIndex: number): void {
+function parseAsyncArrowFromCallExpression(functionStart: i32, startTokenIndex: i32): void {
   if (isTypeScriptEnabled) {
     tsStartParseAsyncArrowFromCallExpression();
   } else if (isFlowEnabled) {
@@ -753,7 +753,7 @@ function isGetterOrSetterMethod(isPattern: boolean): boolean {
 function parseObjectMethod(
   isGenerator: boolean,
   isPattern: boolean,
-  objectContextId: number,
+  objectContextId: i32,
 ): boolean {
   // We don't need to worry about modifiers because object methods can't have optional bodies, so
   // the start will never be used.
@@ -804,7 +804,7 @@ function parseObjPropValue(
   isGenerator: boolean,
   isPattern: boolean,
   isBlockScope: boolean,
-  objectContextId: number,
+  objectContextId: i32,
 ): void {
   if (isTypeScriptEnabled) {
     tsStartParseObjPropValue();
@@ -817,7 +817,7 @@ function parseObjPropValue(
   }
 }
 
-export function parsePropertyName(objectContextId: number): void {
+export function parsePropertyName(objectContextId: i32): void {
   if (isFlowEnabled) {
     flowParseVariance();
   }
@@ -840,7 +840,7 @@ export function parsePropertyName(objectContextId: number): void {
 
 // Parse object or class method.
 export function parseMethod(
-  functionStart: number,
+  functionStart: i32,
   isGenerator: boolean,
   isConstructor: boolean,
 ): void {
@@ -862,17 +862,17 @@ export function parseMethod(
 // Parse arrow function expression.
 // If the parameters are provided, they will be converted to an
 // assignable list.
-export function parseArrowExpression(functionStart: number, startTokenIndex: number): void {
+export function parseArrowExpression(functionStart: i32, startTokenIndex: i32): void {
   parseFunctionBody(functionStart, false /* isGenerator */, true);
   const endTokenIndex = state.tokens.length;
   state.scopes.push(new Scope(startTokenIndex, endTokenIndex, true));
 }
 
 export function parseFunctionBodyAndFinish(
-  functionStart: number,
+  functionStart: i32,
   isGenerator: boolean,
   allowExpressionBody: boolean = false,
-  funcContextId: number = 0,
+  funcContextId: i32 = 0,
 ): void {
   if (isTypeScriptEnabled) {
     tsParseFunctionBodyAndFinish(functionStart, isGenerator, allowExpressionBody, funcContextId);
@@ -885,10 +885,10 @@ export function parseFunctionBodyAndFinish(
 
 // Parse function body and check parameters.
 export function parseFunctionBody(
-  functionStart: number,
+  functionStart: i32,
   isGenerator: boolean,
   allowExpression: boolean,
-  funcContextId: number = 0,
+  funcContextId: i32 = 0,
 ): void {
   const isExpression = allowExpression && !match(tt.braceL);
 

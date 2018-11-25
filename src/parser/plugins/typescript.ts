@@ -973,10 +973,10 @@ export function tsIsDeclarationStart(): boolean {
 // ======================================================
 
 export function tsParseFunctionBodyAndFinish(
-  functionStart: number,
+  functionStart: i32,
   isGenerator: boolean,
-  allowExpressionBody: boolean = false,
-  funcContextId: number,
+  allowExpressionBody: boolean,
+  funcContextId: i32,
 ): void {
   // For arrow functions, `parseArrow` handles the return type itself.
   if (!allowExpressionBody && match(tt.colon)) {
@@ -1004,7 +1004,7 @@ export function tsParseFunctionBodyAndFinish(
   parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);
 }
 
-export function tsParseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {
+export function tsParseSubscript(startPos: i32, noCalls: boolean, stopState: StopState): void {
   if (!hasPrecedingLineBreak() && eat(tt.bang)) {
     state.tokens[state.tokens.length - 1].type = tt.nonNullAssertion;
     return;
@@ -1121,7 +1121,7 @@ export function tsParseAccessModifier(): void {
 
 export function tsTryParseClassMemberWithIsStatic(
   isStatic: boolean,
-  classContextId: number,
+  classContextId: i32,
 ): boolean {
   let isAbstract = false;
   let isReadonly = false;

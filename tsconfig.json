@@ -1,8 +1,8 @@
 {
+  "extends": "./node_modules/assemblyscript/std/assembly.json",
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "strictNullChecks": true,
-    "target": "es2017",
     "module": "commonjs",
     "typeRoots": ["node_modules/@types"],
     "declaration": true,

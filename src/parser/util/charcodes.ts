@@ -105,7 +105,7 @@ export const enum charCodes {
   paragraphSeparator = 8233,
 }
 
-export function isDigit(code: number): boolean {
+export function isDigit(code: i32): boolean {
   return (
     (code >= charCodes.digit0 && code <= charCodes.digit9) ||
     (code >= charCodes.lowercaseA && code <= charCodes.lowercaseF) ||

@@ -2,11 +2,11 @@ import {ContextualKeyword, Token} from "./index";
 import {TokenType, TokenType as tt} from "./types";
 
 export class Scope {
-  startTokenIndex: number;
-  endTokenIndex: number;
+  startTokenIndex: i32;
+  endTokenIndex: i32;
   isFunctionScope: boolean;
 
-  constructor(startTokenIndex: number, endTokenIndex: number, isFunctionScope: boolean) {
+  constructor(startTokenIndex: i32, endTokenIndex: i32, isFunctionScope: boolean) {
     this.startTokenIndex = startTokenIndex;
     this.endTokenIndex = endTokenIndex;
     this.isFunctionScope = isFunctionScope;
@@ -15,41 +15,41 @@ export class Scope {
 
 export class StateSnapshot {
   constructor(
-    readonly potentialArrowAt: number,
+    readonly potentialArrowAt: i32,
     readonly noAnonFunctionType: boolean,
-    readonly tokensLength: number,
-    readonly scopesLength: number,
-    readonly pos: number,
+    readonly tokensLength: i32,
+    readonly scopesLength: i32,
+    readonly pos: i32,
     readonly type: TokenType,
     readonly contextualKeyword: ContextualKeyword,
-    readonly start: number,
-    readonly end: number,
+    readonly start: i32,
+    readonly end: i32,
     readonly isType: boolean,
     readonly error: Error | null,
   ) {}
 }
 
-export default class State {
+export class State {
   // Used to signify the start of a potential arrow function
-  potentialArrowAt: number = -1;
+  potentialArrowAt: i32 = -1;
 
   // Used by Flow to handle an edge case involving function type parsing.
   noAnonFunctionType: boolean = false;
 
   // Token store.
-  tokens: Array<Token> = [];
+  tokens: Array<Token> = new Array<Token>();
 
   // Array of all observed scopes, ordered by their ending position.
-  scopes: Array<Scope> = [];
+  scopes: Array<Scope> = new Array<Scope>();
 
   // The current position of the tokenizer in the input.
-  pos: number = 0;
+  pos: i32 = 0;
 
   // Information about the current token.
   type: TokenType = tt.eof;
   contextualKeyword: ContextualKeyword = ContextualKeyword.NONE;
-  start: number = 0;
-  end: number = 0;
+  start: i32 = 0;
+  end: i32 = 0;
 
   isType: boolean = false;
 

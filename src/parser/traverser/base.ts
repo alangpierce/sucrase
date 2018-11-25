@@ -1,4 +1,4 @@
-import State from "../tokenizer/state";
+import {State} from "../tokenizer/state";
 import {charCodes} from "../util/charcodes";
 
 export let isJSXEnabled: boolean;
@@ -6,9 +6,9 @@ export let isTypeScriptEnabled: boolean;
 export let isFlowEnabled: boolean;
 export let state: State;
 export let input: string;
-export let nextContextId: number;
+export let nextContextId: i32;
 
-export function getNextContextId(): number {
+export function getNextContextId(): i32 {
   return nextContextId++;
 }
 
@@ -23,15 +23,15 @@ export function augmentError(error: any): any {
 }
 
 export class Loc {
-  line: number;
-  column: number;
-  constructor(line: number, column: number) {
+  line: i32;
+  column: i32;
+  constructor(line: i32, column: i32) {
     this.line = line;
     this.column = column;
   }
 }
 
-export function locationForIndex(pos: number): Loc {
+export function locationForIndex(pos: i32): Loc {
   let line = 1;
   let column = 1;
   for (let i = 0; i < pos; i++) {

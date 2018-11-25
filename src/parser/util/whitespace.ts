@@ -1,17 +1,17 @@
 import {charCodes} from "./charcodes";
 
-const WHITESPACE_TABLE = new Uint8Array(128);
-WHITESPACE_TABLE[0x0009] = 1;
-WHITESPACE_TABLE[0x000b] = 1;
-WHITESPACE_TABLE[0x000c] = 1;
-WHITESPACE_TABLE[charCodes.space] = 1;
+// const WHITESPACE_TABLE = new Uint8Array(128);
+// WHITESPACE_TABLE[0x0009] = 1;
+// WHITESPACE_TABLE[0x000b] = 1;
+// WHITESPACE_TABLE[0x000c] = 1;
+// WHITESPACE_TABLE[charCodes.space] = 1;
 
 // https://tc39.github.io/ecma262/#sec-white-space
-export function isWhitespace(code: number): number {
+export function isWhitespace(code: i32): i32 {
   // Fast path for ASCII using a pre-computed table.
-  if (!(code >>> 7)) {
-    return WHITESPACE_TABLE[code];
-  }
+  // if (!(code >>> 7)) {
+  //   return WHITESPACE_TABLE[code];
+  // }
   switch (code) {
     case 0x0009: // CHARACTER TABULATION
     case 0x000b: // LINE TABULATION

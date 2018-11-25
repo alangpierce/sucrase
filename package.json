@@ -12,6 +12,10 @@
     "sucrase-node": "./bin/sucrase-node"
   },
   "scripts": {
+    "asbuild:untouched": "asc assemblyscript-prototype/assembly/index.ts -b assemblyscript-prototype/build/untouched.wasm -t assemblyscript-prototype/build/untouched.wat --sourceMap --validate --debug",
+    "asbuild:optimized": "asc assemblyscript-prototype/assembly/index.ts -b assemblyscript-prototype/build/optimized.wasm -t assemblyscript-prototype/build/optimized.wat --sourceMap --validate --optimize",
+    "asbuild": "yarn asbuild:untouched && yarn asbuild:optimized",
+    "asrun": "node assemblyscript-prototype/index.js",
     "build": "sucrase-node script/build.ts",
     "fast-build": "sucrase-node script/build.ts --fast",
     "clean": "rm -rf ./build ./dist ./dist-self-build ./example-runner/example-repos",

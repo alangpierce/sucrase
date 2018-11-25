@@ -48,7 +48,7 @@ function jsxReadToken(): void {
   }
 }
 
-function jsxReadString(quote: number): void {
+function jsxReadString(quote: i32): void {
   state.pos++;
   for (;;) {
     if (state.pos >= input.length) {
@@ -74,7 +74,7 @@ function jsxReadString(quote: number): void {
 // by isIdentifierStart in readToken.
 
 function jsxReadWord(): void {
-  let ch: number;
+  let ch: i32;
   do {
     if (state.pos > input.length) {
       unexpected("Unexpectedly reached the end of input.");

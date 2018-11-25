@@ -463,7 +463,7 @@ function parseIdentifierStatement(contextualKeyword: ContextualKeyword): void {
 export function parseBlock(
   allowDirectives: boolean = false,
   isFunctionScope: boolean = false,
-  contextId: number = 0,
+  contextId: i32 = 0,
 ): void {
   const startTokenIndex = state.tokens.length;
   expect(tt.braceL);
@@ -545,7 +545,7 @@ function parseVarHead(isBlockScope: boolean): void {
 // `isStatement` parameter).
 
 export function parseFunction(
-  functionStart: number,
+  functionStart: i32,
   isStatement: boolean,
   allowExpressionBody: boolean = false,
   optionalId: boolean = false,
@@ -586,7 +586,7 @@ export function parseFunction(
 
 export function parseFunctionParams(
   allowModifiers: boolean = false,
-  funcContextId: number = 0,
+  funcContextId: i32 = 0,
 ): void {
   if (isTypeScriptEnabled) {
     tsStartParseFunctionParams();
@@ -645,7 +645,7 @@ function isClassMethod(): boolean {
   return match(tt.parenL) || match(tt.lessThan);
 }
 
-function parseClassBody(classContextId: number): void {
+function parseClassBody(classContextId: i32): void {
   expect(tt.braceL);
 
   while (!eat(tt.braceR) && !state.error) {
@@ -662,7 +662,7 @@ function parseClassBody(classContextId: number): void {
   }
 }
 
-function parseClassMember(memberStart: number, classContextId: number): void {
+function parseClassMember(memberStart: i32, classContextId: i32): void {
   if (isTypeScriptEnabled) {
     tsParseAccessModifier();
   }
@@ -685,9 +685,9 @@ function parseClassMember(memberStart: number, classContextId: number): void {
 }
 
 function parseClassMemberWithIsStatic(
-  memberStart: number,
+  memberStart: i32,
   isStatic: boolean,
-  classContextId: number,
+  classContextId: i32,
 ): void {
   if (isTypeScriptEnabled) {
     if (tsTryParseClassMemberWithIsStatic(isStatic, classContextId)) {
@@ -751,7 +751,7 @@ function parseClassMemberWithIsStatic(
 }
 
 function parseClassMethod(
-  functionStart: number,
+  functionStart: i32,
   isGenerator: boolean,
   isConstructor: boolean,
 ): void {
@@ -766,7 +766,7 @@ function parseClassMethod(
 }
 
 // Return the name of the class property, if it is a simple identifier.
-export function parseClassPropertyName(classContextId: number): void {
+export function parseClassPropertyName(classContextId: i32): void {
   parsePropertyName(classContextId);
 }
 

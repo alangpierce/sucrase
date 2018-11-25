@@ -5,7 +5,7 @@ import {unexpected} from "../traverser/util";
 import {charCodes} from "../util/charcodes";
 import {isIdentifierChar, isIdentifierStart} from "../util/identifier";
 import {isWhitespace} from "../util/whitespace";
-import readWord from "./readWord";
+import {readWord} from "./readWord";
 import {TokenType, TokenType as tt} from "./types";
 
 export const enum IdentifierRole {
@@ -105,15 +105,15 @@ export class Token {
 
   type: TokenType;
   contextualKeyword: ContextualKeyword;
-  start: number;
-  end: number;
+  start: i32;
+  end: i32;
   isType: boolean;
   identifierRole: IdentifierRole | null;
   // Initially false for all tokens, then may be computed in a follow-up step that does scope
   // analysis.
   shadowsGlobal: boolean;
-  contextId: number | null;
-  rhsEndIndex: number | null;
+  contextId: i32 | null;
+  rhsEndIndex: i32 | null;
   // For class tokens, records if the class is a class expression or a class statement.
   isExpression: boolean;
 }
@@ -142,7 +142,7 @@ export function retokenizeSlashAsRegex(): void {
   readRegexp();
 }
 
-export function pushTypeContext(existingTokensInType: number): boolean {
+export function pushTypeContext(existingTokensInType: i32): boolean {
   for (let i = state.tokens.length - existingTokensInType; i < state.tokens.length; i++) {
     state.tokens[i].isType = true;
   }
@@ -217,7 +217,7 @@ export function nextToken(): void {
   readToken(input.charCodeAt(state.pos));
 }
 
-function readToken(code: number): void {
+function readToken(code: i32): void {
   // Identifier or keyword. '\uXXXX' sequences are allowed in
   // identifiers, so '\' also dispatches to that.
   if (
@@ -245,7 +245,7 @@ function skipBlockComment(): void {
   state.pos += 2;
 }
 
-export function skipLineComment(startSkip: number): void {
+export function skipLineComment(startSkip: i32): void {
   let ch = input.charCodeAt((state.pos += startSkip));
   if (state.pos < input.length) {
     while (
@@ -347,7 +347,7 @@ function readToken_slash(): void {
   }
 }
 
-function readToken_mult_modulo(code: number): void {
+function readToken_mult_modulo(code: i32): void {
   // '%*'
   let tokenType = code === charCodes.asterisk ? tt.star : tt.modulo;
   let width = 1;
@@ -372,7 +372,7 @@ function readToken_mult_modulo(code: number): void {
   finishOp(tokenType, width);
 }
 
-function readToken_pipe_amp(code: number): void {
+function readToken_pipe_amp(code: i32): void {
   // '|&'
   const nextChar = input.charCodeAt(state.pos + 1);
 
@@ -417,7 +417,7 @@ function readToken_caret(): void {
   }
 }
 
-function readToken_plus_min(code: number): void {
+function readToken_plus_min(code: i32): void {
   // '+-'
   const nextChar = input.charCodeAt(state.pos + 1);
 
@@ -436,7 +436,7 @@ function readToken_plus_min(code: number): void {
 }
 
 // '<>'
-function readToken_lt_gt(code: number): void {
+function readToken_lt_gt(code: i32): void {
   // Avoid right-shift for things like Array<Array<string>>.
   if (code === charCodes.greaterThan && state.isType) {
     finishOp(tt.greaterThan, 1);
@@ -467,7 +467,7 @@ function readToken_lt_gt(code: number): void {
   }
 }
 
-function readToken_eq_excl(code: number): void {
+function readToken_eq_excl(code: i32): void {
   // '=!'
   const nextChar = input.charCodeAt(state.pos + 1);
   if (nextChar === charCodes.equalsTo) {
@@ -508,7 +508,7 @@ function readToken_question(): void {
   }
 }
 
-export function getTokenFromCode(code: number): void {
+export function getTokenFromCode(code: i32): void {
   switch (code) {
     case charCodes.numberSign:
       ++state.pos;
@@ -668,7 +668,7 @@ export function getTokenFromCode(code: number): void {
   unexpected(`Unexpected character '${String.fromCharCode(code)}'`, state.pos);
 }
 
-function finishOp(type: TokenType, size: number): void {
+function finishOp(type: TokenType, size: i32): void {
   state.pos += size;
   finishToken(type);
 }
@@ -777,7 +777,7 @@ function readNumber(startsWithDot: boolean): void {
   finishToken(tt.num);
 }
 
-function readString(quote: number): void {
+function readString(quote: i32): void {
   state.pos++;
   for (;;) {
     if (state.pos >= input.length) {

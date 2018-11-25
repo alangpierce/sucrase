@@ -80,13 +80,12 @@ export function expect(type: TokenType): void {
  * Transition the parser to an error state. All code needs to be written to naturally unwind in this
  * state, which allows us to backtrack without exceptions and without error plumbing everywhere.
  */
-export function unexpected(message: string = "Unexpected token", pos: number = state.start): void {
+export function unexpected(message: string = "Unexpected token", pos: i32 = state.start): void {
   if (state.error) {
     return;
   }
-  // tslint:disable-next-line no-any
-  const err: any = new SyntaxError(message);
-  err.pos = pos;
+  const err = new SyntaxError(message);
+  // err.pos = pos;
   state.error = err;
   state.pos = input.length;
   finishToken(tt.eof);

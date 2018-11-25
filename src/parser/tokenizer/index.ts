@@ -79,11 +79,6 @@ export const enum ContextualKeyword {
   _static,
   _type,
   _unique,
-  // Also throw in some identifiers we know we'll need to match on.
-  _React,
-  _createClass,
-  _createReactClass,
-  _displayName,
 }
 
 // Object type used to represent tokens. Note that normally, tokens

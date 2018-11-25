@@ -14,19 +14,6 @@ import {TokenType as tt} from "./types";
  */
 export default function readWord(): void {
   switch (input.charCodeAt(state.pos++)) {
-    case charCodes.uppercaseR:
-      if (
-        input.charCodeAt(state.pos++) === charCodes.lowercaseE &&
-        input.charCodeAt(state.pos++) === charCodes.lowercaseA &&
-        input.charCodeAt(state.pos++) === charCodes.lowercaseC &&
-        input.charCodeAt(state.pos++) === charCodes.lowercaseT &&
-        !isIdentifierChar(input.charCodeAt(state.pos)) &&
-        input.charCodeAt(state.pos) !== charCodes.backslash
-      ) {
-        finishToken(tt.name, ContextualKeyword._React);
-        return;
-      }
-      break;
     case charCodes.lowercaseA:
       switch (input.charCodeAt(state.pos++)) {
         case charCodes.lowercaseB:
@@ -185,49 +172,6 @@ export default function readWord(): void {
             }
           }
           break;
-        case charCodes.lowercaseR:
-          if (input.charCodeAt(state.pos++) === charCodes.lowercaseE) {
-            if (input.charCodeAt(state.pos++) === charCodes.lowercaseA) {
-              if (input.charCodeAt(state.pos++) === charCodes.lowercaseT) {
-                if (input.charCodeAt(state.pos++) === charCodes.lowercaseE) {
-                  switch (input.charCodeAt(state.pos++)) {
-                    case charCodes.uppercaseC:
-                      if (
-                        input.charCodeAt(state.pos++) === charCodes.lowercaseL &&
-                        input.charCodeAt(state.pos++) === charCodes.lowercaseA &&
-                        input.charCodeAt(state.pos++) === charCodes.lowercaseS &&
-                        input.charCodeAt(state.pos++) === charCodes.lowercaseS &&
-                        !isIdentifierChar(input.charCodeAt(state.pos)) &&
-                        input.charCodeAt(state.pos) !== charCodes.backslash
-                      ) {
-                        finishToken(tt.name, ContextualKeyword._createClass);
-                        return;
-                      }
-                      break;
-                    case charCodes.uppercaseR:
-                      if (
-                        input.charCodeAt(state.pos++) === charCodes.lowercaseE &&
-                        input.charCodeAt(state.pos++) === charCodes.lowercaseA &&
-                        input.charCodeAt(state.pos++) === charCodes.lowercaseC &&
-                        input.charCodeAt(state.pos++) === charCodes.lowercaseT &&
-                        input.charCodeAt(state.pos++) === charCodes.uppercaseC &&
-                        input.charCodeAt(state.pos++) === charCodes.lowercaseL &&
-                        input.charCodeAt(state.pos++) === charCodes.lowercaseA &&
-                        input.charCodeAt(state.pos++) === charCodes.lowercaseS &&
-                        input.charCodeAt(state.pos++) === charCodes.lowercaseS &&
-                        !isIdentifierChar(input.charCodeAt(state.pos)) &&
-                        input.charCodeAt(state.pos) !== charCodes.backslash
-                      ) {
-                        finishToken(tt.name, ContextualKeyword._createReactClass);
-                        return;
-                      }
-                      break;
-                  }
-                }
-              }
-            }
-          }
-          break;
       }
       break;
     case charCodes.lowercaseD:
@@ -286,24 +230,6 @@ export default function readWord(): void {
                 return;
               }
               break;
-          }
-          break;
-        case charCodes.lowercaseI:
-          if (
-            input.charCodeAt(state.pos++) === charCodes.lowercaseS &&
-            input.charCodeAt(state.pos++) === charCodes.lowercaseP &&
-            input.charCodeAt(state.pos++) === charCodes.lowercaseL &&
-            input.charCodeAt(state.pos++) === charCodes.lowercaseA &&
-            input.charCodeAt(state.pos++) === charCodes.lowercaseY &&
-            input.charCodeAt(state.pos++) === charCodes.uppercaseN &&
-            input.charCodeAt(state.pos++) === charCodes.lowercaseA &&
-            input.charCodeAt(state.pos++) === charCodes.lowercaseM &&
-            input.charCodeAt(state.pos++) === charCodes.lowercaseE &&
-            !isIdentifierChar(input.charCodeAt(state.pos)) &&
-            input.charCodeAt(state.pos) !== charCodes.backslash
-          ) {
-            finishToken(tt.name, ContextualKeyword._displayName);
-            return;
           }
           break;
         case charCodes.lowercaseO:

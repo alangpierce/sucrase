@@ -1,6 +1,6 @@
 import CJSImportProcessor from "../CJSImportProcessor";
 import {Options} from "../index";
-import {ContextualKeyword, IdentifierRole} from "../parser/tokenizer";
+import {IdentifierRole} from "../parser/tokenizer";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import RootTransformer from "./RootTransformer";
@@ -22,7 +22,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
 
   process(): boolean {
     const startIndex = this.tokens.currentIndex();
-    if (this.tokens.matchesContextual(ContextualKeyword._createReactClass)) {
+    if (this.tokens.identifierName() === "createReactClass") {
       const newName =
         this.importProcessor && this.importProcessor.getIdentifierReplacement("createReactClass");
       if (newName) {
@@ -35,11 +35,8 @@ export default class ReactDisplayNameTransformer extends Transformer {
     }
     if (
       this.tokens.matches3(tt.name, tt.dot, tt.name) &&
-      this.tokens.matchesContextual(ContextualKeyword._React) &&
-      this.tokens.matchesContextualAtIndex(
-        this.tokens.currentIndex() + 2,
-        ContextualKeyword._createClass,
-      )
+      this.tokens.identifierName() === "React" &&
+      this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 2) === "createClass"
     ) {
       const newName = this.importProcessor
         ? this.importProcessor.getIdentifierReplacement("React") || "React"
@@ -137,7 +134,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
       }
 
       if (
-        this.tokens.matchesContextualAtIndex(index, ContextualKeyword._displayName) &&
+        this.tokens.identifierNameAtIndex(index) === "displayName" &&
         this.tokens.tokens[index].identifierRole === IdentifierRole.ObjectKey &&
         token.contextId === objectContextId
       ) {

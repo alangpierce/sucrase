@@ -3,8 +3,12 @@ import {parse} from "../../src/parser";
 
 export {memory};
 
-export function resetMemory(): void {
-  memory.reset();
+export function snapshotMemory(): usize {
+  return __memory_snapshot();
+}
+
+export function restoreMemoryToSnapshot(ptr: usize): void {
+  __memory_resetToSnapshot(ptr);
 }
 
 export function countTokens(code: string): i32 {

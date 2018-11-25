@@ -30,10 +30,12 @@ const instance = instantiate(wasmModule, {
 async function run() {
   const files = await loadProjectFiles("./src");
 
+  const snapshot = instance.snapshotMemory();
+
   let sum = 0;
   console.time("wasm");
   for (const file of files) {
-    instance.resetMemory();
+    instance.restoreMemoryToSnapshot(snapshot);
     const strPtr = instance.newString(file.code);
     sum += instance.countTokens(strPtr);
   }

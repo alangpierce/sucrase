@@ -1,3 +1,5 @@
+import {throws} from "assert";
+import {transform} from "../src";
 import {IMPORT_DEFAULT_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
@@ -388,6 +390,21 @@ describe("transform flow", () => {
       `"use strict";
       foo(n );
     `,
+    );
+  });
+
+  it("does not infinite loop on declare module declarations", () => {
+    throws(
+      () =>
+        transform(
+          `
+      declare module 'ReactFeatureFlags' {
+        declare module.exports: any;
+      }
+    `,
+          {transforms: ["flow"]},
+        ),
+      /SyntaxError: Unexpected token \(3:9\)/,
     );
   });
 });

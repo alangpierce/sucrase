@@ -152,6 +152,8 @@ function flowParseDeclareModule(): void {
     if (match(tt._import)) {
       next();
       parseImport();
+    } else {
+      unexpected();
     }
   }
   expect(tt.braceR);

@@ -1,3 +1,10 @@
+# 3.8.0 (2018-11-25)
+
+* Various simplifications in prep for compiling the project with AssemblyScript.
+* Performance improvements, varying from 10% to 70% better performance depending
+  on use case.
+* Fix infinite loop in flow `declare module` parsing ([#359])
+
 # 3.7.1 (2018-11-18)
 
 * Fix crash on empty export expressions ([#338])
@@ -146,3 +153,4 @@
 [#339]: https://github.com/alangpierce/sucrase/pull/339
 [#340]: https://github.com/alangpierce/sucrase/pull/340
 [#342]: https://github.com/alangpierce/sucrase/pull/342
+[#359]: https://github.com/alangpierce/sucrase/pull/359

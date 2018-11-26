@@ -9,6 +9,7 @@ module.exports = {
     "class-methods-use-this": "off",
     "func-names": "off",
     "import/extensions": "off",
+    "import/no-cycle": "off",
     "import/no-extraneous-dependencies": [
       "error",
       {
@@ -24,6 +25,7 @@ module.exports = {
     ],
     "import/no-mutable-exports": "off",
     "import/prefer-default-export": "off",
+    "lines-between-class-members": "off",
     "no-await-in-loop": "off",
     "no-bitwise": "off",
     "no-constant-condition": ["error", {checkLoops: false}],

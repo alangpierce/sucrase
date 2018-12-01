@@ -70,9 +70,9 @@
     "prettier": "^1.15.2",
     "sucrase": "^3.8.0",
     "tslint": "^5.9.1",
-    "tslint-language-service": "^0.9.9",
-    "typescript": "^3.1.6",
+    "typescript": "3.1.6",
     "typescript-eslint-parser": "^21.0.1",
+    "typescript-tslint-plugin": "^0.1.2",
     "yargs-parser": "^11.1.1"
   },
   "dependencies": {

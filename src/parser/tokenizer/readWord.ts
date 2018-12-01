@@ -13,9 +13,9 @@ import {TokenType as tt} from "./types";
  */
 export default function readWord(): void {
   let treePos = 0;
-  let code;
+  let code = 0;
   let pos = state.pos;
-  while (true) {
+  while (pos < input.length) {
     code = input.charCodeAt(pos);
     if (code < charCodes.lowercaseA || code > charCodes.lowercaseZ) {
       break;

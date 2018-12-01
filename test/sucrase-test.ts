@@ -723,4 +723,8 @@ describe("sucrase", () => {
       {transforms: ["typescript"]},
     );
   });
+
+  it("handles a file with only a single identifier", () => {
+    assertResult("a", "a", {transforms: []});
+  });
 });

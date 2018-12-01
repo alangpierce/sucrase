@@ -77,14 +77,14 @@ export default class CJSImportProcessor {
   preprocessTokens(): void {
     for (let i = 0; i < this.tokens.tokens.length; i++) {
       if (
-        this.tokens.matchesAtIndex(i, [tt._import]) &&
-        !this.tokens.matchesAtIndex(i, [tt._import, tt.name, tt.eq])
+        this.tokens.matches1AtIndex(i, tt._import) &&
+        !this.tokens.matches3AtIndex(i, tt._import, tt.name, tt.eq)
       ) {
         this.preprocessImportAtIndex(i);
       }
       if (
-        this.tokens.matchesAtIndex(i, [tt._export]) &&
-        !this.tokens.matchesAtIndex(i, [tt._export, tt.eq])
+        this.tokens.matches1AtIndex(i, tt._export) &&
+        !this.tokens.matches2AtIndex(i, tt._export, tt.eq)
       ) {
         this.preprocessExportAtIndex(i);
       }
@@ -226,35 +226,35 @@ get: () => ${primaryImportName}[key]}); });`;
     index++;
     if (
       (this.tokens.matchesContextualAtIndex(index, ContextualKeyword._type) ||
-        this.tokens.matchesAtIndex(index, [tt._typeof])) &&
-      !this.tokens.matchesAtIndex(index + 1, [tt.comma]) &&
+        this.tokens.matches1AtIndex(index, tt._typeof)) &&
+      !this.tokens.matches1AtIndex(index + 1, tt.comma) &&
       !this.tokens.matchesContextualAtIndex(index + 1, ContextualKeyword._from)
     ) {
       // import type declaration, so no need to process anything.
       return;
     }
 
-    if (this.tokens.matchesAtIndex(index, [tt.parenL])) {
+    if (this.tokens.matches1AtIndex(index, tt.parenL)) {
       // Dynamic import, so nothing to do
       return;
     }
 
-    if (this.tokens.matchesAtIndex(index, [tt.name])) {
+    if (this.tokens.matches1AtIndex(index, tt.name)) {
       defaultNames.push(this.tokens.identifierNameAtIndex(index));
       index++;
-      if (this.tokens.matchesAtIndex(index, [tt.comma])) {
+      if (this.tokens.matches1AtIndex(index, tt.comma)) {
         index++;
       }
     }
 
-    if (this.tokens.matchesAtIndex(index, [tt.star])) {
+    if (this.tokens.matches1AtIndex(index, tt.star)) {
       // * as
       index += 2;
       wildcardNames.push(this.tokens.identifierNameAtIndex(index));
       index++;
     }
 
-    if (this.tokens.matchesAtIndex(index, [tt.braceL])) {
+    if (this.tokens.matches1AtIndex(index, tt.braceL)) {
       index++;
       ({newIndex: index, namedImports} = this.getNamedImports(index));
     }
@@ -263,7 +263,7 @@ get: () => ${primaryImportName}[key]}); });`;
       index++;
     }
 
-    if (!this.tokens.matchesAtIndex(index, [tt.string])) {
+    if (!this.tokens.matches1AtIndex(index, tt.string)) {
       throw new Error("Expected string token at the end of import statement.");
     }
     const path = this.tokens.stringValueAtIndex(index);
@@ -278,23 +278,23 @@ get: () => ${primaryImportName}[key]}); });`;
 
   private preprocessExportAtIndex(index: number): void {
     if (
-      this.tokens.matchesAtIndex(index, [tt._export, tt._var]) ||
-      this.tokens.matchesAtIndex(index, [tt._export, tt._let]) ||
-      this.tokens.matchesAtIndex(index, [tt._export, tt._const])
+      this.tokens.matches2AtIndex(index, tt._export, tt._var) ||
+      this.tokens.matches2AtIndex(index, tt._export, tt._let) ||
+      this.tokens.matches2AtIndex(index, tt._export, tt._const)
     ) {
       this.preprocessVarExportAtIndex(index);
     } else if (
-      this.tokens.matchesAtIndex(index, [tt._export, tt._function]) ||
-      this.tokens.matchesAtIndex(index, [tt._export, tt._class])
+      this.tokens.matches2AtIndex(index, tt._export, tt._function) ||
+      this.tokens.matches2AtIndex(index, tt._export, tt._class)
     ) {
       const exportName = this.tokens.identifierNameAtIndex(index + 2);
       this.exportBindingsByLocalName.set(exportName, exportName);
-    } else if (this.tokens.matchesAtIndex(index, [tt._export, tt.name, tt._function])) {
+    } else if (this.tokens.matches3AtIndex(index, tt._export, tt.name, tt._function)) {
       const exportName = this.tokens.identifierNameAtIndex(index + 3);
       this.exportBindingsByLocalName.set(exportName, exportName);
-    } else if (this.tokens.matchesAtIndex(index, [tt._export, tt.braceL])) {
+    } else if (this.tokens.matches2AtIndex(index, tt._export, tt.braceL)) {
       this.preprocessNamedExportAtIndex(index);
-    } else if (this.tokens.matchesAtIndex(index, [tt._export, tt.star])) {
+    } else if (this.tokens.matches2AtIndex(index, tt._export, tt.star)) {
       this.preprocessExportStarAtIndex(index);
     }
   }
@@ -304,19 +304,19 @@ get: () => ${primaryImportName}[key]}); });`;
     // Handle cases like `export let {x} = y;`, starting at the open-brace in that case.
     for (let i = index + 2; ; i++) {
       if (
-        this.tokens.matchesAtIndex(i, [tt.braceL]) ||
-        this.tokens.matchesAtIndex(i, [tt.dollarBraceL]) ||
-        this.tokens.matchesAtIndex(i, [tt.bracketL])
+        this.tokens.matches1AtIndex(i, tt.braceL) ||
+        this.tokens.matches1AtIndex(i, tt.dollarBraceL) ||
+        this.tokens.matches1AtIndex(i, tt.bracketL)
       ) {
         depth++;
       } else if (
-        this.tokens.matchesAtIndex(i, [tt.braceR]) ||
-        this.tokens.matchesAtIndex(i, [tt.bracketR])
+        this.tokens.matches1AtIndex(i, tt.braceR) ||
+        this.tokens.matches1AtIndex(i, tt.bracketR)
       ) {
         depth--;
-      } else if (depth === 0 && !this.tokens.matchesAtIndex(i, [tt.name])) {
+      } else if (depth === 0 && !this.tokens.matches1AtIndex(i, tt.name)) {
         break;
-      } else if (this.tokens.matchesAtIndex(1, [tt.eq])) {
+      } else if (this.tokens.matches1AtIndex(1, tt.eq)) {
         const endIndex = this.tokens.currentToken().rhsEndIndex;
         if (endIndex == null) {
           throw new Error("Expected = token with an end index.");
@@ -353,7 +353,7 @@ get: () => ${primaryImportName}[key]}); });`;
       return;
     }
 
-    if (!this.tokens.matchesAtIndex(index, [tt.string])) {
+    if (!this.tokens.matches1AtIndex(index, tt.string)) {
       throw new Error("Expected string token at the end of import statement.");
     }
     const path = this.tokens.stringValueAtIndex(index);
@@ -363,7 +363,7 @@ get: () => ${primaryImportName}[key]}); });`;
 
   private preprocessExportStarAtIndex(index: number): void {
     let exportedName = null;
-    if (this.tokens.matchesAtIndex(index, [tt._export, tt.star, tt._as])) {
+    if (this.tokens.matches3AtIndex(index, tt._export, tt.star, tt._as)) {
       // export * as
       index += 3;
       exportedName = this.tokens.identifierNameAtIndex(index);
@@ -373,7 +373,7 @@ get: () => ${primaryImportName}[key]}); });`;
       // export * from
       index += 3;
     }
-    if (!this.tokens.matchesAtIndex(index, [tt.string])) {
+    if (!this.tokens.matches1AtIndex(index, tt.string)) {
       throw new Error("Expected string token at the end of star export statement.");
     }
     const path = this.tokens.stringValueAtIndex(index);
@@ -388,7 +388,7 @@ get: () => ${primaryImportName}[key]}); });`;
   private getNamedImports(index: number): {newIndex: number; namedImports: Array<NamedImport>} {
     const namedImports = [];
     while (true) {
-      if (this.tokens.matchesAtIndex(index, [tt.braceR])) {
+      if (this.tokens.matches1AtIndex(index, tt.braceR)) {
         index++;
         break;
       }
@@ -397,8 +397,8 @@ get: () => ${primaryImportName}[key]}); });`;
       let isTypeImport = false;
       if (
         (this.tokens.matchesContextualAtIndex(index, ContextualKeyword._type) ||
-          this.tokens.matchesAtIndex(index, [tt._typeof])) &&
-        this.tokens.matchesAtIndex(index + 1, [tt.name]) &&
+          this.tokens.matches1AtIndex(index, tt._typeof)) &&
+        this.tokens.matches1AtIndex(index + 1, tt.name) &&
         !this.tokens.matchesContextualAtIndex(index + 1, ContextualKeyword._as)
       ) {
         isTypeImport = true;
@@ -418,13 +418,13 @@ get: () => ${primaryImportName}[key]}); });`;
       if (!isTypeImport) {
         namedImports.push({importedName, localName});
       }
-      if (this.tokens.matchesAtIndex(index, [tt.comma, tt.braceR])) {
+      if (this.tokens.matches2AtIndex(index, tt.comma, tt.braceR)) {
         index += 2;
         break;
-      } else if (this.tokens.matchesAtIndex(index, [tt.braceR])) {
+      } else if (this.tokens.matches1AtIndex(index, tt.braceR)) {
         index++;
         break;
-      } else if (this.tokens.matchesAtIndex(index, [tt.comma])) {
+      } else if (this.tokens.matches1AtIndex(index, tt.comma)) {
         index++;
       } else {
         throw new Error(`Unexpected token: ${JSON.stringify(this.tokens.tokens[index])}`);

@@ -76,7 +76,10 @@ export default class ReactDisplayNameTransformer extends Transformer {
   }
 
   private findDisplayName(startIndex: number): string | null {
-    if (this.tokens.matchesAtIndex(startIndex - 2, [tt.name, tt.eq])) {
+    if (startIndex < 2) {
+      return null;
+    }
+    if (this.tokens.matches2AtIndex(startIndex - 2, tt.name, tt.eq)) {
       // This is an assignment (or declaration) and the LHS is either an identifier or a member
       // expression ending in an identifier, so use that identifier name.
       return this.tokens.identifierNameAtIndex(startIndex - 2);
@@ -88,7 +91,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
       // This is an object literal value.
       return this.tokens.identifierNameAtIndex(startIndex - 2);
     }
-    if (this.tokens.matchesAtIndex(startIndex - 2, [tt._export, tt._default])) {
+    if (this.tokens.matches2AtIndex(startIndex - 2, tt._export, tt._default)) {
       return this.getDisplayNameFromFilename();
     }
     return null;
@@ -150,8 +153,8 @@ export default class ReactDisplayNameTransformer extends Transformer {
     // If we got this far, we know we have createClass with an object with no
     // display name, so we want to proceed as long as that was the only argument.
     return (
-      this.tokens.matchesAtIndex(index, [tt.parenR]) ||
-      this.tokens.matchesAtIndex(index, [tt.comma, tt.parenR])
+      this.tokens.matches1AtIndex(index, tt.parenR) ||
+      this.tokens.matches2AtIndex(index, tt.comma, tt.parenR)
     );
   }
 }

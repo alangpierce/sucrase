@@ -65,7 +65,7 @@ export default class ESMImportTransformer extends Transformer {
     this.tokens.copyExpectedToken(tt._import);
     if (
       this.tokens.matchesContextual(ContextualKeyword._type) &&
-      !this.tokens.matchesAtIndex(this.tokens.currentIndex() + 1, [tt.comma]) &&
+      !this.tokens.matches1AtIndex(this.tokens.currentIndex() + 1, tt.comma) &&
       !this.tokens.matchesContextualAtIndex(this.tokens.currentIndex() + 1, ContextualKeyword._from)
     ) {
       // This is an "import type" statement, so exit early.

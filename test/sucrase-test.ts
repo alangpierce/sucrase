@@ -727,4 +727,8 @@ describe("sucrase", () => {
   it("handles a file with only a single identifier", () => {
     assertResult("a", "a", {transforms: []});
   });
+
+  it("handles a file with only an assignment", () => {
+    assertResult("a = 1", '"use strict";a = 1', {transforms: ["imports"]});
+  });
 });

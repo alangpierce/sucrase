@@ -157,11 +157,11 @@ export default class JSXTransformer extends Transformer {
     let introEnd = this.tokens.currentIndex() + 1;
     while (
       this.tokens.tokens[introEnd].isType ||
-      (!this.tokens.matchesAtIndex(introEnd - 1, [tt.jsxName, tt.jsxName]) &&
-        !this.tokens.matchesAtIndex(introEnd - 1, [tt.greaterThan, tt.jsxName]) &&
-        !this.tokens.matchesAtIndex(introEnd, [tt.braceL]) &&
-        !this.tokens.matchesAtIndex(introEnd, [tt.jsxTagEnd]) &&
-        !this.tokens.matchesAtIndex(introEnd, [tt.slash, tt.jsxTagEnd]))
+      (!this.tokens.matches2AtIndex(introEnd - 1, tt.jsxName, tt.jsxName) &&
+        !this.tokens.matches2AtIndex(introEnd - 1, tt.greaterThan, tt.jsxName) &&
+        !this.tokens.matches1AtIndex(introEnd, tt.braceL) &&
+        !this.tokens.matches1AtIndex(introEnd, tt.jsxTagEnd) &&
+        !this.tokens.matches2AtIndex(introEnd, tt.slash, tt.jsxTagEnd))
     ) {
       introEnd++;
     }

@@ -113,7 +113,7 @@ export default class CJSImportTransformer extends Transformer {
     this.tokens.removeInitialToken();
     if (
       this.tokens.matchesContextual(ContextualKeyword._type) &&
-      !this.tokens.matchesAtIndex(this.tokens.currentIndex() + 1, [tt.comma]) &&
+      !this.tokens.matches1AtIndex(this.tokens.currentIndex() + 1, tt.comma) &&
       !this.tokens.matchesContextualAtIndex(this.tokens.currentIndex() + 1, ContextualKeyword._from)
     ) {
       // This is an "import type" statement, so exit early.
@@ -273,13 +273,10 @@ export default class CJSImportTransformer extends Transformer {
     if (identifierToken.type !== tt.name) {
       return false;
     }
-    if (this.tokens.matchesAtIndex(index - 2, [tt.dot])) {
+    if (index >= 2 && this.tokens.matches1AtIndex(index - 2, tt.dot)) {
       return false;
     }
-    if (
-      index - 2 >= 0 &&
-      [tt._var, tt._let, tt._const].includes(this.tokens.tokens[index - 2].type)
-    ) {
+    if (index >= 2 && [tt._var, tt._let, tt._const].includes(this.tokens.tokens[index - 2].type)) {
       // Declarations don't need an extra assignment. This doesn't avoid the
       // assignment for comma-separated declarations, but it's still correct
       // since the assignment is just redundant.
@@ -350,14 +347,14 @@ export default class CJSImportTransformer extends Transformer {
     tokenIndex++;
     // var/let/const
     tokenIndex++;
-    if (!this.tokens.matchesAtIndex(tokenIndex, [tt.name])) {
+    if (!this.tokens.matches1AtIndex(tokenIndex, tt.name)) {
       return false;
     }
     tokenIndex++;
     while (tokenIndex < this.tokens.tokens.length && this.tokens.tokens[tokenIndex].isType) {
       tokenIndex++;
     }
-    if (!this.tokens.matchesAtIndex(tokenIndex, [tt.eq])) {
+    if (!this.tokens.matches1AtIndex(tokenIndex, tt.eq)) {
       return false;
     }
     return true;

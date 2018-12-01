@@ -38,27 +38,9 @@ export default class TokenProcessor {
     this.tokenIndex = 0;
   }
 
-  matchesAtIndex(index: number, types: Array<TokenType>): boolean {
-    if (index < 0) {
-      return false;
-    }
-    if (index > this.tokens.length) {
-      throw new Error("Ran past the end of the token stream.");
-    }
-    for (let i = 0; i < types.length; i++) {
-      if (index + i >= this.tokens.length) {
-        return false;
-      }
-      if (this.tokens[index + i].type !== types[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   matchesContextualAtIndex(index: number, contextualKeyword: ContextualKeyword): boolean {
     return (
-      this.matchesAtIndex(index, [tt.name]) &&
+      this.matches1AtIndex(index, tt.name) &&
       this.tokens[index].contextualKeyword === contextualKeyword
     );
   }
@@ -90,6 +72,22 @@ export default class TokenProcessor {
     // Ideally we'd process escapes within the strings, but for now we pretty much take the raw
     // code.
     return this.code.slice(token.start + 1, token.end - 1);
+  }
+
+  matches1AtIndex(index: number, t1: TokenType): boolean {
+    return this.tokens[index].type === t1;
+  }
+
+  matches2AtIndex(index: number, t1: TokenType, t2: TokenType): boolean {
+    return this.tokens[index].type === t1 && this.tokens[index + 1].type === t2;
+  }
+
+  matches3AtIndex(index: number, t1: TokenType, t2: TokenType, t3: TokenType): boolean {
+    return (
+      this.tokens[index].type === t1 &&
+      this.tokens[index + 1].type === t2 &&
+      this.tokens[index + 2].type === t3
+    );
   }
 
   matches1(t1: TokenType): boolean {

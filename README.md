@@ -9,37 +9,34 @@
 ### [Try it out](https://sucrase.io)
 
 Sucrase is an alternative to Babel that allows super-fast development builds.
-Instead of compiling a large range of JS features down to ES5, Sucrase assumes
-that you're targeting a modern JS runtime (e.g. Node.js 8 or latest Chrome) and
-focuses on compiling non-standard language extensions: JSX, TypeScript, and
-Flow. Because of this smaller scope, Sucrase can get away with an architecture
-that is much more performant but less extensible and maintainable. Sucrase's
-parser is forked from Babel's parser (so Sucrase is indebted to Babel and
-wouldn't be possible without it) and trims it down to focus on a small subset of
-what Babel solves. If it fits your use case, hopefully Sucrase can speed up your
-development experience!
+Instead of compiling a large range of JS features to be able to work in Internet
+Explorer, Sucrase assumes that you're developing with a recent browser or recent
+Node.js version, so it focuses on compiling non-standard language extensions:
+JSX, TypeScript, and Flow. Because of this smaller scope, Sucrase can get away
+with an architecture that is much more performant but less extensible and
+maintainable. Sucrase's parser is forked from Babel's parser (so Sucrase is
+indebted to Babel and wouldn't be possible without it) and trims it down to a
+focused subset of what Babel solves. If it fits your use case, hopefully Sucrase
+can speed up your development experience!
 
-**Current state:** The project is in active development. It is about 20x faster
-than Babel and about 8x faster than TypeScript, and it has been tested on
-hundreds of thousands of lines of code. Still, you may find correctness issues
-when running on a large codebase. Feel free to file issues!
+**Sucrase has been extensively tested.** It can successfully build
+the [Benchling](https://benchling.com/) frontend code,
+[Babel](https://github.com/babel/babel),
+[React](https://github.com/facebook/react),
+[TSLint](https://github.com/palantir/tslint),
+[Apollo client](https://github.com/apollographql/apollo-client), and
+[decaffeinate](https://github.com/decaffeinate/decaffeinate)
+with all tests passing, about 1 million lines of code total.
 
-Sucrase can build the following codebases with all tests passing:
-* Sucrase itself (6K lines of code excluding Babel parser fork, typescript,
-  imports).
-* The [Benchling](https://benchling.com/) frontend codebase
-  (500K lines of code, JSX, typescript, imports).
-* [Babel](https://github.com/babel/babel) (63K lines of code, flow, imports).
-* [React](https://github.com/facebook/react) (86K lines of code, JSX, flow,
-  imports).
-* [TSLint](https://github.com/palantir/tslint) (20K lines of code, typescript,
-  imports).
-* [Apollo client](https://github.com/apollographql/apollo-client) (34K lines of
-  code, typescript, imports)
-* [decaffeinate](https://github.com/decaffeinate/decaffeinate) and its
-  sub-projects [decaffeinate-parser](https://github.com/decaffeinate/decaffeinate-parser)
-  and [coffee-lex](https://github.com/decaffeinate/coffee-lex)
-  (38K lines of code, typescript, imports).
+**Sucrase is about 20x faster than Babel.** Here's one measurement of how Sucrase
+compares with tsc and Babel on a large TypeScript codebase with 4045 files and
+661081 lines of code:
+```
+             Time      Speed
+Sucrase      2.928s    225752 lines per second
+TypeScript   39.603s   16693 lines per second
+Babel        52.598s   12569 lines per second
+```
 
 ## Transforms
 
@@ -50,7 +47,10 @@ are four main transforms that you may want to enable:
   [babel-preset-react](https://github.com/babel/babel/tree/master/packages/babel-preset-react),
   including adding `createReactClass` display names and JSX context information.
 * **typescript**: Compiles TypeScript code to JavaScript, removing type
-  annotations and handling features like enums. Does not check types.
+  annotations and handling features like enums. Does not check types. Sucrase
+  transforms each file independently, so you should enable the `isolatedModules`
+  TypeScript flag so that the typechecker will disallow the few features like
+  `const enum`s that need cross-file compilation.
 * **flow**:  Removes Flow type annotations. Does not check types.
 * **imports**: Transforms ES Modules (`import`/`export`) to CommonJS
   (`require`/`module.exports`) using the same approach as Babel 6 and TypeScript
@@ -65,6 +65,18 @@ The following proposed JS features are built-in and always transformed:
   `const n = 1_234;`
 * [Optional catch binding](https://github.com/tc39/proposal-optional-catch-binding):
   `try { doThing(); } catch { }`.
+
+### Unsupported syntax
+
+All JS syntax not mentioned above will "pass through" and needs to be supported
+by your JS runtime. For example:
+* Decorators, private fields, `throw` expressions, optional chaining, generator
+  arrow functions, and `do` expressions are all unsupported in browsers and Node
+  (as of this writing), and Sucrase doesn't make an attempt to transpile them.
+* Object rest/spread, async functions, and async iterators are all recent
+  features that should work fine, but might cause issues if you use older
+  versions of tools like webpack. BigInt may or may not work, based on your
+  tooling.
 
 ### JSX Options
 Like Babel, Sucrase compiles JSX to React functions by default, but can be
@@ -95,11 +107,11 @@ Installation:
 yarn add --dev sucrase  # Or npm install --save-dev sucrase
 ```
 
-Run on a directory:
-
-```
-sucrase ./srcDir -d ./outDir --transforms typescript,imports
-```
+Often, you'll want to use one of the build tool integrations:
+[Webpack](https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-loader),
+[Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin),
+[Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin),
+[Rollup](https://github.com/rollup/rollup-plugin-sucrase).
 
 Compile on-the-fly via a require hook with some [reasonable defaults](src/register.ts):
 
@@ -116,18 +128,18 @@ Compile on-the-fly via a drop-in replacement for node:
 sucrase-node index.ts
 ```
 
+Run on a directory:
+
+```
+sucrase ./srcDir -d ./outDir --transforms typescript,imports
+```
+
 Call from JS directly:
 
 ```js
 import {transform} from "sucrase";
 const compiledCode = transform(code, {transforms: ["typescript", "imports"]}).code;
 ```
-
-There are also integrations for
-[Webpack](https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-loader),
-[Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin),
-[Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin) and
-[Rollup](https://github.com/rollup/rollup-plugin-sucrase).
 
 ## What Sucrase is not
 
@@ -146,7 +158,7 @@ to have nearly the scope and versatility of Babel. Some specific examples:
   features. Its faster architecture makes new transforms more difficult to write
   and more fragile.
 * Sucrase will never produce code for old browsers like IE. Compiling code down
-  to ES5 is much more complicated than any transformations that Sucrase needs to
+  to ES5 is much more complicated than any transformation that Sucrase needs to
   do.
 * Sucrase is hesitant to implement upcoming JS features, although some of them
   make sense to implement for pragmatic reasons. Its main focus is on language
@@ -194,19 +206,6 @@ Sucrase bypasses most of these steps, and works like this:
 
 Because Sucrase works on a lower level and uses a custom parser for its use
 case, it is much faster than Babel.
-
-## Performance
-
-Currently, Sucrase runs about 20x faster than Babel (even when Babel only runs
-the relevant transforms) and 8x faster than TypeScript. Here's the output of
-one run of `npm run benchmark`:
-
-```
-Simulating transpilation of 100,000 lines of code:
-Sucrase: 469.672ms
-TypeScript: 3782.414ms
-Babel: 9591.515ms
-```
 
 ## Contributing
 

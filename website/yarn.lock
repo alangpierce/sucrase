@@ -1551,9 +1551,10 @@ commander@2.11.x, commander@~2.11.0:
   version "2.11.0"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.11.0.tgz#157152fd1e7a6c8d98a5b715cf376df928004563"
 
-commander@^2.12.2:
-  version "2.13.0"
-  resolved "https://registry.yarnpkg.com/commander/-/commander-2.13.0.tgz#6964bca67685df7c1f1430c584f07d7597885b9c"
+commander@^2.19.0:
+  version "2.19.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-2.19.0.tgz#f6198aa84e5b83c46054b94ddedbfed5ee9ff12a"
+  integrity sha512-6tvAOO+D6OENvRAh524Dh9jcfKTYDQAqvqezbCW82xj5X0pSrcpxtvRKHLG0yBY6SD7PSDrJaj+0AiOcKVd1Xg==
 
 commander@~2.12.1:
   version "2.12.2"
@@ -4914,9 +4915,10 @@ pinkie@^2.0.0:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/pinkie/-/pinkie-2.0.4.tgz#72556b80cfa0d48a974e80e77248e80ed4f7f870"
 
-pirates@^3.0.2:
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/pirates/-/pirates-3.0.2.tgz#7e6f85413fd9161ab4e12b539b06010d85954bb9"
+pirates@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/pirates/-/pirates-4.0.0.tgz#850b18781b4ac6ec58a43c9ed9ec5fe6796addbd"
+  integrity sha512-8t5BsXy1LUIjn3WWOlOuFDuKswhQb/tkak641lvBgmPOBUQHXveORtlMCp6OdPV1dtuTaEahKA8VNz6uLfKBtA==
   dependencies:
     node-modules-regexp "^1.0.0"
 
@@ -6236,15 +6238,15 @@ style-loader@0.18.2:
     loader-utils "^1.0.2"
     schema-utils "^0.3.0"
 
-sucrase@^3.8.0:
-  version "3.8.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.8.0.tgz#daa0c88d090e3621d54be1a476767c792a41bd70"
-  integrity sha512-aNxW8rxAIOqBpkfxT4tFHe1lvMnwWaPhtwN/auX3laOxEG/0qeVtpriGPGzpwhlSxib4678jsSWQHFFy/vizgA==
+sucrase@^3.8.1:
+  version "3.8.1"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.8.1.tgz#62015b5c730c49b809bc0cd301c9374a129c42e1"
+  integrity sha512-Mvgu45uZxl4We1X1KqEuJDHoTz/exvKdQyaSQqAZR8O64txJSvTjTj58L+0aqTeygWwhynD3GnInPleX9f08Cg==
   dependencies:
-    commander "^2.12.2"
+    commander "^2.19.0"
     lines-and-columns "^1.1.6"
     mz "^2.7.0"
-    pirates "^3.0.2"
+    pirates "^4.0.0"
 
 supports-color@^2.0.0:
   version "2.0.0"

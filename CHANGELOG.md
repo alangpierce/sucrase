@@ -1,3 +1,8 @@
+# 3.8.1 (2018-12-03)
+
+* Fix infinite loop when a file ends with a short identifier ([#363])
+* Small perf improvements.
+
 # 3.8.0 (2018-11-25)
 
 * Various simplifications in prep for compiling the project with AssemblyScript.
@@ -154,3 +159,4 @@
 [#340]: https://github.com/alangpierce/sucrase/pull/340
 [#342]: https://github.com/alangpierce/sucrase/pull/342
 [#359]: https://github.com/alangpierce/sucrase/pull/359
+[#363]: https://github.com/alangpierce/sucrase/pull/363

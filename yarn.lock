@@ -808,7 +808,7 @@ commander@2.15.1:
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.15.1.tgz#df46e867d0fc2aec66a34662b406a9ccafff5b0f"
   integrity sha512-VlfT9F3V0v+jr4yxPc5gg9s62/fIVWsd2Bk2iD435um1NlGMYdVCq+MjcXnhYq2icNOizHr1kK+5TI6H0Hy0ag==
 
-commander@^2.12.1, commander@^2.12.2, commander@^2.19.0, commander@^2.8.1:
+commander@^2.12.1, commander@^2.19.0, commander@^2.8.1:
   version "2.19.0"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.19.0.tgz#f6198aa84e5b83c46054b94ddedbfed5ee9ff12a"
   integrity sha512-6tvAOO+D6OENvRAh524Dh9jcfKTYDQAqvqezbCW82xj5X0pSrcpxtvRKHLG0yBY6SD7PSDrJaj+0AiOcKVd1Xg==
@@ -2774,13 +2774,6 @@ pinkie@^2.0.0:
   resolved "https://registry.yarnpkg.com/pinkie/-/pinkie-2.0.4.tgz#72556b80cfa0d48a974e80e77248e80ed4f7f870"
   integrity sha1-clVrgM+g1IqXToDnckjoDtT3+HA=
 
-pirates@^3.0.2:
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/pirates/-/pirates-3.0.2.tgz#7e6f85413fd9161ab4e12b539b06010d85954bb9"
-  integrity sha512-c5CgUJq6H2k6MJz72Ak1F5sN9n9wlSlJyEnwvpm9/y3WB4E3pHBDT2c6PEiS1vyJvq2bUxUAIu0EGf8Cx4Ic7Q==
-  dependencies:
-    node-modules-regexp "^1.0.0"
-
 pirates@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/pirates/-/pirates-4.0.0.tgz#850b18781b4ac6ec58a43c9ed9ec5fe6796addbd"
@@ -3338,15 +3331,15 @@ strip-json-comments@^2.0.1, strip-json-comments@~2.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
   integrity sha1-PFMZQukIwml8DsNEhYwobHygpgo=
 
-sucrase@^3.8.0:
-  version "3.8.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.8.0.tgz#daa0c88d090e3621d54be1a476767c792a41bd70"
-  integrity sha512-aNxW8rxAIOqBpkfxT4tFHe1lvMnwWaPhtwN/auX3laOxEG/0qeVtpriGPGzpwhlSxib4678jsSWQHFFy/vizgA==
+sucrase@^3.8.1:
+  version "3.8.1"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.8.1.tgz#62015b5c730c49b809bc0cd301c9374a129c42e1"
+  integrity sha512-Mvgu45uZxl4We1X1KqEuJDHoTz/exvKdQyaSQqAZR8O64txJSvTjTj58L+0aqTeygWwhynD3GnInPleX9f08Cg==
   dependencies:
-    commander "^2.12.2"
+    commander "^2.19.0"
     lines-and-columns "^1.1.6"
     mz "^2.7.0"
-    pirates "^3.0.2"
+    pirates "^4.0.0"
 
 supports-color@5.4.0:
   version "5.4.0"

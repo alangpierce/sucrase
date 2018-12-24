@@ -8,7 +8,7 @@ type TokenExpectation = {[K in keyof SimpleToken]?: SimpleToken[K]};
 
 function assertTokens(code: string, expectedTokens: Array<TokenExpectation>): void {
   const tokens: Array<SimpleToken> = parse(code, true, false, false).tokens;
-  assert.equal(tokens.length, expectedTokens.length);
+  assert.strictEqual(tokens.length, expectedTokens.length);
   const projectedTokens = tokens.map((token, i) => {
     const result = {};
     for (const key of Object.keys(expectedTokens[i])) {
@@ -16,18 +16,25 @@ function assertTokens(code: string, expectedTokens: Array<TokenExpectation>): vo
     }
     return result;
   });
-  assert.deepEqual(projectedTokens, expectedTokens);
+  assert.deepStrictEqual(projectedTokens, expectedTokens);
 }
 
 describe("tokens", () => {
   it("properly provides identifier roles for const, let, and var", () => {
     assertTokens(
       `
-      const x = 1;
-      let y = 2;
-      var z = 3;
+      function f() {
+        const x = 1;
+        let y = 2;
+        var z = 3;
+      }
     `,
       [
+        {type: tt._function},
+        {type: tt.name, identifierRole: IdentifierRole.TopLevelDeclaration},
+        {type: tt.parenL},
+        {type: tt.parenR},
+        {type: tt.braceL},
         {type: tt._const},
         {type: tt.name, identifierRole: IdentifierRole.BlockScopedDeclaration},
         {type: tt.eq},
@@ -43,6 +50,7 @@ describe("tokens", () => {
         {type: tt.eq},
         {type: tt.num},
         {type: tt.semi},
+        {type: tt.braceR},
         {type: tt.eof},
       ],
     );
@@ -94,12 +102,19 @@ describe("tokens", () => {
   it("treats functions as function-scoped and classes as block-scoped", () => {
     assertTokens(
       `
-      function f() {
-      }
-      class C {
+      function wrapper() {
+        function f() {
+        }
+        class C {
+        }
       }
     `,
       [
+        {type: tt._function},
+        {type: tt.name, identifierRole: IdentifierRole.TopLevelDeclaration},
+        {type: tt.parenL},
+        {type: tt.parenR},
+        {type: tt.braceL},
         {type: tt._function},
         {type: tt.name, identifierRole: IdentifierRole.FunctionScopedDeclaration},
         {type: tt.parenL},
@@ -109,6 +124,7 @@ describe("tokens", () => {
         {type: tt._class},
         {type: tt.name, identifierRole: IdentifierRole.BlockScopedDeclaration},
         {type: tt.braceL},
+        {type: tt.braceR},
         {type: tt.braceR},
         {type: tt.eof},
       ],

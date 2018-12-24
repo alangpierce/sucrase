@@ -75,6 +75,9 @@ import {
 export function parseTopLevel(): File {
   parseBlockBody(tt.eof);
   state.scopes.push(new Scope(0, state.tokens.length, true));
+  if (state.scopeDepth !== 0) {
+    throw new Error(`Invalid scope depth at end of file: ${state.scopeDepth}`);
+  }
   return new File(state.tokens, state.scopes);
 }
 
@@ -283,10 +286,12 @@ function parseDoStatement(): void {
 }
 
 function parseForStatement(): void {
+  state.scopeDepth++;
   const startTokenIndex = state.tokens.length;
   parseAmbiguousForStatement();
   const endTokenIndex = state.tokens.length;
   state.scopes.push(new Scope(startTokenIndex, endTokenIndex, false));
+  state.scopeDepth--;
 }
 
 // Disambiguating between a `for` and a `for`/`in` or `for`/`of`
@@ -368,6 +373,7 @@ function parseReturnStatement(): void {
 function parseSwitchStatement(): void {
   next();
   parseParenExpression();
+  state.scopeDepth++;
   const startTokenIndex = state.tokens.length;
   expect(tt.braceL);
 
@@ -387,6 +393,7 @@ function parseSwitchStatement(): void {
   next(); // Closing brace
   const endTokenIndex = state.tokens.length;
   state.scopes.push(new Scope(startTokenIndex, endTokenIndex, false));
+  state.scopeDepth--;
 }
 
 function parseThrowStatement(): void {
@@ -404,6 +411,7 @@ function parseTryStatement(): void {
     next();
     let catchBindingStartTokenIndex = null;
     if (match(tt.parenL)) {
+      state.scopeDepth++;
       catchBindingStartTokenIndex = state.tokens.length;
       expect(tt.parenL);
       parseBindingAtom(true /* isBlockScope */);
@@ -415,6 +423,7 @@ function parseTryStatement(): void {
       // catch block.
       const endTokenIndex = state.tokens.length;
       state.scopes.push(new Scope(catchBindingStartTokenIndex, endTokenIndex, false));
+      state.scopeDepth--;
     }
   }
   if (eat(tt._finally)) {
@@ -466,6 +475,7 @@ export function parseBlock(
   contextId: number = 0,
 ): void {
   const startTokenIndex = state.tokens.length;
+  state.scopeDepth++;
   expect(tt.braceL);
   if (contextId) {
     state.tokens[state.tokens.length - 1].contextId = contextId;
@@ -476,6 +486,7 @@ export function parseBlock(
   }
   const endTokenIndex = state.tokens.length;
   state.scopes.push(new Scope(startTokenIndex, endTokenIndex, isFunctionScope));
+  state.scopeDepth--;
 }
 
 export function parseBlockBody(end: TokenType): void {
@@ -567,19 +578,23 @@ export function parseFunction(
     // a new function scope to enforce that.
     if (!isStatement) {
       nameScopeStartTokenIndex = state.tokens.length;
+      state.scopeDepth++;
     }
     parseBindingIdentifier(false);
   }
 
   const startTokenIndex = state.tokens.length;
+  state.scopeDepth++;
   parseFunctionParams();
   parseFunctionBodyAndFinish(functionStart, isGenerator, allowExpressionBody);
   const endTokenIndex = state.tokens.length;
   // In addition to the block scope of the function body, we need a separate function-style scope
   // that includes the params.
   state.scopes.push(new Scope(startTokenIndex, endTokenIndex, true));
+  state.scopeDepth--;
   if (nameScopeStartTokenIndex !== null) {
     state.scopes.push(new Scope(nameScopeStartTokenIndex, endTokenIndex, true));
+    state.scopeDepth--;
   }
 }
 
@@ -620,6 +635,7 @@ export function parseClass(isStatement: boolean, optionalId: boolean = false): v
   let nameScopeStartTokenIndex = null;
   if (!isStatement) {
     nameScopeStartTokenIndex = state.tokens.length;
+    state.scopeDepth++;
   }
   parseClassId(isStatement, optionalId);
   parseClassSuper();
@@ -633,6 +649,7 @@ export function parseClass(isStatement: boolean, optionalId: boolean = false): v
   if (nameScopeStartTokenIndex !== null) {
     const endTokenIndex = state.tokens.length;
     state.scopes.push(new Scope(nameScopeStartTokenIndex, endTokenIndex, false));
+    state.scopeDepth--;
   }
 }
 
@@ -806,8 +823,7 @@ function parseClassId(isStatement: boolean, optionalId: boolean = false): void {
   }
 
   if (match(tt.name)) {
-    parseIdentifier();
-    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.BlockScopedDeclaration;
+    parseBindingIdentifier(true);
   }
 
   if (isTypeScriptEnabled) {

@@ -321,6 +321,7 @@ export function baseParseSubscript(startPos: number, noCalls: boolean, stopState
         // We hit an arrow, so backtrack and start again parsing function parameters.
         state.restoreFromSnapshot(snapshot);
         stopState.stop = true;
+        state.scopeDepth++;
 
         parseFunctionParams();
         parseAsyncArrowFromCallExpression(startPos, startTokenIndex);
@@ -452,6 +453,7 @@ export function parseExprAtom(): boolean {
         contextualKeyword === ContextualKeyword._async &&
         match(tt.name)
       ) {
+        state.scopeDepth++;
         parseBindingIdentifier(false);
         expect(tt.arrow);
         // let foo = async bar => {};
@@ -460,6 +462,7 @@ export function parseExprAtom(): boolean {
       }
 
       if (canBeArrow && !canInsertSemicolon() && match(tt.arrow)) {
+        state.scopeDepth++;
         markPriorBindingIdentifier(false);
         expect(tt.arrow);
         parseArrowExpression(functionStart, startTokenIndex);
@@ -596,6 +599,7 @@ function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
       // It was an arrow function this whole time, so start over and parse it as params so that we
       // get proper token annotations.
       state.restoreFromSnapshot(snapshot);
+      state.scopeDepth++;
       // We don't need to worry about functionStart for arrow functions, so just use something.
       const functionStart = state.start;
       // Don't specify a context ID because arrow functions don't need a context ID.
@@ -700,9 +704,7 @@ export function parseObj(isPattern: boolean, isBlockScope: boolean): void {
       if (isPattern) {
         // Mark role when the only thing being spread over is an identifier.
         if (state.tokens.length === previousIndex + 2) {
-          state.tokens[state.tokens.length - 1].identifierRole = isBlockScope
-            ? IdentifierRole.BlockScopedDeclaration
-            : IdentifierRole.FunctionScopedDeclaration;
+          markPriorBindingIdentifier(isBlockScope);
         }
         if (eat(tt.braceR)) {
           break;
@@ -854,6 +856,7 @@ export function parseMethod(
 ): void {
   const funcContextId = getNextContextId();
 
+  state.scopeDepth++;
   const startTokenIndex = state.tokens.length;
   const allowModifiers = isConstructor; // For TypeScript parameter properties
   parseFunctionParams(allowModifiers, funcContextId);
@@ -865,6 +868,7 @@ export function parseMethod(
   );
   const endTokenIndex = state.tokens.length;
   state.scopes.push(new Scope(startTokenIndex, endTokenIndex, true));
+  state.scopeDepth--;
 }
 
 // Parse arrow function expression.
@@ -874,6 +878,7 @@ export function parseArrowExpression(functionStart: number, startTokenIndex: num
   parseFunctionBody(functionStart, false /* isGenerator */, true);
   const endTokenIndex = state.tokens.length;
   state.scopes.push(new Scope(startTokenIndex, endTokenIndex, true));
+  state.scopeDepth--;
 }
 
 export function parseFunctionBodyAndFinish(

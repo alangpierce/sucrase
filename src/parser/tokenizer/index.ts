@@ -12,8 +12,10 @@ import {TokenType, TokenType as tt} from "./types";
 export const enum IdentifierRole {
   Access,
   ExportAccess,
+  TopLevelDeclaration,
   FunctionScopedDeclaration,
   BlockScopedDeclaration,
+  ObjectShorthandTopLevelDeclaration,
   ObjectShorthandFunctionScopedDeclaration,
   ObjectShorthandBlockScopedDeclaration,
   ObjectShorthand,
@@ -21,6 +23,18 @@ export const enum IdentifierRole {
 }
 
 export function isDeclaration(token: Token): boolean {
+  const role = token.identifierRole;
+  return (
+    role === IdentifierRole.TopLevelDeclaration ||
+    role === IdentifierRole.FunctionScopedDeclaration ||
+    role === IdentifierRole.BlockScopedDeclaration ||
+    role === IdentifierRole.ObjectShorthandTopLevelDeclaration ||
+    role === IdentifierRole.ObjectShorthandFunctionScopedDeclaration ||
+    role === IdentifierRole.ObjectShorthandBlockScopedDeclaration
+  );
+}
+
+export function isNonTopLevelDeclaration(token: Token): boolean {
   const role = token.identifierRole;
   return (
     role === IdentifierRole.FunctionScopedDeclaration ||
@@ -32,8 +46,11 @@ export function isDeclaration(token: Token): boolean {
 
 export function isBlockScopedDeclaration(token: Token): boolean {
   const role = token.identifierRole;
+  // Treat top-level declarations as block scope since the distinction doesn't matter here.
   return (
+    role === IdentifierRole.TopLevelDeclaration ||
     role === IdentifierRole.BlockScopedDeclaration ||
+    role === IdentifierRole.ObjectShorthandTopLevelDeclaration ||
     role === IdentifierRole.ObjectShorthandBlockScopedDeclaration
   );
 }
@@ -43,6 +60,14 @@ export function isFunctionScopedDeclaration(token: Token): boolean {
   return (
     role === IdentifierRole.FunctionScopedDeclaration ||
     role === IdentifierRole.ObjectShorthandFunctionScopedDeclaration
+  );
+}
+
+export function isObjectShorthandDeclaration(token: Token): boolean {
+  return (
+    token.identifierRole === IdentifierRole.ObjectShorthandTopLevelDeclaration ||
+    token.identifierRole === IdentifierRole.ObjectShorthandBlockScopedDeclaration ||
+    token.identifierRole === IdentifierRole.ObjectShorthandFunctionScopedDeclaration
   );
 }
 

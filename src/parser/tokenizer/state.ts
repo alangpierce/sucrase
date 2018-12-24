@@ -26,6 +26,7 @@ export class StateSnapshot {
     readonly start: number,
     readonly end: number,
     readonly isType: boolean,
+    readonly scopeDepth: number,
     readonly error: Error | null,
   ) {}
 }
@@ -53,6 +54,7 @@ export default class State {
   end: number = 0;
 
   isType: boolean = false;
+  scopeDepth: number = 0;
 
   /**
    * If the parser is in an error state, then the token is always tt.eof and all functions can
@@ -76,6 +78,7 @@ export default class State {
       this.start,
       this.end,
       this.isType,
+      this.scopeDepth,
       this.error,
     );
   }
@@ -91,6 +94,7 @@ export default class State {
     this.start = snapshot.start;
     this.end = snapshot.end;
     this.isType = snapshot.isType;
+    this.scopeDepth = snapshot.scopeDepth;
     this.error = snapshot.error;
   }
 }

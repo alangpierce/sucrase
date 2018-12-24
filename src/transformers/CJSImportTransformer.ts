@@ -1,5 +1,5 @@
 import CJSImportProcessor from "../CJSImportProcessor";
-import {IdentifierRole, isDeclaration} from "../parser/tokenizer";
+import {IdentifierRole, isDeclaration, isObjectShorthandDeclaration} from "../parser/tokenizer";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
@@ -444,10 +444,7 @@ export default class CJSImportTransformer extends Transformer {
           if (replacement === null) {
             throw new Error(`Expected a replacement for ${name} in \`export var\` syntax.`);
           }
-          if (
-            token.identifierRole === IdentifierRole.ObjectShorthandBlockScopedDeclaration ||
-            token.identifierRole === IdentifierRole.ObjectShorthandFunctionScopedDeclaration
-          ) {
+          if (isObjectShorthandDeclaration(token)) {
             replacement = `${name}: ${replacement}`;
           }
           this.tokens.replaceToken(replacement);

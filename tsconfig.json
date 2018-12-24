@@ -34,5 +34,6 @@
   ],
   "exclude": [
     "benchmark/sample",
+    "example-runner/example-repos"
   ]
 }

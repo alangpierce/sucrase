@@ -9,7 +9,7 @@ import RootTransformer from "./transformers/RootTransformer";
 import formatTokens from "./util/formatTokens";
 import getTSImportedNames from "./util/getTSImportedNames";
 
-export type Transform = "jsx" | "typescript" | "flow" | "imports";
+export type Transform = "jsx" | "typescript" | "flow" | "imports" | "react-hot-loader";
 
 export interface SourceMapOptions {
   /**

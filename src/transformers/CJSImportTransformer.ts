@@ -1,8 +1,10 @@
 import CJSImportProcessor from "../CJSImportProcessor";
+import NameManager from "../NameManager";
 import {IdentifierRole, isDeclaration, isObjectShorthandDeclaration} from "../parser/tokenizer";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
+import ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
@@ -18,6 +20,8 @@ export default class CJSImportTransformer extends Transformer {
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
     readonly importProcessor: CJSImportProcessor,
+    readonly nameManager: NameManager,
+    readonly reactHotLoaderTransformer: ReactHotLoaderTransformer | null,
     readonly enableLegacyBabel5ModuleInterop: boolean,
   ) {
     super();
@@ -296,7 +300,7 @@ export default class CJSImportTransformer extends Transformer {
   private processExportDefault(): void {
     if (
       this.tokens.matches4(tt._export, tt._default, tt._function, tt.name) ||
-      // export default aysnc function
+      // export default async function
       this.tokens.matches5(tt._export, tt._default, tt.name, tt._function, tt.name)
     ) {
       this.tokens.removeInitialToken();
@@ -318,7 +322,17 @@ export default class CJSImportTransformer extends Transformer {
       this.tokens.appendCode(` exports.default = ${name};`);
     } else if (this.tokens.matches3(tt._export, tt._default, tt.at)) {
       throw new Error("Export default statements with decorators are not yet supported.");
+    } else if (this.reactHotLoaderTransformer) {
+      // This is a plain "export default E" statement and we need to assign E to a variable.
+      // Change "export default E" to "let _default; exports.default = _default = E"
+      const defaultVarName = this.nameManager.claimFreeName("_default");
+      this.tokens.replaceToken(`let ${defaultVarName}; exports.`);
+      this.tokens.copyToken();
+      this.tokens.appendCode(` = ${defaultVarName} =`);
+      this.reactHotLoaderTransformer.setExtractedDefaultExportName(defaultVarName);
     } else {
+      // This is a plain "export default E" statement, no additional requirements.
+      // Change "export default E" to "exports.default = E"
       this.tokens.replaceToken("exports.");
       this.tokens.copyToken();
       this.tokens.appendCode(" =");

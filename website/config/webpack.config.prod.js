@@ -144,9 +144,9 @@ module.exports = {
           {
             test: /\.(js|jsx|mjs)$/,
             include: paths.appSrc,
-            loader: require.resolve("babel-loader"),
+            loader: require.resolve("@sucrase/webpack-loader"),
             options: {
-              compact: true,
+              transforms: ["jsx"],
             },
           },
           // The notation here is somewhat confusing.
@@ -168,11 +168,11 @@ module.exports = {
                 loader: MiniCssExtractPlugin.loader,
                 options: Object.assign(
                   {},
-                  shouldUseRelativeAssetPaths ? { publicPath: "../../" } : undefined
-                )
+                  shouldUseRelativeAssetPaths ? {publicPath: "../../"} : undefined,
+                ),
               },
               {
-                loader: require.resolve('css-loader'),
+                loader: require.resolve("css-loader"),
                 options: {
                   importLoaders: 1,
                   sourceMap: shouldUseSourceMap,
@@ -257,7 +257,7 @@ module.exports = {
       // Options similar to the same options in webpackOptions.output
       // both options are optional
       filename: "static/css/[name].[contenthash:8].css",
-      chunkFilename: "static/css/[name].[contenthash:8].chunk.css"
+      chunkFilename: "static/css/[name].[contenthash:8].chunk.css",
     }),
     new ManifestPlugin({
       fileName: "asset-manifest.json",

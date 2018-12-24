@@ -147,12 +147,9 @@ module.exports = {
           {
             test: /\.(js|jsx|mjs)$/,
             include: paths.appSrc,
-            loader: require.resolve("babel-loader"),
+            loader: require.resolve("@sucrase/webpack-loader"),
             options: {
-              // This is a feature of `babel-loader` for webpack (not Babel itself).
-              // It enables caching results in ./node_modules/.cache/babel-loader/
-              // directory for faster rebuilds.
-              cacheDirectory: true,
+              transforms: ["jsx"],
             },
           },
           // "postcss" loader applies autoprefixer to our CSS.

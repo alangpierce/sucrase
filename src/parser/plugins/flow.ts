@@ -1037,6 +1037,7 @@ export function flowParseSubscripts(startPos: number, noCalls: boolean = false):
 
 // Returns true if there was an arrow function here.
 function parseAsyncArrowWithTypeParameters(startPos: number): boolean {
+  state.scopeDepth++;
   const startTokenIndex = state.tokens.length;
   parseFunctionParams();
   if (!parseArrow()) {

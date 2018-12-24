@@ -1,7 +1,7 @@
 import {
   isBlockScopedDeclaration,
-  isDeclaration,
   isFunctionScopedDeclaration,
+  isNonTopLevelDeclaration,
 } from "./parser/tokenizer";
 import {Scope} from "./parser/tokenizer/state";
 import {TokenType as tt} from "./parser/tokenizer/types";
@@ -26,11 +26,12 @@ export default function identifyShadowedGlobals(
  * We can do a fast up-front check to see if there are any declarations to global names. If not,
  * then there's no point in computing scope assignments.
  */
-function hasShadowedGlobals(tokens: TokenProcessor, globalNames: Set<string>): boolean {
+// Exported for testing.
+export function hasShadowedGlobals(tokens: TokenProcessor, globalNames: Set<string>): boolean {
   for (const token of tokens.tokens) {
     if (
       token.type === tt.name &&
-      isDeclaration(token) &&
+      isNonTopLevelDeclaration(token) &&
       globalNames.has(tokens.identifierNameForToken(token))
     ) {
       return true;

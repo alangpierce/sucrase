@@ -34,9 +34,13 @@ export function parseBindingIdentifier(isBlockScope: boolean): void {
 }
 
 export function markPriorBindingIdentifier(isBlockScope: boolean): void {
-  state.tokens[state.tokens.length - 1].identifierRole = isBlockScope
-    ? IdentifierRole.BlockScopedDeclaration
-    : IdentifierRole.FunctionScopedDeclaration;
+  if (state.scopeDepth === 0) {
+    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.TopLevelDeclaration;
+  } else {
+    state.tokens[state.tokens.length - 1].identifierRole = isBlockScope
+      ? IdentifierRole.BlockScopedDeclaration
+      : IdentifierRole.FunctionScopedDeclaration;
+  }
 }
 
 // Parses lvalue (assignable) atom.

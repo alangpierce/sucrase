@@ -33,7 +33,6 @@ export const TRANSFORMS = [
   {name: "typescript", presetName: "typescript"},
   {name: "flow", presetName: "flow"},
   {name: "imports", babelName: "transform-modules-commonjs"},
-  {name: "add-module-exports", babelName: "add-module-exports", hideByDefault: true},
 ];
 
 export const DEFAULT_TRANSFORMS = ["jsx", "typescript", "imports"];

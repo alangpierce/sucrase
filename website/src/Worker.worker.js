@@ -6,7 +6,6 @@ import * as TypeScript from "typescript";
 import {TRANSFORMS} from "./Constants";
 import {compressCode} from "./URLHashState";
 import getTokens from "./getTokens";
-Babel.registerPlugin("add-module-exports", require("babel-plugin-add-module-exports"));
 Babel.registerPlugin(
   "proposal-numeric-separator",
   require("@babel/plugin-proposal-numeric-separator"),
@@ -77,12 +76,6 @@ function runBabel() {
   const babelPresets = TRANSFORMS.filter(({name}) => config.selectedTransforms[name])
     .map(({presetName}) => presetName)
     .filter((name) => name);
-  if (babelPlugins.includes("add-module-exports")) {
-    babelPlugins = [
-      "add-module-exports",
-      ...babelPlugins.filter((p) => p !== "add-module-exports"),
-    ];
-  }
   return runAndProfile(
     () =>
       Babel.transform(config.code, {

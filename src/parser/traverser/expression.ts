@@ -57,7 +57,13 @@ import {ContextualKeyword} from "../tokenizer/keywords";
 import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {getNextContextId, isFlowEnabled, isJSXEnabled, isTypeScriptEnabled, state} from "./base";
-import {parseMaybeDefault, parseRest, parseSpread} from "./lval";
+import {
+  markPriorBindingIdentifier,
+  parseBindingIdentifier,
+  parseMaybeDefault,
+  parseRest,
+  parseSpread,
+} from "./lval";
 import {
   parseBlock,
   parseClass,
@@ -446,14 +452,16 @@ export function parseExprAtom(): boolean {
         contextualKeyword === ContextualKeyword._async &&
         match(tt.name)
       ) {
-        parseIdentifier();
+        parseBindingIdentifier(false);
         expect(tt.arrow);
-        // let foo = bar => {};
+        // let foo = async bar => {};
         parseArrowExpression(functionStart, startTokenIndex);
         return true;
       }
 
-      if (canBeArrow && !canInsertSemicolon() && eat(tt.arrow)) {
+      if (canBeArrow && !canInsertSemicolon() && match(tt.arrow)) {
+        markPriorBindingIdentifier(false);
+        expect(tt.arrow);
         parseArrowExpression(functionStart, startTokenIndex);
         return true;
       }

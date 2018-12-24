@@ -568,8 +568,7 @@ export function parseFunction(
     if (!isStatement) {
       nameScopeStartTokenIndex = state.tokens.length;
     }
-    parseBindingIdentifier();
-    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.FunctionScopedDeclaration;
+    parseBindingIdentifier(false);
   }
 
   const startTokenIndex = state.tokens.length;

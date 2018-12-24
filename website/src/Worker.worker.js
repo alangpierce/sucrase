@@ -98,7 +98,7 @@ function runBabel() {
         parserOpts: {
           plugins: [
             "classProperties",
-            "decorators",
+            ["decorators", {decoratorsBeforeExport: false}],
             "jsx",
             "logicalAssignment",
             "numericSeparator",

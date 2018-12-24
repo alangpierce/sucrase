@@ -1125,4 +1125,40 @@ module.exports = exports.default;
       {transforms: ["imports", "typescript"]},
     );
   });
+
+  it("properly handles shadowing for simple arrow functions", () => {
+    assertResult(
+      `
+      import a from 'a';
+      const f = a => {
+        a();
+      };
+    `,
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
+      
+      const f = a => {
+        a();
+      };
+    `,
+      {transforms: ["imports", "typescript"]},
+    );
+  });
+
+  it("properly handles shadowing for simple async arrow functions", () => {
+    assertResult(
+      `
+      import a from 'a';
+      const f = async a => {
+        a();
+      };
+    `,
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
+      
+      const f = async a => {
+        a();
+      };
+    `,
+      {transforms: ["imports", "typescript"]},
+    );
+  });
 });

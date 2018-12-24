@@ -28,8 +28,15 @@ export function parseRest(isBlockScope: boolean): void {
   parseBindingAtom(isBlockScope);
 }
 
-export function parseBindingIdentifier(): void {
+export function parseBindingIdentifier(isBlockScope: boolean): void {
   parseIdentifier();
+  markPriorBindingIdentifier(isBlockScope);
+}
+
+export function markPriorBindingIdentifier(isBlockScope: boolean): void {
+  state.tokens[state.tokens.length - 1].identifierRole = isBlockScope
+    ? IdentifierRole.BlockScopedDeclaration
+    : IdentifierRole.FunctionScopedDeclaration;
 }
 
 // Parses lvalue (assignable) atom.
@@ -46,10 +53,7 @@ export function parseBindingAtom(isBlockScope: boolean): void {
     case tt._yield:
     case tt.name: {
       state.type = tt.name;
-      parseBindingIdentifier();
-      state.tokens[state.tokens.length - 1].identifierRole = isBlockScope
-        ? IdentifierRole.BlockScopedDeclaration
-        : IdentifierRole.FunctionScopedDeclaration;
+      parseBindingIdentifier(isBlockScope);
       return;
     }
 

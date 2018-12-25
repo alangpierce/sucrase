@@ -9,10 +9,11 @@ const ESLINT = "./node_modules/.bin/eslint";
 async function main(): Promise<void> {
   await Promise.all([
     checkSucrase(),
-    checkIntegration("./integrations/gulp-plugin"),
-    checkIntegration("./integrations/jest-plugin"),
-    checkIntegration("./integrations/webpack-loader"),
-    checkIntegration("./integrations/webpack-object-rest-spread-plugin"),
+    checkProject("./integrations/gulp-plugin"),
+    checkProject("./integrations/jest-plugin"),
+    checkProject("./integrations/webpack-loader"),
+    checkProject("./integrations/webpack-object-rest-spread-plugin"),
+    checkProject("./website"),
   ]);
 }
 
@@ -28,7 +29,7 @@ async function checkSucrase(): Promise<void> {
   ]);
 }
 
-async function checkIntegration(path: string): Promise<void> {
+async function checkProject(path: string): Promise<void> {
   await Promise.all([
     run(`${TSC} --project ${path} --noEmit`),
     run(`${TSLINT} --project ${path}`),

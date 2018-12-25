@@ -1,19 +1,16 @@
-import PropTypes from "prop-types";
 import React, {Component} from "react";
 
-export default class OptionBox extends Component {
-  static propTypes = {
-    options: PropTypes.arrayOf(
-      PropTypes.shape({
-        text: PropTypes.string.isRequired,
-        checked: PropTypes.bool.isRequired,
-        onToggle: PropTypes.func.isRequired,
-      }),
-    ).isRequired,
-    title: PropTypes.string.isRequired,
-  };
+interface OptionBoxProps {
+  options: Array<{
+    text: string;
+    checked: boolean;
+    onToggle: () => void;
+  }>;
+  title: string;
+}
 
-  render() {
+export default class OptionBox extends Component<OptionBoxProps> {
+  render(): JSX.Element {
     const {options, title} = this.props;
     return (
       <div className="OptionBox">

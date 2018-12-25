@@ -1,5 +1,5 @@
-import GZip from "gzip-js";
 import * as Base64 from "base64-js";
+import GZip from "gzip-js";
 
 import {
   DEFAULT_COMPARE_WITH_BABEL,
@@ -10,6 +10,16 @@ import {
   TRANSFORMS,
 } from "./Constants";
 
+interface BaseHashState {
+  code: string;
+  selectedTransforms: {[transformName: string]: boolean};
+  compareWithBabel: boolean;
+  compareWithTypeScript: boolean;
+  showTokens: boolean;
+}
+
+type HashState = BaseHashState & {compressedCode: string};
+
 export function saveHashState({
   code,
   compressedCode,
@@ -17,7 +27,7 @@ export function saveHashState({
   compareWithBabel,
   compareWithTypeScript,
   showTokens,
-}) {
+}: HashState): void {
   const components = [];
 
   const transformsValue = TRANSFORMS.filter(({name}) => selectedTransforms[name])
@@ -39,9 +49,9 @@ export function saveHashState({
 
   if (code !== INITIAL_CODE) {
     if (code.length > 150) {
-      components.push(`compressedCode=${window.encodeURIComponent(compressedCode)}`);
+      components.push(`compressedCode=${encodeURIComponent(compressedCode)}`);
     } else {
-      components.push(`code=${window.encodeURIComponent(code)}`);
+      components.push(`code=${encodeURIComponent(code)}`);
     }
   }
 
@@ -56,25 +66,25 @@ export function saveHashState({
   }
 }
 
-export function loadHashState() {
+export function loadHashState(): Partial<BaseHashState> | null {
   try {
-    let hashContents = window.location.hash;
+    const hashContents = window.location.hash;
     if (!hashContents.startsWith("#")) {
       return null;
     }
     const components = hashContents.substr(1).split("&");
-    const result = {};
+    const result: Partial<HashState> = {};
     for (const component of components) {
-      let [key, value] = component.split("=");
+      const [key, value] = component.split("=");
       if (key === "selectedTransforms") {
         result.selectedTransforms = {};
         for (const transformName of value.split(",")) {
           result.selectedTransforms[transformName] = true;
         }
       } else if (key === "code") {
-        result.code = window.decodeURIComponent(value);
+        result.code = decodeURIComponent(value);
       } else if (key === "compressedCode") {
-        result.code = decompressCode(window.decodeURIComponent(value));
+        result.code = decompressCode(decodeURIComponent(value));
       } else if (["compareWithBabel", "compareWithTypeScript", "showTokens"].includes(key)) {
         result[key] = value === "true";
       }
@@ -85,16 +95,18 @@ export function loadHashState() {
     }
     return result;
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error(`Error when loading hash fragment.`);
+    // eslint-disable-next-line no-console
     console.error(e);
     return null;
   }
 }
 
-export function compressCode(code) {
-  return Base64.fromByteArray(GZip.zip(code));
+export function compressCode(code: string): string {
+  return Base64.fromByteArray(Uint8Array.from(GZip.zip(code)));
 }
 
-function decompressCode(compressedCode) {
+function decompressCode(compressedCode: string): string {
   return String.fromCharCode(...GZip.unzip(Base64.toByteArray(compressedCode)));
 }

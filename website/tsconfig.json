@@ -1,38 +1,26 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "strictNullChecks": true,
     "target": "es2017",
     "module": "commonjs",
     "typeRoots": ["node_modules/@types"],
     "declaration": true,
-    "lib": ["dom", "es2017"],
-    "experimentalDecorators": true,
     "esModuleInterop": true,
+    "jsx": "react",
     "noImplicitAny": true,
     "noImplicitReturns": true,
-    "noUnusedLocals": true,
     "suppressImplicitAnyIndexErrors": true,
-    "noImplicitThis": true,
     "downlevelIteration": true,
     "noEmitHelpers": true,
     "importHelpers": true,
     "plugins": [
       {
-        "name": "typescript-tslint-plugin",
+        "name": "tslint-language-service",
         "ignoreDefinitionFiles": true
       }
     ]
   },
-  "include": [
-    "benchmark",
-    "example-runner",
-    "generator",
-    "script",
-    "src",
-    "test"
-  ],
   "exclude": [
-    "benchmark/sample",
+    "node_modules",
   ]
 }

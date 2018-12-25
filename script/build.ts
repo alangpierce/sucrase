@@ -17,6 +17,7 @@ async function main(): Promise<void> {
     () => buildIntegration("./integrations/jest-plugin"),
     () => buildIntegration("./integrations/webpack-loader"),
     () => buildIntegration("./integrations/webpack-object-rest-spread-plugin"),
+    () => buildWebsite(),
   ];
   if (fast) {
     await Promise.all(promiseFactories.map((f) => f()));
@@ -71,6 +72,19 @@ async function buildIntegration(path: string): Promise<void> {
 
   if (!fast) {
     await run(`${TSC} --emitDeclarationOnly --project ${path} --outDir ${path}/dist`);
+  }
+}
+
+/**
+ * Just runs yarn for the website to prepare it for lint.
+ */
+async function buildWebsite(): Promise<void> {
+  if (!fast) {
+    console.log("Installing website dependencies");
+    const originalDir = process.cwd();
+    process.chdir("./website");
+    await run("yarn");
+    process.chdir(originalDir);
   }
 }
 

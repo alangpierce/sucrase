@@ -1,33 +1,52 @@
-import Worker from "./Worker.worker.js";
+import Worker from "./Worker.worker";
+import {Message, WorkerConfig} from "./WorkerProtocol";
 
 const CANCELLED_MESSAGE = "SUCRASE JOB CANCELLED";
 const TIMEOUT_MESSAGE = "SUCRASE JOB TIMED OUT";
 
-let worker;
+let worker: Worker;
 
 // Used to coordinate communication with the worker. This is non-null any time
 // there is an active call, and it is nulled out on completion. Only one request
 // may be active at any time.
-let nextResolve = null;
-let nextReject = null;
+let nextResolve: ((value: unknown) => void) | null = null;
+let nextReject: ((e: Error) => void) | null = null;
 
-let timeoutTimer = null;
+let timeoutTimer: number | null = null;
 
 // The pending config to be processed next. Set to null when processed.
-let nextConfig = null;
+let nextConfig: WorkerConfig | null = null;
 // Function to be called when the config is set.
-let notifyConfig = null;
+let notifyConfig: (() => void) | null = null;
+
+type UpdateStateFunc = (
+  values: {
+    sucraseCode?: string;
+    babelCode?: string;
+    typeScriptCode?: string;
+    tokensStr?: string;
+    sucraseTimeMs?: number | null;
+    babelTimeMs?: number | null;
+    typeScriptTimeMs?: number | null;
+  },
+) => void;
 
 // Callback function to update the main app state. Just forwards the object to
 // setState in the App component.
-let updateStateFn = null;
+let updateStateFn: UpdateStateFunc | null = null;
+
+type HandleCompressedCodeFunc = (compressedCode: string) => void;
+
 // Callback function to persist the compressed code to the URL. Compression is
 // slow enough that it's useful to do in a web worker.
-let handleCompressedCodeFn = null;
+let handleCompressedCodeFn: HandleCompressedCodeFunc | null = null;
 
-function initWorker() {
+function initWorker(): void {
   worker = new Worker();
-  worker.addEventListener("message", ({data}) => {
+  worker.addEventListener("message", ({data}: {data: unknown}) => {
+    if (!nextResolve) {
+      throw new Error("Expected nextResolve to be set.");
+    }
     nextResolve(data);
     finishEndMessage();
   });
@@ -35,13 +54,15 @@ function initWorker() {
 
 initWorker();
 
-function finishEndMessage() {
+function finishEndMessage(): void {
   nextResolve = null;
   nextReject = null;
-  clearTimeout(timeoutTimer);
+  if (timeoutTimer != null) {
+    window.clearTimeout(timeoutTimer);
+  }
 }
 
-function sendMessage(message) {
+function sendMessage(message: Message): Promise<unknown> {
   if (nextConfig) {
     throw new Error(CANCELLED_MESSAGE);
   }
@@ -49,9 +70,12 @@ function sendMessage(message) {
   if (nextResolve || nextReject) {
     throw new Error("Cannot send message when a message is already in progress!");
   }
-  timeoutTimer = setTimeout(() => {
+  timeoutTimer = window.setTimeout(() => {
     worker.terminate();
     initWorker();
+    if (!nextReject) {
+      throw new Error("Expected nextReject to be set!");
+    }
     nextReject(new Error(TIMEOUT_MESSAGE));
     finishEndMessage();
   }, 10000);
@@ -61,46 +85,46 @@ function sendMessage(message) {
   });
 }
 
-async function setConfig(config) {
+async function setConfig(config: WorkerConfig): Promise<void> {
   await sendMessage({type: "SET_CONFIG", config});
 }
 
-async function runSucrase() {
-  return await sendMessage({type: "RUN_SUCRASE"});
+async function runSucrase(): Promise<string> {
+  return (await sendMessage({type: "RUN_SUCRASE"})) as string;
 }
 
-async function runBabel() {
-  return await sendMessage({type: "RUN_BABEL"});
+async function runBabel(): Promise<string> {
+  return (await sendMessage({type: "RUN_BABEL"})) as string;
 }
 
-async function runTypeScript() {
-  return await sendMessage({type: "RUN_TYPESCRIPT"});
+async function runTypeScript(): Promise<string> {
+  return (await sendMessage({type: "RUN_TYPESCRIPT"})) as string;
 }
 
-async function compressCode() {
-  return await sendMessage({type: "COMPRESS_CODE"});
+async function compressCode(): Promise<string> {
+  return (await sendMessage({type: "COMPRESS_CODE"})) as string;
 }
 
-async function getTokens() {
-  return await sendMessage({type: "GET_TOKENS"});
+async function getTokens(): Promise<string> {
+  return (await sendMessage({type: "GET_TOKENS"})) as string;
 }
 
-async function profileSucrase() {
-  return await sendMessage({type: "PROFILE_SUCRASE"});
+async function profileSucrase(): Promise<number> {
+  return (await sendMessage({type: "PROFILE_SUCRASE"})) as number;
 }
 
-async function profileBabel() {
-  return await sendMessage({type: "PROFILE_BABEL"});
+async function profileBabel(): Promise<number> {
+  return (await sendMessage({type: "PROFILE_BABEL"})) as number;
 }
 
-async function profileTypeScript() {
-  return await sendMessage({type: "PROFILE_TYPESCRIPT"});
+async function profileTypeScript(): Promise<number> {
+  return (await sendMessage({type: "PROFILE_TYPESCRIPT"})) as number;
 }
 
 /**
  * Consume a pending config, blocking until one shows up.
  */
-async function waitForConfig() {
+async function waitForConfig(): Promise<WorkerConfig> {
   if (nextConfig) {
     const config = nextConfig;
     nextConfig = null;
@@ -123,7 +147,7 @@ async function waitForConfig() {
 const NUM_TRIALS = 10;
 const NUM_WARMUP_RUNS = 2;
 
-async function profile(asyncFn) {
+async function profile(asyncFn: () => Promise<number | null>): Promise<number | null> {
   for (let i = 0; i < NUM_WARMUP_RUNS; i++) {
     const time = await asyncFn();
     if (time == null) {
@@ -141,9 +165,13 @@ async function profile(asyncFn) {
   return total / NUM_TRIALS;
 }
 
-async function workerLoop() {
+async function workerLoop(): Promise<void> {
   while (true) {
     const config = await waitForConfig();
+    if (!updateStateFn || !handleCompressedCodeFn) {
+      throw new Error("Expected update callbacks to be set before config is set.");
+    }
+
     try {
       await setConfig(config);
       const sucraseCode = await runSucrase();
@@ -177,16 +205,23 @@ async function workerLoop() {
   }
 }
 
-export function updateConfig(config) {
+export function updateConfig(config: WorkerConfig): void {
   nextConfig = config;
   if (notifyConfig) {
     notifyConfig();
   }
 }
 
-export function subscribe({updateState, handleCompressedCode}) {
+export function subscribe({
+  updateState,
+  handleCompressedCode,
+}: {
+  updateState: UpdateStateFunc;
+  handleCompressedCode: HandleCompressedCodeFunc;
+}): void {
   updateStateFn = updateState;
   handleCompressedCodeFn = handleCompressedCode;
 }
 
+// tslint:disable-next-line no-floating-promises
 workerLoop();

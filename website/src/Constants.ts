@@ -1,3 +1,5 @@
+import {Transform} from "sucrase";
+
 export const INITIAL_CODE = `\
 // Try typing or pasting some code into the left editor!
 import React, { Component } from "react";
@@ -28,7 +30,13 @@ export default App;
 
 `;
 
-export const TRANSFORMS = [
+interface TransformInfo {
+  name: Transform;
+  presetName?: unknown;
+  babelName?: string;
+}
+
+export const TRANSFORMS: Array<TransformInfo> = [
   {name: "jsx", presetName: ["react", {development: true}]},
   {name: "typescript", presetName: "typescript"},
   {name: "flow", presetName: "flow"},

@@ -1,4 +1,5 @@
-import {editor, Uri} from "monaco-editor";
+import {css, StyleSheet} from "aphrodite";
+import {editor} from "monaco-editor";
 import React, {Component} from "react";
 import MonacoEditor, {EditorDidMount} from "react-monaco-editor";
 import {AutoSizer} from "react-virtualized";
@@ -12,8 +13,6 @@ interface EditorProps {
   isPlaintext?: boolean;
   options?: editor.IEditorConstructionOptions;
 }
-
-let nextModelNum = 0;
 
 export default class Editor extends Component<EditorProps> {
   editor: editor.IStandaloneCodeEditor | null = null;
@@ -51,12 +50,12 @@ export default class Editor extends Component<EditorProps> {
   render(): JSX.Element {
     const {label, code, onChange, isReadOnly, isPlaintext, options} = this.props;
     return (
-      <div className="Editor">
-        <span className="Editor-label">
+      <div className={css(styles.editor)}>
+        <span className={css(styles.label)}>
           {label}
           {this._formatTime()}
         </span>
-        <span className="Editor-container">
+        <span className={css(styles.container)}>
           <AutoSizer onResize={this.invalidate} defaultWidth={300} defaultHeight={300}>
             {({width, height}) => (
               <MonacoEditor
@@ -80,3 +79,25 @@ export default class Editor extends Component<EditorProps> {
     );
   }
 }
+
+const styles = StyleSheet.create({
+  editor: {
+    display: "flex",
+    flexDirection: "column",
+    minWidth: 300,
+    height: "100%",
+    flex: 1,
+    // When adding a third editor, we need the container size to shrink so that
+    // the Monaco layout code will adjust to the container size.
+    overflowX: "hidden",
+    margin: 8,
+  },
+  label: {
+    color: "white",
+    lineHeight: '30px',
+    padding: 8,
+  },
+  container: {
+    height: "100%",
+  },
+});

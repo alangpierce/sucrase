@@ -1,10 +1,8 @@
 "use strict";
 
-const autoprefixer = require("autoprefixer");
 const path = require("path");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const ManifestPlugin = require("webpack-manifest-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
@@ -34,9 +32,6 @@ const env = getClientEnvironment(publicUrl);
 if (env.stringified["process.env"].NODE_ENV !== '"production"') {
   throw new Error("Production builds must have NODE_ENV=production.");
 }
-
-// Note: defined here because it will be used more than once.
-const cssFilename = "static/css/[name].[contenthash:8].css";
 
 // This is the production configuration.
 // It compiles slowly and is focused on producing a fast and minimal bundle.
@@ -141,7 +136,7 @@ module.exports = {
               name: "static/media/[name].[hash:8].[ext]",
             },
           },
-          // Process JS with Babel.
+          // Process TS with Sucrase.
           {
             test: /\.(js|jsx|mjs|ts|tsx)$/,
             include: paths.appSrc,
@@ -150,56 +145,10 @@ module.exports = {
               transforms: ["jsx", "typescript"],
             },
           },
-          // The notation here is somewhat confusing.
-          // "postcss" loader applies autoprefixer to our CSS.
-          // "css" loader resolves paths in CSS and adds assets as dependencies.
-          // "style" loader normally turns CSS into JS modules injecting <style>,
-          // but unlike in development configuration, we do something different.
-          // `ExtractTextPlugin` first applies the "postcss" and "css" loaders
-          // (second argument), then grabs the result CSS and puts it into a
-          // separate file in our build process. This way we actually ship
-          // a single CSS file in production instead of JS code injecting <style>
-          // tags. If you use code splitting, however, any async bundles will still
-          // use the "style" loader inside the async code so CSS from them won't be
-          // in the main CSS file.
+          // We don't use CSS, but Monaco requires CSS loaders to be configured.
           {
             test: /\.css$/,
-            use: [
-              {
-                loader: MiniCssExtractPlugin.loader,
-                options: Object.assign(
-                  {},
-                  shouldUseRelativeAssetPaths ? {publicPath: "../../"} : undefined,
-                ),
-              },
-              {
-                loader: require.resolve("css-loader"),
-                options: {
-                  importLoaders: 1,
-                  sourceMap: shouldUseSourceMap,
-                },
-              },
-              {
-                loader: require.resolve("postcss-loader"),
-                options: {
-                  // Necessary for external CSS imports to work
-                  // https://github.com/facebookincubator/create-react-app/issues/2677
-                  ident: "postcss",
-                  plugins: () => [
-                    require("postcss-flexbugs-fixes"),
-                    autoprefixer({
-                      browsers: [
-                        ">1%",
-                        "last 4 versions",
-                        "Firefox ESR",
-                        "not ie < 9", // React doesn't support IE8 anyway
-                      ],
-                      flexbox: "no-2009",
-                    }),
-                  ],
-                },
-              },
-            ],
+            use: [require.resolve("style-loader"), require.resolve("css-loader")],
           },
           // "file" loader makes sure assets end up in the `build` folder.
           // When you `import` an asset, you get its filename.
@@ -251,15 +200,6 @@ module.exports = {
     // It is absolutely essential that NODE_ENV was set to production here.
     // Otherwise React will be compiled in the very slow development mode.
     new webpack.DefinePlugin(env.stringified),
-    // Generate a manifest file which contains a mapping of all asset filenames
-    // to their corresponding output file so that tools can pick it up without
-    // having to parse `index.html`.
-    new MiniCssExtractPlugin({
-      // Options similar to the same options in webpackOptions.output
-      // both options are optional
-      filename: "static/css/[name].[contenthash:8].css",
-      chunkFilename: "static/css/[name].[contenthash:8].chunk.css",
-    }),
     new ManifestPlugin({
       fileName: "asset-manifest.json",
     }),

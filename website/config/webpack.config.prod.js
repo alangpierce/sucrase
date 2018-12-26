@@ -3,10 +3,10 @@
 const autoprefixer = require("autoprefixer");
 const path = require("path");
 const webpack = require("webpack");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const ManifestPlugin = require("webpack-manifest-plugin");
+const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
 const SWPrecacheWebpackPlugin = require("sw-precache-webpack-plugin");
 const eslintFormatter = require("react-dev-utils/eslintFormatter");
@@ -62,6 +62,7 @@ module.exports = {
     // Point sourcemap entries to original disk location (format as URL on Windows)
     devtoolModuleFilenameTemplate: (info) =>
       path.relative(paths.appSrc, info.absoluteResourcePath).replace(/\\/g, "/"),
+    globalObject: `(typeof self !== 'undefined' ? self : this)`,
   },
   resolve: {
     // This allows you to set a fallback for where Webpack should look for modules.
@@ -78,7 +79,7 @@ module.exports = {
     // https://github.com/facebookincubator/create-react-app/issues/290
     // `web` extension prefixes have been added for better support
     // for React Native Web.
-    extensions: [".web.js", ".js", ".mjs", ".json", ".web.jsx", ".jsx"],
+    extensions: [".web.js", ".js", ".mjs", ".json", ".web.jsx", ".jsx", ".ts", ".tsx"],
     alias: {
       // Support React Native Web
       // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
@@ -117,7 +118,7 @@ module.exports = {
         include: paths.appSrc,
       },
       {
-        test: /\.worker\.js$/,
+        test: /\.worker\.ts$/,
         use: {loader: "worker-loader"},
       },
       {
@@ -142,11 +143,11 @@ module.exports = {
           },
           // Process JS with Babel.
           {
-            test: /\.(js|jsx|mjs)$/,
+            test: /\.(js|jsx|mjs|ts|tsx)$/,
             include: paths.appSrc,
             loader: require.resolve("@sucrase/webpack-loader"),
             options: {
-              transforms: ["jsx"],
+              transforms: ["jsx", "typescript"],
             },
           },
           // The notation here is somewhat confusing.
@@ -298,12 +299,7 @@ module.exports = {
     // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
     // You can remove this if you don't use Moment.js:
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-    new CopyWebpackPlugin([
-      {
-        from: "node_modules/monaco-editor/min/vs",
-        to: "vs",
-      },
-    ]),
+    new MonacoWebpackPlugin({languages: ["typescript"]}),
   ],
   // Some libraries import Node modules but don't use them in the browser.
   // Tell Webpack to provide empty mocks for them so importing them works.

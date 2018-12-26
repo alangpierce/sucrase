@@ -1,23 +1,40 @@
 import React, {Component} from "react";
-import "./App.css";
-
 import {getVersion} from "sucrase";
 
+import "./App.css";
 import {
-  TRANSFORMS,
-  INITIAL_CODE,
   DEFAULT_COMPARE_WITH_BABEL,
+  DEFAULT_COMPARE_WITH_TYPESCRIPT,
   DEFAULT_SHOW_TOKENS,
   DEFAULT_TRANSFORMS,
-  DEFAULT_COMPARE_WITH_TYPESCRIPT,
+  INITIAL_CODE,
+  TRANSFORMS,
 } from "./Constants";
 import Editor from "./Editor";
 import OptionBox from "./OptionBox";
 import {loadHashState, saveHashState} from "./URLHashState";
 import * as WorkerClient from "./WorkerClient";
 
-class App extends Component {
-  constructor(props) {
+interface State {
+  code: string;
+  compareWithBabel: boolean;
+  compareWithTypeScript: boolean;
+  showTokens: boolean;
+  selectedTransforms: {[transformName: string]: boolean};
+  sucraseCode: string;
+  sucraseTimeMs: number | null | "LOADING";
+  babelCode: string;
+  babelTimeMs: number | null | "LOADING";
+  typeScriptCode: string;
+  typeScriptTimeMs: number | null | "LOADING";
+  tokensStr: string;
+  showMore: boolean;
+}
+
+class App extends Component<{}, State> {
+  editors: {[editorName: string]: Editor | null};
+
+  constructor(props: {}) {
     super(props);
     this.state = {
       code: INITIAL_CODE,
@@ -45,11 +62,7 @@ class App extends Component {
       hashState &&
       (hashState.compareWithBabel != null ||
         hashState.compareWithTypeScript ||
-        hashState.showTokens != null ||
-        (hashState.selectedTransforms &&
-          TRANSFORMS.some(
-            ({name, hideByDefault}) => hideByDefault && hashState.selectedTransforms[name],
-          )))
+        hashState.showTokens != null)
     ) {
       this.state = {...this.state, showMore: true};
     }
@@ -57,10 +70,10 @@ class App extends Component {
     this.editors = {};
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     WorkerClient.subscribe({
       updateState: (stateUpdate) => {
-        this.setState(stateUpdate);
+        this.setState((state) => ({...state, ...stateUpdate}));
       },
       handleCompressedCode: (compressedCode) => {
         saveHashState({
@@ -76,7 +89,7 @@ class App extends Component {
     this.postConfigToWorker();
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: {}, prevState: State): void {
     if (
       this.state.code !== prevState.code ||
       this.state.selectedTransforms !== prevState.selectedTransforms ||
@@ -88,7 +101,7 @@ class App extends Component {
     }
   }
 
-  postConfigToWorker() {
+  postConfigToWorker(): void {
     this.setState({sucraseTimeMs: "LOADING", babelTimeMs: "LOADING", typeScriptTimeMs: "LOADING"});
     WorkerClient.updateConfig({
       compareWithBabel: this.state.compareWithBabel,
@@ -99,7 +112,7 @@ class App extends Component {
     });
   }
 
-  _handleCodeChange = (newCode) => {
+  _handleCodeChange = (newCode: string) => {
     this.setState({
       code: newCode,
     });
@@ -117,7 +130,7 @@ class App extends Component {
     this.setState({showTokens: !this.state.showTokens});
   };
 
-  render() {
+  render(): JSX.Element {
     const {
       sucraseCode,
       sucraseTimeMs,
@@ -140,10 +153,8 @@ class App extends Component {
         <div className="App-options">
           <OptionBox
             title="Transforms"
-            options={TRANSFORMS.filter(
-              ({hideByDefault}) => !hideByDefault || this.state.showMore,
-            ).map(({name, isExperimental}) => ({
-              text: name + (isExperimental ? " (experimental)" : ""),
+            options={TRANSFORMS.map(({name}) => ({
+              text: name,
               checked: Boolean(this.state.selectedTransforms[name]),
               onToggle: () => {
                 let newTransforms = this.state.selectedTransforms;
@@ -236,7 +247,7 @@ class App extends Component {
               isReadOnly={true}
               isPlaintext={true}
               options={{
-                lineNumbers: (n) => (n > 1 ? String(n - 2) : null),
+                lineNumbers: (n) => (n > 1 ? String(n - 2) : ""),
               }}
             />
           )}

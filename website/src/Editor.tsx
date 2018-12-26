@@ -1,24 +1,28 @@
-import PropTypes from "prop-types";
+import {editor, Uri} from "monaco-editor";
 import React, {Component} from "react";
-import MonacoEditor from "react-monaco-editor";
+import MonacoEditor, {EditorDidMount} from "react-monaco-editor";
 import {AutoSizer} from "react-virtualized";
 
-export default class Editor extends Component {
-  static propTypes = {
-    label: PropTypes.string.isRequired,
-    code: PropTypes.string.isRequired,
-    timeMs: PropTypes.oneOfType([PropTypes.number, PropTypes.oneOf(["LOADING"])]),
-    onChange: PropTypes.func,
-    isReadOnly: PropTypes.bool,
-    isPlaintext: PropTypes.bool,
-    options: PropTypes.object,
-  };
+interface EditorProps {
+  label: string;
+  code: string;
+  timeMs?: number | "LOADING" | null;
+  onChange?: (code: string) => void;
+  isReadOnly?: boolean;
+  isPlaintext?: boolean;
+  options?: editor.IEditorConstructionOptions;
+}
 
-  componentDidMount() {
+let nextModelNum = 0;
+
+export default class Editor extends Component<EditorProps> {
+  editor: editor.IStandaloneCodeEditor | null = null;
+
+  componentDidMount(): void {
     setTimeout(this.invalidate, 0);
   }
 
-  _editorDidMount = (editor, monaco) => {
+  _editorDidMount: EditorDidMount = (editor, monaco) => {
     this.editor = editor;
     monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
       noSemanticValidation: true,
@@ -33,7 +37,7 @@ export default class Editor extends Component {
     }
   };
 
-  _formatTime() {
+  _formatTime(): string {
     const {timeMs} = this.props;
     if (timeMs == null) {
       return "";
@@ -44,7 +48,7 @@ export default class Editor extends Component {
     }
   }
 
-  render() {
+  render(): JSX.Element {
     const {label, code, onChange, isReadOnly, isPlaintext, options} = this.props;
     return (
       <div className="Editor">
@@ -59,14 +63,13 @@ export default class Editor extends Component {
                 editorDidMount={this._editorDidMount}
                 width={width}
                 height={height - 30}
-                language={isPlaintext ? null : "typescript"}
+                language={isPlaintext ? undefined : "typescript"}
                 theme="vs-dark"
                 value={code}
                 onChange={onChange}
                 options={{
                   minimap: {enabled: false},
                   readOnly: isReadOnly,
-                  tabWidth: 2,
                   ...options,
                 }}
               />

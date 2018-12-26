@@ -3,8 +3,8 @@
 const autoprefixer = require("autoprefixer");
 const path = require("path");
 const webpack = require("webpack");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
 const WatchMissingNodeModulesPlugin = require("react-dev-utils/WatchMissingNodeModulesPlugin");
@@ -68,7 +68,7 @@ module.exports = {
     // Point sourcemap entries to original disk location (format as URL on Windows)
     devtoolModuleFilenameTemplate: (info) =>
       path.resolve(info.absoluteResourcePath).replace(/\\/g, "/"),
-    globalObject: `typeof self !== 'undefined' ? self : this`,
+    globalObject: `(typeof self !== 'undefined' ? self : this)`,
   },
   resolve: {
     // This allows you to set a fallback for where Webpack should look for modules.
@@ -85,7 +85,7 @@ module.exports = {
     // https://github.com/facebookincubator/create-react-app/issues/290
     // `web` extension prefixes have been added for better support
     // for React Native Web.
-    extensions: [".web.js", ".js", ".mjs", ".json", ".web.jsx", ".jsx"],
+    extensions: [".web.js", ".js", ".mjs", ".json", ".web.jsx", ".jsx", ".ts", ".tsx"],
     plugins: [
       // Prevents users from importing files from outside of src/ (or node_modules/).
       // This often causes confusion because we only process files within src/ with babel.
@@ -119,7 +119,7 @@ module.exports = {
         include: paths.appSrc,
       },
       {
-        test: /\.worker\.js$/,
+        test: /\.worker\.ts$/,
         use: {loader: "worker-loader"},
       },
       {
@@ -145,11 +145,11 @@ module.exports = {
           },
           // Process JS with Babel.
           {
-            test: /\.(js|jsx|mjs)$/,
+            test: /\.(js|jsx|mjs|ts|tsx)$/,
             include: paths.appSrc,
             loader: require.resolve("@sucrase/webpack-loader"),
             options: {
-              transforms: ["jsx"],
+              transforms: ["jsx", "typescript"],
             },
           },
           // "postcss" loader applies autoprefixer to our CSS.
@@ -244,12 +244,7 @@ module.exports = {
     // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
     // You can remove this if you don't use Moment.js:
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-    new CopyWebpackPlugin([
-      {
-        from: "node_modules/monaco-editor/min/vs",
-        to: "vs",
-      },
-    ]),
+    new MonacoWebpackPlugin({languages: ["typescript"]}),
   ],
   // Some libraries import Node modules but don't use them in the browser.
   // Tell Webpack to provide empty mocks for them so importing them works.

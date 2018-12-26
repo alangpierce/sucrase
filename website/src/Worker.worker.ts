@@ -1,18 +1,26 @@
 /* eslint-disable no-restricted-globals */
+// @ts-ignore
 import * as Babel from "@babel/standalone";
 import * as Sucrase from "sucrase";
 import * as TypeScript from "typescript";
 
 import {TRANSFORMS} from "./Constants";
-import {compressCode} from "./URLHashState";
 import getTokens from "./getTokens";
+import {compressCode} from "./URLHashState";
+import {Message, WorkerConfig} from "./WorkerProtocol";
+
+type Transform = Sucrase.Transform;
+
+declare const self: Worker;
+
 Babel.registerPlugin(
   "proposal-numeric-separator",
   require("@babel/plugin-proposal-numeric-separator"),
 );
 Babel.registerPlugin("dynamic-import-node", require("babel-plugin-dynamic-import-node"));
 
-let config = null;
+// SET_CONFIG must be the first message before anything else is called.
+let config: WorkerConfig;
 
 /**
  * The worker architecture intentionally bypasses the browser event loop in
@@ -22,7 +30,7 @@ self.addEventListener("message", ({data}) => {
   self.postMessage(processEvent(data));
 });
 
-function processEvent(data) {
+function processEvent(data: Message): unknown {
   if (data.type === "SET_CONFIG") {
     config = data.config;
     return null;
@@ -43,13 +51,14 @@ function processEvent(data) {
   } else if (data.type === "PROFILE_TYPESCRIPT") {
     return runTypeScript().time;
   }
+  return null;
 }
 
-function getSelectedTransforms() {
+function getSelectedTransforms(): Array<Transform> {
   return TRANSFORMS.map(({name}) => name).filter((name) => config.selectedTransforms[name]);
 }
 
-function getFilePath() {
+function getFilePath(): string {
   if (config.selectedTransforms.typescript) {
     if (config.selectedTransforms.jsx) {
       return "sample.tsx";
@@ -61,7 +70,7 @@ function getFilePath() {
   }
 }
 
-function runSucrase() {
+function runSucrase(): {code: string; time: number | null} {
   return runAndProfile(
     () =>
       Sucrase.transform(config.code, {transforms: getSelectedTransforms(), filePath: getFilePath()})
@@ -69,8 +78,8 @@ function runSucrase() {
   );
 }
 
-function runBabel() {
-  let babelPlugins = TRANSFORMS.filter(({name}) => config.selectedTransforms[name])
+function runBabel(): {code: string; time: number | null} {
+  const babelPlugins = TRANSFORMS.filter(({name}) => config.selectedTransforms[name])
     .map(({babelName}) => babelName)
     .filter((name) => name);
   const babelPresets = TRANSFORMS.filter(({name}) => config.selectedTransforms[name])
@@ -102,13 +111,13 @@ function runBabel() {
   );
 }
 
-function runTypeScript() {
+function runTypeScript(): {code: string; time: number | null} {
   for (const {name} of TRANSFORMS) {
     if (["typescript", "imports", "jsx"].includes(name)) {
       continue;
     }
     if (config.selectedTransforms[name]) {
-      return {code: `Transform "${name}" is not valid in TypeScript.`};
+      return {code: `Transform "${name}" is not valid in TypeScript.`, time: null};
     }
   }
   return runAndProfile(
@@ -127,14 +136,18 @@ function runTypeScript() {
   );
 }
 
-function runAndProfile(runOperation) {
+function runAndProfile(runOperation: () => string): {code: string; time: number | null} {
   try {
     const start = performance.now();
     const code = runOperation();
     const time = performance.now() - start;
     return {code, time};
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error(e);
     return {code: e.message, time: null};
   }
 }
+
+// Expose the right type when imported via worker-loader.
+export default {} as typeof Worker & {new (): Worker};

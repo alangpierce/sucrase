@@ -46,6 +46,7 @@ module.exports = {
     "no-useless-constructor": "off",
     "prefer-destructuring": "off",
     "prettier/prettier": "error",
+    "strict": "off",
   },
   settings: {
     "import/extensions": [".js", ".ts"],

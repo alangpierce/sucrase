@@ -7,8 +7,6 @@ const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
 const WatchMissingNodeModulesPlugin = require("react-dev-utils/WatchMissingNodeModulesPlugin");
-const eslintFormatter = require("react-dev-utils/eslintFormatter");
-const ModuleScopePlugin = require("react-dev-utils/ModuleScopePlugin");
 const getClientEnvironment = require("./env");
 const paths = require("./paths");
 
@@ -30,9 +28,6 @@ module.exports = {
   // We care about seeing the compiled output, and Sucrase makes it pretty
   // readable anyway.
   devtool: "eval",
-  // These are the "entry points" to our application.
-  // This means they will be the "root" imports that are included in JS bundle.
-  // The first two entry points enable "hot" CSS and auto-refreshes for JS.
   entry: [
     // Include an alternative client for WebpackDevServer. A client's job is to
     // connect to WebpackDevServer by a socket and get notified about changes.
@@ -63,7 +58,7 @@ module.exports = {
     // There are also additional JS chunk files if you use code splitting.
     chunkFilename: "static/js/[name].chunk.js",
     // This is the URL that app is served from. We use "/" in development.
-    publicPath: publicPath,
+    publicPath,
     // Point sourcemap entries to original disk location (format as URL on Windows)
     devtoolModuleFilenameTemplate: (info) =>
       path.resolve(info.absoluteResourcePath).replace(/\\/g, "/"),
@@ -74,49 +69,14 @@ module.exports = {
     // We placed these paths second because we want `node_modules` to "win"
     // if there are any conflicts. This matches Node resolution mechanism.
     // https://github.com/facebookincubator/create-react-app/issues/253
-    modules: ["node_modules", paths.appNodeModules].concat(
-      // It is guaranteed to exist because we tweak it in `env.js`
-      process.env.NODE_PATH.split(path.delimiter).filter(Boolean),
-    ),
-    // These are the reasonable defaults supported by the Node ecosystem.
-    // We also include JSX as a common component filename extension to support
-    // some tools, although we do not recommend using it, see:
-    // https://github.com/facebookincubator/create-react-app/issues/290
-    // `web` extension prefixes have been added for better support
-    // for React Native Web.
-    extensions: [".web.js", ".js", ".mjs", ".json", ".web.jsx", ".jsx", ".ts", ".tsx"],
-    plugins: [
-      // Prevents users from importing files from outside of src/ (or node_modules/).
-      // This often causes confusion because we only process files within src/ with babel.
-      // To fix this, we prevent you from importing files out of src/ -- if you'd like to,
-      // please link the files into your node_modules/ and let module-resolution kick in.
-      // Make sure your source files are compiled, as they will not be processed in any way.
-      new ModuleScopePlugin(paths.appSrc, [paths.appPackageJson]),
-    ],
+    modules: ["node_modules", paths.appNodeModules],
+    extensions: [".js", ".mjs", ".json", ".ts", ".tsx"],
   },
   module: {
     strictExportPresence: true,
     rules: [
-      // TODO: Disable require.ensure as it's not a standard language feature.
-      // We are waiting for https://github.com/facebookincubator/create-react-app/issues/2176.
-      // { parser: { requireEnsure: false } },
-
-      // First, run the linter.
-      // It's important to do this before Babel processes the JS.
-      {
-        test: /\.(js|jsx|mjs)$/,
-        enforce: "pre",
-        use: [
-          {
-            options: {
-              formatter: eslintFormatter,
-              eslintPath: require.resolve("eslint"),
-            },
-            loader: require.resolve("eslint-loader"),
-          },
-        ],
-        include: paths.appSrc,
-      },
+      // Disable require.ensure as it's not a standard language feature.
+      {parser: {requireEnsure: false}},
       {
         test: /\.worker\.ts$/,
         use: {loader: "worker-loader"},
@@ -189,8 +149,6 @@ module.exports = {
     // <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
     // In development, this will be an empty string.
     new InterpolateHtmlPlugin(HtmlWebpackPlugin, env.raw),
-    // Add module names to factory functions so they appear in browser profiler.
-    new webpack.NamedModulesPlugin(),
     // Makes some environment variables available to the JS code, for example:
     // if (process.env.NODE_ENV === 'development') { ... }. See `./env.js`.
     new webpack.DefinePlugin(env.stringified),

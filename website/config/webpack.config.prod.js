@@ -6,18 +6,12 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const ManifestPlugin = require("webpack-manifest-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
-const SWPrecacheWebpackPlugin = require("sw-precache-webpack-plugin");
-const eslintFormatter = require("react-dev-utils/eslintFormatter");
-const ModuleScopePlugin = require("react-dev-utils/ModuleScopePlugin");
 const paths = require("./paths");
 const getClientEnvironment = require("./env");
 
 // Webpack uses `publicPath` to determine where the app is being served from.
 // It requires a trailing slash, or the file assets will get an incorrect path.
 const publicPath = paths.servedPath;
-// Some apps do not use client-side routing with pushState.
-// For these, "homepage" can be set to "." to enable relative asset paths.
-const shouldUseRelativeAssetPaths = publicPath === "./";
 // Source maps are resource heavy and can cause out of memory issue for large source files.
 const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP !== "false";
 // `publicUrl` is just like `publicPath`, but we will provide it to our app
@@ -53,7 +47,7 @@ module.exports = {
     filename: "static/js/[name].[chunkhash:8].js",
     chunkFilename: "static/js/[name].[chunkhash:8].chunk.js",
     // We inferred the "public path" (such as / or /my-project) from homepage.
-    publicPath: publicPath,
+    publicPath,
     // Point sourcemap entries to original disk location (format as URL on Windows)
     devtoolModuleFilenameTemplate: (info) =>
       path.relative(paths.appSrc, info.absoluteResourcePath).replace(/\\/g, "/"),
@@ -64,54 +58,14 @@ module.exports = {
     // We placed these paths second because we want `node_modules` to "win"
     // if there are any conflicts. This matches Node resolution mechanism.
     // https://github.com/facebookincubator/create-react-app/issues/253
-    modules: ["node_modules", paths.appNodeModules].concat(
-      // It is guaranteed to exist because we tweak it in `env.js`
-      process.env.NODE_PATH.split(path.delimiter).filter(Boolean),
-    ),
-    // These are the reasonable defaults supported by the Node ecosystem.
-    // We also include JSX as a common component filename extension to support
-    // some tools, although we do not recommend using it, see:
-    // https://github.com/facebookincubator/create-react-app/issues/290
-    // `web` extension prefixes have been added for better support
-    // for React Native Web.
-    extensions: [".web.js", ".js", ".mjs", ".json", ".web.jsx", ".jsx", ".ts", ".tsx"],
-    alias: {
-      // Support React Native Web
-      // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
-      "react-native": "react-native-web",
-    },
-    plugins: [
-      // Prevents users from importing files from outside of src/ (or node_modules/).
-      // This often causes confusion because we only process files within src/ with babel.
-      // To fix this, we prevent you from importing files out of src/ -- if you'd like to,
-      // please link the files into your node_modules/ and let module-resolution kick in.
-      // Make sure your source files are compiled, as they will not be processed in any way.
-      new ModuleScopePlugin(paths.appSrc, [paths.appPackageJson]),
-    ],
+    modules: ["node_modules", paths.appNodeModules],
+    extensions: [".js", ".mjs", ".json", ".ts", ".tsx"],
   },
   module: {
     strictExportPresence: true,
     rules: [
-      // TODO: Disable require.ensure as it's not a standard language feature.
-      // We are waiting for https://github.com/facebookincubator/create-react-app/issues/2176.
-      // { parser: { requireEnsure: false } },
-
-      // First, run the linter.
-      // It's important to do this before Babel processes the JS.
-      {
-        test: /\.(js|jsx|mjs)$/,
-        enforce: "pre",
-        use: [
-          {
-            options: {
-              formatter: eslintFormatter,
-              eslintPath: require.resolve("eslint"),
-            },
-            loader: require.resolve("eslint-loader"),
-          },
-        ],
-        include: paths.appSrc,
-      },
+      // Disable require.ensure as it's not a standard language feature.
+      {parser: {requireEnsure: false}},
       {
         test: /\.worker\.ts$/,
         use: {loader: "worker-loader"},
@@ -202,36 +156,6 @@ module.exports = {
     new webpack.DefinePlugin(env.stringified),
     new ManifestPlugin({
       fileName: "asset-manifest.json",
-    }),
-    // Generate a service worker script that will precache, and keep up to date,
-    // the HTML & assets that are part of the Webpack build.
-    new SWPrecacheWebpackPlugin({
-      // By default, a cache-busting query parameter is appended to requests
-      // used to populate the caches, to ensure the responses are fresh.
-      // If a URL is already hashed by Webpack, then there is no concern
-      // about it being stale, and the cache-busting can be skipped.
-      dontCacheBustUrlsMatching: /\.\w{8}\./,
-      filename: "service-worker.js",
-      logger(message) {
-        if (message.indexOf("Total precache size is") === 0) {
-          // This message occurs for every build and is a bit too noisy.
-          return;
-        }
-        if (message.indexOf("Skipping static resource") === 0) {
-          // This message obscures real errors so we ignore it.
-          // https://github.com/facebookincubator/create-react-app/issues/2612
-          return;
-        }
-        console.log(message);
-      },
-      minify: true,
-      // For unknown URLs, fallback to the index page
-      navigateFallback: publicUrl + "/index.html",
-      // Ignores URLs starting from /__ (useful for Firebase):
-      // https://github.com/facebookincubator/create-react-app/issues/2237#issuecomment-302693219
-      navigateFallbackWhitelist: [/^(?!\/__).*/],
-      // Don't precache sourcemaps (they're large) and build asset manifest:
-      staticFileGlobsIgnorePatterns: [/\.map$/, /asset-manifest\.json$/],
     }),
     // Moment.js is an extremely popular library that bundles large locale files
     // by default due to how Webpack interprets its code. This is a practical

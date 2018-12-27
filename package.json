@@ -44,7 +44,6 @@
   "bugs": {
     "url": "https://github.com/alangpierce/sucrase/issues"
   },
-  "homepage": "https://sucrase.io",
   "devDependencies": {
     "@babel/cli": "^7.1.5",
     "@babel/core": "^7.1.6",

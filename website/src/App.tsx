@@ -1,7 +1,7 @@
+import {css, StyleSheet} from "aphrodite";
 import React, {Component} from "react";
 import {getVersion} from "sucrase";
 
-import "./App.css";
 import {
   DEFAULT_COMPARE_WITH_BABEL,
   DEFAULT_COMPARE_WITH_TYPESCRIPT,
@@ -31,7 +31,7 @@ interface State {
   showMore: boolean;
 }
 
-class App extends Component<{}, State> {
+export default class App extends Component<{}, State> {
   editors: {[editorName: string]: Editor | null};
 
   constructor(props: {}) {
@@ -141,16 +141,16 @@ class App extends Component<{}, State> {
       tokensStr,
     } = this.state;
     return (
-      <div className="App">
-        <span className="App-title">Sucrase</span>
-        <span className="App-subtitle">
+      <div className={css(styles.app)}>
+        <span className={css(styles.title)}>Sucrase</span>
+        <span className={css(styles.subtitle)}>
           <span>Super-fast Babel alternative</span>
           {" | "}
-          <a className="App-link" href="https://github.com/alangpierce/sucrase">
+          <a className={css(styles.link)} href="https://github.com/alangpierce/sucrase">
             GitHub
           </a>
         </span>
-        <div className="App-options">
+        <div className={css(styles.options)}>
           <OptionBox
             title="Transforms"
             options={TRANSFORMS.map(({name}) => ({
@@ -195,7 +195,7 @@ class App extends Component<{}, State> {
           )}
           {!this.state.showMore && (
             <a
-              className="App-link"
+              className={css(styles.link)}
               onClick={(e) => {
                 this.setState({showMore: true});
                 e.preventDefault();
@@ -207,7 +207,7 @@ class App extends Component<{}, State> {
           )}
         </div>
 
-        <div className="Editors">
+        <div className={css(styles.editors)}>
           <Editor
             ref={(e) => (this.editors["input"] = e)}
             label="Your code"
@@ -252,8 +252,8 @@ class App extends Component<{}, State> {
             />
           )}
         </div>
-        <span className="App-footer">
-          <a className="App-link" href="https://www.npmjs.com/package/sucrase">
+        <span className={css(styles.footer)}>
+          <a className={css(styles.link)} href="https://www.npmjs.com/package/sucrase">
             sucrase
           </a>{" "}
           {getVersion()}
@@ -263,4 +263,41 @@ class App extends Component<{}, State> {
   }
 }
 
-export default App;
+const styles = StyleSheet.create({
+  app: {
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    backgroundColor: "#222",
+  },
+  title: {
+    fontSize: "2em",
+    color: "white",
+    fontWeight: "bold",
+    padding: 8,
+  },
+  subtitle: {
+    fontSize: "1.2em",
+    color: "white",
+  },
+  link: {
+    color: "#CCCCCC",
+  },
+  options: {
+    textAlign: "center",
+    color: "white",
+  },
+  footer: {
+    fontSize: "large",
+    color: "white",
+    marginBottom: 8,
+  },
+  editors: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+  },
+});

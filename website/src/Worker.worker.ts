@@ -18,6 +18,7 @@ Babel.registerPlugin(
   require("@babel/plugin-proposal-numeric-separator"),
 );
 Babel.registerPlugin("dynamic-import-node", require("babel-plugin-dynamic-import-node"));
+Babel.registerPlugin("react-hot-loader", require("react-hot-loader/babel"));
 
 // SET_CONFIG must be the first message before anything else is called.
 let config: WorkerConfig;

@@ -322,10 +322,10 @@ describe("transform flow", () => {
         #prop2: number = value;
       }
     `,
-      `"use strict";const __init = Symbol();
-      class A {constructor() { this[__init](); }
+      `"use strict";
+      class A {constructor() { A.prototype.__init.call(this); }
         
-        [__init]() {this.prop2 = value}
+        __init() {this.prop2 = value}
       }
     `,
     );

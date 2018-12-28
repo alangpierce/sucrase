@@ -83,7 +83,6 @@ export default class RootTransformer {
       prefix += transformer.getPrefixCode();
     }
     prefix += this.generatedVariables.map((v) => ` var ${v};`).join("");
-    prefix += this.nameManager.getInjectedSymbolCode();
     let suffix = "";
     for (const transformer of this.transformers) {
       suffix += transformer.getSuffixCode();
@@ -154,8 +153,11 @@ export default class RootTransformer {
   processClass(): void {
     const classInfo = getClassInfo(this, this.tokens, this.nameManager);
 
+    // Both static and instance initializers need a class name to use to invoke the initializer, so
+    // assign to one if necessary.
     const needsCommaExpression =
-      classInfo.headerInfo.isExpression && classInfo.staticInitializerSuffixes.length > 0;
+      classInfo.headerInfo.isExpression &&
+      classInfo.staticInitializerNames.length + classInfo.instanceInitializerNames.length > 0;
 
     let className = classInfo.headerInfo.className;
     if (needsCommaExpression) {
@@ -174,15 +176,17 @@ export default class RootTransformer {
       this.processToken();
     }
 
-    this.processClassBody(classInfo);
+    this.processClassBody(classInfo, className);
 
-    const staticInitializerStatements = classInfo.staticInitializerSuffixes.map(
-      (suffix) => `${className}${suffix}`,
+    const staticInitializerStatements = classInfo.staticInitializerNames.map(
+      (name) => `${className}.${name}()`,
     );
     if (needsCommaExpression) {
-      this.tokens.appendCode(`, ${staticInitializerStatements.join(", ")}, ${className})`);
-    } else if (classInfo.staticInitializerSuffixes.length > 0) {
-      this.tokens.appendCode(` ${staticInitializerStatements.join("; ")};`);
+      this.tokens.appendCode(
+        `, ${staticInitializerStatements.map((s) => `${s}, `).join("")}${className})`,
+      );
+    } else if (classInfo.staticInitializerNames.length > 0) {
+      this.tokens.appendCode(` ${staticInitializerStatements.map((s) => `${s};`).join(" ")}`);
     }
   }
 
@@ -190,12 +194,13 @@ export default class RootTransformer {
    * We want to just handle class fields in all contexts, since TypeScript supports them. Later,
    * when some JS implementations support class fields, this should be made optional.
    */
-  processClassBody(classInfo: ClassInfo): void {
+  processClassBody(classInfo: ClassInfo, className: string | null): void {
     const {
       headerInfo,
       constructorInsertPos,
-      initializerStatements,
+      constructorInitializerStatements,
       fields,
+      instanceInitializerNames,
       rangesToRemove,
     } = classInfo;
     let fieldIndex = 0;
@@ -206,15 +211,22 @@ export default class RootTransformer {
     }
     this.tokens.copyExpectedToken(tt.braceL);
 
-    if (constructorInsertPos === null && initializerStatements.length > 0) {
-      const initializersCode = initializerStatements.join(";");
+    const needsConstructorInit =
+      constructorInitializerStatements.length + instanceInitializerNames.length > 0;
+
+    if (constructorInsertPos === null && needsConstructorInit) {
+      const constructorInitializersCode = this.makeConstructorInitCode(
+        constructorInitializerStatements,
+        instanceInitializerNames,
+        className!,
+      );
       if (headerInfo.hasSuperclass) {
         const argsName = this.nameManager.claimFreeName("args");
         this.tokens.appendCode(
-          `constructor(...${argsName}) { super(...${argsName}); ${initializersCode}; }`,
+          `constructor(...${argsName}) { super(...${argsName}); ${constructorInitializersCode}; }`,
         );
       } else {
-        this.tokens.appendCode(`constructor() { ${initializersCode}; }`);
+        this.tokens.appendCode(`constructor() { ${constructorInitializersCode}; }`);
       }
     }
 
@@ -222,12 +234,12 @@ export default class RootTransformer {
       if (fieldIndex < fields.length && this.tokens.currentIndex() === fields[fieldIndex].start) {
         let needsCloseBrace = false;
         if (this.tokens.matches1(tt.bracketL)) {
-          this.tokens.copyTokenWithPrefix(`[${fields[fieldIndex].initializerName}]() {this`);
+          this.tokens.copyTokenWithPrefix(`${fields[fieldIndex].initializerName}() {this`);
         } else if (this.tokens.matches1(tt.string) || this.tokens.matches1(tt.num)) {
-          this.tokens.copyTokenWithPrefix(`[${fields[fieldIndex].initializerName}]() {this[`);
+          this.tokens.copyTokenWithPrefix(`${fields[fieldIndex].initializerName}() {this[`);
           needsCloseBrace = true;
         } else {
-          this.tokens.copyTokenWithPrefix(`[${fields[fieldIndex].initializerName}]() {this.`);
+          this.tokens.copyTokenWithPrefix(`${fields[fieldIndex].initializerName}() {this.`);
         }
         while (this.tokens.currentIndex() < fields[fieldIndex].end) {
           if (needsCloseBrace && this.tokens.currentIndex() === fields[fieldIndex].equalsIndex) {
@@ -248,8 +260,14 @@ export default class RootTransformer {
         rangeToRemoveIndex++;
       } else if (this.tokens.currentIndex() === constructorInsertPos) {
         this.tokens.copyToken();
-        if (initializerStatements.length > 0) {
-          this.tokens.appendCode(`;${initializerStatements.join(";")};`);
+        if (needsConstructorInit) {
+          this.tokens.appendCode(
+            `;${this.makeConstructorInitCode(
+              constructorInitializerStatements,
+              instanceInitializerNames,
+              className!,
+            )};`,
+          );
         }
         this.processToken();
       } else {
@@ -257,6 +275,17 @@ export default class RootTransformer {
       }
     }
     this.tokens.copyExpectedToken(tt.braceR);
+  }
+
+  makeConstructorInitCode(
+    constructorInitializerStatements: Array<string>,
+    instanceInitializerNames: Array<string>,
+    className: string,
+  ): string {
+    return [
+      ...constructorInitializerStatements,
+      ...instanceInitializerNames.map((name) => `${className}.prototype.${name}.call(this)`),
+    ].join(";");
   }
 
   processPossibleTypeRange(): boolean {

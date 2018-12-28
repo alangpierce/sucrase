@@ -72,10 +72,10 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";const __init = Symbol();
+      `"use strict";
       class A {
-        [__init]() {this.x = 1}
-        constructor() {;this[__init]();
+        __init() {this.x = 1}
+        constructor() {;A.prototype.__init.call(this);
           this.y = 2;
         }
       }
@@ -93,11 +93,11 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";const __init = Symbol();
+      `"use strict";
       class A extends B {
-        [__init]() {this.x = 1}
+        __init() {this.x = 1}
         constructor(a) {
-          super(a);this[__init]();;
+          super(a);A.prototype.__init.call(this);;
         }
       }
     `,
@@ -115,11 +115,11 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";const __init = Symbol();
+      `"use strict";
       class A extends B {
-        [__init]() {this.x = 1}
+        __init() {this.x = 1}
         constructor(a) {
-          super(a);this[__init]();;
+          super(a);A.prototype.__init.call(this);;
           super(b);
         }
       }
@@ -138,11 +138,11 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";const __init = Symbol();
+      `"use strict";
       class A extends B {
-        [__init]() {this.x = 1}
+        __init() {this.x = 1}
         constructor(a) {
-          super(a);this[__init]();;
+          super(a);A.prototype.__init.call(this);;
           super.b();
         }
       }
@@ -161,12 +161,12 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";const __init = Symbol();
+      `"use strict";
       class A extends B {
-        [__init]() {this.x = 1}
+        __init() {this.x = 1}
         constructor(a) {
           super.b();
-          super(a);this[__init]();;
+          super(a);A.prototype.__init.call(this);;
         }
       }
     `,
@@ -185,11 +185,11 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";const __init = Symbol();
+      `"use strict";
       class A extends B {
-        [__init]() {this.x = 1}
+        __init() {this.x = 1}
         constructor(a) {
-          super();this[__init]();;
+          super();A.prototype.__init.call(this);;
           super.a;
           super.b = 1;
         }
@@ -210,13 +210,13 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";const __init = Symbol();
+      `"use strict";
       class A extends B {
-        [__init]() {this.x = 1}
+        __init() {this.x = 1}
         constructor(a) {
           super.a;
           super.b = 1;
-          super();this[__init]();;
+          super();A.prototype.__init.call(this);;
         }
       }
     `,
@@ -230,9 +230,9 @@ describe("typescript transform", () => {
         x = 1;
       }
     `,
-      `"use strict";const __init = Symbol();
-      class A {constructor() { this[__init](); }
-        [__init]() {this.x = 1}
+      `"use strict";
+      class A {constructor() { A.prototype.__init.call(this); }
+        __init() {this.x = 1}
       }
     `,
     );
@@ -245,9 +245,9 @@ describe("typescript transform", () => {
         x = 1;
       }
     `,
-      `"use strict";const __init = Symbol();
-      class A extends B {constructor(...args) { super(...args); this[__init](); }
-        [__init]() {this.x = 1}
+      `"use strict";
+      class A extends B {constructor(...args) { super(...args); A.prototype.__init.call(this); }
+        __init() {this.x = 1}
       }
     `,
     );
@@ -260,9 +260,9 @@ describe("typescript transform", () => {
         args = 1;
       }
     `,
-      `"use strict";const __init = Symbol();
-      class A extends B {constructor(...args2) { super(...args2); this[__init](); }
-        [__init]() {this.args = 1}
+      `"use strict";
+      class A extends B {constructor(...args2) { super(...args2); A.prototype.__init.call(this); }
+        __init() {this.args = 1}
       }
     `,
     );
@@ -424,10 +424,10 @@ describe("typescript transform", () => {
         f: any = function() {};
       }
     `,
-      `"use strict";const __init = Symbol();
-      class A {constructor() { this[__init](); }
+      `"use strict";
+      class A {constructor() { A.prototype.__init.call(this); }
         
-        [__init]() {this.f = function() {}}
+        __init() {this.f = function() {}}
       }
     `,
     );
@@ -479,11 +479,11 @@ describe("typescript transform", () => {
         "Hello, world" = 2;
       }
     `,
-      `"use strict";const __init = Symbol();const __init2 = Symbol();const __init3 = Symbol();
-      class A {constructor() { this[__init]();this[__init2]();this[__init3](); }
-        [__init]() {this[a + b] = 3}
-        [__init2]() {this[0] = 1}
-        [__init3]() {this["Hello, world"] = 2}
+      `"use strict";
+      class A {constructor() { A.prototype.__init.call(this);A.prototype.__init2.call(this);A.prototype.__init3.call(this); }
+        __init() {this[a + b] = 3}
+        __init2() {this[0] = 1}
+        __init3() {this["Hello, world"] = 2}
       }
     `,
     );
@@ -845,10 +845,10 @@ describe("typescript transform", () => {
         }
       }
     `,
-      `"use strict";const __init = Symbol();
+      `"use strict";
       class A {
-        [__init]() {this.x = 1}
-         constructor() {;this[__init]();
+        __init() {this.x = 1}
+         constructor() {;A.prototype.__init.call(this);
         }
       }
     `,
@@ -1115,9 +1115,9 @@ describe("typescript transform", () => {
         n?: number = 3;
       }
     `,
-      `"use strict";const __init = Symbol();
-      class A {constructor() { this[__init](); }
-        [__init]() {this.n = 3}
+      `"use strict";
+      class A {constructor() { A.prototype.__init.call(this); }
+        __init() {this.n = 3}
       }
     `,
     );
@@ -1150,12 +1150,12 @@ describe("typescript transform", () => {
           x = 1;
       }
     `,
-      `"use strict";${ESMODULE_PREFIX}const __init = Symbol();
-       class Foo {constructor() { this[__init](); }
+      `"use strict";${ESMODULE_PREFIX}
+       class Foo {constructor() { Foo.prototype.__init.call(this); }
           f() {
           }
           
-          [__init]() {this.x = 1}
+          __init() {this.x = 1}
       } exports.Foo = Foo;
     `,
     );

@@ -29,10 +29,11 @@ export interface ClassInfo {
   headerInfo: ClassHeaderInfo;
   // Array of non-semicolon-delimited code strings to go in the constructor, after super if
   // necessary.
-  initializerStatements: Array<string>;
+  constructorInitializerStatements: Array<string>;
+  instanceInitializerNames: Array<string>;
   // Array of static initializer statements, with the class name omitted. For example, if we need to
   // run `C.x = 3;`, an element of this array will be `.x = 3`.
-  staticInitializerSuffixes: Array<string>;
+  staticInitializerNames: Array<string>;
   // Token index after which we should insert initializer statements (either the start of the
   // constructor, or after the super call), or null if there was no constructor.
   constructorInsertPos: number | null;
@@ -53,9 +54,9 @@ export default function getClassInfo(
 
   const headerInfo = processClassHeader(tokens);
 
-  let constructorInitializers: Array<string> = [];
-  const classInitializers: Array<string> = [];
-  const staticInitializerSuffixes: Array<string> = [];
+  let constructorInitializerStatements: Array<string> = [];
+  const instanceInitializerNames: Array<string> = [];
+  const staticInitializerNames: Array<string> = [];
   let constructorInsertPos = null;
   const fields: Array<FieldInfo> = [];
   const rangesToRemove: Array<TokenRange> = [];
@@ -68,7 +69,7 @@ export default function getClassInfo(
   tokens.nextToken();
   while (!tokens.matchesContextIdAndLabel(tt.braceR, classContextId)) {
     if (tokens.matchesContextual(ContextualKeyword._constructor) && !tokens.currentToken().isType) {
-      ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
+      ({constructorInitializerStatements, constructorInsertPos} = processConstructor(tokens));
     } else if (tokens.matches1(tt.semi)) {
       rangesToRemove.push({start: tokens.currentIndex(), end: tokens.currentIndex() + 1});
       tokens.nextToken();
@@ -88,7 +89,7 @@ export default function getClassInfo(
         tokens.matchesContextual(ContextualKeyword._constructor) &&
         !tokens.currentToken().isType
       ) {
-        ({constructorInitializers, constructorInsertPos} = processConstructor(tokens));
+        ({constructorInitializerStatements, constructorInsertPos} = processConstructor(tokens));
         continue;
       }
       const nameStartIndex = tokens.currentIndex();
@@ -122,11 +123,11 @@ export default function getClassInfo(
         }
         let initializerName;
         if (isStatic) {
-          initializerName = nameManager.claimSymbol("__initStatic");
-          staticInitializerSuffixes.push(`[${initializerName}]()`);
+          initializerName = nameManager.claimFreeName("__initStatic");
+          staticInitializerNames.push(initializerName);
         } else {
-          initializerName = nameManager.claimSymbol("__init");
-          classInitializers.push(`this[${initializerName}]()`);
+          initializerName = nameManager.claimFreeName("__init");
+          instanceInitializerNames.push(initializerName);
         }
         // Fields start at the name, so `static x = 1;` has a field range of `x = 1;`.
         fields.push({
@@ -145,8 +146,9 @@ export default function getClassInfo(
   tokens.restoreToSnapshot(snapshot);
   return {
     headerInfo,
-    initializerStatements: [...constructorInitializers, ...classInitializers],
-    staticInitializerSuffixes,
+    constructorInitializerStatements,
+    instanceInitializerNames,
+    staticInitializerNames,
     constructorInsertPos,
     fields,
     rangesToRemove,
@@ -183,8 +185,8 @@ function processClassHeader(tokens: TokenProcessor): ClassHeaderInfo {
  */
 function processConstructor(
   tokens: TokenProcessor,
-): {constructorInitializers: Array<string>; constructorInsertPos: number} {
-  const constructorInitializers = [];
+): {constructorInitializerStatements: Array<string>; constructorInsertPos: number} {
+  const constructorInitializerStatements = [];
 
   tokens.nextToken();
   const constructorContextId = tokens.currentToken().contextId;
@@ -204,7 +206,7 @@ function processConstructor(
         throw new Error("Expected identifier after access modifiers in constructor arg.");
       }
       const name = tokens.identifierNameForToken(token);
-      constructorInitializers.push(`this.${name} = ${name}`);
+      constructorInitializerStatements.push(`this.${name} = ${name}`);
     }
     tokens.nextToken();
   }
@@ -232,7 +234,7 @@ function processConstructor(
   // }
   tokens.nextToken();
 
-  return {constructorInitializers, constructorInsertPos};
+  return {constructorInitializerStatements, constructorInsertPos};
 }
 
 /**

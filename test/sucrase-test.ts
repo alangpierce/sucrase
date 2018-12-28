@@ -282,10 +282,10 @@ describe("sucrase", () => {
         static x = 3;
       }
     `,
-      `"use strict";const __initStatic = Symbol();
+      `"use strict";
       class A {
-        static [__initStatic]() {this.x = 3}
-      } A[__initStatic]();
+        static __initStatic() {this.x = 3}
+      } A.__initStatic();
     `,
       {transforms: ["jsx", "imports", "typescript"]},
     );
@@ -298,10 +298,26 @@ describe("sucrase", () => {
         static x = 3;
       }
     `,
-      `"use strict"; var _class;const __initStatic = Symbol();
+      `"use strict"; var _class;
       const A = (_class = class {
-        static [__initStatic]() {this.x = 3}
-      }, _class[__initStatic](), _class)
+        static __initStatic() {this.x = 3}
+      }, _class.__initStatic(), _class)
+    `,
+      {transforms: ["jsx", "imports", "typescript"]},
+    );
+  });
+
+  it("properly converts instance fields in expression classes", () => {
+    assertResult(
+      `
+      const A = class {
+        x = 3;
+      }
+    `,
+      `"use strict"; var _class;
+      const A = (_class = class {constructor() { _class.prototype.__init.call(this); }
+        __init() {this.x = 3}
+      }, _class)
     `,
       {transforms: ["jsx", "imports", "typescript"]},
     );
@@ -314,10 +330,10 @@ describe("sucrase", () => {
         static x = 3;
       }
     `,
-      `"use strict";${ESMODULE_PREFIX}const __initStatic = Symbol();
+      `"use strict";${ESMODULE_PREFIX}
        class C {
-        static [__initStatic]() {this.x = 3}
-      } C[__initStatic](); exports.default = C;
+        static __initStatic() {this.x = 3}
+      } C.__initStatic(); exports.default = C;
     `,
       {transforms: ["jsx", "imports", "typescript"]},
     );
@@ -333,13 +349,13 @@ describe("sucrase", () => {
         static b = B;
       }
     `,
-      `"use strict";${IMPORT_DEFAULT_PREFIX}const __init = Symbol();const __initStatic = Symbol();
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
       var _A = require('A'); var _A2 = _interopRequireDefault(_A);
       var _B = require('B'); var _B2 = _interopRequireDefault(_B);
-      class C {constructor() { this[__init](); }
-        [__init]() {this.a = _A2.default}
-        static [__initStatic]() {this.b = _B2.default}
-      } C[__initStatic]();
+      class C {constructor() { C.prototype.__init.call(this); }
+        __init() {this.a = _A2.default}
+        static __initStatic() {this.b = _B2.default}
+      } C.__initStatic();
     `,
       {transforms: ["jsx", "imports", "typescript"]},
     );
@@ -516,13 +532,13 @@ describe("sucrase", () => {
         }
       }
     `,
-      `"use strict";const __initStatic = Symbol();
+      `"use strict";
       class A {
-        static [__initStatic]() {this.b = {}}
+        static __initStatic() {this.b = {}}
         c () {
           const d = 1;
         }
-      } A[__initStatic]();
+      } A.__initStatic();
     `,
       {transforms: ["imports"]},
     );
@@ -539,11 +555,11 @@ describe("sucrase", () => {
       
       export default function() {}
     `,
-      `"use strict";${ESMODULE_PREFIX}const __init = Symbol();const __init2 = Symbol();const __init3 = Symbol();
-       class Observer {constructor() { this[__init]();this[__init2]();this[__init3](); }
-        [__init]() {this.update = (v) => {}}
-        [__init2]() {this.complete = () => {}}
-        [__init3]() {this.error = (err) => {}}
+      `"use strict";${ESMODULE_PREFIX}
+       class Observer {constructor() { Observer.prototype.__init.call(this);Observer.prototype.__init2.call(this);Observer.prototype.__init3.call(this); }
+        __init() {this.update = (v) => {}}
+        __init2() {this.complete = () => {}}
+        __init3() {this.error = (err) => {}}
       } exports.Observer = Observer;
       
       exports. default = function() {}
@@ -593,12 +609,12 @@ describe("sucrase", () => {
         static "test" = "value";
       }
     `,
-      `"use strict";const __initStatic = Symbol();const __initStatic2 = Symbol();const __initStatic3 = Symbol();
+      `"use strict";
       class C {
-        static [__initStatic]() {this[f] = 3}
-        static [__initStatic2]() {this[5] = 'Hello'}
-        static [__initStatic3]() {this["test"] = "value"}
-      } C[__initStatic](); C[__initStatic2](); C[__initStatic3]();
+        static __initStatic() {this[f] = 3}
+        static __initStatic2() {this[5] = 'Hello'}
+        static __initStatic3() {this["test"] = "value"}
+      } C.__initStatic(); C.__initStatic2(); C.__initStatic3();
     `,
       {transforms: ["imports", "typescript"]},
     );
@@ -616,11 +632,11 @@ describe("sucrase", () => {
         }
       }
     `,
-      `"use strict";const __init = Symbol();
-      class C {constructor() { this[__init](); }
+      `"use strict";
+      class C {constructor() { C.prototype.__init.call(this); }
         f() {
         }
-        [__init]() {this.g = () => {
+        __init() {this.g = () => {
           console.log(1);
           console.log(2);
         }}

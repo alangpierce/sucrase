@@ -2,6 +2,7 @@
 node_modules
 dist
 dist-self-build
+dist-types
 example-runner/example-repos
 integrations/gulp-plugin/dist
 .nyc_output

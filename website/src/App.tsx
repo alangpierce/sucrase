@@ -1,5 +1,6 @@
 import {css, StyleSheet} from "aphrodite";
 import React, {Component} from "react";
+import {hot} from "react-hot-loader";
 import {getVersion} from "sucrase";
 
 import {
@@ -31,7 +32,7 @@ interface State {
   showMore: boolean;
 }
 
-export default class App extends Component<{}, State> {
+class App extends Component<{}, State> {
   editors: {[editorName: string]: Editor | null};
 
   constructor(props: {}) {
@@ -262,6 +263,8 @@ export default class App extends Component<{}, State> {
     );
   }
 }
+
+export default hot(module)(App);
 
 const styles = StyleSheet.create({
   app: {

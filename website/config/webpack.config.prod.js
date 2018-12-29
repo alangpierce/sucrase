@@ -97,6 +97,7 @@ module.exports = {
             loader: require.resolve("@sucrase/webpack-loader"),
             options: {
               transforms: ["jsx", "typescript"],
+              production: true,
             },
           },
           // We don't use CSS, but Monaco requires CSS loaders to be configured.

@@ -1,5 +1,6 @@
 #!./node_modules/.bin/sucrase-node
 /* eslint-disable no-console */
+import mergeDirectoryContents from "./mergeDirectoryContents";
 import run from "./run";
 
 const SUCRASE = "./node_modules/.bin/sucrase";
@@ -34,6 +35,7 @@ async function buildSucrase(): Promise<void> {
   await run(`${SUCRASE} ./src -d ./dist --transforms imports,typescript -q`);
   if (!fast) {
     await run(`rm -rf ./dist-self-build`);
+    await run(`rm -rf ./dist-types`);
     // The installed Sucrase version is always the previous version, but released versions of
     // Sucrase should be self-compiled, so we do a multi-phase compilation. We compile Sucrase with
     // the previous version, then use it to compile the current code, then use that to compile the
@@ -51,7 +53,8 @@ async function buildSucrase(): Promise<void> {
     );
     await run("diff -r ./dist ./dist-self-build");
     // Also add in .d.ts files from tsc, which only need to be compiled once.
-    await run(`${TSC} --emitDeclarationOnly --project ./src --outDir ./dist`);
+    await run(`${TSC} --emitDeclarationOnly --project ./src --outDir ./dist-types`);
+    await mergeDirectoryContents("./dist-types/src", "./dist");
     // Link all integrations to Sucrase so that all building/linting/testing is up to date.
     await run("yarn link");
   }

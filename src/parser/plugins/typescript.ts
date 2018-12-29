@@ -145,7 +145,24 @@ function tsParseThisTypeNode(): void {
 
 function tsParseTypeQuery(): void {
   expect(tt._typeof);
-  tsParseEntityName();
+  if (match(tt._import)) {
+    tsParseImportType();
+  } else {
+    tsParseEntityName();
+  }
+}
+
+function tsParseImportType(): void {
+  expect(tt._import);
+  expect(tt.parenL);
+  expect(tt.string);
+  expect(tt.parenR);
+  if (eat(tt.dot)) {
+    tsParseEntityName();
+  }
+  if (match(tt.lessThan)) {
+    tsParseTypeArguments();
+  }
 }
 
 function tsParseTypeParameter(): void {
@@ -410,6 +427,9 @@ function tsParseNonArrayType(): void {
     }
     case tt._typeof:
       tsParseTypeQuery();
+      return;
+    case tt._import:
+      tsParseImportType();
       return;
     case tt.braceL:
       if (tsLookaheadIsStartOfMappedType()) {

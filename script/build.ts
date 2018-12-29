@@ -87,6 +87,7 @@ async function buildWebsite(): Promise<void> {
     const originalDir = process.cwd();
     process.chdir("./website");
     await run("yarn");
+    await run("yarn link sucrase");
     process.chdir(originalDir);
   }
 }

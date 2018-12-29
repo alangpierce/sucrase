@@ -1,5 +1,7 @@
 #!./node_modules/.bin/sucrase-node
 /* eslint-disable no-console */
+import {exists} from "mz/fs";
+
 import run from "./run";
 
 const TSC = "./node_modules/.bin/tsc";
@@ -7,6 +9,11 @@ const TSLINT = "./node_modules/.bin/tslint";
 const ESLINT = "./node_modules/.bin/eslint";
 
 async function main(): Promise<void> {
+  // Linting sub-projects requires the latest Sucrase types, so require a build first.
+  if (!(await exists("./dist"))) {
+    console.log("Must run build before lint, running build...");
+    await run("yarn build");
+  }
   await Promise.all([
     checkSucrase(),
     checkProject("./integrations/gulp-plugin"),

@@ -10,6 +10,7 @@ import JSXTransformer from "./JSXTransformer";
 import NumericSeparatorTransformer from "./NumericSeparatorTransformer";
 import OptionalCatchBindingTransformer from "./OptionalCatchBindingTransformer";
 import ReactDisplayNameTransformer from "./ReactDisplayNameTransformer";
+import ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
 import Transformer from "./Transformer";
 import TypeScriptTransformer from "./TypeScriptTransformer";
 
@@ -19,6 +20,7 @@ export default class RootTransformer {
   private tokens: TokenProcessor;
   private generatedVariables: Array<string> = [];
   private isImportsTransformEnabled: boolean;
+  private isReactHotLoaderTransformEnabled: boolean;
 
   constructor(
     sucraseContext: SucraseContext,
@@ -30,6 +32,7 @@ export default class RootTransformer {
     const {tokenProcessor, importProcessor} = sucraseContext;
     this.tokens = tokenProcessor;
     this.isImportsTransformEnabled = transforms.includes("imports");
+    this.isReactHotLoaderTransformEnabled = transforms.includes("react-hot-loader");
 
     this.transformers.push(new NumericSeparatorTransformer(tokenProcessor));
     this.transformers.push(new OptionalCatchBindingTransformer(tokenProcessor, this.nameManager));
@@ -40,6 +43,15 @@ export default class RootTransformer {
       this.transformers.push(
         new ReactDisplayNameTransformer(this, tokenProcessor, importProcessor, options),
       );
+    }
+
+    let reactHotLoaderTransformer = null;
+    if (transforms.includes("react-hot-loader")) {
+      if (!options.filePath) {
+        throw new Error("filePath is required when using the react-hot-loader transform.");
+      }
+      reactHotLoaderTransformer = new ReactHotLoaderTransformer(tokenProcessor, options.filePath);
+      this.transformers.push(reactHotLoaderTransformer);
     }
 
     // Note that we always want to enable the imports transformer, even when the import transform
@@ -54,12 +66,19 @@ export default class RootTransformer {
           this,
           tokenProcessor,
           importProcessor,
+          this.nameManager,
+          reactHotLoaderTransformer,
           enableLegacyBabel5ModuleInterop,
         ),
       );
     } else {
       this.transformers.push(
-        new ESMImportTransformer(tokenProcessor, transforms.includes("typescript")),
+        new ESMImportTransformer(
+          tokenProcessor,
+          this.nameManager,
+          reactHotLoaderTransformer,
+          transforms.includes("typescript"),
+        ),
       );
     }
 
@@ -210,6 +229,11 @@ export default class RootTransformer {
       throw new Error("Expected non-null context ID on class.");
     }
     this.tokens.copyExpectedToken(tt.braceL);
+    if (this.isReactHotLoaderTransformEnabled) {
+      this.tokens.appendCode(
+        "__reactstandin__regenerateByEval(key, code) {this[key] = eval(code);}",
+      );
+    }
 
     const needsConstructorInit =
       constructorInitializerStatements.length + instanceInitializerNames.length > 0;

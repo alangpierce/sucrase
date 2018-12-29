@@ -1,7 +1,9 @@
+import NameManager from "../NameManager";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import {getNonTypeIdentifiers} from "../util/getNonTypeIdentifiers";
+import ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
 import Transformer from "./Transformer";
 
 /**
@@ -11,7 +13,12 @@ import Transformer from "./Transformer";
 export default class ESMImportTransformer extends Transformer {
   private nonTypeIdentifiers: Set<string>;
 
-  constructor(readonly tokens: TokenProcessor, readonly isTypeScriptTransformEnabled: boolean) {
+  constructor(
+    readonly tokens: TokenProcessor,
+    readonly nameManager: NameManager,
+    readonly reactHotLoaderTransformer: ReactHotLoaderTransformer | null,
+    readonly isTypeScriptTransformEnabled: boolean,
+  ) {
     super();
     this.nonTypeIdentifiers = isTypeScriptTransformEnabled
       ? getNonTypeIdentifiers(tokens)
@@ -30,6 +37,9 @@ export default class ESMImportTransformer extends Transformer {
     }
     if (this.tokens.matches1(tt._import)) {
       return this.processImport();
+    }
+    if (this.tokens.matches2(tt._export, tt._default)) {
+      return this.processExportDefault();
     }
     return false;
   }
@@ -181,5 +191,26 @@ export default class ESMImportTransformer extends Transformer {
 
   private isTypeName(name: string): boolean {
     return this.isTypeScriptTransformEnabled && !this.nonTypeIdentifiers.has(name);
+  }
+
+  private processExportDefault(): boolean {
+    const alreadyHasName =
+      this.tokens.matches4(tt._export, tt._default, tt._function, tt.name) ||
+      // export default async function
+      this.tokens.matches5(tt._export, tt._default, tt.name, tt._function, tt.name) ||
+      this.tokens.matches4(tt._export, tt._default, tt._class, tt.name) ||
+      this.tokens.matches5(tt._export, tt._default, tt._abstract, tt._class, tt.name);
+
+    if (!alreadyHasName && this.reactHotLoaderTransformer) {
+      // This is a plain "export default E" statement and we need to assign E to a variable.
+      // Change "export default E" to "let _default; export default _default = E"
+      const defaultVarName = this.nameManager.claimFreeName("_default");
+      this.tokens.replaceToken(`let ${defaultVarName}; export`);
+      this.tokens.copyToken();
+      this.tokens.appendCode(` ${defaultVarName} =`);
+      this.reactHotLoaderTransformer.setExtractedDefaultExportName(defaultVarName);
+      return true;
+    }
+    return false;
   }
 }

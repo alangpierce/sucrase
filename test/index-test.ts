@@ -4,7 +4,7 @@ import {getFormattedTokens} from "../src";
 
 describe("getFormattedTokens", () => {
   it("formats a simple program", () => {
-    assert.equal(
+    assert.strictEqual(
       getFormattedTokens(
         `\
 if (foo) {

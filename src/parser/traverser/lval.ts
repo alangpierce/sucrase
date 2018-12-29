@@ -34,6 +34,9 @@ export function parseBindingIdentifier(isBlockScope: boolean): void {
 }
 
 export function markPriorBindingIdentifier(isBlockScope: boolean): void {
+  if (state.isType) {
+    return;
+  }
   if (state.scopeDepth === 0) {
     state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.TopLevelDeclaration;
   } else {

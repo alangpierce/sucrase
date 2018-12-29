@@ -7,3 +7,6 @@ if (obj != null) { for (var key in obj) { \
 if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } \
 newObj.default = obj; return newObj; } }`;
 export const ESMODULE_PREFIX = 'Object.defineProperty(exports, "__esModule", {value: true});';
+export const RHL_PREFIX = `(function () { \
+var enterModule = require('react-hot-loader').enterModule; enterModule && enterModule(module); \
+})();`;

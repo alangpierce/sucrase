@@ -53,8 +53,12 @@ are four main transforms that you may want to enable:
   `const enum`s that need cross-file compilation.
 * **flow**:  Removes Flow type annotations. Does not check types.
 * **imports**: Transforms ES Modules (`import`/`export`) to CommonJS
-  (`require`/`module.exports`) using the same approach as Babel 6 and TypeScript
+  (`require`/`module.exports`) using the same approach as Babel and TypeScript
   with `--esModuleInterop`. Also includes dynamic `import`.
+* **react-hot-loader**: Performs the equivalent of the `react-hot-loader/babel`
+  transform in the [react-hot-loader](https://github.com/gaearon/react-hot-loader)
+  project. This enables advanced hot reloading use cases such as editing of
+  bound methods.
 
 The following proposed JS features are built-in and always transformed:
 * [Class fields](https://github.com/tc39/proposal-class-fields): `class C { x = 1; }`.

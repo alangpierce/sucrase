@@ -7,7 +7,7 @@ export function assertResult(
   expectedResult: string,
   options: Options = {transforms: ["jsx", "imports"]},
 ): void {
-  assert.equal(transform(code, options).code, expectedResult);
+  assert.strictEqual(transform(code, options).code, expectedResult);
 }
 
 export function devProps(lineNumber: number): string {

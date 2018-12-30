@@ -1,7 +1,6 @@
 import {css, StyleSheet} from "aphrodite";
 import React, {Component} from "react";
 import {hot} from "react-hot-loader";
-import {getVersion} from "sucrase";
 
 import {
   DEFAULT_COMPARE_WITH_BABEL,
@@ -11,7 +10,7 @@ import {
   INITIAL_CODE,
   TRANSFORMS,
 } from "./Constants";
-import Editor from "./Editor";
+import EditorWrapper from "./EditorWrapper";
 import OptionBox from "./OptionBox";
 import {loadHashState, saveHashState} from "./URLHashState";
 import * as WorkerClient from "./WorkerClient";
@@ -33,8 +32,6 @@ interface State {
 }
 
 class App extends Component<{}, State> {
-  editors: {[editorName: string]: Editor | null};
-
   constructor(props: {}) {
     super(props);
     this.state = {
@@ -67,8 +64,6 @@ class App extends Component<{}, State> {
     ) {
       this.state = {...this.state, showMore: true};
     }
-
-    this.editors = {};
   }
 
   componentDidMount(): void {
@@ -209,22 +204,19 @@ class App extends Component<{}, State> {
         </div>
 
         <div className={css(styles.editors)}>
-          <Editor
-            ref={(e) => (this.editors["input"] = e)}
+          <EditorWrapper
             label="Your code"
             code={this.state.code}
             onChange={this._handleCodeChange}
           />
-          <Editor
-            ref={(e) => (this.editors["sucrase"] = e)}
+          <EditorWrapper
             label="Transformed with Sucrase"
             code={sucraseCode}
             timeMs={sucraseTimeMs}
             isReadOnly={true}
           />
           {this.state.compareWithBabel && (
-            <Editor
-              ref={(e) => (this.editors["babel"] = e)}
+            <EditorWrapper
               label="Transformed with Babel"
               code={babelCode}
               timeMs={babelTimeMs}
@@ -232,8 +224,7 @@ class App extends Component<{}, State> {
             />
           )}
           {this.state.compareWithTypeScript && (
-            <Editor
-              ref={(e) => (this.editors["typescript"] = e)}
+            <EditorWrapper
               label="Transformed with TypeScript"
               code={typeScriptCode}
               timeMs={typeScriptTimeMs}
@@ -241,8 +232,7 @@ class App extends Component<{}, State> {
             />
           )}
           {this.state.showTokens && (
-            <Editor
-              ref={(e) => (this.editors["tokens"] = e)}
+            <EditorWrapper
               label="Tokens"
               code={tokensStr}
               isReadOnly={true}
@@ -257,7 +247,7 @@ class App extends Component<{}, State> {
           <a className={css(styles.link)} href="https://www.npmjs.com/package/sucrase">
             sucrase
           </a>{" "}
-          {getVersion()}
+          {process.env.SUCRASE_VERSION}
         </span>
       </div>
     );

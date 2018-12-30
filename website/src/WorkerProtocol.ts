@@ -9,6 +9,11 @@ export type Message =
   | {type: "PROFILE_BABEL"}
   | {type: "PROFILE_TYPESCRIPT"};
 
+export type WorkerMessage =
+  | {type: "RESPONSE"; response: unknown}
+  | {type: "BABEL_LOADED"}
+  | {type: "TYPESCRIPT_LOADED"};
+
 export interface WorkerConfig {
   compareWithBabel: boolean;
   compareWithTypeScript: boolean;

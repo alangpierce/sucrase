@@ -43,7 +43,7 @@
     "webpack": "^4.28.2",
     "webpack-dev-server": "2.8.2",
     "webpack-manifest-plugin": "^2.0.4",
-    "worker-loader": "^2.0.0"
+    "worker-plugin": "^3.0.0"
   },
   "scripts": {
     "start": "node scripts/start.js",

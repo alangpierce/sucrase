@@ -14,6 +14,7 @@ interface EditorWrapperProps {
   isReadOnly?: boolean;
   isPlaintext?: boolean;
   options?: editor.IEditorConstructionOptions;
+  babelLoaded: boolean;
 }
 
 interface State {
@@ -27,8 +28,10 @@ export default class EditorWrapper extends Component<EditorWrapperProps, State> 
 
   editor: Editor | null = null;
 
-  async componentDidMount(): Promise<void> {
-    this.setState({MonacoEditor: (await import("react-monaco-editor")).default});
+  async componentDidUpdate(prevProps: EditorWrapperProps): Promise<void> {
+    if (prevProps.babelLoaded !== this.props.babelLoaded) {
+      this.setState({MonacoEditor: (await import("react-monaco-editor")).default});
+    }
   }
 
   invalidate = () => {

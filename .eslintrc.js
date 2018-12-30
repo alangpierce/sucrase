@@ -9,6 +9,8 @@ module.exports = {
     "class-methods-use-this": "off",
     "func-names": "off",
     "import/extensions": "off",
+    // This rule has TypeScript false positives, so just disable for now.
+    "import/named": "off",
     "import/no-cycle": "off",
     "import/no-extraneous-dependencies": [
       "error",

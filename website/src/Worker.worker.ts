@@ -1,35 +1,59 @@
 /* eslint-disable no-restricted-globals */
-// @ts-ignore
-import * as Babel from "@babel/standalone";
 import * as Sucrase from "sucrase";
-import * as TypeScript from "typescript";
-
 import {TRANSFORMS} from "./Constants";
 import getTokens from "./getTokens";
 import {compressCode} from "./URLHashState";
-import {Message, WorkerConfig} from "./WorkerProtocol";
+import {Message, WorkerConfig, WorkerMessage} from "./WorkerProtocol";
 
 type Transform = Sucrase.Transform;
 
 declare const self: Worker;
 
-Babel.registerPlugin(
-  "proposal-numeric-separator",
-  require("@babel/plugin-proposal-numeric-separator"),
-);
-Babel.registerPlugin("dynamic-import-node", require("babel-plugin-dynamic-import-node"));
-Babel.registerPlugin("react-hot-loader", require("react-hot-loader/babel"));
+let Babel: typeof import("./Babel") | null = null;
+let TypeScript: typeof import("typescript") | null = null;
+
+function postMessage(message: WorkerMessage): void {
+  self.postMessage(message);
+}
+
+/**
+ * Hacky workaround for the fact that chunk loading in workers is normally
+ * synchronous. We determine the chunk name based on how the webpack config
+ * chooses names, then load that up-front in a fetch (which is actually async).
+ * This makes it so the later import() will be able to pull the JS from cache,
+ * and thus block the worker for a much shorter period of time.
+ */
+async function prefetchChunk(chunkName: string): Promise<void> {
+  const path = location.pathname.replace(/\/\d+\./, `/${chunkName}.`);
+  const response = await fetch(path);
+  await response.text();
+}
+
+async function loadDependencies(): Promise<void> {
+  await prefetchChunk("babel-compiler");
+  Babel = await import(/* webpackChunkName: "babel-compiler" */ "./Babel");
+  postMessage({type: "BABEL_LOADED"});
+  await prefetchChunk("typescript-compiler");
+  TypeScript = await import(/* webpackChunkName: "typescript-compiler" */ "typescript");
+  postMessage({type: "TYPESCRIPT_LOADED"});
+}
 
 // SET_CONFIG must be the first message before anything else is called.
 let config: WorkerConfig;
 
 /**
  * The worker architecture intentionally bypasses the browser event loop in
- * favor of.
+ * favor of a more controlled model where at most one message is enqueued at
+ * a time. For example, rather than each keystroke enqueueing a worker message,
+ * the worker client keeps its own state and only sends a message to compute
+ * for the last keystroke.
  */
 self.addEventListener("message", ({data}) => {
-  self.postMessage(processEvent(data));
+  postMessage({type: "RESPONSE", response: processEvent(data)});
 });
+
+// tslint:disable-next-line no-floating-promises
+loadDependencies();
 
 function processEvent(data: Message): unknown {
   if (data.type === "SET_CONFIG") {
@@ -80,6 +104,10 @@ function runSucrase(): {code: string; time: number | null} {
 }
 
 function runBabel(): {code: string; time: number | null} {
+  if (!Babel) {
+    return {code: "Loading Babel...", time: null};
+  }
+  const {transform} = Babel;
   const babelPlugins = TRANSFORMS.filter(({name}) => config.selectedTransforms[name])
     .map(({babelName}) => babelName)
     .filter((name) => name);
@@ -88,7 +116,7 @@ function runBabel(): {code: string; time: number | null} {
     .filter((name) => name);
   return runAndProfile(
     () =>
-      Babel.transform(config.code, {
+      transform(config.code, {
         filename: getFilePath(),
         presets: babelPresets,
         plugins: [
@@ -113,6 +141,10 @@ function runBabel(): {code: string; time: number | null} {
 }
 
 function runTypeScript(): {code: string; time: number | null} {
+  if (!TypeScript) {
+    return {code: "Loading TypeScript...", time: null};
+  }
+  const {transpileModule, ModuleKind, JsxEmit, ScriptTarget} = TypeScript;
   for (const {name} of TRANSFORMS) {
     if (["typescript", "imports", "jsx"].includes(name)) {
       continue;
@@ -123,15 +155,11 @@ function runTypeScript(): {code: string; time: number | null} {
   }
   return runAndProfile(
     () =>
-      TypeScript.transpileModule(config.code, {
+      transpileModule(config.code, {
         compilerOptions: {
-          module: config.selectedTransforms.imports
-            ? TypeScript.ModuleKind.CommonJS
-            : TypeScript.ModuleKind.ESNext,
-          jsx: config.selectedTransforms.jsx
-            ? TypeScript.JsxEmit.React
-            : TypeScript.JsxEmit.Preserve,
-          target: TypeScript.ScriptTarget.ESNext,
+          module: config.selectedTransforms.imports ? ModuleKind.CommonJS : ModuleKind.ESNext,
+          jsx: config.selectedTransforms.jsx ? JsxEmit.React : JsxEmit.Preserve,
+          target: ScriptTarget.ESNext,
         },
       }).outputText,
   );

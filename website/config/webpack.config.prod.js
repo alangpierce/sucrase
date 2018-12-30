@@ -6,6 +6,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const ManifestPlugin = require("webpack-manifest-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
+const WorkerPlugin = require("worker-plugin");
 const paths = require("./paths");
 const getClientEnvironment = require("./env");
 
@@ -44,8 +45,8 @@ module.exports = {
     // Generated JS file names (with nested folders).
     // There will be one main bundle, and one file per asynchronous chunk.
     // We don't currently advertise code splitting but Webpack supports it.
-    filename: "static/js/[name].[chunkhash:8].js",
-    chunkFilename: "static/js/[name].[chunkhash:8].chunk.js",
+    filename: "[name].[hash:8].js",
+    chunkFilename: "[name].[hash:8].chunk.js",
     // We inferred the "public path" (such as / or /my-project) from homepage.
     publicPath,
     // Point sourcemap entries to original disk location (format as URL on Windows)
@@ -66,10 +67,6 @@ module.exports = {
     rules: [
       // Disable require.ensure as it's not a standard language feature.
       {parser: {requireEnsure: false}},
-      {
-        test: /\.worker\.ts$/,
-        use: {loader: "worker-loader"},
-      },
       {
         type: "javascript/auto",
         test: /\.mjs$/,
@@ -158,13 +155,8 @@ module.exports = {
     new ManifestPlugin({
       fileName: "asset-manifest.json",
     }),
-    // Moment.js is an extremely popular library that bundles large locale files
-    // by default due to how Webpack interprets its code. This is a practical
-    // solution that requires the user to opt into importing specific locales.
-    // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
-    // You can remove this if you don't use Moment.js:
-    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
     new MonacoWebpackPlugin({languages: ["typescript"]}),
+    new WorkerPlugin(),
   ],
   // Some libraries import Node modules but don't use them in the browser.
   // Tell Webpack to provide empty mocks for them so importing them works.

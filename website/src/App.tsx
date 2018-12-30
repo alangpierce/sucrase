@@ -29,6 +29,8 @@ interface State {
   typeScriptTimeMs: number | null | "LOADING";
   tokensStr: string;
   showMore: boolean;
+  babelLoaded: boolean;
+  typeScriptLoaded: boolean;
 }
 
 class App extends Component<{}, State> {
@@ -49,6 +51,8 @@ class App extends Component<{}, State> {
       typeScriptTimeMs: null,
       tokensStr: "",
       showMore: false,
+      babelLoaded: false,
+      typeScriptLoaded: false,
     };
     const hashState = loadHashState();
     if (hashState) {
@@ -91,7 +95,9 @@ class App extends Component<{}, State> {
       this.state.selectedTransforms !== prevState.selectedTransforms ||
       this.state.compareWithBabel !== prevState.compareWithBabel ||
       this.state.compareWithTypeScript !== prevState.compareWithTypeScript ||
-      this.state.showTokens !== prevState.showTokens
+      this.state.showTokens !== prevState.showTokens ||
+      this.state.babelLoaded !== prevState.babelLoaded ||
+      this.state.typeScriptLoaded !== prevState.typeScriptLoaded
     ) {
       this.postConfigToWorker();
     }
@@ -208,12 +214,14 @@ class App extends Component<{}, State> {
             label="Your code"
             code={this.state.code}
             onChange={this._handleCodeChange}
+            babelLoaded={this.state.babelLoaded}
           />
           <EditorWrapper
             label="Transformed with Sucrase"
             code={sucraseCode}
             timeMs={sucraseTimeMs}
             isReadOnly={true}
+            babelLoaded={this.state.babelLoaded}
           />
           {this.state.compareWithBabel && (
             <EditorWrapper
@@ -221,6 +229,7 @@ class App extends Component<{}, State> {
               code={babelCode}
               timeMs={babelTimeMs}
               isReadOnly={true}
+              babelLoaded={this.state.babelLoaded}
             />
           )}
           {this.state.compareWithTypeScript && (
@@ -229,6 +238,7 @@ class App extends Component<{}, State> {
               code={typeScriptCode}
               timeMs={typeScriptTimeMs}
               isReadOnly={true}
+              babelLoaded={this.state.babelLoaded}
             />
           )}
           {this.state.showTokens && (
@@ -240,6 +250,7 @@ class App extends Component<{}, State> {
               options={{
                 lineNumbers: (n) => (n > 1 ? String(n - 2) : ""),
               }}
+              babelLoaded={this.state.babelLoaded}
             />
           )}
         </div>

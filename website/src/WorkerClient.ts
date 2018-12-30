@@ -1,5 +1,4 @@
-import Worker from "./Worker.worker";
-import {Message, WorkerConfig} from "./WorkerProtocol";
+import {Message, WorkerConfig, WorkerMessage} from "./WorkerProtocol";
 
 const CANCELLED_MESSAGE = "SUCRASE JOB CANCELLED";
 const TIMEOUT_MESSAGE = "SUCRASE JOB TIMED OUT";
@@ -28,6 +27,8 @@ type UpdateStateFunc = (
     sucraseTimeMs?: number | null;
     babelTimeMs?: number | null;
     typeScriptTimeMs?: number | null;
+    babelLoaded?: boolean;
+    typeScriptLoaded?: boolean;
   },
 ) => void;
 
@@ -42,13 +43,23 @@ type HandleCompressedCodeFunc = (compressedCode: string) => void;
 let handleCompressedCodeFn: HandleCompressedCodeFunc | null = null;
 
 function initWorker(): void {
-  worker = new Worker();
-  worker.addEventListener("message", ({data}: {data: unknown}) => {
-    if (!nextResolve) {
-      throw new Error("Expected nextResolve to be set.");
+  worker = new Worker("./Worker.worker", {type: "module"});
+  worker.addEventListener("message", ({data}: {data: WorkerMessage}) => {
+    if (data.type === "RESPONSE") {
+      if (!nextResolve) {
+        throw new Error("Expected nextResolve to be set.");
+      }
+      nextResolve(data.response);
+      finishEndMessage();
+    } else if (data.type === "BABEL_LOADED") {
+      if (updateStateFn) {
+        updateStateFn({babelLoaded: true});
+      }
+    } else if (data.type === "TYPESCRIPT_LOADED") {
+      if (updateStateFn) {
+        updateStateFn({typeScriptLoaded: true});
+      }
     }
-    nextResolve(data);
-    finishEndMessage();
   });
 }
 

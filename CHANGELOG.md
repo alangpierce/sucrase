@@ -1,3 +1,10 @@
+# 3.9.0 (2019-12-30)
+
+* Add a react-hot-loader transform. ([#376])
+* Add support for dynamic `import()` syntax in TS types. ([#380])
+* Many improvements to the website, including faster initial pageloads.
+* Small performance improvements.
+
 # 3.8.1 (2018-12-03)
 
 * Fix infinite loop when a file ends with a short identifier ([#363])
@@ -160,3 +167,5 @@
 [#342]: https://github.com/alangpierce/sucrase/pull/342
 [#359]: https://github.com/alangpierce/sucrase/pull/359
 [#363]: https://github.com/alangpierce/sucrase/pull/363
+[#376]: https://github.com/alangpierce/sucrase/pull/376
+[#380]: https://github.com/alangpierce/sucrase/pull/380

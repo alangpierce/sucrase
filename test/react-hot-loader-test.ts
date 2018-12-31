@@ -75,7 +75,7 @@ describe("transform react-hot-loader", () => {
       
       let _default; exports. default = _default = 12;
     
-(function () {
+;(function () {
   var reactHotLoader = require('react-hot-loader').default;
   var leaveModule = require('react-hot-loader').leaveModule;
   if (!reactHotLoader) {
@@ -141,7 +141,7 @@ describe("transform react-hot-loader", () => {
       
       let _default; export default _default = 12;
     
-(function () {
+;(function () {
   var reactHotLoader = require('react-hot-loader').default;
   var leaveModule = require('react-hot-loader').leaveModule;
   if (!reactHotLoader) {
@@ -167,7 +167,7 @@ describe("transform react-hot-loader", () => {
       
       const f = (x) => x + 1;
     
-(function () {
+;(function () {
   var reactHotLoader = require('react-hot-loader').default;
   var leaveModule = require('react-hot-loader').leaveModule;
   if (!reactHotLoader) {
@@ -188,7 +188,28 @@ describe("transform react-hot-loader", () => {
       `${RHL_PREFIX}
       export default function add() {}
     
-(function () {
+;(function () {
+  var reactHotLoader = require('react-hot-loader').default;
+  var leaveModule = require('react-hot-loader').leaveModule;
+  if (!reactHotLoader) {
+    return;
+  }
+  reactHotLoader.register(add, "add", "sample.tsx");
+  leaveModule(module);
+})();`,
+      ["typescript"],
+    );
+  });
+
+  it("guards against ASI issues by starting the suffix with a semicolon", () => {
+    assertESMResult(
+      `
+      export default function add() {}
+    `,
+      `${RHL_PREFIX}
+      export default function add() {}
+    
+;(function () {
   var reactHotLoader = require('react-hot-loader').default;
   var leaveModule = require('react-hot-loader').leaveModule;
   if (!reactHotLoader) {

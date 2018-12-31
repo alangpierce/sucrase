@@ -44,7 +44,7 @@ export default class ReactHotLoaderTransformer extends Transformer {
       });
     }
     return `
-(function () {
+;(function () {
   var reactHotLoader = require('react-hot-loader').default;
   var leaveModule = require('react-hot-loader').leaveModule;
   if (!reactHotLoader) {

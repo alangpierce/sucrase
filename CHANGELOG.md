@@ -1,3 +1,8 @@
+# 3.9.1 (2019-12-31)
+
+* Fix react-hot-loader transform syntax error with some export styles. ([#384])
+* Fix website to properly show react-hot-loader Babel transform output. ([#386])
+
 # 3.9.0 (2019-12-30)
 
 * Add a react-hot-loader transform. ([#376])
@@ -169,3 +174,5 @@
 [#363]: https://github.com/alangpierce/sucrase/pull/363
 [#376]: https://github.com/alangpierce/sucrase/pull/376
 [#380]: https://github.com/alangpierce/sucrase/pull/380
+[#384]: https://github.com/alangpierce/sucrase/pull/384
+[#386]: https://github.com/alangpierce/sucrase/pull/386

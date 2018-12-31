@@ -6014,10 +6014,10 @@ style-loader@^0.23.1:
     loader-utils "^1.1.0"
     schema-utils "^1.0.0"
 
-sucrase@^3.9.0:
-  version "3.9.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.9.0.tgz#e6ec1dfb0a0b95e48bb542756de4086a8c929d34"
-  integrity sha512-hVruqlQhvX1g1m28TpvGF+l6jMa2Scyd+qBpskd4PKOKyexXE0GIkxaFxgPDnDgmDYYMJwKrQiCzwCHuLQIxzA==
+sucrase@^3.9.1:
+  version "3.9.1"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.9.1.tgz#95efeda8b727197a8eb1f65b539969b0c41f77a2"
+  integrity sha512-im4FoCSqTnEN8VXNZflTioAIvCZ4CkiXP1/ZQhJHFD7d5EZM64Frl+dMrwm8PzM1CU0peRS9qXK1Kgem7UBUQg==
   dependencies:
     commander "^2.19.0"
     lines-and-columns "^1.1.6"

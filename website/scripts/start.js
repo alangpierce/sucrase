@@ -17,14 +17,8 @@ const fs = require("fs");
 const chalk = require("chalk");
 const webpack = require("webpack");
 const WebpackDevServer = require("webpack-dev-server");
-const clearConsole = require("react-dev-utils/clearConsole");
 const checkRequiredFiles = require("react-dev-utils/checkRequiredFiles");
-const {
-  choosePort,
-  createCompiler,
-  prepareProxy,
-  prepareUrls,
-} = require("react-dev-utils/WebpackDevServerUtils");
+const {choosePort, prepareProxy, prepareUrls} = require("react-dev-utils/WebpackDevServerUtils");
 const openBrowser = require("react-dev-utils/openBrowser");
 const paths = require("../config/paths");
 const config = require("../config/webpack.config.dev");
@@ -51,10 +45,8 @@ choosePort(HOST, DEFAULT_PORT)
       return;
     }
     const protocol = process.env.HTTPS === "true" ? "https" : "http";
-    const appName = require(paths.appPackageJson).name;
     const urls = prepareUrls(protocol, HOST, port);
-    // Create a webpack compiler that is configured with custom messages.
-    const compiler = createCompiler(webpack, config, appName, urls, useYarn);
+    const compiler = webpack(config);
     // Load proxy config
     const proxySetting = require(paths.appPackageJson).proxy;
     const proxyConfig = prepareProxy(proxySetting, paths.appPublic);
@@ -65,9 +57,6 @@ choosePort(HOST, DEFAULT_PORT)
     devServer.listen(port, HOST, (err) => {
       if (err) {
         return console.log(err);
-      }
-      if (isInteractive) {
-        clearConsole();
       }
       console.log(chalk.cyan("Starting the development server...\n"));
       openBrowser(urls.localUrlForBrowser);

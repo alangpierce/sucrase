@@ -1,6 +1,6 @@
 import {css, StyleSheet} from "aphrodite";
 import React, {Component} from "react";
-import {hot} from "react-hot-loader";
+import {hot} from "react-hot-loader/root";
 
 import {
   DEFAULT_COMPARE_WITH_BABEL,
@@ -265,7 +265,7 @@ class App extends Component<{}, State> {
   }
 }
 
-export default hot(module)(App);
+export default hot(App);
 
 const styles = StyleSheet.create({
   app: {

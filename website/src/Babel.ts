@@ -10,7 +10,7 @@ import NumericSeparatorPlugin from "@babel/plugin-proposal-numeric-separator";
 // @ts-ignore
 import DynamicImportPlugin from "babel-plugin-dynamic-import-node";
 // @ts-ignore
-import ReactHotLoaderPlugin from "react-hot-loader/babel";
+import ReactHotLoaderPlugin from "react-hot-loader/dist/babel.development";
 
 registerPlugin("proposal-numeric-separator", NumericSeparatorPlugin);
 registerPlugin("dynamic-import-node", DynamicImportPlugin);

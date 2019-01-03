@@ -470,4 +470,21 @@ describe("type transforms", () => {
     `,
     );
   });
+
+  it("handles optional params without type annotations", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      const test = (a?) => a;
+      function test2(a?) {
+        return a;
+      }
+    `,
+      `"use strict";
+      const test = (a) => a;
+      function test2(a) {
+        return a;
+      }
+    `,
+    );
+  });
 });

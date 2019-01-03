@@ -1,9 +1,14 @@
-# 3.9.1 (2019-12-31)
+# 3.9.2 (2019-01-02)
+
+* Fix crash on optional arrow function params without type annotations. ([#389])
+* Usability bug fixes for website. ([#390])
+
+# 3.9.1 (2018-12-31)
 
 * Fix react-hot-loader transform syntax error with some export styles. ([#384])
 * Fix website to properly show react-hot-loader Babel transform output. ([#386])
 
-# 3.9.0 (2019-12-30)
+# 3.9.0 (2018-12-30)
 
 * Add a react-hot-loader transform. ([#376])
 * Add support for dynamic `import()` syntax in TS types. ([#380])
@@ -176,3 +181,5 @@
 [#380]: https://github.com/alangpierce/sucrase/pull/380
 [#384]: https://github.com/alangpierce/sucrase/pull/384
 [#386]: https://github.com/alangpierce/sucrase/pull/386
+[#389]: https://github.com/alangpierce/sucrase/pull/389
+[#390]: https://github.com/alangpierce/sucrase/pull/390

@@ -90,7 +90,7 @@ export function loadHashState(): Partial<BaseHashState> | null {
       }
     }
     // Deleting code and refreshing should give the default state again.
-    if (!result.code) {
+    if (result.code === "") {
       return null;
     }
     return result;

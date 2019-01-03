@@ -29,7 +29,7 @@ export default class EditorWrapper extends Component<EditorWrapperProps, State> 
   editor: Editor | null = null;
 
   async componentDidUpdate(prevProps: EditorWrapperProps): Promise<void> {
-    if (prevProps.babelLoaded !== this.props.babelLoaded) {
+    if (this.props.babelLoaded && !this.state.MonacoEditor) {
       this.setState({MonacoEditor: (await import("react-monaco-editor")).default});
     }
   }

@@ -14,8 +14,10 @@ export default class TypeScriptTransformer extends Transformer {
   }
 
   process(): boolean {
-    const processedType = this.rootTransformer.processPossibleTypeRange();
-    if (processedType) {
+    if (
+      this.rootTransformer.processPossibleArrowParamEnd() ||
+      this.rootTransformer.processPossibleTypeRange()
+    ) {
       return true;
     }
     if (

@@ -41,7 +41,7 @@
     "typescript": "^3.2.2",
     "url-loader": "^1.1.2",
     "webpack": "^4.28.2",
-    "webpack-dev-server": "2.8.2",
+    "webpack-dev-server": "^3.1.14",
     "webpack-manifest-plugin": "^2.0.4",
     "worker-plugin": "^3.0.0"
   },

@@ -1,5 +1,10 @@
 import {ESMODULE_PREFIX} from "./prefixes";
-import {assertResult} from "./util";
+import {assertExpectations, assertResult, Expectations} from "./util";
+
+function assertTypeScriptAndFlowExpectations(code: string, expectations: Expectations): void {
+  assertExpectations(code, expectations, {transforms: ["jsx", "imports", "typescript"]});
+  assertExpectations(code, expectations, {transforms: ["jsx", "imports", "flow"]});
+}
 
 function assertTypeScriptAndFlowResult(code: string, expectedResult: string): void {
   assertResult(code, expectedResult, {transforms: ["jsx", "imports", "typescript"]});
@@ -485,6 +490,20 @@ describe("type transforms", () => {
         return a;
       }
     `,
+    );
+  });
+
+  it("does not produce code with a syntax error on multiline return types", () => {
+    assertTypeScriptAndFlowExpectations(
+      `
+      const multiLineReturn = (
+        x: number
+      ): {
+        value: number;
+      } => ({value: x}); 
+      setOutput(multiLineReturn(5).value)
+    `,
+      {expectedOutput: 5},
     );
   });
 });

@@ -312,6 +312,32 @@ export default class RootTransformer {
     ].join(";");
   }
 
+  /**
+   * Normally it's ok to simply remove type tokens, but we need to be more careful when dealing with
+   * arrow function return types since they can confuse the parser. In that case, we want to move
+   * the close-paren to the same line as the arrow.
+   *
+   * See https://github.com/alangpierce/sucrase/issues/391 for more details.
+   */
+  processPossibleArrowParamEnd(): boolean {
+    if (this.tokens.matches2(tt.parenR, tt.colon) && this.tokens.tokenAtRelativeIndex(1).isType) {
+      let nextNonTypeIndex = this.tokens.currentIndex() + 1;
+      // Look ahead to see if this is an arrow function or something else.
+      while (this.tokens.tokens[nextNonTypeIndex].isType) {
+        nextNonTypeIndex++;
+      }
+      if (this.tokens.matches1AtIndex(nextNonTypeIndex, tt.arrow)) {
+        this.tokens.removeInitialToken();
+        while (this.tokens.currentIndex() < nextNonTypeIndex) {
+          this.tokens.removeToken();
+        }
+        this.tokens.replaceTokenTrimmingLeftWhitespace(") =>");
+        return true;
+      }
+    }
+    return false;
+  }
+
   processPossibleTypeRange(): boolean {
     if (this.tokens.currentToken().isType) {
       this.tokens.removeInitialToken();

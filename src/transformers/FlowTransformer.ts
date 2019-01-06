@@ -8,6 +8,9 @@ export default class FlowTransformer extends Transformer {
   }
 
   process(): boolean {
-    return this.rootTransformer.processPossibleTypeRange();
+    return (
+      this.rootTransformer.processPossibleArrowParamEnd() ||
+      this.rootTransformer.processPossibleTypeRange()
+    );
   }
 }

@@ -1,3 +1,7 @@
+# 3.9.3 (2019-01-06)
+
+* Fix syntax error on arrow functions with multiline return types. ([#393])
+
 # 3.9.2 (2019-01-02)
 
 * Fix crash on optional arrow function params without type annotations. ([#389])
@@ -183,3 +187,4 @@
 [#386]: https://github.com/alangpierce/sucrase/pull/386
 [#389]: https://github.com/alangpierce/sucrase/pull/389
 [#390]: https://github.com/alangpierce/sucrase/pull/390
+[#393]: https://github.com/alangpierce/sucrase/pull/393

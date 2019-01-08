@@ -1341,4 +1341,19 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("properly compiles class fields with extends in a type parameter", () => {
+    assertTypeScriptESMResult(
+      `
+      class A<B extends C> {
+        x = 1;
+      }
+    `,
+      `
+      class A {constructor() { A.prototype.__init.call(this); }
+        __init() {this.x = 1}
+      }
+    `,
+    );
+  });
 });

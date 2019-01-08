@@ -172,7 +172,11 @@ function processClassHeader(tokens: TokenProcessor): ClassHeaderInfo {
     className = tokens.identifierName();
   }
   while (!tokens.matchesContextIdAndLabel(tt.braceL, contextId)) {
-    if (tokens.matches1(tt._extends)) {
+    // If this has a superclass, there will always be an `extends` token. If it doesn't have a
+    // superclass, only type parameters and `implements` clauses can show up here, all of which
+    // consist only of type tokens. A declaration like `class A<B extends C> {` should *not* count
+    // as having a superclass.
+    if (tokens.matches1(tt._extends) && !tokens.currentToken().isType) {
       hasSuperclass = true;
     }
     tokens.nextToken();

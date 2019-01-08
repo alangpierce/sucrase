@@ -1,3 +1,7 @@
+# 3.9.4 (2019-01-07)
+
+* Avoid false positive when detecting if a class has a superclass. ([#399])
+
 # 3.9.3 (2019-01-06)
 
 * Fix syntax error on arrow functions with multiline return types. ([#393])
@@ -188,3 +192,4 @@
 [#389]: https://github.com/alangpierce/sucrase/pull/389
 [#390]: https://github.com/alangpierce/sucrase/pull/390
 [#393]: https://github.com/alangpierce/sucrase/pull/393
+[#399]: https://github.com/alangpierce/sucrase/pull/399

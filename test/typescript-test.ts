@@ -1356,4 +1356,17 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("fixes issue #401", () => {
+    assertTypeScriptResult(
+      `
+      export class Foo {}
+      let foo: Foo = new Foo();
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       class Foo {} exports.Foo = Foo;
+      let foo = new Foo();
+    `,
+    );
+  });
 });

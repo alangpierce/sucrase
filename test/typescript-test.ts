@@ -1357,7 +1357,7 @@ describe("typescript transform", () => {
     );
   });
 
-  it("fixes issue #401", () => {
+  it("properly handles a declaration that looks like an assignment to an export (#401)", () => {
     assertTypeScriptResult(
       `
       export class Foo {}

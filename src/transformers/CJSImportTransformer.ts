@@ -274,7 +274,9 @@ export default class CJSImportTransformer extends Transformer {
   private processAssignment(): boolean {
     const index = this.tokens.currentIndex();
     const identifierToken = this.tokens.tokens[index - 1];
-    if (identifierToken.type !== tt.name) {
+    // If the LHS is a type identifier, this must be a declaration like `let a: b = c;`,
+    // with `b` as the identifier, so nothing needs to be done in that case.
+    if (identifierToken.isType || identifierToken.type !== tt.name) {
       return false;
     }
     if (index >= 2 && this.tokens.matches1AtIndex(index - 2, tt.dot)) {

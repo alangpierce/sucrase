@@ -1,9 +1,12 @@
+import {Options} from "../index";
 import {IdentifierRole} from "../parser/tokenizer";
 import {TokenType, TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import {startsWithLowerCase} from "../transformers/JSXTransformer";
+import getJSXPragmaInfo from "./getJSXPragmaInfo";
 
-export function getNonTypeIdentifiers(tokens: TokenProcessor): Set<string> {
+export function getNonTypeIdentifiers(tokens: TokenProcessor, options: Options): Set<string> {
+  const jsxPragmaInfo = getJSXPragmaInfo(options);
   const nonTypeIdentifiers: Set<string> = new Set();
   for (let i = 0; i < tokens.tokens.length; i++) {
     const token = tokens.tokens[i];
@@ -17,8 +20,18 @@ export function getNonTypeIdentifiers(tokens: TokenProcessor): Set<string> {
     ) {
       nonTypeIdentifiers.add(tokens.identifierNameForToken(token));
     }
+    if (token.type === tt.jsxTagStart) {
+      nonTypeIdentifiers.add(jsxPragmaInfo.base);
+    }
+    if (
+      token.type === tt.jsxTagStart &&
+      i + 1 < tokens.tokens.length &&
+      tokens.tokens[i + 1].type === tt.jsxTagEnd
+    ) {
+      nonTypeIdentifiers.add(jsxPragmaInfo.base);
+      nonTypeIdentifiers.add(jsxPragmaInfo.fragmentBase);
+    }
     if (token.type === tt.jsxName && token.identifierRole === IdentifierRole.Access) {
-      nonTypeIdentifiers.add("React");
       const identifierName = tokens.identifierNameForToken(token);
       // Lower-case single-component tag names like "div" don't count.
       if (!startsWithLowerCase(identifierName) || tokens.tokens[i + 1].type === TokenType.dot) {

@@ -1,3 +1,4 @@
+import {Options} from "./index";
 import NameManager from "./NameManager";
 import {isDeclaration} from "./parser/tokenizer";
 import {ContextualKeyword} from "./parser/tokenizer/keywords";
@@ -40,6 +41,7 @@ export default class CJSImportProcessor {
     readonly nameManager: NameManager,
     readonly tokens: TokenProcessor,
     readonly enableLegacyTypeScriptModuleInterop: boolean,
+    readonly options: Options,
   ) {}
 
   getPrefixCode(): string {
@@ -97,7 +99,7 @@ export default class CJSImportProcessor {
    * bare imports.
    */
   pruneTypeOnlyImports(): void {
-    const nonTypeIdentifiers = getNonTypeIdentifiers(this.tokens);
+    const nonTypeIdentifiers = getNonTypeIdentifiers(this.tokens, this.options);
     for (const [path, importInfo] of this.importInfoByPath.entries()) {
       if (
         importInfo.hasBareImport ||

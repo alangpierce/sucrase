@@ -4,7 +4,7 @@ import {
   IMPORT_WILDCARD_PREFIX,
   JSX_PREFIX,
 } from "./prefixes";
-import {assertResult} from "./util";
+import {assertResult, devProps} from "./util";
 
 function assertTypeScriptResult(code: string, expectedResult: string): void {
   assertResult(code, expectedResult, {transforms: ["jsx", "imports", "typescript"]});
@@ -1045,6 +1045,59 @@ describe("typescript transform", () => {
         );
       }
     `,
+    );
+  });
+
+  it("does not elide a React import when the file contains a JSX fragment", () => {
+    assertTypeScriptResult(
+      `
+      import React from 'react';
+      function render(): JSX.Element {
+        return <>Hello</>;
+      }
+    `,
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
+      var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+      function render() {
+        return _react2.default.createElement(_react2.default.Fragment, null, "Hello");
+      }
+    `,
+    );
+  });
+
+  it("correctly takes JSX pragmas into account avoiding JSX import elision", () => {
+    assertResult(
+      `
+      import {A, B, C, D} from 'foo';
+      function render(): JSX.Element {
+        return <>Hello</>;
+      }
+    `,
+      `
+      import {A, C,} from 'foo';
+      function render() {
+        return A.B(C.D, null, "Hello");
+      }
+    `,
+      {transforms: ["typescript", "jsx"], jsxPragma: "A.B", jsxFragmentPragma: "C.D"},
+    );
+  });
+
+  it("correctly takes JSX pragmas into account avoiding JSX import elision with fragments unused", () => {
+    assertResult(
+      `
+      import {A, B, C, D} from 'foo';
+      function render(): JSX.Element {
+        return <span />;
+      }
+    `,
+      `const _jsxFileName = "";
+      import {A,} from 'foo';
+      function render() {
+        return A.B('span', {${devProps(4)}} );
+      }
+    `,
+      {transforms: ["typescript", "jsx"], jsxPragma: "A.B", jsxFragmentPragma: "C.D"},
     );
   });
 

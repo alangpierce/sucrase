@@ -4,6 +4,7 @@ import NameManager from "../NameManager";
 import XHTMLEntities from "../parser/plugins/jsx/xhtml";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
+import getJSXPragmaInfo, {JSXPragmaInfo} from "../util/getJSXPragmaInfo";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
@@ -14,10 +15,7 @@ export default class JSXTransformer extends Transformer {
   lastLineNumber: number = 1;
   lastIndex: number = 0;
   filenameVarName: string | null = null;
-  readonly jsxPragmaBase: string;
-  readonly jsxPragmaSuffix: string;
-  readonly jsxFragmentPragmaBase: string;
-  readonly jsxFragmentPragmaSuffix: string;
+  readonly jsxPragmaInfo: JSXPragmaInfo;
 
   constructor(
     readonly rootTransformer: RootTransformer,
@@ -27,20 +25,7 @@ export default class JSXTransformer extends Transformer {
     readonly options: Options,
   ) {
     super();
-    [this.jsxPragmaBase, this.jsxPragmaSuffix] = this.splitPragma(
-      options.jsxPragma || "React.createElement",
-    );
-    [this.jsxFragmentPragmaBase, this.jsxFragmentPragmaSuffix] = this.splitPragma(
-      options.jsxFragmentPragma || "React.Fragment",
-    );
-  }
-
-  private splitPragma(pragma: string): [string, string] {
-    let dotIndex = pragma.indexOf(".");
-    if (dotIndex === -1) {
-      dotIndex = pragma.length;
-    }
-    return [pragma.slice(0, dotIndex), pragma.slice(dotIndex)];
+    this.jsxPragmaInfo = getJSXPragmaInfo(options);
   }
 
   process(): boolean {
@@ -219,21 +204,23 @@ export default class JSXTransformer extends Transformer {
   }
 
   processJSXTag(): void {
-    const {jsxPragmaBase, jsxPragmaSuffix, jsxFragmentPragmaBase, jsxFragmentPragmaSuffix} = this;
+    const {jsxPragmaInfo} = this;
     const resolvedPragmaBaseName = this.importProcessor
-      ? this.importProcessor.getIdentifierReplacement(jsxPragmaBase) || jsxPragmaBase
-      : jsxPragmaBase;
+      ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.base) || jsxPragmaInfo.base
+      : jsxPragmaInfo.base;
     const firstTokenStart = this.tokens.currentToken().start;
     // First tag is always jsxTagStart.
-    this.tokens.replaceToken(`${resolvedPragmaBaseName}${jsxPragmaSuffix}(`);
+    this.tokens.replaceToken(`${resolvedPragmaBaseName}${jsxPragmaInfo.suffix}(`);
 
     if (this.tokens.matches1(tt.jsxTagEnd)) {
       // Fragment syntax.
       const resolvedFragmentPragmaBaseName = this.importProcessor
-        ? this.importProcessor.getIdentifierReplacement(jsxFragmentPragmaBase) ||
-          jsxFragmentPragmaBase
-        : jsxFragmentPragmaBase;
-      this.tokens.replaceToken(`${resolvedFragmentPragmaBaseName}${jsxFragmentPragmaSuffix}, null`);
+        ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.fragmentBase) ||
+          jsxPragmaInfo.fragmentBase
+        : jsxPragmaInfo.fragmentBase;
+      this.tokens.replaceToken(
+        `${resolvedFragmentPragmaBaseName}${jsxPragmaInfo.fragmentSuffix}, null`,
+      );
       // Tag with children.
       this.processChildren();
       while (!this.tokens.matches1(tt.jsxTagEnd)) {

@@ -78,6 +78,7 @@ export default class RootTransformer {
           this.nameManager,
           reactHotLoaderTransformer,
           transforms.includes("typescript"),
+          options,
         ),
       );
     }

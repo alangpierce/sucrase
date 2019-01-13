@@ -1,3 +1,4 @@
+import {Options} from "../index";
 import NameManager from "../NameManager";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
@@ -18,10 +19,11 @@ export default class ESMImportTransformer extends Transformer {
     readonly nameManager: NameManager,
     readonly reactHotLoaderTransformer: ReactHotLoaderTransformer | null,
     readonly isTypeScriptTransformEnabled: boolean,
+    options: Options,
   ) {
     super();
     this.nonTypeIdentifiers = isTypeScriptTransformEnabled
-      ? getNonTypeIdentifiers(tokens)
+      ? getNonTypeIdentifiers(tokens, options)
       : new Set();
   }
 

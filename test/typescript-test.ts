@@ -536,6 +536,8 @@ describe("typescript transform", () => {
         "",
         "D" = "foo".length,
         E = D / D,
+        "debugger" = 4,
+        default = 7,
         "!" = E << E,
         "\\n",
         ",",
@@ -549,6 +551,8 @@ describe("typescript transform", () => {
         Foo[Foo[""] = (A / 2) + 1] = "";
         const D = "foo".length; Foo[Foo["D"] = D] = "D";
         const E = D / D; Foo[Foo["E"] = E] = "E";
+        Foo[Foo["debugger"] = 4] = "debugger";
+        Foo[Foo["default"] = 7] = "default";
         Foo[Foo["!"] = E << E] = "!";
         Foo[Foo["\\n"] = (E << E) + 1] = "\\n";
         Foo[Foo[","] = ((E << E) + 1) + 1] = ",";

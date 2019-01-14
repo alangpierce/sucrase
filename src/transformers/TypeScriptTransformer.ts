@@ -81,19 +81,17 @@ export default class TypeScriptTransformer extends Transformer {
       }
       const nameToken = this.tokens.currentToken();
       let name;
-      let isValidIdentifier;
       let nameStringCode;
       if (nameToken.type === tt.name) {
         name = this.tokens.identifierNameForToken(nameToken);
-        isValidIdentifier = true;
         nameStringCode = `"${name}"`;
       } else if (nameToken.type === tt.string) {
         name = this.tokens.stringValueForToken(nameToken);
-        isValidIdentifier = isIdentifier(name);
         nameStringCode = this.tokens.code.slice(nameToken.start, nameToken.end);
       } else {
         throw new Error("Expected name or string at beginning of enum element.");
       }
+      const isValidIdentifier = isIdentifier(name);
       this.tokens.removeInitialToken();
 
       let valueIsString;

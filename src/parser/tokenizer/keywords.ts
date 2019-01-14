@@ -1,4 +1,4 @@
-export const enum ContextualKeyword {
+export enum ContextualKeyword {
   NONE,
   _abstract,
   _as,

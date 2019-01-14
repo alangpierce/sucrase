@@ -9,7 +9,7 @@ import {ContextualKeyword} from "./keywords";
 import readWord from "./readWord";
 import {TokenType, TokenType as tt} from "./types";
 
-export const enum IdentifierRole {
+export enum IdentifierRole {
   Access,
   ExportAccess,
   TopLevelDeclaration,

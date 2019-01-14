@@ -178,7 +178,7 @@ function generateTokenTypeEnum(): string {
 /**
  * Enum of all token types, with bit fields to signify meaningful properties.
  */
-export const enum TokenType {
+export enum TokenType {
   // Precedence 0 means not an operator; otherwise it is a positive number up to 12.
   PRECEDENCE_MASK = 0xf,
   IS_KEYWORD = 1 << 4,

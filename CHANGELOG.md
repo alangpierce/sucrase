@@ -1,3 +1,9 @@
+# 3.9.5 (2019-01-13)
+
+* Fix bug when processing a declaration that looks like an export assignment. ([#402])
+* Fix TS import elision for JSX fragments and custom pragmas. ([#403])
+* Treat reserved words as invalid identifiers when handling enums. ([#405])
+
 # 3.9.4 (2019-01-07)
 
 * Avoid false positive when detecting if a class has a superclass. ([#399])
@@ -193,3 +199,6 @@
 [#390]: https://github.com/alangpierce/sucrase/pull/390
 [#393]: https://github.com/alangpierce/sucrase/pull/393
 [#399]: https://github.com/alangpierce/sucrase/pull/399
+[#402]: https://github.com/alangpierce/sucrase/pull/402
+[#403]: https://github.com/alangpierce/sucrase/pull/403
+[#405]: https://github.com/alangpierce/sucrase/pull/405

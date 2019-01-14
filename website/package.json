@@ -36,7 +36,7 @@
     "react-monaco-editor": "^0.22.0",
     "react-virtualized": "^9.21.0",
     "style-loader": "^0.23.1",
-    "sucrase": "^3.9.4",
+    "sucrase": "^3.9.5",
     "tslint": "^5.12.0",
     "typescript": "^3.2.2",
     "url-loader": "^1.1.2",

@@ -1,6 +1,6 @@
 {
   "name": "sucrase",
-  "version": "3.9.4",
+  "version": "3.9.5",
   "description": "Super-fast alternative to Babel for when you can target modern JS runtimes",
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
@@ -67,7 +67,7 @@
     "mocha": "^5.2.0",
     "nyc": "^13.1.0",
     "prettier": "^1.15.2",
-    "sucrase": "^3.9.4",
+    "sucrase": "^3.9.5",
     "tslint": "^5.9.1",
     "typescript": "^3.2.2",
     "typescript-eslint-parser": "^21.0.2",

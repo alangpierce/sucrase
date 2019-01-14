@@ -1,4 +1,4 @@
-export const enum charCodes {
+export enum charCodes {
   backSpace = 8,
   lineFeed = 10, //  '\n'
   carriageReturn = 13, //  '\r'

@@ -996,6 +996,21 @@ describe("typescript transform", () => {
     );
   });
 
+  it("handles definite assignment assertions on variables", () => {
+    assertTypeScriptResult(
+      `
+      let x!: number;
+      initX();
+      console.log(x + 1);
+    `,
+      `"use strict";
+      let x;
+      initX();
+      console.log(x + 1);
+    `,
+    );
+  });
+
   it("handles mapped type modifiers", () => {
     assertTypeScriptResult(
       `

@@ -867,9 +867,9 @@ export function flowAfterParseClassSuper(hasSuper: boolean): void {
     flowParseTypeParameterInstantiation();
   }
   if (isContextual(ContextualKeyword._implements)) {
-    state.tokens[state.tokens.length - 1].type = tt._implements;
     const oldIsType = pushTypeContext(0);
     next();
+    state.tokens[state.tokens.length - 1].type = tt._implements;
     do {
       flowParseRestrictedIdentifier();
       if (match(tt.lessThan)) {

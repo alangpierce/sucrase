@@ -407,4 +407,23 @@ describe("transform flow", () => {
       /SyntaxError: Unexpected token \(3:9\)/,
     );
   });
+
+  it("correctly compiles class fields with flow `implements` classes", () => {
+    assertFlowResult(
+      `
+      class Foo implements Bar {
+        baz = () => {
+      
+        }
+      }
+    `,
+      `"use strict";
+      class Foo  {constructor() { Foo.prototype.__init.call(this); }
+        __init() {this.baz = () => {
+      
+        }}
+      }
+    `,
+    );
+  });
 });

@@ -1240,8 +1240,10 @@ export function tsStartParseFunctionParams(): void {
 
 // `let x: number;`
 export function tsAfterParseVarHead(): void {
+  const oldIsType = pushTypeContext(0);
   eat(tt.bang);
   tsTryParseTypeAnnotation();
+  popTypeContext(oldIsType);
 }
 
 // parse the return type of an async arrow function - let foo = (async (): number => {});

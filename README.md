@@ -89,7 +89,7 @@ configured for any JSX use case.
 * **jsxFragmentPragma**: Fragment component, defaults to `React.Fragment`.
 
 ### Legacy CommonJS interop
-Two legacy modes can be used with the `import` tranform:
+Two legacy modes can be used with the `import` transform:
 * **enableLegacyTypeScriptModuleInterop**: Use the default TypeScript approach
   to CommonJS interop instead of assuming that TypeScript's `--esModuleInterop`
   flag is enabled. For example, if a CJS module exports a function, legacy

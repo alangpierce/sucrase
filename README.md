@@ -29,22 +29,23 @@ the [Benchling](https://benchling.com/) frontend code,
 with all tests passing, about 1 million lines of code total.
 
 **Sucrase is about 20x faster than Babel.** Here's one measurement of how Sucrase
-compares with tsc and Babel on a large TypeScript codebase with 4045 files and
+compares with other tools on a large TypeScript codebase with 4045 files and
 661081 lines of code:
 ```
              Time      Speed
 Sucrase      2.928s    225752 lines per second
+swc          13.782s   47966 lines per second
 TypeScript   39.603s   16693 lines per second
 Babel        52.598s   12569 lines per second
 ```
 
 ## Transforms
 
-The main configuration option in Sucrase is an array of transform names. There
-are four main transforms that you may want to enable:
+The main configuration option in Sucrase is an array of transform names. These
+transforms are available:
 * **jsx**: Transforms JSX syntax to `React.createElement`, e.g. `<div a={b} />`
   becomes `React.createElement('div', {a: b})`. Behaves like Babel 7's
-  [babel-preset-react](https://github.com/babel/babel/tree/master/packages/babel-preset-react),
+  [React preset](https://github.com/babel/babel/tree/master/packages/babel-preset-react),
   including adding `createReactClass` display names and JSX context information.
 * **typescript**: Compiles TypeScript code to JavaScript, removing type
   annotations and handling features like enums. Does not check types. Sucrase
@@ -60,7 +61,7 @@ are four main transforms that you may want to enable:
   project. This enables advanced hot reloading use cases such as editing of
   bound methods.
 
-The following proposed JS features are built-in and always transformed:
+These proposed JS features are built-in and always transformed:
 * [Class fields](https://github.com/tc39/proposal-class-fields): `class C { x = 1; }`.
   This includes static fields but not the `#x` private field syntax.
 * [Export namespace syntax](https://github.com/tc39/proposal-export-ns-from):
@@ -115,15 +116,16 @@ Often, you'll want to use one of the build tool integrations:
 [Webpack](https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-loader),
 [Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin),
 [Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin),
-[Rollup](https://github.com/rollup/rollup-plugin-sucrase).
+[Rollup](https://github.com/rollup/rollup-plugin-sucrase),
+[Broccoli](https://github.com/stefanpenner/broccoli-sucrase).
 
 Compile on-the-fly via a require hook with some [reasonable defaults](src/register.ts):
 
 ```js
 // Register just one extension.
-import "sucrase/register/ts";
+require("sucrase/register/ts");
 // Or register all at once.
-import "sucrase/register";
+require("sucrase/register");
 ```
 
 Compile on-the-fly via a drop-in replacement for node:

@@ -45,9 +45,6 @@ export default class CJSImportProcessor {
   ) {}
 
   getPrefixCode(): string {
-    if (this.enableLegacyTypeScriptModuleInterop) {
-      return "";
-    }
     let prefix = "";
     if (this.interopRequireWildcardName) {
       prefix += `
@@ -74,6 +71,20 @@ export default class CJSImportProcessor {
         }`.replace(/\s+/g, " ");
     }
     return prefix;
+  }
+
+  getInteropRequireWildcardName(): string {
+    if (!this.interopRequireWildcardName) {
+      this.interopRequireWildcardName = this.nameManager.claimFreeName("_interopRequireWildcard");
+    }
+    return this.interopRequireWildcardName;
+  }
+
+  getInteropRequireDefaultName(): string {
+    if (!this.interopRequireDefaultName) {
+      this.interopRequireDefaultName = this.nameManager.claimFreeName("_interopRequireDefault");
+    }
+    return this.interopRequireDefaultName;
   }
 
   preprocessTokens(): void {
@@ -154,33 +165,16 @@ export default class CJSImportProcessor {
       }
       let requireCode = `var ${primaryImportName} = require('${path}');`;
       if (wildcardNames.length > 0) {
-        if (!this.enableLegacyTypeScriptModuleInterop && !this.interopRequireWildcardName) {
-          this.interopRequireWildcardName = this.nameManager.claimFreeName(
-            "_interopRequireWildcard",
-          );
-        }
         for (const wildcardName of wildcardNames) {
           const moduleExpr = this.enableLegacyTypeScriptModuleInterop
             ? primaryImportName
-            : `${this.interopRequireWildcardName}(${primaryImportName})`;
+            : `${this.getInteropRequireWildcardName()}(${primaryImportName})`;
           requireCode += ` var ${wildcardName} = ${moduleExpr};`;
         }
       } else if (exportStarNames.length > 0 && secondaryImportName !== primaryImportName) {
-        if (!this.enableLegacyTypeScriptModuleInterop && !this.interopRequireWildcardName) {
-          this.interopRequireWildcardName = this.nameManager.claimFreeName(
-            "_interopRequireWildcard",
-          );
-        }
-        requireCode += ` var ${secondaryImportName} = ${
-          this.interopRequireWildcardName
-        }(${primaryImportName});`;
+        requireCode += ` var ${secondaryImportName} = ${this.getInteropRequireWildcardName()}(${primaryImportName});`;
       } else if (defaultNames.length > 0 && secondaryImportName !== primaryImportName) {
-        if (!this.interopRequireDefaultName) {
-          this.interopRequireDefaultName = this.nameManager.claimFreeName("_interopRequireDefault");
-        }
-        requireCode += ` var ${secondaryImportName} = ${
-          this.interopRequireDefaultName
-        }(${primaryImportName});`;
+        requireCode += ` var ${secondaryImportName} = ${this.getInteropRequireDefaultName()}(${primaryImportName});`;
       }
 
       for (const {importedName, localName} of namedExports) {

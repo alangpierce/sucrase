@@ -36,3 +36,39 @@ export function assertResult(
 export function devProps(lineNumber: number): string {
   return `__self: this, __source: {fileName: _jsxFileName, lineNumber: ${lineNumber}}`;
 }
+
+/**
+ * Given a mapping from filename to code, compiles each file and runs the file called "main"
+ * under normal CJS semantics (require and exports). The main module should export a value
+ * called `output`, and we assert that it's equal to expectedOutput.
+ */
+export function assertMultiFileOutput(
+  codeByFilename: {[filename: string]: string},
+  expectedOutput: unknown,
+): void {
+  const mainResult = new FakeModuleResolver(codeByFilename).evaluateModule("main");
+  // tslint:disable-next-line no-any
+  const output = (mainResult as any).output;
+  assert.deepStrictEqual(output, expectedOutput);
+}
+
+class FakeModuleResolver {
+  moduleExportsCache: {[filename: string]: unknown} = {};
+
+  constructor(readonly codeByFilename: {[filename: string]: string}) {}
+
+  evaluateModule(filename: string): unknown {
+    if (filename in this.moduleExportsCache) {
+      return this.moduleExportsCache[filename];
+    }
+    const exports = {};
+    this.moduleExportsCache[filename] = exports;
+    const code = this.codeByFilename[filename];
+    if (!code) {
+      throw new Error(`Did not find file ${filename}`);
+    }
+    const compiledCode = transform(code, {transforms: ["imports"]}).code;
+    vm.runInNewContext(compiledCode, {require: this.evaluateModule.bind(this), exports});
+    return exports;
+  }
+}

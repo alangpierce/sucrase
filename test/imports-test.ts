@@ -4,7 +4,7 @@ import {
   IMPORT_WILDCARD_PREFIX,
   JSX_PREFIX,
 } from "./prefixes";
-import {assertResult, devProps} from "./util";
+import {assertMultiFileOutput, assertResult, devProps} from "./util";
 
 describe("transform imports", () => {
   it("transforms export default", () => {
@@ -1159,6 +1159,246 @@ module.exports = exports.default;
       };
     `,
       {transforms: ["imports", "typescript"]},
+    );
+  });
+
+  it("handles += of an exported value", () => {
+    assertResult(
+      `
+      let x = 1;
+      export {x as y};
+      x += 2;
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      let x = 1;
+      exports.y = x;
+      x = exports.y += 2;
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
+  it("handles postincrement of an exported value", () => {
+    assertResult(
+      `
+      let x = 1;
+      export {x as y};
+      console.log(x++);
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      let x = 1;
+      exports.y = x;
+      console.log((x = exports.y = x + 1, x - 1));
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
+  it("handles postdecrement of an exported value", () => {
+    assertResult(
+      `
+      let x = 1;
+      export {x as y};
+      console.log(x--);
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      let x = 1;
+      exports.y = x;
+      console.log((x = exports.y = x - 1, x + 1));
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
+  it("handles postincrement of a doubly-exported value", () => {
+    assertResult(
+      `
+      export let x = 1;
+      export {x as y};
+      console.log(x++);
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       let x = 1; exports.x = x;
+      exports.y = exports.x;
+      console.log((exports.x = exports.y = exports.x + 1, exports.x - 1));
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
+  it("handles postincrement of a triply-exported value", () => {
+    assertResult(
+      `
+      export let x = 1;
+      export {x as y};
+      export {x as z};
+      console.log(x++);
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       let x = 1; exports.x = x;
+      exports.y = exports.x;
+      exports.z = exports.x;
+      console.log((exports.x = exports.y = exports.z = exports.x + 1, exports.x - 1));
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
+  it("handles preincrement of an exported value", () => {
+    assertResult(
+      `
+      let x = 1;
+      export {x as y};
+      console.log(++x);
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      let x = 1;
+      exports.y = x;
+      console.log(exports.y = ++x);
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
+  it("handles shadowing of exported values", () => {
+    assertResult(
+      `
+      let x = 1;
+      export {x as y};
+      function foo(x) {
+        x = 2;
+        return x;
+      }
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      let x = 1;
+      exports.y = x;
+      function foo(x) {
+        x = 2;
+        return x;
+      }
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
+  it("implements basic live bindings", () => {
+    assertMultiFileOutput(
+      {
+        main: `
+          import {x, addOne} from 'otherFile';
+          addOne();
+          export const output = x;
+      `,
+        otherFile: `
+          export let x = 3;
+          export function addOne() {
+            x++;
+          }
+      `,
+      },
+      4,
+    );
+  });
+
+  it("does not implement a live binding for export default", () => {
+    assertMultiFileOutput(
+      {
+        main: `
+          import x, {addOne} from 'otherFile';
+          addOne();
+          export const output = x;
+      `,
+        otherFile: `
+          let x = 3;
+          export default x;
+          export function addOne() {
+            x++;
+          }
+      `,
+      },
+      3,
+    );
+  });
+
+  it("implements a live binding for exporting with the name default", () => {
+    assertMultiFileOutput(
+      {
+        main: `
+          import x, {setToFive} from 'otherFile';
+          setToFive();
+          export const output = x;
+      `,
+        otherFile: `
+          let x = 3;
+          export {x as default};
+          export function setToFive() {
+            x = 5;
+          }
+      `,
+      },
+      5,
+    );
+  });
+
+  it("handles ++ with default export live bindings", () => {
+    assertMultiFileOutput(
+      {
+        main: `
+          import x, {addOne} from 'otherFile';
+          addOne();
+          export const output = x;
+      `,
+        otherFile: `
+          let x = 3;
+          export {x as default};
+          export function addOne() {
+            x++;
+          }
+      `,
+      },
+      4,
+    );
+  });
+
+  it("implements live bindings for star imports", () => {
+    assertMultiFileOutput(
+      {
+        main: `
+          import * as otherFile from 'otherFile';
+          otherFile.setToFive();
+          export const output = otherFile.x;
+      `,
+        otherFile: `
+          export let x = 3;
+          export function setToFive() {
+            x = 5;
+          }
+      `,
+      },
+      5,
+    );
+  });
+
+  it("implements live bindings for re-exported values", () => {
+    assertMultiFileOutput(
+      {
+        main: `
+          import * as otherFile from 'otherFile';
+          otherFile.setToFive();
+          export const output = otherFile.x;
+      `,
+        otherFile: `
+          export * from 'thirdFile';
+        `,
+        thirdFile: `
+          export let x = 3;
+          export function setToFive() {
+            x = 5;
+          }
+      `,
+      },
+      5,
     );
   });
 });

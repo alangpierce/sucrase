@@ -32,7 +32,7 @@ export default class CJSImportProcessor {
   private importInfoByPath: Map<string, ImportInfo> = new Map();
   private importsToReplace: Map<string, string> = new Map();
   private identifierReplacements: Map<string, string> = new Map();
-  private exportBindingsByLocalName: Map<string, string> = new Map();
+  private exportBindingsByLocalName: Map<string, Array<string>> = new Map();
 
   private interopRequireWildcardName: string;
   private interopRequireDefaultName: string;
@@ -290,10 +290,10 @@ get: () => ${primaryImportName}[key]}); });`;
       this.tokens.matches2AtIndex(index, tt._export, tt._class)
     ) {
       const exportName = this.tokens.identifierNameAtIndex(index + 2);
-      this.exportBindingsByLocalName.set(exportName, exportName);
+      this.addExportBinding(exportName, exportName);
     } else if (this.tokens.matches3AtIndex(index, tt._export, tt.name, tt._function)) {
       const exportName = this.tokens.identifierNameAtIndex(index + 3);
-      this.exportBindingsByLocalName.set(exportName, exportName);
+      this.addExportBinding(exportName, exportName);
     } else if (this.tokens.matches2AtIndex(index, tt._export, tt.braceL)) {
       this.preprocessNamedExportAtIndex(index);
     } else if (this.tokens.matches2AtIndex(index, tt._export, tt.star)) {
@@ -350,7 +350,7 @@ get: () => ${primaryImportName}[key]}); });`;
     } else {
       // Reinterpret "a as b" to be local/exported rather than imported/local.
       for (const {importedName: localName, localName: exportedName} of namedImports) {
-        this.exportBindingsByLocalName.set(localName, exportedName);
+        this.addExportBinding(localName, exportedName);
       }
       return;
     }
@@ -457,6 +457,13 @@ get: () => ${primaryImportName}[key]}); });`;
     return newInfo;
   }
 
+  private addExportBinding(localName: string, exportedName: string): void {
+    if (!this.exportBindingsByLocalName.has(localName)) {
+      this.exportBindingsByLocalName.set(localName, []);
+    }
+    this.exportBindingsByLocalName.get(localName)!.push(exportedName);
+  }
+
   /**
    * Return the code to use for the import for this path, or the empty string if
    * the code has already been "claimed" by a previous import.
@@ -471,8 +478,15 @@ get: () => ${primaryImportName}[key]}); });`;
     return this.identifierReplacements.get(identifierName) || null;
   }
 
+  /**
+   * Return a string like `exports.foo = exports.bar`.
+   */
   resolveExportBinding(assignedName: string): string | null {
-    return this.exportBindingsByLocalName.get(assignedName) || null;
+    const exportedNames = this.exportBindingsByLocalName.get(assignedName);
+    if (!exportedNames || exportedNames.length === 0) {
+      return null;
+    }
+    return exportedNames.map((exportedName) => `exports.${exportedName}`).join(" = ");
   }
 
   /**

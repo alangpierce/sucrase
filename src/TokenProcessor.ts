@@ -59,6 +59,10 @@ export default class TokenProcessor {
     return this.code.slice(token.start, token.end);
   }
 
+  rawCodeForToken(token: Token): string {
+    return this.code.slice(token.start, token.end);
+  }
+
   stringValueAtIndex(index: number): string {
     return this.stringValueForToken(this.tokens[index]);
   }

@@ -79,7 +79,10 @@ const types = {
 
   eq: new TokenType("=", {isAssign}),
   assign: new TokenType("_=", {isAssign}),
-  incDec: new TokenType("++/--", {prefix, postfix}),
+  // Mark the token as either prefix or postfix for the parser; we later assign
+  // based on what we find.
+  preIncDec: new TokenType("++/--", {prefix, postfix}),
+  postIncDec: new TokenType("++/--", {prefix, postfix}),
   bang: new TokenType("!", {prefix}),
   tilde: new TokenType("~", {prefix}),
   pipeline: new BinopTokenType("|>", 0),

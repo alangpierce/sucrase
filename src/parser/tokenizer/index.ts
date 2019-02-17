@@ -407,7 +407,8 @@ function readToken_plus_min(code: number): void {
   const nextChar = input.charCodeAt(state.pos + 1);
 
   if (nextChar === code) {
-    finishOp(tt.incDec, 2);
+    // Tentatively call this a prefix operator, but it might be changed to postfix later.
+    finishOp(tt.preIncDec, 2);
     return;
   }
 

@@ -235,6 +235,11 @@ export function parseMaybeUnary(): boolean {
     return true;
   }
   while (state.type & TokenType.IS_POSTFIX && !canInsertSemicolon()) {
+    // The tokenizer calls everything a preincrement, so make it a postincrement when
+    // we see it in that context.
+    if (state.type === tt.preIncDec) {
+      state.type = tt.postIncDec;
+    }
     next();
   }
   return false;

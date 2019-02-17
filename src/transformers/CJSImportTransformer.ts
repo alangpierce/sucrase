@@ -60,11 +60,23 @@ export default class CJSImportTransformer extends Transformer {
       this.hadExport = true;
       return this.processExport();
     }
+    if (this.tokens.matches2(tt.name, tt.postIncDec)) {
+      // Fall through to normal identifier matching if this doesn't apply.
+      if (this.processPostIncDec()) {
+        return true;
+      }
+    }
     if (this.tokens.matches1(tt.name) || this.tokens.matches1(tt.jsxName)) {
       return this.processIdentifier();
     }
     if (this.tokens.matches1(tt.eq)) {
       return this.processAssignment();
+    }
+    if (this.tokens.matches1(tt.assign)) {
+      return this.processComplexAssignment();
+    }
+    if (this.tokens.matches1(tt.preIncDec)) {
+      return this.processPreIncDec();
     }
     return false;
   }
@@ -279,6 +291,9 @@ export default class CJSImportTransformer extends Transformer {
     if (identifierToken.isType || identifierToken.type !== tt.name) {
       return false;
     }
+    if (identifierToken.shadowsGlobal) {
+      return false;
+    }
     if (index >= 2 && this.tokens.matches1AtIndex(index - 2, tt.dot)) {
       return false;
     }
@@ -288,14 +303,108 @@ export default class CJSImportTransformer extends Transformer {
       // since the assignment is just redundant.
       return false;
     }
-    const exportedName = this.importProcessor.resolveExportBinding(
+    const assignmentSnippet = this.importProcessor.resolveExportBinding(
       this.tokens.identifierNameForToken(identifierToken),
     );
-    if (!exportedName) {
+    if (!assignmentSnippet) {
       return false;
     }
     this.tokens.copyToken();
-    this.tokens.appendCode(` exports.${exportedName} =`);
+    this.tokens.appendCode(` ${assignmentSnippet} =`);
+    return true;
+  }
+
+  /**
+   * Process something like `a += 3`, where `a` might be an exported value.
+   */
+  private processComplexAssignment(): boolean {
+    const index = this.tokens.currentIndex();
+    const identifierToken = this.tokens.tokens[index - 1];
+    if (identifierToken.type !== tt.name) {
+      return false;
+    }
+    if (identifierToken.shadowsGlobal) {
+      return false;
+    }
+    if (index >= 2 && this.tokens.matches1AtIndex(index - 2, tt.dot)) {
+      return false;
+    }
+    const assignmentSnippet = this.importProcessor.resolveExportBinding(
+      this.tokens.identifierNameForToken(identifierToken),
+    );
+    if (!assignmentSnippet) {
+      return false;
+    }
+    this.tokens.appendCode(` = ${assignmentSnippet}`);
+    this.tokens.copyToken();
+    return true;
+  }
+
+  /**
+   * Process something like `++a`, where `a` might be an exported value.
+   */
+  private processPreIncDec(): boolean {
+    const index = this.tokens.currentIndex();
+    const identifierToken = this.tokens.tokens[index + 1];
+    if (identifierToken.type !== tt.name) {
+      return false;
+    }
+    if (identifierToken.shadowsGlobal) {
+      return false;
+    }
+    // Ignore things like ++a.b and ++a[b] and ++a().b.
+    if (
+      index + 2 < this.tokens.tokens.length &&
+      (this.tokens.matches1AtIndex(index + 2, tt.dot) ||
+        this.tokens.matches1AtIndex(index + 2, tt.bracketL) ||
+        this.tokens.matches1AtIndex(index + 2, tt.parenL))
+    ) {
+      return false;
+    }
+    const identifierName = this.tokens.identifierNameForToken(identifierToken);
+    const assignmentSnippet = this.importProcessor.resolveExportBinding(identifierName);
+    if (!assignmentSnippet) {
+      return false;
+    }
+    this.tokens.appendCode(`${assignmentSnippet} = `);
+    this.tokens.copyToken();
+    return true;
+  }
+
+  /**
+   * Process something like `a++`, where `a` might be an exported value.
+   * This starts at the `a`, not at the `++`.
+   */
+  private processPostIncDec(): boolean {
+    const index = this.tokens.currentIndex();
+    const identifierToken = this.tokens.tokens[index];
+    const operatorToken = this.tokens.tokens[index + 1];
+    if (identifierToken.type !== tt.name) {
+      return false;
+    }
+    if (identifierToken.shadowsGlobal) {
+      return false;
+    }
+    if (index >= 1 && this.tokens.matches1AtIndex(index - 1, tt.dot)) {
+      return false;
+    }
+    const identifierName = this.tokens.identifierNameForToken(identifierToken);
+    const assignmentSnippet = this.importProcessor.resolveExportBinding(identifierName);
+    if (!assignmentSnippet) {
+      return false;
+    }
+    const operatorCode = this.tokens.rawCodeForToken(operatorToken);
+    // We might also replace the identifier with something like exports.x, so
+    // do that replacement here as well.
+    const base = this.importProcessor.getIdentifierReplacement(identifierName) || identifierName;
+    if (operatorCode === "++") {
+      this.tokens.replaceToken(`(${base} = ${assignmentSnippet} = ${base} + 1, ${base} - 1)`);
+    } else if (operatorCode === "--") {
+      this.tokens.replaceToken(`(${base} = ${assignmentSnippet} = ${base} - 1, ${base} + 1)`);
+    } else {
+      throw new Error(`Unexpected operator: ${operatorCode}`);
+    }
+    this.tokens.removeToken();
     return true;
   }
 

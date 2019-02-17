@@ -245,4 +245,34 @@ describe("tokens", () => {
       ],
     );
   });
+
+  it("distinguishes pre-increment and post-increment", () => {
+    assertTokens(
+      `
+      a = b
+      ++c
+      d++
+      e = f++
+      g = ++h
+    `,
+      [
+        {type: tt.name},
+        {type: tt.eq},
+        {type: tt.name},
+        {type: tt.preIncDec},
+        {type: tt.name},
+        {type: tt.name},
+        {type: tt.postIncDec},
+        {type: tt.name},
+        {type: tt.eq},
+        {type: tt.name},
+        {type: tt.postIncDec},
+        {type: tt.name},
+        {type: tt.eq},
+        {type: tt.preIncDec},
+        {type: tt.name},
+        {type: tt.eof},
+      ],
+    );
+  });
 });

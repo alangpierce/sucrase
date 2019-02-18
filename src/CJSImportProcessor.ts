@@ -36,6 +36,7 @@ export default class CJSImportProcessor {
 
   private interopRequireWildcardName: string;
   private interopRequireDefaultName: string;
+  private createStarExportName: string;
 
   constructor(
     readonly nameManager: NameManager,
@@ -70,6 +71,23 @@ export default class CJSImportProcessor {
           return obj && obj.__esModule ? obj : { default: obj };
         }`.replace(/\s+/g, " ");
     }
+    if (this.createStarExportName) {
+      // Note that TypeScript and Babel do this differently; TypeScript does a simple existence
+      // check in the exports object and does a plain assignment, whereas Babel uses
+      // defineProperty and builds an object of explicitly-exported names so that star exports can
+      // always take lower precedence. For now, we do the easier TypeScript thing.
+      prefix += `
+        function ${this.createStarExportName}(obj) {
+          Object.keys(obj)
+            .filter((key) => key !== "default" && key !== "__esModule")
+            .forEach((key) => {
+              if (exports.hasOwnProperty(key)) {
+                return;
+              }
+              Object.defineProperty(exports, key, {enumerable: true, get: () => obj[key]});
+            });
+        }`.replace(/\s+/g, " ");
+    }
     return prefix;
   }
 
@@ -85,6 +103,13 @@ export default class CJSImportProcessor {
       this.interopRequireDefaultName = this.nameManager.claimFreeName("_interopRequireDefault");
     }
     return this.interopRequireDefaultName;
+  }
+
+  getCreateStarExportName(): string {
+    if (!this.createStarExportName) {
+      this.createStarExportName = this.nameManager.claimFreeName("_createStarExport");
+    }
+    return this.createStarExportName;
   }
 
   preprocessTokens(): void {
@@ -185,15 +210,7 @@ export default class CJSImportProcessor {
         requireCode += ` exports.${exportStarName} = ${secondaryImportName};`;
       }
       if (hasStarExport) {
-        // Note that TypeScript and Babel do this differently; TypeScript does a simple existence
-        // check in the exports object and does a plain assignment, whereas Babel uses
-        // defineProperty and builds an object of explicitly-exported names so that star exports can
-        // always take lower precedence. For now, we do the easier TypeScript thing.a
-        requireCode += ` Object.keys(${primaryImportName}).filter(key => \
-key !== 'default' && key !== '__esModule').forEach(key => { \
-if (exports.hasOwnProperty(key)) { return; } \
-Object.defineProperty(exports, key, {enumerable: true, \
-get: () => ${primaryImportName}[key]}); });`;
+        requireCode += ` ${this.getCreateStarExportName()}(${primaryImportName});`;
       }
 
       this.importsToReplace.set(path, requireCode);

@@ -1,4 +1,5 @@
 import {
+  CREATE_STAR_EXPORT_PREFIX,
   ESMODULE_PREFIX,
   IMPORT_DEFAULT_PREFIX,
   IMPORT_WILDCARD_PREFIX,
@@ -834,8 +835,8 @@ describe("typescript transform", () => {
       `
       export * from './MyVars';
     `,
-      `"use strict";${ESMODULE_PREFIX}
-      var _MyVars = require('./MyVars'); Object.keys(_MyVars).filter(key => key !== 'default' && key !== '__esModule').forEach(key => { if (exports.hasOwnProperty(key)) { return; } Object.defineProperty(exports, key, {enumerable: true, get: () => _MyVars[key]}); });
+      `"use strict";${CREATE_STAR_EXPORT_PREFIX}${ESMODULE_PREFIX}
+      var _MyVars = require('./MyVars'); _createStarExport(_MyVars);
     `,
     );
   });

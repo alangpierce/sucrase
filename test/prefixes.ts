@@ -4,8 +4,11 @@ return obj && obj.__esModule ? obj : { default: obj }; }`;
 export const IMPORT_WILDCARD_PREFIX = ` function _interopRequireWildcard(obj) { \
 if (obj && obj.__esModule) { return obj; } else { var newObj = {}; \
 if (obj != null) { for (var key in obj) { \
-if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } \
+if (Object.prototype.hasOwnProperty.call(obj, key)) { newObj[key] = obj[key]; } } } \
 newObj.default = obj; return newObj; } }`;
+export const CREATE_NAMED_EXPORT_FROM_PREFIX = ` function _createNamedExportFrom(obj, \
+localName, importedName) { Object.defineProperty(exports, localName, \
+{enumerable: true, get: () => obj[importedName]}); }`;
 export const CREATE_STAR_EXPORT_PREFIX = ` function _createStarExport(obj) { \
 Object.keys(obj) .filter((key) => key !== "default" && key !== "__esModule") \
 .forEach((key) => { if (exports.hasOwnProperty(key)) { return; } \

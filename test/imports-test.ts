@@ -1,4 +1,5 @@
 import {
+  CREATE_NAMED_EXPORT_FROM_PREFIX,
   CREATE_STAR_EXPORT_PREFIX,
   ESMODULE_PREFIX,
   IMPORT_DEFAULT_PREFIX,
@@ -253,7 +254,7 @@ exports.a = a; exports.b = b;
       `"use strict"; function _interopRequireWildcard2(obj) { \
 if (obj && obj.__esModule) { return obj; } else { var newObj = {}; \
 if (obj != null) { for (var key in obj) { \
-if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } \
+if (Object.prototype.hasOwnProperty.call(obj, key)) { newObj[key] = obj[key]; } } } \
 newObj.default = obj; return newObj; } } function _interopRequireDefault3(obj) { \
 return obj && obj.__esModule ? obj : { default: obj }; }
       var _foo = require('foo'); var foo = _interopRequireWildcard2(_foo);
@@ -793,9 +794,9 @@ module.exports = exports.default;
       export {x} from './MyVars';
       export {a as b, c as d} from './MyOtherVars';
     `,
-      `"use strict";${ESMODULE_PREFIX}
-      var _MyVars = require('./MyVars'); Object.defineProperty(exports, 'x', {enumerable: true, get: () => _MyVars.x});
-      var _MyOtherVars = require('./MyOtherVars'); Object.defineProperty(exports, 'b', {enumerable: true, get: () => _MyOtherVars.a}); Object.defineProperty(exports, 'd', {enumerable: true, get: () => _MyOtherVars.c});
+      `"use strict";${CREATE_NAMED_EXPORT_FROM_PREFIX}${ESMODULE_PREFIX}
+      var _MyVars = require('./MyVars'); _createNamedExportFrom(_MyVars, 'x', 'x');
+      var _MyOtherVars = require('./MyOtherVars'); _createNamedExportFrom(_MyOtherVars, 'b', 'a'); _createNamedExportFrom(_MyOtherVars, 'd', 'c');
     `,
     );
   });

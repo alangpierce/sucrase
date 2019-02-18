@@ -36,6 +36,7 @@ export default class CJSImportProcessor {
 
   private interopRequireWildcardName: string;
   private interopRequireDefaultName: string;
+  private createNamedExportFromName: string;
   private createStarExportName: string;
 
   constructor(
@@ -56,10 +57,11 @@ export default class CJSImportProcessor {
             var newObj = {};
             if (obj != null) {
               for (var key in obj) {
-                if (Object.prototype.hasOwnProperty.call(obj, key))
+                if (Object.prototype.hasOwnProperty.call(obj, key)) {
                   newObj[key] = obj[key];
                 }
               }
+            }
             newObj.default = obj;
             return newObj;
           }
@@ -69,6 +71,12 @@ export default class CJSImportProcessor {
       prefix += `
         function ${this.interopRequireDefaultName}(obj) {
           return obj && obj.__esModule ? obj : { default: obj };
+        }`.replace(/\s+/g, " ");
+    }
+    if (this.createNamedExportFromName) {
+      prefix += `
+        function ${this.createNamedExportFromName}(obj, localName, importedName) {
+          Object.defineProperty(exports, localName, {enumerable: true, get: () => obj[importedName]});
         }`.replace(/\s+/g, " ");
     }
     if (this.createStarExportName) {
@@ -103,6 +111,13 @@ export default class CJSImportProcessor {
       this.interopRequireDefaultName = this.nameManager.claimFreeName("_interopRequireDefault");
     }
     return this.interopRequireDefaultName;
+  }
+
+  getCreateNamedExportFromName(): string {
+    if (!this.createNamedExportFromName) {
+      this.createNamedExportFromName = this.nameManager.claimFreeName("_createNamedExportFrom");
+    }
+    return this.createNamedExportFromName;
   }
 
   getCreateStarExportName(): string {
@@ -203,8 +218,7 @@ export default class CJSImportProcessor {
       }
 
       for (const {importedName, localName} of namedExports) {
-        requireCode += ` Object.defineProperty(exports, '${localName}', \
-{enumerable: true, get: () => ${primaryImportName}.${importedName}});`;
+        requireCode += ` ${this.getCreateNamedExportFromName()}(${primaryImportName}, '${localName}', '${importedName}');`;
       }
       for (const exportStarName of exportStarNames) {
         requireCode += ` exports.${exportStarName} = ${secondaryImportName};`;

@@ -1,3 +1,4 @@
+import {HelperManager} from "./HelperManager";
 import {Options} from "./index";
 import NameManager from "./NameManager";
 import {isDeclaration} from "./parser/tokenizer";
@@ -33,98 +34,19 @@ export default class CJSImportProcessor {
   private importsToReplace: Map<string, string> = new Map();
   private identifierReplacements: Map<string, string> = new Map();
   private exportBindingsByLocalName: Map<string, Array<string>> = new Map();
-
-  private interopRequireWildcardName: string;
-  private interopRequireDefaultName: string;
-  private createNamedExportFromName: string;
-  private createStarExportName: string;
+  private helpers: HelperManager;
 
   constructor(
     readonly nameManager: NameManager,
     readonly tokens: TokenProcessor,
     readonly enableLegacyTypeScriptModuleInterop: boolean,
     readonly options: Options,
-  ) {}
+  ) {
+    this.helpers = new HelperManager(nameManager);
+  }
 
   getPrefixCode(): string {
-    let prefix = "";
-    if (this.interopRequireWildcardName) {
-      prefix += `
-        function ${this.interopRequireWildcardName}(obj) {
-          if (obj && obj.__esModule) {
-            return obj;
-          } else {
-            var newObj = {};
-            if (obj != null) {
-              for (var key in obj) {
-                if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                  newObj[key] = obj[key];
-                }
-              }
-            }
-            newObj.default = obj;
-            return newObj;
-          }
-        }`.replace(/\s+/g, " ");
-    }
-    if (this.interopRequireDefaultName) {
-      prefix += `
-        function ${this.interopRequireDefaultName}(obj) {
-          return obj && obj.__esModule ? obj : { default: obj };
-        }`.replace(/\s+/g, " ");
-    }
-    if (this.createNamedExportFromName) {
-      prefix += `
-        function ${this.createNamedExportFromName}(obj, localName, importedName) {
-          Object.defineProperty(exports, localName, {enumerable: true, get: () => obj[importedName]});
-        }`.replace(/\s+/g, " ");
-    }
-    if (this.createStarExportName) {
-      // Note that TypeScript and Babel do this differently; TypeScript does a simple existence
-      // check in the exports object and does a plain assignment, whereas Babel uses
-      // defineProperty and builds an object of explicitly-exported names so that star exports can
-      // always take lower precedence. For now, we do the easier TypeScript thing.
-      prefix += `
-        function ${this.createStarExportName}(obj) {
-          Object.keys(obj)
-            .filter((key) => key !== "default" && key !== "__esModule")
-            .forEach((key) => {
-              if (exports.hasOwnProperty(key)) {
-                return;
-              }
-              Object.defineProperty(exports, key, {enumerable: true, get: () => obj[key]});
-            });
-        }`.replace(/\s+/g, " ");
-    }
-    return prefix;
-  }
-
-  getInteropRequireWildcardName(): string {
-    if (!this.interopRequireWildcardName) {
-      this.interopRequireWildcardName = this.nameManager.claimFreeName("_interopRequireWildcard");
-    }
-    return this.interopRequireWildcardName;
-  }
-
-  getInteropRequireDefaultName(): string {
-    if (!this.interopRequireDefaultName) {
-      this.interopRequireDefaultName = this.nameManager.claimFreeName("_interopRequireDefault");
-    }
-    return this.interopRequireDefaultName;
-  }
-
-  getCreateNamedExportFromName(): string {
-    if (!this.createNamedExportFromName) {
-      this.createNamedExportFromName = this.nameManager.claimFreeName("_createNamedExportFrom");
-    }
-    return this.createNamedExportFromName;
-  }
-
-  getCreateStarExportName(): string {
-    if (!this.createStarExportName) {
-      this.createStarExportName = this.nameManager.claimFreeName("_createStarExport");
-    }
-    return this.createStarExportName;
+    return this.helpers.emitHelpers();
   }
 
   preprocessTokens(): void {
@@ -208,23 +130,29 @@ export default class CJSImportProcessor {
         for (const wildcardName of wildcardNames) {
           const moduleExpr = this.enableLegacyTypeScriptModuleInterop
             ? primaryImportName
-            : `${this.getInteropRequireWildcardName()}(${primaryImportName})`;
+            : `${this.helpers.getHelperName("interopRequireWildcard")}(${primaryImportName})`;
           requireCode += ` var ${wildcardName} = ${moduleExpr};`;
         }
       } else if (exportStarNames.length > 0 && secondaryImportName !== primaryImportName) {
-        requireCode += ` var ${secondaryImportName} = ${this.getInteropRequireWildcardName()}(${primaryImportName});`;
+        requireCode += ` var ${secondaryImportName} = ${this.helpers.getHelperName(
+          "interopRequireWildcard",
+        )}(${primaryImportName});`;
       } else if (defaultNames.length > 0 && secondaryImportName !== primaryImportName) {
-        requireCode += ` var ${secondaryImportName} = ${this.getInteropRequireDefaultName()}(${primaryImportName});`;
+        requireCode += ` var ${secondaryImportName} = ${this.helpers.getHelperName(
+          "interopRequireDefault",
+        )}(${primaryImportName});`;
       }
 
       for (const {importedName, localName} of namedExports) {
-        requireCode += ` ${this.getCreateNamedExportFromName()}(${primaryImportName}, '${localName}', '${importedName}');`;
+        requireCode += ` ${this.helpers.getHelperName(
+          "createNamedExportFrom",
+        )}(${primaryImportName}, '${localName}', '${importedName}');`;
       }
       for (const exportStarName of exportStarNames) {
         requireCode += ` exports.${exportStarName} = ${secondaryImportName};`;
       }
       if (hasStarExport) {
-        requireCode += ` ${this.getCreateStarExportName()}(${primaryImportName});`;
+        requireCode += ` ${this.helpers.getHelperName("createStarExport")}(${primaryImportName});`;
       }
 
       this.importsToReplace.set(path, requireCode);

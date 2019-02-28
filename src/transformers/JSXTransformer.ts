@@ -3,6 +3,7 @@ import {Options} from "../index";
 import NameManager from "../NameManager";
 import XHTMLEntities from "../parser/plugins/jsx/xhtml";
 import {TokenType as tt} from "../parser/tokenizer/types";
+import {charCodes} from "../parser/util/charcodes";
 import TokenProcessor from "../TokenProcessor";
 import getJSXPragmaInfo, {JSXPragmaInfo} from "../util/getJSXPragmaInfo";
 import RootTransformer from "./RootTransformer";
@@ -251,8 +252,15 @@ export default class JSXTransformer extends Transformer {
   }
 }
 
+/**
+ * Spec for identifiers: https://tc39.github.io/ecma262/#prod-IdentifierStart.
+ *
+ * Really only treat anything starting with a-z as tag names.  `_`, `$`, `é`
+ * should be treated as copmonent names
+ */
 export function startsWithLowerCase(s: string): boolean {
-  return s[0] === s[0].toLowerCase();
+  const firstChar = s.charCodeAt(0);
+  return firstChar >= charCodes.lowercaseA && firstChar <= charCodes.lowercaseZ;
 }
 
 /**

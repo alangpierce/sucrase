@@ -1,7 +1,7 @@
-diff --git a/Gulpfile.js b/Gulpfile.js
+diff --git c/Gulpfile.js w/Gulpfile.js
 index a03b34f15..b8a30ddae 100644
---- a/Gulpfile.js
-+++ b/Gulpfile.js
+--- c/Gulpfile.js
++++ w/Gulpfile.js
 @@ -4,7 +4,7 @@ const plumber = require("gulp-plumber");
  const through = require("through2");
  const chalk = require("chalk");
@@ -39,10 +39,10 @@ index a03b34f15..b8a30ddae 100644
  });
  
  gulp.task("default", gulp.series("build"));
-diff --git a/Makefile b/Makefile
+diff --git c/Makefile w/Makefile
 index a23354d7b..0f5e4b6f8 100644
---- a/Makefile
-+++ b/Makefile
+--- c/Makefile
++++ w/Makefile
 @@ -66,7 +66,9 @@ test-only:
  	BABEL_ENV=test ./scripts/test.sh
  	make test-clean
@@ -69,10 +69,10 @@ index a23354d7b..0f5e4b6f8 100644
  	./node_modules/.bin/lerna bootstrap -- --ignore-engines
  	make build
  	cd packages/babel-runtime; \
-diff --git a/package.json b/package.json
+diff --git c/package.json w/package.json
 index 2ef4be29b..cdcb4632d 100644
---- a/package.json
-+++ b/package.json
+--- c/package.json
++++ w/package.json
 @@ -77,6 +77,9 @@
      ]
    },
@@ -83,10 +83,23 @@ index 2ef4be29b..cdcb4632d 100644
      "collectCoverageFrom": [
        "packages/*/src/**/*.mjs",
        "packages/*/src/**/*.js",
-diff --git a/scripts/gulp-tasks.js b/scripts/gulp-tasks.js
+diff --git c/packages/babel-plugin-transform-regenerator/package.json w/packages/babel-plugin-transform-regenerator/package.json
+index d7c9c2eae..efb3cc149 100644
+--- c/packages/babel-plugin-transform-regenerator/package.json
++++ w/packages/babel-plugin-transform-regenerator/package.json
+@@ -7,7 +7,7 @@
+   "repository": "https://github.com/babel/babel/tree/master/packages/babel-plugin-transform-regenerator",
+   "main": "lib/index.js",
+   "dependencies": {
+-    "regenerator-transform": "^0.13.3"
++    "regenerator-transform": "0.13.3"
+   },
+   "license": "MIT",
+   "peerDependencies": {
+diff --git c/scripts/gulp-tasks.js w/scripts/gulp-tasks.js
 index f3c696de5..5eab2452a 100644
---- a/scripts/gulp-tasks.js
-+++ b/scripts/gulp-tasks.js
+--- c/scripts/gulp-tasks.js
++++ w/scripts/gulp-tasks.js
 @@ -19,6 +19,7 @@ const RootMostResolvePlugin = require("webpack-dependency-suite")
  const webpack = require("webpack");
  const webpackStream = require("webpack-stream");

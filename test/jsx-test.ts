@@ -37,6 +37,33 @@ describe("transform JSX", () => {
     );
   });
 
+  it("handles more esoteric component names", () => {
+    assertResult(
+      `
+      <_Foo />
+    `,
+      `${JSX_PREFIX}
+      React.createElement(_Foo, {${devProps(2)}} )
+    `,
+    );
+    assertResult(
+      `
+      <$ />
+    `,
+      `${JSX_PREFIX}
+      React.createElement($, {${devProps(2)}} )
+    `,
+    );
+    assertResult(
+      `
+      <é />
+    `,
+      `${JSX_PREFIX}
+      React.createElement(é, {${devProps(2)}} )
+    `,
+    );
+  });
+
   it("transforms nested JSX elements", () => {
     assertResult(
       `

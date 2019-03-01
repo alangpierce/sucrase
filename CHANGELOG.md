@@ -1,3 +1,10 @@
+# 3.9.6 (2019-03-01)
+
+* Fix Flow bug where `implements` caused the class name to be incorrectly recognized. ([#409])
+* Correctly handle `!:` in TS variable declarations. ([#410])
+* Move more import code into helper functions in prep for some upcoming changes.
+* Fix bug where some JSX component names were incorrectly turned into strings. ([#425]) (Yang Zhang)
+
 # 3.9.5 (2019-01-13)
 
 * Fix bug when processing a declaration that looks like an export assignment. ([#402])
@@ -202,3 +209,6 @@
 [#402]: https://github.com/alangpierce/sucrase/pull/402
 [#403]: https://github.com/alangpierce/sucrase/pull/403
 [#405]: https://github.com/alangpierce/sucrase/pull/405
+[#409]: https://github.com/alangpierce/sucrase/pull/409
+[#410]: https://github.com/alangpierce/sucrase/pull/410
+[#425]: https://github.com/alangpierce/sucrase/pull/425

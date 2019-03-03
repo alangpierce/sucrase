@@ -12,11 +12,15 @@ index 3e891362..a6039e3f 100644
      "prelint": "npm run lint-fix",
      "lint": "lerna run -- lint",
 diff --git a/packages/apollo-cache-inmemory/package.json b/packages/apollo-cache-inmemory/package.json
-index 1e2ba3a2..295e7b24 100644
+index 1e2ba3a2..5588b1d4 100644
 --- a/packages/apollo-cache-inmemory/package.json
 +++ b/packages/apollo-cache-inmemory/package.json
-@@ -26,7 +26,7 @@
-     "test": "jest",
+@@ -23,10 +23,10 @@
+   "homepage": "https://github.com/apollographql/apollo-client#readme",
+   "scripts": {
+     "coverage": "jest --coverage",
+-    "test": "jest",
++    "test": "jest --no-cache",
      "lint": "tslint --type-check -p tsconfig.json src/*.ts",
      "prebuild": "npm run clean",
 -    "build": "tsc -p .",
@@ -33,11 +37,30 @@ index 1e2ba3a2..295e7b24 100644
      },
      "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
      "moduleFileExtensions": ["ts", "tsx", "js", "json"]
+diff --git a/packages/apollo-cache-inmemory/src/__tests__/__snapshots__/mapCache.ts.snap b/packages/apollo-cache-inmemory/src/__tests__/__snapshots__/mapCache.ts.snap
+index 64a68e89..f1d314e5 100644
+--- a/packages/apollo-cache-inmemory/src/__tests__/__snapshots__/mapCache.ts.snap
++++ b/packages/apollo-cache-inmemory/src/__tests__/__snapshots__/mapCache.ts.snap
+@@ -1,8 +1,6 @@
+ // Jest Snapshot v1, https://goo.gl/fbAQLP
+ 
+-exports[
+-  `MapCache writing to the store throws when trying to write an object without id that was previously queried with id 1`
+-] = `
++exports[`MapCache writing to the store throws when trying to write an object without id that was previously queried with id 1`] = `
+ "Error writing result to store for query:
+  query Failure {
+   item {
 diff --git a/packages/apollo-cache/package.json b/packages/apollo-cache/package.json
-index 9f56fcf5..9d686661 100644
+index 9f56fcf5..63e5de58 100644
 --- a/packages/apollo-cache/package.json
 +++ b/packages/apollo-cache/package.json
-@@ -27,7 +27,7 @@
+@@ -23,11 +23,11 @@
+   "homepage": "https://github.com/apollographql/apollo-client#readme",
+   "scripts": {
+     "coverage": "jest --coverage",
+-    "test": "jest",
++    "test": "jest --no-cache",
      "lint":
        "tslint --type-check -p tsconfig.json src/*.ts && tslint --type-check -p tsconfig.json tests/*.ts",
      "prebuild": "npm run clean",
@@ -56,10 +79,15 @@ index 9f56fcf5..9d686661 100644
      "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
      "moduleFileExtensions": ["ts", "tsx", "js", "json"]
 diff --git a/packages/apollo-client-preset/package.json b/packages/apollo-client-preset/package.json
-index 8adfdd8a..6096d237 100644
+index 8adfdd8a..e7ece34e 100644
 --- a/packages/apollo-client-preset/package.json
 +++ b/packages/apollo-client-preset/package.json
-@@ -24,7 +24,7 @@
+@@ -20,11 +20,11 @@
+   },
+   "homepage": "https://github.com/apollographql/apollo-client#readme",
+   "scripts": {
+-    "test": "jest",
++    "test": "jest --no-cache",
      "coverage": "jest --coverage",
      "lint": "tslint --type-check -p tsconfig.json src/*.ts",
      "prebuild": "npm run clean",
@@ -91,10 +119,18 @@ index f38b5ec6..dd45bc67 100644
  export default class DefaultClient<
    TCache = NormalizedCache
 diff --git a/packages/apollo-client/package.json b/packages/apollo-client/package.json
-index d75f3c8c..f5f05f0f 100644
+index d75f3c8c..4e98e472 100644
 --- a/packages/apollo-client/package.json
 +++ b/packages/apollo-client/package.json
-@@ -18,7 +18,7 @@
+@@ -11,14 +11,14 @@
+     "coverage": "jest --coverage",
+     "dev": "./scripts/dev.sh",
+     "deploy": "./scripts/deploy.sh",
+-    "test": "jest",
++    "test": "jest --no-cache",
+     "benchmark":
+       "npm run build:benchmark && node benchmark_lib/benchmark/index.js",
+     "benchmark:inspect":
        "npm run build:benchmark && node --inspect --debug-brk benchmark_lib/benchmark/index.js",
      "filesize": "npm run build && npm run build:browser",
      "type-check": "flow check",
@@ -151,10 +187,15 @@ index 23685547..0eeeab31 100644
        try {
          handleCount++;
 diff --git a/packages/apollo-utilities/package.json b/packages/apollo-utilities/package.json
-index 1cbdb3c1..e3074837 100644
+index 1cbdb3c1..51461c3f 100644
 --- a/packages/apollo-utilities/package.json
 +++ b/packages/apollo-utilities/package.json
-@@ -26,7 +26,7 @@
+@@ -22,11 +22,11 @@
+   },
+   "homepage": "https://github.com/apollographql/apollo-client#readme",
+   "scripts": {
+-    "test": "jest",
++    "test": "jest --no-cache",
      "coverage": "jest --coverage",
      "lint": "tslint --type-check -p tsconfig.json src/*.ts",
      "prebuild": "npm run clean",
@@ -173,14 +214,16 @@ index 1cbdb3c1..e3074837 100644
      "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
      "moduleFileExtensions": ["ts", "tsx", "js", "json"]
 diff --git a/packages/graphql-anywhere/package.json b/packages/graphql-anywhere/package.json
-index fbc98de7..93f7410f 100644
+index fbc98de7..7f99e847 100644
 --- a/packages/graphql-anywhere/package.json
 +++ b/packages/graphql-anywhere/package.json
-@@ -9,7 +9,7 @@
+@@ -8,8 +8,8 @@
+   "typings": "./lib/index.d.ts",
    "scripts": {
      "coverage": "jest --coverage",
-     "test": "jest",
+-    "test": "jest",
 -    "build": "tsc",
++    "test": "jest --no-cache",
 +    "build": "sucrase src -d lib --exclude-dirs __tests__ --transforms typescript,imports",
      "postbuild": "npm run bundle",
      "bundle": "rollup -c rollup.config.js && rollup -c rollup.async.config.js",

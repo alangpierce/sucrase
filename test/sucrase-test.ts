@@ -747,4 +747,28 @@ describe("sucrase", () => {
   it("handles a file with only an assignment", () => {
     assertResult("a = 1", '"use strict";a = 1', {transforms: ["imports"]});
   });
+
+  it("handles a standalone comment that looks like it could be a regex", () => {
+    assertResult(
+      `
+      /*/*/;
+    `,
+      `
+      /*/*/;
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("handles a comment that looks like it could be a regex after a string", () => {
+    assertResult(
+      `
+      let thing = "sup" /*/*/;
+    `,
+      `
+      let thing = "sup" /*/*/;
+    `,
+      {transforms: []},
+    );
+  });
 });

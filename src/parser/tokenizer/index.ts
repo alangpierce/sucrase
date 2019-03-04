@@ -265,6 +265,7 @@ export function skipSpace(): void {
       case charCodes.slash:
         switch (input.charCodeAt(state.pos + 1)) {
           case charCodes.asterisk:
+            state.pos += 2;
             skipBlockComment();
             break;
 

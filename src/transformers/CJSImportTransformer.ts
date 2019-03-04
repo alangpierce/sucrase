@@ -4,6 +4,11 @@ import {IdentifierRole, isDeclaration, isObjectShorthandDeclaration} from "../pa
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
+import getDeclarationInfo, {
+  DeclarationInfo,
+  EMPTY_DECLARATION_INFO,
+} from "../util/getDeclarationInfo";
+import shouldElideDefaultExport from "../util/shouldElideDefaultExport";
 import ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
 import RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
@@ -15,6 +20,7 @@ export default class CJSImportTransformer extends Transformer {
   private hadExport: boolean = false;
   private hadNamedExport: boolean = false;
   private hadDefaultExport: boolean = false;
+  private declarationInfo: DeclarationInfo;
 
   constructor(
     readonly rootTransformer: RootTransformer,
@@ -23,8 +29,12 @@ export default class CJSImportTransformer extends Transformer {
     readonly nameManager: NameManager,
     readonly reactHotLoaderTransformer: ReactHotLoaderTransformer | null,
     readonly enableLegacyBabel5ModuleInterop: boolean,
+    readonly isTypeScriptTransformEnabled: boolean,
   ) {
     super();
+    this.declarationInfo = isTypeScriptTransformEnabled
+      ? getDeclarationInfo(tokens)
+      : EMPTY_DECLARATION_INFO;
   }
 
   getPrefixCode(): string {
@@ -433,16 +443,25 @@ export default class CJSImportTransformer extends Transformer {
       this.tokens.appendCode(` exports.default = ${name};`);
     } else if (this.tokens.matches3(tt._export, tt._default, tt.at)) {
       throw new Error("Export default statements with decorators are not yet supported.");
+      // After this point, this is a plain "export default E" statement.
+    } else if (
+      shouldElideDefaultExport(this.isTypeScriptTransformEnabled, this.tokens, this.declarationInfo)
+    ) {
+      // If the exported value is just an identifier and should be elided by TypeScript
+      // rules, then remove it entirely. It will always have the form `export default e`,
+      // where `e` is an identifier.
+      this.tokens.removeInitialToken();
+      this.tokens.removeToken();
+      this.tokens.removeToken();
     } else if (this.reactHotLoaderTransformer) {
-      // This is a plain "export default E" statement and we need to assign E to a variable.
-      // Change "export default E" to "let _default; exports.default = _default = E"
+      // We need to assign E to a variable. Change "export default E" to
+      // "let _default; exports.default = _default = E"
       const defaultVarName = this.nameManager.claimFreeName("_default");
       this.tokens.replaceToken(`let ${defaultVarName}; exports.`);
       this.tokens.copyToken();
       this.tokens.appendCode(` = ${defaultVarName} =`);
       this.reactHotLoaderTransformer.setExtractedDefaultExportName(defaultVarName);
     } else {
-      // This is a plain "export default E" statement, no additional requirements.
       // Change "export default E" to "exports.default = E"
       this.tokens.replaceToken("exports.");
       this.tokens.copyToken();
@@ -667,6 +686,9 @@ export default class CJSImportTransformer extends Transformer {
    * Transform this:
    * export {a, b as c} from './foo';
    * into the pre-generated Object.defineProperty code from the ImportProcessor.
+   *
+   * For the first case, if the TypeScript transform is enabled, we need to skip
+   * exports that are only defined as types.
    */
   private processExportBindings(): void {
     this.tokens.removeInitialToken();
@@ -689,8 +711,10 @@ export default class CJSImportTransformer extends Transformer {
       } else {
         exportedName = localName;
       }
-      const newLocalName = this.importProcessor.getIdentifierReplacement(localName);
-      exportStatements.push(`exports.${exportedName} = ${newLocalName || localName};`);
+      if (!this.shouldElideExportedIdentifier(localName)) {
+        const newLocalName = this.importProcessor.getIdentifierReplacement(localName);
+        exportStatements.push(`exports.${exportedName} = ${newLocalName || localName};`);
+      }
 
       if (this.tokens.matches1(tt.braceR)) {
         this.tokens.removeToken();
@@ -733,5 +757,9 @@ export default class CJSImportTransformer extends Transformer {
     if (this.tokens.matches1(tt.semi)) {
       this.tokens.removeToken();
     }
+  }
+
+  private shouldElideExportedIdentifier(name: string): boolean {
+    return this.isTypeScriptTransformEnabled && !this.declarationInfo.valueDeclarations.has(name);
   }
 }

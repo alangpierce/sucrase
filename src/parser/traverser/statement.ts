@@ -60,7 +60,12 @@ import {
   parseParenExpression,
   parsePropertyName,
 } from "./expression";
-import {parseBindingAtom, parseBindingIdentifier, parseBindingList} from "./lval";
+import {
+  parseBindingAtom,
+  parseBindingIdentifier,
+  parseBindingList,
+  parseImportedIdentifier,
+} from "./lval";
 import {
   canInsertSemicolon,
   eatContextual,
@@ -854,6 +859,7 @@ function parseClassSuper(): void {
 // Parses module export declaration.
 
 export function parseExport(): void {
+  const exportIndex = state.tokens.length - 1;
   if (isTypeScriptEnabled) {
     if (tsTryParseExport()) {
       return;
@@ -884,6 +890,7 @@ export function parseExport(): void {
     parseExportSpecifiers();
     parseExportFrom();
   }
+  state.tokens[exportIndex].rhsEndIndex = state.tokens.length;
 }
 
 function parseExportDefaultExpression(): void {
@@ -1053,7 +1060,7 @@ function shouldParseDefaultImport(): boolean {
 }
 
 function parseImportSpecifierLocal(): void {
-  parseIdentifier();
+  parseImportedIdentifier();
 }
 
 // Parses a comma-separated list of module imports.
@@ -1106,8 +1113,10 @@ function parseImportSpecifier(): void {
     flowParseImportSpecifier();
     return;
   }
-  parseIdentifier();
-  if (eatContextual(ContextualKeyword._as)) {
-    parseIdentifier();
+  parseImportedIdentifier();
+  if (isContextual(ContextualKeyword._as)) {
+    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ImportAccess;
+    next();
+    parseImportedIdentifier();
   }
 }

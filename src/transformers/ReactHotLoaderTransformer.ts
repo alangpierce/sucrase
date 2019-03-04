@@ -1,4 +1,4 @@
-import {IdentifierRole} from "../parser/tokenizer";
+import {IdentifierRole, isTopLevelDeclaration} from "../parser/tokenizer";
 import TokenProcessor from "../TokenProcessor";
 import Transformer from "./Transformer";
 
@@ -27,8 +27,9 @@ export default class ReactHotLoaderTransformer extends Transformer {
     const topLevelNames = new Set();
     for (const token of this.tokens.tokens) {
       if (
-        token.identifierRole === IdentifierRole.TopLevelDeclaration ||
-        token.identifierRole === IdentifierRole.ObjectShorthandTopLevelDeclaration
+        !token.isType &&
+        isTopLevelDeclaration(token) &&
+        token.identifierRole !== IdentifierRole.ImportDeclaration
       ) {
         topLevelNames.add(this.tokens.identifierNameForToken(token));
       }

@@ -266,9 +266,11 @@ describe("sucrase", () => {
   it("allows using the import keyword as an export", () => {
     assertResult(
       `
+      const Import = null;
       export {Import as import};
     `,
       `"use strict";${ESMODULE_PREFIX}
+      const Import = null;
       exports.import = Import;
     `,
       {transforms: ["jsx", "imports", "typescript"]},

@@ -69,6 +69,7 @@ export default class RootTransformer {
           this.nameManager,
           reactHotLoaderTransformer,
           enableLegacyBabel5ModuleInterop,
+          transforms.includes("typescript"),
         ),
       );
     } else {

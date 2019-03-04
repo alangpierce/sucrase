@@ -26,7 +26,7 @@ import {
   parseTemplate,
   StopState,
 } from "../traverser/expression";
-import {parseBindingList} from "../traverser/lval";
+import {parseBindingIdentifier, parseBindingList, parseImportedIdentifier} from "../traverser/lval";
 import {
   baseParseMaybeDecoratorArguments,
   parseBlockBody,
@@ -203,7 +203,11 @@ function tsFillSignature(returnToken: TokenType): void {
   const returnTokenRequired = returnToken === tt.arrow;
   tsTryParseTypeParameters();
   expect(tt.parenL);
+  // Create a scope even though we're doing type parsing so we don't accidentally
+  // treat params as top-level bindings.
+  state.scopeDepth++;
   tsParseBindingListForSignature(false /* isBlockScope */);
+  state.scopeDepth--;
   if (returnTokenRequired) {
     tsParseTypeOrTypePredicateAnnotation(returnToken);
   } else if (match(returnToken)) {
@@ -673,7 +677,7 @@ function tsParseExpressionWithTypeArguments(): void {
 }
 
 function tsParseInterfaceDeclaration(): void {
-  parseIdentifier();
+  parseBindingIdentifier(false);
   tsTryParseTypeParameters();
   if (eat(tt._extends)) {
     tsParseHeritageClause();
@@ -682,7 +686,7 @@ function tsParseInterfaceDeclaration(): void {
 }
 
 function tsParseTypeAliasDeclaration(): void {
-  parseIdentifier();
+  parseBindingIdentifier(false);
   tsTryParseTypeParameters();
   expect(tt.eq);
   tsParseType();
@@ -704,7 +708,7 @@ function tsParseEnumMember(): void {
 }
 
 function tsParseEnumDeclaration(): void {
-  parseIdentifier();
+  parseBindingIdentifier(false);
   expect(tt.braceL);
   while (!eat(tt.braceR) && !state.error) {
     tsParseEnumMember();
@@ -718,7 +722,7 @@ function tsParseModuleBlock(): void {
 }
 
 function tsParseModuleOrNamespaceDeclaration(): void {
-  parseIdentifier();
+  parseBindingIdentifier(false);
   if (eat(tt.dot)) {
     tsParseModuleOrNamespaceDeclaration();
   } else {
@@ -743,7 +747,7 @@ function tsParseAmbientExternalModuleDeclaration(): void {
 }
 
 export function tsParseImportEqualsDeclaration(): void {
-  parseIdentifier();
+  parseImportedIdentifier();
   expect(tt.eq);
   tsParseModuleReference();
   semicolon();

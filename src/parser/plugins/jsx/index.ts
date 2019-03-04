@@ -139,11 +139,11 @@ function jsxParseEmptyExpression(): void {
 }
 
 // Parse JSX spread child
+// Does not parse the last token.
 function jsxParseSpreadChild(): void {
   expect(tt.braceL);
   expect(tt.ellipsis);
   parseExpression();
-  expect(tt.braceR);
 }
 
 // Parses JSX expression enclosed into curly brackets.
@@ -233,6 +233,7 @@ function jsxParseElementAt(): void {
         case tt.braceL:
           if (lookaheadType() === tt.ellipsis) {
             jsxParseSpreadChild();
+            nextJSXExprToken();
           } else {
             jsxParseExpressionContainer();
             nextJSXExprToken();

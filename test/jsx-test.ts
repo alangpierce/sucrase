@@ -499,6 +499,17 @@ describe("transform JSX", () => {
     throws(() => transform("const x = <", {transforms: ["jsx"]}));
   });
 
+  it("handles spread children", () => {
+    assertResult(
+      `
+      const e = <A>{...b}</A>;
+    `,
+      `${JSX_PREFIX}
+      const e = React.createElement(A, {${devProps(2)}}, ...b);
+    `,
+    );
+  });
+
   describe("with production true", () => {
     it("handles no props", () => {
       assertResult(

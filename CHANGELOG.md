@@ -1,3 +1,9 @@
+# 3.10.0 (2019-03-11)
+
+* Fix bug where `/*/` was being parsed incorrectly. ([#430])
+* Properly parse and compile JSX spread children. ([#431])
+* Implement TypeScript export elision for exported types. ([#433])
+
 # 3.9.6 (2019-03-01)
 
 * Fix Flow bug where `implements` caused the class name to be incorrectly recognized. ([#409])
@@ -212,3 +218,6 @@
 [#409]: https://github.com/alangpierce/sucrase/pull/409
 [#410]: https://github.com/alangpierce/sucrase/pull/410
 [#425]: https://github.com/alangpierce/sucrase/pull/425
+[#430]: https://github.com/alangpierce/sucrase/pull/430
+[#431]: https://github.com/alangpierce/sucrase/pull/431
+[#433]: https://github.com/alangpierce/sucrase/pull/433

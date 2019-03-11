@@ -3325,10 +3325,10 @@ strip-json-comments@^2.0.1, strip-json-comments@~2.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
   integrity sha1-PFMZQukIwml8DsNEhYwobHygpgo=
 
-sucrase@^3.9.6:
-  version "3.9.6"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.9.6.tgz#e5d80d5bef9ee4c31704762e075f543a7875739f"
-  integrity sha512-Z36EUbmeZtdV4c92bCJc+6lcU1P+96NDNtmIjHyOhXr7uBqT0L5aCmeKN9poYvdRKG8kvhr59xPqAdV3v6a6aw==
+sucrase@^3.10.0:
+  version "3.10.0"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.10.0.tgz#e08f194f6c47576eb759ca9d0a82e32271abbca1"
+  integrity sha512-bWXuX3F+P8V7npz1sGuNc3X+MNuUNDy/STNyQI1qN1AVb+0yTKbriTKb/rfXqNVEcRlh5xVE2+Pj4fyzJRhOxA==
   dependencies:
     commander "^2.19.0"
     lines-and-columns "^1.1.6"

@@ -15,6 +15,14 @@ function assertTypeScriptESMResult(code: string, expectedResult: string): void {
   assertResult(code, expectedResult, {transforms: ["jsx", "typescript"]});
 }
 
+function assertTypeScriptImportResult(
+  code: string,
+  {expectedCJSResult, expectedESMResult}: {expectedCJSResult: string; expectedESMResult: string},
+): void {
+  assertTypeScriptResult(code, expectedCJSResult);
+  assertTypeScriptESMResult(code, expectedESMResult);
+}
+
 describe("typescript transform", () => {
   it("removes type assertions using `as`", () => {
     assertTypeScriptResult(
@@ -1440,6 +1448,198 @@ describe("typescript transform", () => {
        class Foo {} exports.Foo = Foo;
       let foo = new Foo();
     `,
+    );
+  });
+
+  it("elides type-only exports", () => {
+    assertTypeScriptImportResult(
+      `
+      type T = number;
+      type U = number;
+      export {T, U as w};
+    `,
+      {
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}
+      
+
+      
+    `,
+        expectedESMResult: `
+      
+
+      export {};
+    `,
+      },
+    );
+  });
+
+  it("preserves non-type exports in ESM mode", () => {
+    assertTypeScriptImportResult(
+      `
+      const T = 3;
+      export {T as u};
+    `,
+      {
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}
+      const T = 3;
+      exports.u = T;
+    `,
+        expectedESMResult: `
+      const T = 3;
+      export {T as u};
+    `,
+      },
+    );
+  });
+
+  it("preserves type-and-non-type exports in ESM mode", () => {
+    assertTypeScriptImportResult(
+      `
+      type T = number;
+      const T = 3;
+      export {T};
+    `,
+      {
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}
+      
+      const T = 3;
+      exports.T = T;
+    `,
+        expectedESMResult: `
+      
+      const T = 3;
+      export {T};
+    `,
+      },
+    );
+  });
+
+  it("elides unknown and type-only exports in CJS, and only elides type-only exports in ESM", () => {
+    assertTypeScriptImportResult(
+      `
+      import A, {b, c as d} from './foo';
+      enum E { X = 1 }
+      class F {}
+      interface G {}
+      function h() {}
+      import I = require('./i');
+      type J = number;
+      export {A, b, c, d, E, F, G, h, I, J};
+    `,
+      {
+        expectedCJSResult: `"use strict";${IMPORT_DEFAULT_PREFIX}${ESMODULE_PREFIX}
+      var _foo = require('./foo'); var _foo2 = _interopRequireDefault(_foo);
+      var E; (function (E) { const X = 1; E[E["X"] = X] = "X"; })(E || (E = {}));
+      class F {}
+      
+      function h() {}
+      const I = exports.I = require('./i');
+      
+      exports.A = _foo2.default; exports.b = _foo.b; exports.d = _foo.c; exports.E = E; exports.F = F; exports.h = h; exports.I = I;
+    `,
+        expectedESMResult: `
+      import A, {b, c as d} from './foo';
+      var E; (function (E) { const X = 1; E[E["X"] = X] = "X"; })(E || (E = {}));
+      class F {}
+      
+      function h() {}
+      const I = require('./i');
+      
+      export {A, b, c, d, E, F, h, I,};
+    `,
+      },
+    );
+  });
+
+  it("elides export default when the value is an identifier declared as a type", () => {
+    assertTypeScriptImportResult(
+      `
+      type T = number;
+      export default T;
+    `,
+      {
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}
+      
+      ;
+    `,
+        expectedESMResult: `
+      
+      ;
+    `,
+      },
+    );
+  });
+
+  it("does not elide export default when the value is a complex expression", () => {
+    assertTypeScriptImportResult(
+      `
+      type T = number;
+      export default T | U;
+    `,
+      {
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}
+      
+      exports. default = T | U;
+    `,
+        expectedESMResult: `
+      
+      export default T | U;
+    `,
+      },
+    );
+  });
+
+  it("does not elide export default when the value is used as a binding within a type", () => {
+    assertTypeScriptImportResult(
+      `
+      type f = (x: number) => void;
+      export default x;
+    `,
+      {
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}
+      
+      exports. default = x;
+    `,
+        expectedESMResult: `
+      
+      export default x;
+    `,
+      },
+    );
+  });
+
+  it("preserves export default when the value is an unknown identifier", () => {
+    assertTypeScriptImportResult(
+      `
+      export default window;
+    `,
+      {
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}
+      exports. default = window;
+    `,
+        expectedESMResult: `
+      export default window;
+    `,
+      },
+    );
+  });
+
+  it("preserves export default when the value is a plain variable", () => {
+    assertTypeScriptImportResult(
+      `
+      const x = 1;
+      export default x;
+    `,
+      {
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}
+      const x = 1;
+      exports. default = x;
+    `,
+        expectedESMResult: `
+      const x = 1;
+      export default x;
+    `,
+      },
     );
   });
 });

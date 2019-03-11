@@ -3,7 +3,12 @@ import NameManager from "../NameManager";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
+import getDeclarationInfo, {
+  DeclarationInfo,
+  EMPTY_DECLARATION_INFO,
+} from "../util/getDeclarationInfo";
 import {getNonTypeIdentifiers} from "../util/getNonTypeIdentifiers";
+import shouldElideDefaultExport from "../util/shouldElideDefaultExport";
 import ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
 import Transformer from "./Transformer";
 
@@ -13,6 +18,7 @@ import Transformer from "./Transformer";
  */
 export default class ESMImportTransformer extends Transformer {
   private nonTypeIdentifiers: Set<string>;
+  private declarationInfo: DeclarationInfo;
 
   constructor(
     readonly tokens: TokenProcessor,
@@ -25,6 +31,9 @@ export default class ESMImportTransformer extends Transformer {
     this.nonTypeIdentifiers = isTypeScriptTransformEnabled
       ? getNonTypeIdentifiers(tokens, options)
       : new Set();
+    this.declarationInfo = isTypeScriptTransformEnabled
+      ? getDeclarationInfo(tokens)
+      : EMPTY_DECLARATION_INFO;
   }
 
   process(): boolean {
@@ -43,6 +52,9 @@ export default class ESMImportTransformer extends Transformer {
     if (this.tokens.matches2(tt._export, tt._default)) {
       return this.processExportDefault();
     }
+    if (this.tokens.matches2(tt._export, tt.braceL)) {
+      return this.processNamedExports();
+    }
     return false;
   }
 
@@ -53,7 +65,7 @@ export default class ESMImportTransformer extends Transformer {
     }
 
     const snapshot = this.tokens.snapshot();
-    const allImportsRemoved = this.removeTypeBindings();
+    const allImportsRemoved = this.removeImportTypeBindings();
     if (allImportsRemoved) {
       this.tokens.restoreToSnapshot(snapshot);
       while (!this.tokens.matches1(tt.string)) {
@@ -73,7 +85,7 @@ export default class ESMImportTransformer extends Transformer {
    * Return true if this import was ONLY types, and thus is eligible for removal. This will bail out
    * of the replacement operation, so we can return early here.
    */
-  private removeTypeBindings(): boolean {
+  private removeImportTypeBindings(): boolean {
     this.tokens.copyExpectedToken(tt._import);
     if (
       this.tokens.matchesContextual(ContextualKeyword._type) &&
@@ -196,6 +208,18 @@ export default class ESMImportTransformer extends Transformer {
   }
 
   private processExportDefault(): boolean {
+    if (
+      shouldElideDefaultExport(this.isTypeScriptTransformEnabled, this.tokens, this.declarationInfo)
+    ) {
+      // If the exported value is just an identifier and should be elided by TypeScript
+      // rules, then remove it entirely. It will always have the form `export default e`,
+      // where `e` is an identifier.
+      this.tokens.removeInitialToken();
+      this.tokens.removeToken();
+      this.tokens.removeToken();
+      return true;
+    }
+
     const alreadyHasName =
       this.tokens.matches4(tt._export, tt._default, tt._function, tt.name) ||
       // export default async function
@@ -214,5 +238,61 @@ export default class ESMImportTransformer extends Transformer {
       return true;
     }
     return false;
+  }
+
+  /**
+   * In TypeScript, we need to remove named exports that were never declared or only declared as a
+   * type.
+   */
+  private processNamedExports(): boolean {
+    if (!this.isTypeScriptTransformEnabled) {
+      return false;
+    }
+    this.tokens.copyExpectedToken(tt._export);
+    this.tokens.copyExpectedToken(tt.braceL);
+
+    while (!this.tokens.matches1(tt.braceR)) {
+      if (!this.tokens.matches1(tt.name)) {
+        throw new Error("Expected identifier at the start of named export.");
+      }
+      if (this.shouldElideExportedName(this.tokens.identifierName())) {
+        while (
+          !this.tokens.matches1(tt.comma) &&
+          !this.tokens.matches1(tt.braceR) &&
+          !this.tokens.isAtEnd()
+        ) {
+          this.tokens.removeToken();
+        }
+        if (this.tokens.matches1(tt.comma)) {
+          this.tokens.removeToken();
+        }
+      } else {
+        while (
+          !this.tokens.matches1(tt.comma) &&
+          !this.tokens.matches1(tt.braceR) &&
+          !this.tokens.isAtEnd()
+        ) {
+          this.tokens.copyToken();
+        }
+        if (this.tokens.matches1(tt.comma)) {
+          this.tokens.copyToken();
+        }
+      }
+    }
+    this.tokens.copyExpectedToken(tt.braceR);
+    return true;
+  }
+
+  /**
+   * ESM elides all imports with the rule that we only elide if we see that it's
+   * a type and never see it as a value. This is in contract to CJS, which
+   * elides imports that are completely unknown.
+   */
+  private shouldElideExportedName(name: string): boolean {
+    return (
+      this.isTypeScriptTransformEnabled &&
+      this.declarationInfo.typeDeclarations.has(name) &&
+      !this.declarationInfo.valueDeclarations.has(name)
+    );
   }
 }

@@ -19,7 +19,12 @@ export enum IdentifierRole {
   ObjectShorthandFunctionScopedDeclaration,
   ObjectShorthandBlockScopedDeclaration,
   ObjectShorthand,
+  // Any identifier bound in an import statement, e.g. both A and b from
+  // `import A, * as b from 'A';`
+  ImportDeclaration,
   ObjectKey,
+  // The `foo` in `import {foo as bar} from "./abc";`.
+  ImportAccess,
 }
 
 export function isDeclaration(token: Token): boolean {
@@ -41,6 +46,15 @@ export function isNonTopLevelDeclaration(token: Token): boolean {
     role === IdentifierRole.BlockScopedDeclaration ||
     role === IdentifierRole.ObjectShorthandFunctionScopedDeclaration ||
     role === IdentifierRole.ObjectShorthandBlockScopedDeclaration
+  );
+}
+
+export function isTopLevelDeclaration(token: Token): boolean {
+  const role = token.identifierRole;
+  return (
+    role === IdentifierRole.TopLevelDeclaration ||
+    role === IdentifierRole.ObjectShorthandTopLevelDeclaration ||
+    role === IdentifierRole.ImportDeclaration
   );
 }
 
@@ -98,6 +112,7 @@ export class Token {
   // analysis.
   shadowsGlobal: boolean;
   contextId: number | null;
+  // For assignments, the index of the RHS. For export tokens, the end of the export.
   rhsEndIndex: number | null;
   // For class tokens, records if the class is a class expression or a class statement.
   isExpression: boolean;

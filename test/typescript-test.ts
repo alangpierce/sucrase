@@ -1451,6 +1451,17 @@ describe("typescript transform", () => {
     );
   });
 
+  it("properly handles comparison operators that look like JSX or generics (#408)", () => {
+    assertTypeScriptResult(
+      `
+      a < b > c
+    `,
+      `"use strict";
+      a < b > c
+    `,
+    );
+  });
+
   it("elides type-only exports", () => {
     assertTypeScriptImportResult(
       `

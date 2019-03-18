@@ -1053,6 +1053,8 @@ export function tsParseSubscript(startPos: number, noCalls: boolean, stopState: 
     } else if (match(tt.backQuote)) {
       // Tagged template with a type argument.
       parseTemplate();
+    } else {
+      unexpected();
     }
 
     if (state.error) {

@@ -449,6 +449,11 @@ function tsParseNonArrayType(): void {
       tsParseParenthesizedType();
       return;
     default:
+      if (state.type & TokenType.IS_KEYWORD) {
+        next();
+        state.tokens[state.tokens.length - 1].type = tt.name;
+        return;
+      }
       break;
   }
 
@@ -779,6 +784,9 @@ function tsParseExternalModuleReference(): void {
 
 // Returns true if a statement matched.
 function tsTryParseDeclare(): boolean {
+  if (isLineTerminator()) {
+    return false;
+  }
   switch (state.type) {
     case tt._function: {
       const oldIsType = pushTypeContext(1);
@@ -872,7 +880,7 @@ function tsParseExpressionStatement(contextualKeyword: ContextualKeyword): boole
 function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken: boolean): boolean {
   switch (contextualKeyword) {
     case ContextualKeyword._abstract:
-      if (isBeforeToken || match(tt._class)) {
+      if (tsCheckLineTerminatorAndMatch(tt._class, isBeforeToken)) {
         if (isBeforeToken) next();
         state.tokens[state.tokens.length - 1].type = tt._abstract;
         parseClass(/* isStatement */ true, /* optionalId */ false);
@@ -881,7 +889,7 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
       break;
 
     case ContextualKeyword._enum:
-      if (isBeforeToken || match(tt.name)) {
+      if (tsCheckLineTerminatorAndMatch(tt.name, isBeforeToken)) {
         if (isBeforeToken) next();
         state.tokens[state.tokens.length - 1].type = tt._enum;
         tsParseEnumDeclaration();
@@ -890,7 +898,7 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
       break;
 
     case ContextualKeyword._interface:
-      if (isBeforeToken || match(tt.name)) {
+      if (tsCheckLineTerminatorAndMatch(tt.name, isBeforeToken)) {
         // `next` is true in "export" and "declare" contexts, so we want to remove that token
         // as well.
         const oldIsType = pushTypeContext(1);
@@ -908,8 +916,9 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
         tsParseAmbientExternalModuleDeclaration();
         popTypeContext(oldIsType);
         return true;
-      } else if (match(tt.name)) {
+      } else if (tsCheckLineTerminatorAndMatch(tt.name, isBeforeToken)) {
         const oldIsType = pushTypeContext(isBeforeToken ? 2 : 1);
+        if (isBeforeToken) next();
         tsParseModuleOrNamespaceDeclaration();
         popTypeContext(oldIsType);
         return true;
@@ -917,7 +926,7 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
       break;
 
     case ContextualKeyword._namespace:
-      if (isBeforeToken || match(tt.name)) {
+      if (tsCheckLineTerminatorAndMatch(tt.name, isBeforeToken)) {
         const oldIsType = pushTypeContext(1);
         if (isBeforeToken) next();
         tsParseModuleOrNamespaceDeclaration();
@@ -927,7 +936,7 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
       break;
 
     case ContextualKeyword._type:
-      if (isBeforeToken || match(tt.name)) {
+      if (tsCheckLineTerminatorAndMatch(tt.name, isBeforeToken)) {
         const oldIsType = pushTypeContext(1);
         if (isBeforeToken) next();
         tsParseTypeAliasDeclaration();
@@ -940,6 +949,10 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
       break;
   }
   return false;
+}
+
+function tsCheckLineTerminatorAndMatch(tokenType: TokenType, isBeforeToken: boolean): boolean {
+  return !isLineTerminator() && (isBeforeToken || match(tokenType));
 }
 
 // Returns true if there was a generic async arrow function.

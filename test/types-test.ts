@@ -506,4 +506,15 @@ describe("type transforms", () => {
       {expectedOutput: 5},
     );
   });
+
+  it("allows keywords as identifiers in a type context", () => {
+    assertTypeScriptAndFlowResult(
+      `
+      function foo(a: function) {}
+    `,
+      `"use strict";
+      function foo(a) {}
+    `,
+    );
+  });
 });

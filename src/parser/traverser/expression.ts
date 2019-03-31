@@ -524,6 +524,12 @@ export function parseExprAtom(): boolean {
       return false;
     }
 
+    case tt.hash: {
+      // Smart pipeline topic reference.
+      next();
+      return false;
+    }
+
     default:
       unexpected();
       return false;

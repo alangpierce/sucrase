@@ -1653,4 +1653,61 @@ describe("typescript transform", () => {
       },
     );
   });
+
+  it("handles newlines before class declarations", () => {
+    assertTypeScriptResult(
+      `
+      abstract
+      class A {}
+      declare
+      class B {}
+      declare
+      const x: number, y: string;
+      declare
+      const { x, y }: { x: number, y: number };
+      declare
+      interface I {}
+      declare
+      let x;
+      declare
+      var x;
+      declare
+      var x: any;
+      module
+      Foo
+      {}
+      namespace
+      Foo
+      {}
+      type
+      Foo = string;
+    `,
+      `"use strict";
+      abstract
+      class A {}
+      declare
+      class B {}
+      declare
+      const x, y;
+      declare
+      const { x, y };
+      declare
+      
+      declare
+      let x;
+      declare
+      var x;
+      declare
+      var x;
+      module
+      Foo
+      {}
+      namespace
+      Foo
+      {}
+      type
+      Foo = string;
+    `,
+    );
+  });
 });

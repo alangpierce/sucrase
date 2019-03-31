@@ -382,7 +382,7 @@ function parseAsyncArrowFromCallExpression(functionStart: number, startTokenInde
     flowStartParseAsyncArrowFromCallExpression();
   }
   expect(tt.arrow);
-  parseArrowExpression(functionStart, startTokenIndex);
+  parseArrowExpression(startTokenIndex);
 }
 
 // Parse a no-call expression (like argument of `new` or `::` operators).
@@ -450,7 +450,7 @@ export function parseExprAtom(): boolean {
         !canInsertSemicolon()
       ) {
         next();
-        parseFunction(functionStart, false, false);
+        parseFunction(functionStart, false);
         return false;
       } else if (
         canBeArrow &&
@@ -462,7 +462,7 @@ export function parseExprAtom(): boolean {
         parseBindingIdentifier(false);
         expect(tt.arrow);
         // let foo = async bar => {};
-        parseArrowExpression(functionStart, startTokenIndex);
+        parseArrowExpression(startTokenIndex);
         return true;
       }
 
@@ -470,7 +470,7 @@ export function parseExprAtom(): boolean {
         state.scopeDepth++;
         markPriorBindingIdentifier(false);
         expect(tt.arrow);
-        parseArrowExpression(functionStart, startTokenIndex);
+        parseArrowExpression(startTokenIndex);
         return true;
       }
 
@@ -611,12 +611,10 @@ function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
       // get proper token annotations.
       state.restoreFromSnapshot(snapshot);
       state.scopeDepth++;
-      // We don't need to worry about functionStart for arrow functions, so just use something.
-      const functionStart = state.start;
       // Don't specify a context ID because arrow functions don't need a context ID.
       parseFunctionParams();
       parseArrow();
-      parseArrowExpression(functionStart, startTokenIndex);
+      parseArrowExpression(startTokenIndex);
       return true;
     }
   }
@@ -751,7 +749,7 @@ export function parseObj(isPattern: boolean, isBlockScope: boolean): void {
       parsePropertyName(contextId);
     }
 
-    parseObjPropValue(isGenerator, isPattern, isBlockScope, contextId);
+    parseObjPropValue(isPattern, isBlockScope, contextId);
   }
 
   state.tokens[state.tokens.length - 1].contextId = contextId;
@@ -771,23 +769,19 @@ function isGetterOrSetterMethod(isPattern: boolean): boolean {
 }
 
 // Returns true if this was a method.
-function parseObjectMethod(
-  isGenerator: boolean,
-  isPattern: boolean,
-  objectContextId: number,
-): boolean {
+function parseObjectMethod(isPattern: boolean, objectContextId: number): boolean {
   // We don't need to worry about modifiers because object methods can't have optional bodies, so
   // the start will never be used.
   const functionStart = state.start;
   if (match(tt.parenL)) {
     if (isPattern) unexpected();
-    parseMethod(functionStart, isGenerator, /* isConstructor */ false);
+    parseMethod(functionStart, /* isConstructor */ false);
     return true;
   }
 
   if (isGetterOrSetterMethod(isPattern)) {
     parsePropertyName(objectContextId);
-    parseMethod(functionStart, /* isGenerator */ false, /* isConstructor */ false);
+    parseMethod(functionStart, /* isConstructor */ false);
     return true;
   }
   return false;
@@ -822,7 +816,6 @@ function parseObjectProperty(isPattern: boolean, isBlockScope: boolean): void {
 }
 
 function parseObjPropValue(
-  isGenerator: boolean,
   isPattern: boolean,
   isBlockScope: boolean,
   objectContextId: number,
@@ -832,7 +825,7 @@ function parseObjPropValue(
   } else if (isFlowEnabled) {
     flowStartParseObjPropValue();
   }
-  const wasMethod = parseObjectMethod(isGenerator, isPattern, objectContextId);
+  const wasMethod = parseObjectMethod(isPattern, objectContextId);
   if (!wasMethod) {
     parseObjectProperty(isPattern, isBlockScope);
   }
@@ -860,23 +853,14 @@ export function parsePropertyName(objectContextId: number): void {
 }
 
 // Parse object or class method.
-export function parseMethod(
-  functionStart: number,
-  isGenerator: boolean,
-  isConstructor: boolean,
-): void {
+export function parseMethod(functionStart: number, isConstructor: boolean): void {
   const funcContextId = getNextContextId();
 
   state.scopeDepth++;
   const startTokenIndex = state.tokens.length;
   const allowModifiers = isConstructor; // For TypeScript parameter properties
   parseFunctionParams(allowModifiers, funcContextId);
-  parseFunctionBodyAndFinish(
-    functionStart,
-    isGenerator,
-    false /* allowExpressionBody */,
-    funcContextId,
-  );
+  parseFunctionBodyAndFinish(functionStart, funcContextId);
   const endTokenIndex = state.tokens.length;
   state.scopes.push(new Scope(startTokenIndex, endTokenIndex, true));
   state.scopeDepth--;
@@ -885,35 +869,24 @@ export function parseMethod(
 // Parse arrow function expression.
 // If the parameters are provided, they will be converted to an
 // assignable list.
-export function parseArrowExpression(functionStart: number, startTokenIndex: number): void {
-  parseFunctionBody(functionStart, false /* isGenerator */, true);
+export function parseArrowExpression(startTokenIndex: number): void {
+  parseFunctionBody(true);
   const endTokenIndex = state.tokens.length;
   state.scopes.push(new Scope(startTokenIndex, endTokenIndex, true));
   state.scopeDepth--;
 }
 
-export function parseFunctionBodyAndFinish(
-  functionStart: number,
-  isGenerator: boolean,
-  allowExpressionBody: boolean = false,
-  funcContextId: number = 0,
-): void {
+export function parseFunctionBodyAndFinish(functionStart: number, funcContextId: number = 0): void {
   if (isTypeScriptEnabled) {
-    tsParseFunctionBodyAndFinish(functionStart, isGenerator, allowExpressionBody, funcContextId);
+    tsParseFunctionBodyAndFinish(functionStart, funcContextId);
   } else if (isFlowEnabled) {
-    flowParseFunctionBodyAndFinish(functionStart, isGenerator, allowExpressionBody, funcContextId);
+    flowParseFunctionBodyAndFinish(funcContextId);
   } else {
-    parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);
+    parseFunctionBody(false, funcContextId);
   }
 }
 
-// Parse function body and check parameters.
-export function parseFunctionBody(
-  functionStart: number,
-  isGenerator: boolean,
-  allowExpression: boolean,
-  funcContextId: number = 0,
-): void {
+export function parseFunctionBody(allowExpression: boolean, funcContextId: number = 0): void {
   const isExpression = allowExpression && !match(tt.braceL);
 
   if (isExpression) {
@@ -948,6 +921,9 @@ function parseExprListItem(allowEmpty: boolean): void {
   } else if (match(tt.ellipsis)) {
     parseSpread();
     parseParenItem();
+  } else if (match(tt.question)) {
+    // Partial function application proposal.
+    next();
   } else {
     parseMaybeAssign(false, true);
   }

@@ -709,18 +709,13 @@ export function flowParseVariance(): void {
 // Overrides
 // ==================================
 
-export function flowParseFunctionBodyAndFinish(
-  functionStart: number,
-  isGenerator: boolean,
-  allowExpressionBody: boolean = false,
-  funcContextId: number,
-): void {
+export function flowParseFunctionBodyAndFinish(funcContextId: number): void {
   // For arrow functions, `parseArrow` handles the return type itself.
-  if (!allowExpressionBody && match(tt.colon)) {
+  if (match(tt.colon)) {
     flowParseTypeAndPredicateInitialiser();
   }
 
-  parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);
+  parseFunctionBody(false, funcContextId);
 }
 
 export function flowParseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {
@@ -1029,7 +1024,7 @@ export function flowParseSubscripts(startPos: number, noCalls: boolean = false):
     match(tt.lessThan)
   ) {
     const snapshot = state.snapshot();
-    const wasArrow = parseAsyncArrowWithTypeParameters(startPos);
+    const wasArrow = parseAsyncArrowWithTypeParameters();
     if (wasArrow && !state.error) {
       return;
     }
@@ -1040,13 +1035,13 @@ export function flowParseSubscripts(startPos: number, noCalls: boolean = false):
 }
 
 // Returns true if there was an arrow function here.
-function parseAsyncArrowWithTypeParameters(startPos: number): boolean {
+function parseAsyncArrowWithTypeParameters(): boolean {
   state.scopeDepth++;
   const startTokenIndex = state.tokens.length;
   parseFunctionParams();
   if (!parseArrow()) {
     return false;
   }
-  parseArrowExpression(startPos, startTokenIndex);
+  parseArrowExpression(startTokenIndex);
   return true;
 }

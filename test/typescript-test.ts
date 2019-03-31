@@ -1710,4 +1710,39 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("handles const contexts", () => {
+    assertTypeScriptResult(
+      `
+      let x = 5 as const;
+    `,
+      `"use strict";
+      let x = 5 ;
+    `,
+    );
+  });
+
+  it("handles the readonly type modifier", () => {
+    assertTypeScriptResult(
+      `
+      let z: readonly number[];
+      let z1: readonly [number, number];
+    `,
+      `"use strict";
+      let z;
+      let z1;
+    `,
+    );
+  });
+
+  it("allows template literal syntax for type literals", () => {
+    assertTypeScriptResult(
+      `
+      let x: \`foo\`;
+    `,
+      `"use strict";
+      let x;
+    `,
+    );
+  });
 });

@@ -7,7 +7,7 @@ type SimpleToken = Token & {label?: string};
 type TokenExpectation = {[K in keyof SimpleToken]?: SimpleToken[K]};
 
 function assertTokens(code: string, expectedTokens: Array<TokenExpectation>): void {
-  const tokens: Array<SimpleToken> = parse(code, true, false, false).tokens;
+  const tokens: Array<SimpleToken> = parse(code, true, true, false).tokens;
   assert.strictEqual(tokens.length, expectedTokens.length);
   const projectedTokens = tokens.map((token, i) => {
     const result = {};
@@ -271,6 +271,34 @@ describe("tokens", () => {
         {type: tt.eq},
         {type: tt.preIncDec},
         {type: tt.name},
+        {type: tt.eof},
+      ],
+    );
+  });
+
+  it("properly parses keyword keys in TS class bodies", () => {
+    assertTokens(
+      `
+      class A {
+        abstract?: void;
+        readonly!: void;
+      }
+    `,
+      [
+        {type: tt._class},
+        {type: tt.name},
+        {type: tt.braceL},
+        {type: tt.name},
+        {type: tt.question},
+        {type: tt.colon},
+        {type: tt._void},
+        {type: tt.semi},
+        {type: tt.name},
+        {type: tt.bang},
+        {type: tt.colon},
+        {type: tt._void},
+        {type: tt.semi},
+        {type: tt.braceR},
         {type: tt.eof},
       ],
     );

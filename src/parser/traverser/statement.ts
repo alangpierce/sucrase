@@ -198,7 +198,7 @@ function parseStatementContent(declaration: boolean): void {
         next();
         if (match(tt._function) && !canInsertSemicolon()) {
           expect(tt._function);
-          parseFunction(functionStart, true, false);
+          parseFunction(functionStart, true);
           return;
         } else {
           state.restoreFromSnapshot(snapshot);
@@ -563,12 +563,9 @@ function parseVarHead(isBlockScope: boolean): void {
 export function parseFunction(
   functionStart: number,
   isStatement: boolean,
-  allowExpressionBody: boolean = false,
   optionalId: boolean = false,
 ): void {
-  let isGenerator = false;
   if (match(tt.star)) {
-    isGenerator = true;
     next();
   }
 
@@ -591,7 +588,7 @@ export function parseFunction(
   const startTokenIndex = state.tokens.length;
   state.scopeDepth++;
   parseFunctionParams();
-  parseFunctionBodyAndFinish(functionStart, isGenerator, allowExpressionBody);
+  parseFunctionBodyAndFinish(functionStart);
   const endTokenIndex = state.tokens.length;
   // In addition to the block scope of the function body, we need a separate function-style scope
   // that includes the params.
@@ -691,7 +688,7 @@ function parseClassMember(memberStart: number, classContextId: number): void {
   if (match(tt.name) && state.contextualKeyword === ContextualKeyword._static) {
     parseIdentifier(); // eats 'static'
     if (isClassMethod()) {
-      parseClassMethod(memberStart, false, /* isConstructor */ false);
+      parseClassMethod(memberStart, /* isConstructor */ false);
       return;
     } else if (isClassProperty()) {
       parseClassProperty();
@@ -718,7 +715,7 @@ function parseClassMemberWithIsStatic(
   if (eat(tt.star)) {
     // a generator
     parseClassPropertyName(classContextId);
-    parseClassMethod(memberStart, true, /* isConstructor */ false);
+    parseClassMethod(memberStart, /* isConstructor */ false);
     return;
   }
 
@@ -734,7 +731,7 @@ function parseClassMemberWithIsStatic(
   parsePostMemberNameModifiers();
 
   if (isClassMethod()) {
-    parseClassMethod(memberStart, false, isConstructor);
+    parseClassMethod(memberStart, isConstructor);
   } else if (isClassProperty()) {
     parseClassProperty();
   } else if (token.contextualKeyword === ContextualKeyword._async && !isLineTerminator()) {
@@ -747,7 +744,7 @@ function parseClassMemberWithIsStatic(
 
     // The so-called parsed name would have been "async": get the real name.
     parseClassPropertyName(classContextId);
-    parseClassMethod(memberStart, isGenerator, false /* isConstructor */);
+    parseClassMethod(memberStart, false /* isConstructor */);
   } else if (
     (token.contextualKeyword === ContextualKeyword._get ||
       token.contextualKeyword === ContextualKeyword._set) &&
@@ -762,7 +759,7 @@ function parseClassMemberWithIsStatic(
     // a getter or setter
     // The so-called parsed name would have been "get/set": get the real name.
     parseClassPropertyName(classContextId);
-    parseClassMethod(memberStart, false, /* isConstructor */ false);
+    parseClassMethod(memberStart, /* isConstructor */ false);
   } else if (isLineTerminator()) {
     // an uninitialized class property (due to ASI, since we don't otherwise recognize the next token)
     parseClassProperty();
@@ -771,11 +768,7 @@ function parseClassMemberWithIsStatic(
   }
 }
 
-function parseClassMethod(
-  functionStart: number,
-  isGenerator: boolean,
-  isConstructor: boolean,
-): void {
+function parseClassMethod(functionStart: number, isConstructor: boolean): void {
   if (isTypeScriptEnabled) {
     tsTryParseTypeParameters();
   } else if (isFlowEnabled) {
@@ -783,7 +776,7 @@ function parseClassMethod(
       flowParseTypeParameterDeclaration();
     }
   }
-  parseMethod(functionStart, isGenerator, isConstructor);
+  parseMethod(functionStart, isConstructor);
 }
 
 // Return the name of the class property, if it is a simple identifier.
@@ -901,12 +894,12 @@ function parseExportDefaultExpression(): void {
   }
   const functionStart = state.start;
   if (eat(tt._function)) {
-    parseFunction(functionStart, true, false, true);
+    parseFunction(functionStart, true, true);
   } else if (isContextual(ContextualKeyword._async) && lookaheadType() === tt._function) {
     // async function declaration
     eatContextual(ContextualKeyword._async);
     eat(tt._function);
-    parseFunction(functionStart, true, false, true);
+    parseFunction(functionStart, true, true);
   } else if (match(tt._class)) {
     parseClass(true, true);
   } else if (match(tt.at)) {

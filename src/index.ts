@@ -136,6 +136,7 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
       tokenProcessor,
       enableLegacyTypeScriptModuleInterop,
       options,
+      options.transforms.includes("typescript"),
     );
     importProcessor.preprocessTokens();
     // We need to mark shadowed globals after processing imports so we know that the globals are,

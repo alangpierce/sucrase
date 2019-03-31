@@ -1654,6 +1654,58 @@ describe("typescript transform", () => {
     );
   });
 
+  it("elides unused import = statements", () => {
+    assertTypeScriptImportResult(
+      `
+      import A = require('A');
+      import B = require('B');
+      import C = A.C;
+      B();
+      const c: C = 2;
+    `,
+      {
+        expectedCJSResult: `"use strict";
+      ;
+      const B = require('B');
+      ;
+      B();
+      const c = 2;
+    `,
+        expectedESMResult: `
+      ;
+      const B = require('B');
+      ;
+      B();
+      const c = 2;
+    `,
+      },
+    );
+  });
+
+  // We don't support this for now since it needs a more complex implementation than we have
+  // anywhere else, and ideally you would just write `const B = A.B;`, which works.
+  it.skip("handles transitive references when eliding import = statements", () => {
+    assertTypeScriptImportResult(
+      `
+      import A from 'A';
+      import B = A.B;
+      B();
+    `,
+      {
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}
+      const A_1 = require("A");
+      const B = A_1.default.B;
+      B();
+    `,
+        expectedESMResult: `
+      import A from 'A';
+      const B = A.B;
+      B();
+    `,
+      },
+    );
+  });
+
   it("handles newlines before class declarations", () => {
     assertTypeScriptResult(
       `

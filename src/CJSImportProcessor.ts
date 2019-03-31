@@ -30,6 +30,7 @@ interface ImportInfo {
  * interopRequireWildcard, so we also allow that mode for compatibility.
  */
 export default class CJSImportProcessor {
+  private nonTypeIdentifiers: Set<string> = new Set();
   private importInfoByPath: Map<string, ImportInfo> = new Map();
   private importsToReplace: Map<string, string> = new Map();
   private identifierReplacements: Map<string, string> = new Map();
@@ -41,6 +42,7 @@ export default class CJSImportProcessor {
     readonly tokens: TokenProcessor,
     readonly enableLegacyTypeScriptModuleInterop: boolean,
     readonly options: Options,
+    readonly isTypeScriptTransformEnabled: boolean,
   ) {
     this.helpers = new HelperManager(nameManager);
   }
@@ -72,7 +74,7 @@ export default class CJSImportProcessor {
    * bare imports.
    */
   pruneTypeOnlyImports(): void {
-    const nonTypeIdentifiers = getNonTypeIdentifiers(this.tokens, this.options);
+    this.nonTypeIdentifiers = getNonTypeIdentifiers(this.tokens, this.options);
     for (const [path, importInfo] of this.importInfoByPath.entries()) {
       if (
         importInfo.hasBareImport ||
@@ -87,10 +89,14 @@ export default class CJSImportProcessor {
         ...importInfo.wildcardNames,
         ...importInfo.namedImports.map(({localName}) => localName),
       ];
-      if (names.every((name) => !nonTypeIdentifiers.has(name))) {
+      if (names.every((name) => this.isTypeName(name))) {
         this.importsToReplace.set(path, "");
       }
     }
+  }
+
+  isTypeName(name: string): boolean {
+    return this.isTypeScriptTransformEnabled && !this.nonTypeIdentifiers.has(name);
   }
 
   private generateImportReplacements(): void {

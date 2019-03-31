@@ -80,8 +80,8 @@ by your JS runtime. For example:
   (as of this writing), and Sucrase doesn't make an attempt to transpile them.
 * Object rest/spread, async functions, and async iterators are all recent
   features that should work fine, but might cause issues if you use older
-  versions of tools like webpack. BigInt may or may not work, based on your
-  tooling.
+  versions of tools like webpack. BigInt and newer regex features may or may not
+  work, based on your tooling.
 
 ### JSX Options
 Like Babel, Sucrase compiles JSX to React functions by default, but can be

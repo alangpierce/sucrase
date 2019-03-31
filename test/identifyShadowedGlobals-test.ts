@@ -10,9 +10,15 @@ function assertHasShadowedGlobals(code: string, expected: boolean): void {
   const tokenProcessor = new TokenProcessor(code, file.tokens, false);
   const nameManager = new NameManager(tokenProcessor);
   nameManager.preprocessNames();
-  const importProcessor = new CJSImportProcessor(nameManager, tokenProcessor, false, {
-    transforms: [],
-  });
+  const importProcessor = new CJSImportProcessor(
+    nameManager,
+    tokenProcessor,
+    false,
+    {
+      transforms: [],
+    },
+    false,
+  );
   importProcessor.preprocessTokens();
   assert.strictEqual(
     hasShadowedGlobals(tokenProcessor, importProcessor.getGlobalNames()),

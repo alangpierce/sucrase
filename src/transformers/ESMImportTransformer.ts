@@ -3,6 +3,7 @@ import NameManager from "../NameManager";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
+import elideImportEquals from "../util/elideImportEquals";
 import getDeclarationInfo, {
   DeclarationInfo,
   EMPTY_DECLARATION_INFO,
@@ -39,8 +40,7 @@ export default class ESMImportTransformer extends Transformer {
   process(): boolean {
     // TypeScript `import foo = require('foo');` should always just be translated to plain require.
     if (this.tokens.matches3(tt._import, tt.name, tt.eq)) {
-      this.tokens.replaceToken("const");
-      return true;
+      return this.processImportEquals();
     }
     if (this.tokens.matches2(tt._export, tt.eq)) {
       this.tokens.replaceToken("module.exports");
@@ -56,6 +56,18 @@ export default class ESMImportTransformer extends Transformer {
       return this.processNamedExports();
     }
     return false;
+  }
+
+  private processImportEquals(): boolean {
+    const importName = this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 1);
+    if (this.isTypeName(importName)) {
+      // If this name is only used as a type, elide the whole import.
+      elideImportEquals(this.tokens);
+    } else {
+      // Otherwise, switch `import` to `const`.
+      this.tokens.replaceToken("const");
+    }
+    return true;
   }
 
   private processImport(): boolean {

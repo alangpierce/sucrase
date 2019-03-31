@@ -635,6 +635,10 @@ function flowParsePrimaryType(): void {
       if (state.type === tt._typeof) {
         flowParseTypeofType();
         return;
+      } else if (state.type & TokenType.IS_KEYWORD) {
+        next();
+        state.tokens[state.tokens.length - 1].type = tt.name;
+        return;
       }
   }
 

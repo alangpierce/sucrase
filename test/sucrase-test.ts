@@ -773,4 +773,28 @@ describe("sucrase", () => {
       {transforms: []},
     );
   });
+
+  it("handles smart pipeline syntax", () => {
+    assertResult(
+      `
+      value |> #
+      value |> (#)
+      value |> # + 1
+      value |> (() => # + 1)
+      function* f () {
+        return x |> (yield #);
+      }
+    `,
+      `
+      value |> #
+      value |> (#)
+      value |> # + 1
+      value |> (() => # + 1)
+      function* f () {
+        return x |> (yield #);
+      }
+    `,
+      {transforms: []},
+    );
+  });
 });

@@ -73,7 +73,8 @@ function tsNextTokenCanFollowModifier(): boolean {
     !match(tt.parenR) &&
     !match(tt.colon) &&
     !match(tt.eq) &&
-    !match(tt.question);
+    !match(tt.question) &&
+    !match(tt.bang);
 
   if (canFollowModifier) {
     return true;
@@ -448,6 +449,9 @@ function tsParseNonArrayType(): void {
     case tt.parenL:
       tsParseParenthesizedType();
       return;
+    case tt.backQuote:
+      parseTemplate();
+      return;
     default:
       if (state.type & TokenType.IS_KEYWORD) {
         next();
@@ -477,7 +481,11 @@ function tsParseInferType(): void {
 }
 
 function tsParseTypeOperatorOrHigher(): void {
-  if (isContextual(ContextualKeyword._keyof) || isContextual(ContextualKeyword._unique)) {
+  if (
+    isContextual(ContextualKeyword._keyof) ||
+    isContextual(ContextualKeyword._unique) ||
+    isContextual(ContextualKeyword._readonly)
+  ) {
     next();
     tsParseTypeOperatorOrHigher();
   } else if (isContextual(ContextualKeyword._infer)) {
@@ -969,10 +977,7 @@ function tsTryParseGenericAsyncArrowFunction(): boolean {
     return false;
   }
 
-  // We don't need to be precise about the function start since it's only used if this is a
-  // bodiless function, which isn't valid here.
-  const functionStart = state.start;
-  parseFunctionBody(functionStart, false /* isGenerator */, true);
+  parseFunctionBody(true);
   return true;
 }
 
@@ -1009,21 +1014,16 @@ export function tsIsDeclarationStart(): boolean {
 // OVERRIDES
 // ======================================================
 
-export function tsParseFunctionBodyAndFinish(
-  functionStart: number,
-  isGenerator: boolean,
-  allowExpressionBody: boolean = false,
-  funcContextId: number,
-): void {
+export function tsParseFunctionBodyAndFinish(functionStart: number, funcContextId: number): void {
   // For arrow functions, `parseArrow` handles the return type itself.
-  if (!allowExpressionBody && match(tt.colon)) {
+  if (match(tt.colon)) {
     tsParseTypeOrTypePredicateAnnotation(tt.colon);
   }
 
   // The original code checked the node type to make sure this function type allows a missing
   // body, but we skip that to avoid sending around the node type. We instead just use the
   // allowExpressionBody boolean to make sure it's not an arrow function.
-  if (!allowExpressionBody && !match(tt.braceL) && isLineTerminator()) {
+  if (!match(tt.braceL) && isLineTerminator()) {
     // Retroactively mark the function declaration as a type.
     let i = state.tokens.length - 1;
     while (
@@ -1038,7 +1038,7 @@ export function tsParseFunctionBodyAndFinish(
     return;
   }
 
-  parseFunctionBody(functionStart, isGenerator, allowExpressionBody, funcContextId);
+  parseFunctionBody(false, funcContextId);
 }
 
 export function tsParseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {

@@ -797,4 +797,16 @@ describe("sucrase", () => {
       {transforms: []},
     );
   });
+
+  it("handles partial application syntax", () => {
+    assertResult(
+      `
+      foo(?)
+    `,
+      `
+      foo(?)
+    `,
+      {transforms: []},
+    );
+  });
 });

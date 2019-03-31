@@ -471,7 +471,7 @@ describe("type transforms", () => {
       async <T>(1, 2, 3);
     `,
       `"use strict";
-      async (1, 2, 3);
+      async ( 1, 2, 3);
     `,
     );
   });
@@ -502,6 +502,20 @@ describe("type transforms", () => {
         value: number;
       } => ({value: x}); 
       setOutput(multiLineReturn(5).value)
+    `,
+      {expectedOutput: 5},
+    );
+  });
+
+  it("properly handles multiline type parameters in an async arrow function", () => {
+    assertTypeScriptAndFlowExpectations(
+      `
+      const multilineGenerics = async <
+        A
+      >(x) => {
+        setOutput(5);
+      };
+      multilineGenerics();
     `,
       {expectedOutput: 5},
     );

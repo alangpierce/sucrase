@@ -1,5 +1,6 @@
 import {Options, SucraseContext, Transform} from "../index";
 import NameManager from "../NameManager";
+import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import TokenProcessor from "../TokenProcessor";
 import getClassInfo, {ClassInfo} from "../util/getClassInfo";
@@ -336,6 +337,49 @@ export default class RootTransformer {
         this.tokens.replaceTokenTrimmingLeftWhitespace(") =>");
         return true;
       }
+    }
+    return false;
+  }
+
+  /**
+   * An async arrow function might be of the form:
+   *
+   * async <
+   *   T
+   * >() => {}
+   *
+   * in which case, removing the type parameters will cause a syntax error. Detect this case and
+   * move the open-paren earlier.
+   */
+  processPossibleAsyncArrowWithTypeParams(): boolean {
+    if (
+      !this.tokens.matchesContextual(ContextualKeyword._async) &&
+      !this.tokens.matches1(tt._async)
+    ) {
+      return false;
+    }
+    const nextToken = this.tokens.tokenAtRelativeIndex(1);
+    if (nextToken.type !== tt.lessThan || !nextToken.isType) {
+      return false;
+    }
+
+    let nextNonTypeIndex = this.tokens.currentIndex() + 1;
+    // Look ahead to see if this is an arrow function or something else.
+    while (this.tokens.tokens[nextNonTypeIndex].isType) {
+      nextNonTypeIndex++;
+    }
+    if (this.tokens.matches1AtIndex(nextNonTypeIndex, tt.parenL)) {
+      this.tokens.replaceToken("async (");
+      this.tokens.removeInitialToken();
+      while (this.tokens.currentIndex() < nextNonTypeIndex) {
+        this.tokens.removeToken();
+      }
+      this.tokens.removeToken();
+      // We ate a ( token, so we need to process the tokens in between and then the ) token so that
+      // we remain balanced.
+      this.processBalancedCode();
+      this.processToken();
+      return true;
     }
     return false;
   }

@@ -16,6 +16,7 @@ export default class TypeScriptTransformer extends Transformer {
   process(): boolean {
     if (
       this.rootTransformer.processPossibleArrowParamEnd() ||
+      this.rootTransformer.processPossibleAsyncArrowWithTypeParams() ||
       this.rootTransformer.processPossibleTypeRange()
     ) {
       return true;

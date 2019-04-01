@@ -6119,10 +6119,10 @@ style-loader@^0.23.1:
     loader-utils "^1.1.0"
     schema-utils "^1.0.0"
 
-sucrase@^3.10.0:
-  version "3.10.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.10.0.tgz#e08f194f6c47576eb759ca9d0a82e32271abbca1"
-  integrity sha512-bWXuX3F+P8V7npz1sGuNc3X+MNuUNDy/STNyQI1qN1AVb+0yTKbriTKb/rfXqNVEcRlh5xVE2+Pj4fyzJRhOxA==
+sucrase@3.10.1:
+  version "3.10.1"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.10.1.tgz#70ce0bad0e4c8fbc3c3184dbd1797e82990d0602"
+  integrity sha512-nMOs6rFWwkYRxcKHHDjyQmC5CmLbHN2LwRyWF1n2i0kb/pq0xcB9M19TdY5Ivfcj1BsWfs+az9Ga5B0tFdE5ww==
   dependencies:
     commander "^2.19.0"
     lines-and-columns "^1.1.6"

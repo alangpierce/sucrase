@@ -1,3 +1,10 @@
+# 3.10.1 (2019-03-31)
+
+* Fix parsing of `a<b>c` in TypeScript. ([#438])
+* Add support for new TypeScript 3.4 syntax, other parser improvements. ([#439], [#440])
+* Elide TS `import =` statements that are only used as a type ([#441])
+* Properly handle async arrow functions with multiline type parameters ([#443])
+
 # 3.10.0 (2019-03-11)
 
 * Fix bug where `/*/` was being parsed incorrectly. ([#430])
@@ -221,3 +228,8 @@
 [#430]: https://github.com/alangpierce/sucrase/pull/430
 [#431]: https://github.com/alangpierce/sucrase/pull/431
 [#433]: https://github.com/alangpierce/sucrase/pull/433
+[#438]: https://github.com/alangpierce/sucrase/pull/438
+[#439]: https://github.com/alangpierce/sucrase/pull/439
+[#440]: https://github.com/alangpierce/sucrase/pull/440
+[#441]: https://github.com/alangpierce/sucrase/pull/441
+[#443]: https://github.com/alangpierce/sucrase/pull/443

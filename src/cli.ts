@@ -75,7 +75,7 @@ async function buildDirectory(
   outDirPath: string,
   options: CLIOptions,
 ): Promise<void> {
-  const extension = options.sucraseOptions.transforms.includes("typescript") ? ".ts" : ".js";
+  const extension = options.sucraseOptions.transforms.includes("typescript") ? /.tsx?$/ : /.jsx?$/;
   if (!(await exists(outDirPath))) {
     await mkdir(outDirPath);
   }
@@ -87,10 +87,8 @@ async function buildDirectory(
     const outChildPath = join(outDirPath, child);
     if ((await stat(srcChildPath)).isDirectory()) {
       await buildDirectory(srcChildPath, outChildPath, options);
-    } else if (srcChildPath.endsWith(extension)) {
-      const outPath = `${outChildPath.substr(0, outChildPath.length - extension.length)}.${
-        options.outExtension
-      }`;
+    } else if (extension.test(srcChildPath)) {
+      const outPath = _path.basename(outChildPath, _path.extname(outChildPath)) + '.' + options.outExtension;
       await buildFile(srcChildPath, outPath, options);
     }
   }

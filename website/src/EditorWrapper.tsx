@@ -70,7 +70,7 @@ export default class EditorWrapper extends Component<EditorWrapperProps, State> 
                   }}
                   MonacoEditor={MonacoEditor}
                   width={width}
-                  height={height - 30}
+                  height={Math.max(300, height)}
                   code={code}
                   onChange={onChange}
                   isPlaintext={isPlaintext}
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "column",
     minWidth: 300,
-    height: "100%",
+    minHeight: 300,
     flex: 1,
     // When adding a third editor, we need the container size to shrink so that
     // the Monaco layout code will adjust to the container size.

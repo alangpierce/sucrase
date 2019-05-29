@@ -70,7 +70,7 @@ export default function getClassInfo(
   while (!tokens.matchesContextIdAndLabel(tt.braceR, classContextId)) {
     if (tokens.matchesContextual(ContextualKeyword._constructor) && !tokens.currentToken().isType) {
       ({constructorInitializerStatements, constructorInsertPos} = processConstructor(tokens));
-    } else if (tokens.matches1(tt.semi)) {
+    } else if (tokens.matches(tt.semi)) {
       rangesToRemove.push({start: tokens.currentIndex(), end: tokens.currentIndex() + 1});
       tokens.nextToken();
     } else if (tokens.currentToken().isType) {
@@ -80,7 +80,7 @@ export default function getClassInfo(
       const statementStartIndex = tokens.currentIndex();
       let isStatic = false;
       while (isAccessModifier(tokens.currentToken())) {
-        if (tokens.matches1(tt._static)) {
+        if (tokens.matches(tt._static)) {
           isStatic = true;
         }
         tokens.nextToken();
@@ -94,7 +94,7 @@ export default function getClassInfo(
       }
       const nameStartIndex = tokens.currentIndex();
       skipFieldName(tokens);
-      if (tokens.matches1(tt.lessThan) || tokens.matches1(tt.parenL)) {
+      if (tokens.matches(tt.lessThan) || tokens.matches(tt.parenL)) {
         // This is a method, so just skip to the next method/field. To do that, we seek forward to
         // the next start of a class name (either an open bracket or an identifier, or the closing
         // curly brace), then seek backward to include any access modifiers.
@@ -110,7 +110,7 @@ export default function getClassInfo(
       while (tokens.currentToken().isType) {
         tokens.nextToken();
       }
-      if (tokens.matches1(tt.eq)) {
+      if (tokens.matches(tt.eq)) {
         const equalsIndex = tokens.currentIndex();
         // This is an initializer, so we need to wrap in an initializer method.
         const valueEnd = tokens.currentToken().rhsEndIndex;
@@ -168,7 +168,7 @@ function processClassHeader(tokens: TokenProcessor): ClassHeaderInfo {
   let className = null;
   let hasSuperclass = false;
   tokens.nextToken();
-  if (tokens.matches1(tt.name)) {
+  if (tokens.matches(tt.name)) {
     className = tokens.identifierName();
   }
   while (!tokens.matchesContextIdAndLabel(tt.braceL, contextId)) {
@@ -176,7 +176,7 @@ function processClassHeader(tokens: TokenProcessor): ClassHeaderInfo {
     // superclass, only type parameters and `implements` clauses can show up here, all of which
     // consist only of type tokens. A declaration like `class A<B extends C> {` should *not* count
     // as having a superclass.
-    if (tokens.matches1(tt._extends) && !tokens.currentToken().isType) {
+    if (tokens.matches(tt._extends) && !tokens.currentToken().isType) {
       hasSuperclass = true;
     }
     tokens.nextToken();
@@ -221,7 +221,7 @@ function processConstructor(
   // Advance through body looking for a super call.
   let foundSuperCall = false;
   while (!tokens.matchesContextIdAndLabel(tt.braceR, constructorContextId)) {
-    if (!foundSuperCall && tokens.matches2(tt._super, tt.parenL)) {
+    if (!foundSuperCall && tokens.matches(tt._super, tt.parenL)) {
       tokens.nextToken();
       const superCallContextId = tokens.currentToken().contextId;
       if (superCallContextId == null) {
@@ -265,7 +265,7 @@ function isAccessModifier(token: Token): boolean {
  * a method or field name.
  */
 function skipFieldName(tokens: TokenProcessor): void {
-  if (tokens.matches1(tt.bracketL)) {
+  if (tokens.matches(tt.bracketL)) {
     const startToken = tokens.currentToken();
     const classContextId = startToken.contextId;
     if (classContextId == null) {

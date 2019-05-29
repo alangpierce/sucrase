@@ -39,20 +39,20 @@ export default class ESMImportTransformer extends Transformer {
 
   process(): boolean {
     // TypeScript `import foo = require('foo');` should always just be translated to plain require.
-    if (this.tokens.matches3(tt._import, tt.name, tt.eq)) {
+    if (this.tokens.matches(tt._import, tt.name, tt.eq)) {
       return this.processImportEquals();
     }
-    if (this.tokens.matches2(tt._export, tt.eq)) {
+    if (this.tokens.matches(tt._export, tt.eq)) {
       this.tokens.replaceToken("module.exports");
       return true;
     }
-    if (this.tokens.matches1(tt._import)) {
+    if (this.tokens.matches(tt._import)) {
       return this.processImport();
     }
-    if (this.tokens.matches2(tt._export, tt._default)) {
+    if (this.tokens.matches(tt._export, tt._default)) {
       return this.processExportDefault();
     }
-    if (this.tokens.matches2(tt._export, tt.braceL)) {
+    if (this.tokens.matches(tt._export, tt.braceL)) {
       return this.processNamedExports();
     }
     return false;
@@ -71,7 +71,7 @@ export default class ESMImportTransformer extends Transformer {
   }
 
   private processImport(): boolean {
-    if (this.tokens.matches2(tt._import, tt.parenL)) {
+    if (this.tokens.matches(tt._import, tt.parenL)) {
       // Dynamic imports don't need to be transformed.
       return false;
     }
@@ -80,11 +80,11 @@ export default class ESMImportTransformer extends Transformer {
     const allImportsRemoved = this.removeImportTypeBindings();
     if (allImportsRemoved) {
       this.tokens.restoreToSnapshot(snapshot);
-      while (!this.tokens.matches1(tt.string)) {
+      while (!this.tokens.matches(tt.string)) {
         this.tokens.removeToken();
       }
       this.tokens.removeToken();
-      if (this.tokens.matches1(tt.semi)) {
+      if (this.tokens.matches(tt.semi)) {
         this.tokens.removeToken();
       }
     }
@@ -101,14 +101,14 @@ export default class ESMImportTransformer extends Transformer {
     this.tokens.copyExpectedToken(tt._import);
     if (
       this.tokens.matchesContextual(ContextualKeyword._type) &&
-      !this.tokens.matches1AtIndex(this.tokens.currentIndex() + 1, tt.comma) &&
+      !this.tokens.matchesAtIndex(this.tokens.currentIndex() + 1, tt.comma) &&
       !this.tokens.matchesContextualAtIndex(this.tokens.currentIndex() + 1, ContextualKeyword._from)
     ) {
       // This is an "import type" statement, so exit early.
       return true;
     }
 
-    if (this.tokens.matches1(tt.string)) {
+    if (this.tokens.matches(tt.string)) {
       // This is a bare import, so we should proceed with the import.
       this.tokens.copyToken();
       return false;
@@ -116,22 +116,22 @@ export default class ESMImportTransformer extends Transformer {
 
     let foundNonTypeImport = false;
 
-    if (this.tokens.matches1(tt.name)) {
+    if (this.tokens.matches(tt.name)) {
       if (this.isTypeName(this.tokens.identifierName())) {
         this.tokens.removeToken();
-        if (this.tokens.matches1(tt.comma)) {
+        if (this.tokens.matches(tt.comma)) {
           this.tokens.removeToken();
         }
       } else {
         foundNonTypeImport = true;
         this.tokens.copyToken();
-        if (this.tokens.matches1(tt.comma)) {
+        if (this.tokens.matches(tt.comma)) {
           this.tokens.copyToken();
         }
       }
     }
 
-    if (this.tokens.matches1(tt.star)) {
+    if (this.tokens.matches(tt.star)) {
       if (this.isTypeName(this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 2))) {
         this.tokens.removeToken();
         this.tokens.removeToken();
@@ -142,58 +142,58 @@ export default class ESMImportTransformer extends Transformer {
         this.tokens.copyExpectedToken(tt.name);
         this.tokens.copyExpectedToken(tt.name);
       }
-    } else if (this.tokens.matches1(tt.braceL)) {
+    } else if (this.tokens.matches(tt.braceL)) {
       this.tokens.copyToken();
-      while (!this.tokens.matches1(tt.braceR)) {
+      while (!this.tokens.matches(tt.braceR)) {
         if (
-          this.tokens.matches3(tt.name, tt.name, tt.comma) ||
-          this.tokens.matches3(tt.name, tt.name, tt.braceR)
+          this.tokens.matches(tt.name, tt.name, tt.comma) ||
+          this.tokens.matches(tt.name, tt.name, tt.braceR)
         ) {
           // type foo
           this.tokens.removeToken();
           this.tokens.removeToken();
-          if (this.tokens.matches1(tt.comma)) {
+          if (this.tokens.matches(tt.comma)) {
             this.tokens.removeToken();
           }
         } else if (
-          this.tokens.matches5(tt.name, tt.name, tt.name, tt.name, tt.comma) ||
-          this.tokens.matches5(tt.name, tt.name, tt.name, tt.name, tt.braceR)
+          this.tokens.matches(tt.name, tt.name, tt.name, tt.name, tt.comma) ||
+          this.tokens.matches(tt.name, tt.name, tt.name, tt.name, tt.braceR)
         ) {
           // type foo as bar
           this.tokens.removeToken();
           this.tokens.removeToken();
           this.tokens.removeToken();
           this.tokens.removeToken();
-          if (this.tokens.matches1(tt.comma)) {
+          if (this.tokens.matches(tt.comma)) {
             this.tokens.removeToken();
           }
         } else if (
-          this.tokens.matches2(tt.name, tt.comma) ||
-          this.tokens.matches2(tt.name, tt.braceR)
+          this.tokens.matches(tt.name, tt.comma) ||
+          this.tokens.matches(tt.name, tt.braceR)
         ) {
           // foo
           if (this.isTypeName(this.tokens.identifierName())) {
             this.tokens.removeToken();
-            if (this.tokens.matches1(tt.comma)) {
+            if (this.tokens.matches(tt.comma)) {
               this.tokens.removeToken();
             }
           } else {
             foundNonTypeImport = true;
             this.tokens.copyToken();
-            if (this.tokens.matches1(tt.comma)) {
+            if (this.tokens.matches(tt.comma)) {
               this.tokens.copyToken();
             }
           }
         } else if (
-          this.tokens.matches4(tt.name, tt.name, tt.name, tt.comma) ||
-          this.tokens.matches4(tt.name, tt.name, tt.name, tt.braceR)
+          this.tokens.matches(tt.name, tt.name, tt.name, tt.comma) ||
+          this.tokens.matches(tt.name, tt.name, tt.name, tt.braceR)
         ) {
           // foo as bar
           if (this.isTypeName(this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 2))) {
             this.tokens.removeToken();
             this.tokens.removeToken();
             this.tokens.removeToken();
-            if (this.tokens.matches1(tt.comma)) {
+            if (this.tokens.matches(tt.comma)) {
               this.tokens.removeToken();
             }
           } else {
@@ -201,7 +201,7 @@ export default class ESMImportTransformer extends Transformer {
             this.tokens.copyToken();
             this.tokens.copyToken();
             this.tokens.copyToken();
-            if (this.tokens.matches1(tt.comma)) {
+            if (this.tokens.matches(tt.comma)) {
               this.tokens.copyToken();
             }
           }
@@ -233,11 +233,11 @@ export default class ESMImportTransformer extends Transformer {
     }
 
     const alreadyHasName =
-      this.tokens.matches4(tt._export, tt._default, tt._function, tt.name) ||
+      this.tokens.matches(tt._export, tt._default, tt._function, tt.name) ||
       // export default async function
-      this.tokens.matches5(tt._export, tt._default, tt.name, tt._function, tt.name) ||
-      this.tokens.matches4(tt._export, tt._default, tt._class, tt.name) ||
-      this.tokens.matches5(tt._export, tt._default, tt._abstract, tt._class, tt.name);
+      this.tokens.matches(tt._export, tt._default, tt.name, tt._function, tt.name) ||
+      this.tokens.matches(tt._export, tt._default, tt._class, tt.name) ||
+      this.tokens.matches(tt._export, tt._default, tt._abstract, tt._class, tt.name);
 
     if (!alreadyHasName && this.reactHotLoaderTransformer) {
       // This is a plain "export default E" statement and we need to assign E to a variable.
@@ -263,30 +263,30 @@ export default class ESMImportTransformer extends Transformer {
     this.tokens.copyExpectedToken(tt._export);
     this.tokens.copyExpectedToken(tt.braceL);
 
-    while (!this.tokens.matches1(tt.braceR)) {
-      if (!this.tokens.matches1(tt.name)) {
+    while (!this.tokens.matches(tt.braceR)) {
+      if (!this.tokens.matches(tt.name)) {
         throw new Error("Expected identifier at the start of named export.");
       }
       if (this.shouldElideExportedName(this.tokens.identifierName())) {
         while (
-          !this.tokens.matches1(tt.comma) &&
-          !this.tokens.matches1(tt.braceR) &&
+          !this.tokens.matches(tt.comma) &&
+          !this.tokens.matches(tt.braceR) &&
           !this.tokens.isAtEnd()
         ) {
           this.tokens.removeToken();
         }
-        if (this.tokens.matches1(tt.comma)) {
+        if (this.tokens.matches(tt.comma)) {
           this.tokens.removeToken();
         }
       } else {
         while (
-          !this.tokens.matches1(tt.comma) &&
-          !this.tokens.matches1(tt.braceR) &&
+          !this.tokens.matches(tt.comma) &&
+          !this.tokens.matches(tt.braceR) &&
           !this.tokens.isAtEnd()
         ) {
           this.tokens.copyToken();
         }
-        if (this.tokens.matches1(tt.comma)) {
+        if (this.tokens.matches(tt.comma)) {
           this.tokens.copyToken();
         }
       }

@@ -22,23 +22,23 @@ export default class TypeScriptTransformer extends Transformer {
       return true;
     }
     if (
-      this.tokens.matches1(tt._public) ||
-      this.tokens.matches1(tt._protected) ||
-      this.tokens.matches1(tt._private) ||
-      this.tokens.matches1(tt._abstract) ||
-      this.tokens.matches1(tt._readonly) ||
-      this.tokens.matches1(tt.nonNullAssertion)
+      this.tokens.matches(tt._public) ||
+      this.tokens.matches(tt._protected) ||
+      this.tokens.matches(tt._private) ||
+      this.tokens.matches(tt._abstract) ||
+      this.tokens.matches(tt._readonly) ||
+      this.tokens.matches(tt.nonNullAssertion)
     ) {
       this.tokens.removeInitialToken();
       return true;
     }
-    if (this.tokens.matches1(tt._enum) || this.tokens.matches2(tt._const, tt._enum)) {
+    if (this.tokens.matches(tt._enum) || this.tokens.matches(tt._const, tt._enum)) {
       this.processEnum();
       return true;
     }
     if (
-      this.tokens.matches2(tt._export, tt._enum) ||
-      this.tokens.matches3(tt._export, tt._const, tt._enum)
+      this.tokens.matches(tt._export, tt._enum) ||
+      this.tokens.matches(tt._export, tt._const, tt._enum)
     ) {
       this.processEnum(true);
       return true;
@@ -49,7 +49,7 @@ export default class TypeScriptTransformer extends Transformer {
   processEnum(isExport: boolean = false): void {
     // We might have "export const enum", so just remove all relevant tokens.
     this.tokens.removeInitialToken();
-    while (this.tokens.matches1(tt._const) || this.tokens.matches1(tt._enum)) {
+    while (this.tokens.matches(tt._const) || this.tokens.matches(tt._enum)) {
       this.tokens.removeToken();
     }
     const enumName = this.tokens.identifierName();
@@ -77,7 +77,7 @@ export default class TypeScriptTransformer extends Transformer {
     let isPreviousValidIdentifier = false;
     let lastValueReference = null;
     while (true) {
-      if (this.tokens.matches1(tt.braceR)) {
+      if (this.tokens.matches(tt.braceR)) {
         break;
       }
       const nameToken = this.tokens.currentToken();
@@ -98,16 +98,13 @@ export default class TypeScriptTransformer extends Transformer {
       let valueIsString;
       let valueCode;
 
-      if (this.tokens.matches1(tt.eq)) {
+      if (this.tokens.matches(tt.eq)) {
         const rhsEndIndex = this.tokens.currentToken().rhsEndIndex!;
         if (rhsEndIndex == null) {
           throw new Error("Expected rhsEndIndex on enum assign.");
         }
         this.tokens.removeToken();
-        if (
-          this.tokens.matches2(tt.string, tt.comma) ||
-          this.tokens.matches2(tt.string, tt.braceR)
-        ) {
+        if (this.tokens.matches(tt.string, tt.comma) || this.tokens.matches(tt.string, tt.braceR)) {
           valueIsString = true;
         }
         const startToken = this.tokens.currentToken();
@@ -130,7 +127,7 @@ export default class TypeScriptTransformer extends Transformer {
           valueCode = "0";
         }
       }
-      if (this.tokens.matches1(tt.comma)) {
+      if (this.tokens.matches(tt.comma)) {
         this.tokens.removeToken();
       }
 

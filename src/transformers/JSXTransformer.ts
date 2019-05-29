@@ -30,7 +30,7 @@ export default class JSXTransformer extends Transformer {
   }
 
   process(): boolean {
-    if (this.tokens.matches1(tt.jsxTagStart)) {
+    if (this.tokens.matches(tt.jsxTagStart)) {
       this.processJSXTag();
       return true;
     }
@@ -72,7 +72,7 @@ export default class JSXTransformer extends Transformer {
     const devProps = this.options.production
       ? ""
       : `__self: this, __source: {fileName: ${this.getFilenameVarName()}, lineNumber: ${lineNumber}}`;
-    if (!this.tokens.matches1(tt.jsxName) && !this.tokens.matches1(tt.braceL)) {
+    if (!this.tokens.matches(tt.jsxName) && !this.tokens.matches(tt.braceL)) {
       if (devProps) {
         this.tokens.appendCode(`, {${devProps}}`);
       } else {
@@ -82,22 +82,22 @@ export default class JSXTransformer extends Transformer {
     }
     this.tokens.appendCode(`, {`);
     while (true) {
-      if (this.tokens.matches2(tt.jsxName, tt.eq)) {
+      if (this.tokens.matches(tt.jsxName, tt.eq)) {
         this.processPropKeyName();
         this.tokens.replaceToken(": ");
-        if (this.tokens.matches1(tt.braceL)) {
+        if (this.tokens.matches(tt.braceL)) {
           this.tokens.replaceToken("");
           this.rootTransformer.processBalancedCode();
           this.tokens.replaceToken("");
-        } else if (this.tokens.matches1(tt.jsxTagStart)) {
+        } else if (this.tokens.matches(tt.jsxTagStart)) {
           this.processJSXTag();
         } else {
           this.processStringPropValue();
         }
-      } else if (this.tokens.matches1(tt.jsxName)) {
+      } else if (this.tokens.matches(tt.jsxName)) {
         this.processPropKeyName();
         this.tokens.appendCode(": true");
-      } else if (this.tokens.matches1(tt.braceL)) {
+      } else if (this.tokens.matches(tt.braceL)) {
         this.tokens.replaceToken("");
         this.rootTransformer.processBalancedCode();
         this.tokens.replaceToken("");
@@ -143,11 +143,11 @@ export default class JSXTransformer extends Transformer {
     let introEnd = this.tokens.currentIndex() + 1;
     while (
       this.tokens.tokens[introEnd].isType ||
-      (!this.tokens.matches2AtIndex(introEnd - 1, tt.jsxName, tt.jsxName) &&
-        !this.tokens.matches2AtIndex(introEnd - 1, tt.greaterThan, tt.jsxName) &&
-        !this.tokens.matches1AtIndex(introEnd, tt.braceL) &&
-        !this.tokens.matches1AtIndex(introEnd, tt.jsxTagEnd) &&
-        !this.tokens.matches2AtIndex(introEnd, tt.slash, tt.jsxTagEnd))
+      (!this.tokens.matchesAtIndex(introEnd - 1, tt.jsxName, tt.jsxName) &&
+        !this.tokens.matchesAtIndex(introEnd - 1, tt.greaterThan, tt.jsxName) &&
+        !this.tokens.matchesAtIndex(introEnd, tt.braceL) &&
+        !this.tokens.matchesAtIndex(introEnd, tt.jsxTagEnd) &&
+        !this.tokens.matchesAtIndex(introEnd, tt.slash, tt.jsxTagEnd))
     ) {
       introEnd++;
     }
@@ -164,12 +164,12 @@ export default class JSXTransformer extends Transformer {
 
   processChildren(): void {
     while (true) {
-      if (this.tokens.matches2(tt.jsxTagStart, tt.slash)) {
+      if (this.tokens.matches(tt.jsxTagStart, tt.slash)) {
         // Closing tag, so no more children.
         return;
       }
-      if (this.tokens.matches1(tt.braceL)) {
-        if (this.tokens.matches2(tt.braceL, tt.braceR)) {
+      if (this.tokens.matches(tt.braceL)) {
+        if (this.tokens.matches(tt.braceL, tt.braceR)) {
           // Empty interpolations and comment-only interpolations are allowed
           // and don't create an extra child arg.
           this.tokens.replaceToken("");
@@ -180,11 +180,11 @@ export default class JSXTransformer extends Transformer {
           this.rootTransformer.processBalancedCode();
           this.tokens.replaceToken("");
         }
-      } else if (this.tokens.matches1(tt.jsxTagStart)) {
+      } else if (this.tokens.matches(tt.jsxTagStart)) {
         // Child JSX element
         this.tokens.appendCode(", ");
         this.processJSXTag();
-      } else if (this.tokens.matches1(tt.jsxText)) {
+      } else if (this.tokens.matches(tt.jsxText)) {
         this.processChildTextElement();
       } else {
         throw new Error("Unexpected token when processing JSX children.");
@@ -213,7 +213,7 @@ export default class JSXTransformer extends Transformer {
     // First tag is always jsxTagStart.
     this.tokens.replaceToken(`${resolvedPragmaBaseName}${jsxPragmaInfo.suffix}(`);
 
-    if (this.tokens.matches1(tt.jsxTagEnd)) {
+    if (this.tokens.matches(tt.jsxTagEnd)) {
       // Fragment syntax.
       const resolvedFragmentPragmaBaseName = this.importProcessor
         ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.fragmentBase) ||
@@ -224,7 +224,7 @@ export default class JSXTransformer extends Transformer {
       );
       // Tag with children.
       this.processChildren();
-      while (!this.tokens.matches1(tt.jsxTagEnd)) {
+      while (!this.tokens.matches(tt.jsxTagEnd)) {
         this.tokens.replaceToken("");
       }
       this.tokens.replaceToken(")");
@@ -233,15 +233,15 @@ export default class JSXTransformer extends Transformer {
       this.processTagIntro();
       this.processProps(firstTokenStart);
 
-      if (this.tokens.matches2(tt.slash, tt.jsxTagEnd)) {
+      if (this.tokens.matches(tt.slash, tt.jsxTagEnd)) {
         // Self-closing tag.
         this.tokens.replaceToken("");
         this.tokens.replaceToken(")");
-      } else if (this.tokens.matches1(tt.jsxTagEnd)) {
+      } else if (this.tokens.matches(tt.jsxTagEnd)) {
         this.tokens.replaceToken("");
         // Tag with children.
         this.processChildren();
-        while (!this.tokens.matches1(tt.jsxTagEnd)) {
+        while (!this.tokens.matches(tt.jsxTagEnd)) {
           this.tokens.replaceToken("");
         }
         this.tokens.replaceToken(")");

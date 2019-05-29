@@ -11,7 +11,7 @@ export default function elideImportEquals(tokens: TokenProcessor): void {
   // name or require
   tokens.removeToken();
   // Handle either `import A = require('A')` or `import A = B.C.D`.
-  if (tokens.matches1(tt.parenL)) {
+  if (tokens.matches(tt.parenL)) {
     // (
     tokens.removeToken();
     // path string
@@ -19,7 +19,7 @@ export default function elideImportEquals(tokens: TokenProcessor): void {
     // )
     tokens.removeToken();
   } else {
-    while (tokens.matches1(tt.dot)) {
+    while (tokens.matches(tt.dot)) {
       // .
       tokens.removeToken();
       // name

@@ -8,7 +8,7 @@ export default class NameManager {
 
   preprocessNames(): void {
     for (let i = 0; i < this.tokens.tokens.length; i++) {
-      if (this.tokens.matches1AtIndex(i, tt.name)) {
+      if (this.tokens.matchesAtIndex(i, tt.name)) {
         this.usedNames.add(this.tokens.identifierNameAtIndex(i));
       }
     }

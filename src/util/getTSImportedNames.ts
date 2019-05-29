@@ -13,8 +13,8 @@ export default function getTSImportedNames(tokens: TokenProcessor): Set<string> 
   const importedNames = new Set();
   for (let i = 0; i < tokens.tokens.length; i++) {
     if (
-      tokens.matches1AtIndex(i, tt._import) &&
-      !tokens.matches3AtIndex(i, tt._import, tt.name, tt.eq)
+      tokens.matchesAtIndex(i, tt._import) &&
+      !tokens.matchesAtIndex(i, tt._import, tt.name, tt.eq)
     ) {
       collectNamesForImport(tokens, i, importedNames);
     }
@@ -29,27 +29,27 @@ function collectNamesForImport(
 ): void {
   index++;
 
-  if (tokens.matches1AtIndex(index, tt.parenL)) {
+  if (tokens.matchesAtIndex(index, tt.parenL)) {
     // Dynamic import, so nothing to do
     return;
   }
 
-  if (tokens.matches1AtIndex(index, tt.name)) {
+  if (tokens.matchesAtIndex(index, tt.name)) {
     importedNames.add(tokens.identifierNameAtIndex(index));
     index++;
-    if (tokens.matches1AtIndex(index, tt.comma)) {
+    if (tokens.matchesAtIndex(index, tt.comma)) {
       index++;
     }
   }
 
-  if (tokens.matches1AtIndex(index, tt.star)) {
+  if (tokens.matchesAtIndex(index, tt.star)) {
     // * as
     index += 2;
     importedNames.add(tokens.identifierNameAtIndex(index));
     index++;
   }
 
-  if (tokens.matches1AtIndex(index, tt.braceL)) {
+  if (tokens.matchesAtIndex(index, tt.braceL)) {
     index++;
     collectNamesForNamedImport(tokens, index, importedNames);
   }
@@ -61,7 +61,7 @@ function collectNamesForNamedImport(
   importedNames: Set<string>,
 ): void {
   while (true) {
-    if (tokens.matches1AtIndex(index, tt.braceR)) {
+    if (tokens.matchesAtIndex(index, tt.braceR)) {
       return;
     }
 
@@ -75,11 +75,11 @@ function collectNamesForNamedImport(
       index++;
     }
     importedNames.add(name);
-    if (tokens.matches2AtIndex(index, tt.comma, tt.braceR)) {
+    if (tokens.matchesAtIndex(index, tt.comma, tt.braceR)) {
       return;
-    } else if (tokens.matches1AtIndex(index, tt.braceR)) {
+    } else if (tokens.matchesAtIndex(index, tt.braceR)) {
       return;
-    } else if (tokens.matches1AtIndex(index, tt.comma)) {
+    } else if (tokens.matchesAtIndex(index, tt.comma)) {
       index++;
     } else {
       throw new Error(`Unexpected token: ${JSON.stringify(tokens.tokens[index])}`);

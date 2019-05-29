@@ -126,17 +126,17 @@ export default class RootTransformer {
     let braceDepth = 0;
     let parenDepth = 0;
     while (!this.tokens.isAtEnd()) {
-      if (this.tokens.matches1(tt.braceL) || this.tokens.matches1(tt.dollarBraceL)) {
+      if (this.tokens.matches(tt.braceL) || this.tokens.matches(tt.dollarBraceL)) {
         braceDepth++;
-      } else if (this.tokens.matches1(tt.braceR)) {
+      } else if (this.tokens.matches(tt.braceR)) {
         if (braceDepth === 0) {
           return;
         }
         braceDepth--;
       }
-      if (this.tokens.matches1(tt.parenL)) {
+      if (this.tokens.matches(tt.parenL)) {
         parenDepth++;
-      } else if (this.tokens.matches1(tt.parenR)) {
+      } else if (this.tokens.matches(tt.parenR)) {
         if (parenDepth === 0) {
           return;
         }
@@ -147,7 +147,7 @@ export default class RootTransformer {
   }
 
   processToken(): void {
-    if (this.tokens.matches1(tt._class)) {
+    if (this.tokens.matches(tt._class)) {
       this.processClass();
       return;
     }
@@ -164,7 +164,7 @@ export default class RootTransformer {
    * Skip past a class with a name and return that name.
    */
   processNamedClass(): string {
-    if (!this.tokens.matches2(tt._class, tt.name)) {
+    if (!this.tokens.matches(tt._class, tt.name)) {
       throw new Error("Expected identifier for exported class name.");
     }
     const name = this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 1);
@@ -260,9 +260,9 @@ export default class RootTransformer {
     while (!this.tokens.matchesContextIdAndLabel(tt.braceR, classContextId)) {
       if (fieldIndex < fields.length && this.tokens.currentIndex() === fields[fieldIndex].start) {
         let needsCloseBrace = false;
-        if (this.tokens.matches1(tt.bracketL)) {
+        if (this.tokens.matches(tt.bracketL)) {
           this.tokens.copyTokenWithPrefix(`${fields[fieldIndex].initializerName}() {this`);
-        } else if (this.tokens.matches1(tt.string) || this.tokens.matches1(tt.num)) {
+        } else if (this.tokens.matches(tt.string) || this.tokens.matches(tt.num)) {
           this.tokens.copyTokenWithPrefix(`${fields[fieldIndex].initializerName}() {this[`);
           needsCloseBrace = true;
         } else {
@@ -323,13 +323,13 @@ export default class RootTransformer {
    * See https://github.com/alangpierce/sucrase/issues/391 for more details.
    */
   processPossibleArrowParamEnd(): boolean {
-    if (this.tokens.matches2(tt.parenR, tt.colon) && this.tokens.tokenAtRelativeIndex(1).isType) {
+    if (this.tokens.matches(tt.parenR, tt.colon) && this.tokens.tokenAtRelativeIndex(1).isType) {
       let nextNonTypeIndex = this.tokens.currentIndex() + 1;
       // Look ahead to see if this is an arrow function or something else.
       while (this.tokens.tokens[nextNonTypeIndex].isType) {
         nextNonTypeIndex++;
       }
-      if (this.tokens.matches1AtIndex(nextNonTypeIndex, tt.arrow)) {
+      if (this.tokens.matchesAtIndex(nextNonTypeIndex, tt.arrow)) {
         this.tokens.removeInitialToken();
         while (this.tokens.currentIndex() < nextNonTypeIndex) {
           this.tokens.removeToken();
@@ -354,7 +354,7 @@ export default class RootTransformer {
   processPossibleAsyncArrowWithTypeParams(): boolean {
     if (
       !this.tokens.matchesContextual(ContextualKeyword._async) &&
-      !this.tokens.matches1(tt._async)
+      !this.tokens.matches(tt._async)
     ) {
       return false;
     }
@@ -368,7 +368,7 @@ export default class RootTransformer {
     while (this.tokens.tokens[nextNonTypeIndex].isType) {
       nextNonTypeIndex++;
     }
-    if (this.tokens.matches1AtIndex(nextNonTypeIndex, tt.parenL)) {
+    if (this.tokens.matchesAtIndex(nextNonTypeIndex, tt.parenL)) {
       this.tokens.replaceToken("async (");
       this.tokens.removeInitialToken();
       while (this.tokens.currentIndex() < nextNonTypeIndex) {

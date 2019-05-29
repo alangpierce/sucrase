@@ -40,7 +40,7 @@ export default class TokenProcessor {
 
   matchesContextualAtIndex(index: number, contextualKeyword: ContextualKeyword): boolean {
     return (
-      this.matches1AtIndex(index, tt.name) &&
+      this.matchesAtIndex(index, tt.name) &&
       this.tokens[index].contextualKeyword === contextualKeyword
     );
   }
@@ -78,55 +78,15 @@ export default class TokenProcessor {
     return this.code.slice(token.start + 1, token.end - 1);
   }
 
-  matches1AtIndex(index: number, t1: TokenType): boolean {
-    return this.tokens[index].type === t1;
+  matchesAtIndex(index: number, ...ts: Array<TokenType>): boolean {
+    for (let i = 0; i < ts.length; i++) {
+      if (ts[i] !== this.tokens[index + i].type) return false;
+    }
+    return true;
   }
 
-  matches2AtIndex(index: number, t1: TokenType, t2: TokenType): boolean {
-    return this.tokens[index].type === t1 && this.tokens[index + 1].type === t2;
-  }
-
-  matches3AtIndex(index: number, t1: TokenType, t2: TokenType, t3: TokenType): boolean {
-    return (
-      this.tokens[index].type === t1 &&
-      this.tokens[index + 1].type === t2 &&
-      this.tokens[index + 2].type === t3
-    );
-  }
-
-  matches1(t1: TokenType): boolean {
-    return this.tokens[this.tokenIndex].type === t1;
-  }
-
-  matches2(t1: TokenType, t2: TokenType): boolean {
-    return this.tokens[this.tokenIndex].type === t1 && this.tokens[this.tokenIndex + 1].type === t2;
-  }
-
-  matches3(t1: TokenType, t2: TokenType, t3: TokenType): boolean {
-    return (
-      this.tokens[this.tokenIndex].type === t1 &&
-      this.tokens[this.tokenIndex + 1].type === t2 &&
-      this.tokens[this.tokenIndex + 2].type === t3
-    );
-  }
-
-  matches4(t1: TokenType, t2: TokenType, t3: TokenType, t4: TokenType): boolean {
-    return (
-      this.tokens[this.tokenIndex].type === t1 &&
-      this.tokens[this.tokenIndex + 1].type === t2 &&
-      this.tokens[this.tokenIndex + 2].type === t3 &&
-      this.tokens[this.tokenIndex + 3].type === t4
-    );
-  }
-
-  matches5(t1: TokenType, t2: TokenType, t3: TokenType, t4: TokenType, t5: TokenType): boolean {
-    return (
-      this.tokens[this.tokenIndex].type === t1 &&
-      this.tokens[this.tokenIndex + 1].type === t2 &&
-      this.tokens[this.tokenIndex + 2].type === t3 &&
-      this.tokens[this.tokenIndex + 3].type === t4 &&
-      this.tokens[this.tokenIndex + 4].type === t5
-    );
+  matches(...ts: Array<TokenType>): boolean {
+    return this.matchesAtIndex(this.tokenIndex, ...ts);
   }
 
   matchesContextual(contextualKeyword: ContextualKeyword): boolean {
@@ -134,7 +94,7 @@ export default class TokenProcessor {
   }
 
   matchesContextIdAndLabel(type: TokenType, contextId: number): boolean {
-    return this.matches1(type) && this.currentToken().contextId === contextId;
+    return this.matches(type) && this.currentToken().contextId === contextId;
   }
 
   previousWhitespaceAndComments(): string {

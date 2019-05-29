@@ -21,7 +21,7 @@ export default function shouldElideDefaultExport(
   const numTokens = exportToken.rhsEndIndex - tokens.currentIndex();
   if (
     numTokens !== 3 &&
-    !(numTokens === 4 && tokens.matches1AtIndex(exportToken.rhsEndIndex - 1, tt.semi))
+    !(numTokens === 4 && tokens.matchesAtIndex(exportToken.rhsEndIndex - 1, tt.semi))
   ) {
     return false;
   }

@@ -55,37 +55,37 @@ export default class CJSImportTransformer extends Transformer {
 
   process(): boolean {
     // TypeScript `import foo = require('foo');` should always just be translated to plain require.
-    if (this.tokens.matches3(tt._import, tt.name, tt.eq)) {
+    if (this.tokens.matches(tt._import, tt.name, tt.eq)) {
       return this.processImportEquals();
     }
-    if (this.tokens.matches1(tt._import)) {
+    if (this.tokens.matches(tt._import)) {
       this.processImport();
       return true;
     }
-    if (this.tokens.matches2(tt._export, tt.eq)) {
+    if (this.tokens.matches(tt._export, tt.eq)) {
       this.tokens.replaceToken("module.exports");
       return true;
     }
-    if (this.tokens.matches1(tt._export) && !this.tokens.currentToken().isType) {
+    if (this.tokens.matches(tt._export) && !this.tokens.currentToken().isType) {
       this.hadExport = true;
       return this.processExport();
     }
-    if (this.tokens.matches2(tt.name, tt.postIncDec)) {
+    if (this.tokens.matches(tt.name, tt.postIncDec)) {
       // Fall through to normal identifier matching if this doesn't apply.
       if (this.processPostIncDec()) {
         return true;
       }
     }
-    if (this.tokens.matches1(tt.name) || this.tokens.matches1(tt.jsxName)) {
+    if (this.tokens.matches(tt.name) || this.tokens.matches(tt.jsxName)) {
       return this.processIdentifier();
     }
-    if (this.tokens.matches1(tt.eq)) {
+    if (this.tokens.matches(tt.eq)) {
       return this.processAssignment();
     }
-    if (this.tokens.matches1(tt.assign)) {
+    if (this.tokens.matches(tt.assign)) {
       return this.processComplexAssignment();
     }
-    if (this.tokens.matches1(tt.preIncDec)) {
+    if (this.tokens.matches(tt.preIncDec)) {
       return this.processPreIncDec();
     }
     return false;
@@ -113,7 +113,7 @@ export default class CJSImportTransformer extends Transformer {
    * we just need to look it up.
    */
   private processImport(): void {
-    if (this.tokens.matches2(tt._import, tt.parenL)) {
+    if (this.tokens.matches(tt._import, tt.parenL)) {
       this.tokens.replaceToken("Promise.resolve().then(() => require");
       const contextId = this.tokens.currentToken().contextId;
       if (contextId == null) {
@@ -136,7 +136,7 @@ export default class CJSImportTransformer extends Transformer {
       this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
       this.tokens.appendCode(this.importProcessor.claimImportCode(path));
     }
-    if (this.tokens.matches1(tt.semi)) {
+    if (this.tokens.matches(tt.semi)) {
       this.tokens.removeToken();
     }
   }
@@ -151,7 +151,7 @@ export default class CJSImportTransformer extends Transformer {
     this.tokens.removeInitialToken();
     if (
       this.tokens.matchesContextual(ContextualKeyword._type) &&
-      !this.tokens.matches1AtIndex(this.tokens.currentIndex() + 1, tt.comma) &&
+      !this.tokens.matchesAtIndex(this.tokens.currentIndex() + 1, tt.comma) &&
       !this.tokens.matchesContextualAtIndex(this.tokens.currentIndex() + 1, ContextualKeyword._from)
     ) {
       // This is an "import type" statement, so exit early.
@@ -159,29 +159,29 @@ export default class CJSImportTransformer extends Transformer {
       return true;
     }
 
-    if (this.tokens.matches1(tt.name) || this.tokens.matches1(tt.star)) {
+    if (this.tokens.matches(tt.name) || this.tokens.matches(tt.star)) {
       // We have a default import or namespace import, so there must be some
       // non-type import.
       this.removeRemainingImport();
       return false;
     }
 
-    if (this.tokens.matches1(tt.string)) {
+    if (this.tokens.matches(tt.string)) {
       // This is a bare import, so we should proceed with the import.
       return false;
     }
 
     let foundNonType = false;
-    while (!this.tokens.matches1(tt.string)) {
+    while (!this.tokens.matches(tt.string)) {
       // Check if any named imports are of the form "foo" or "foo as bar", with
       // no leading "type".
-      if ((!foundNonType && this.tokens.matches1(tt.braceL)) || this.tokens.matches1(tt.comma)) {
+      if ((!foundNonType && this.tokens.matches(tt.braceL)) || this.tokens.matches(tt.comma)) {
         this.tokens.removeToken();
         if (
-          this.tokens.matches2(tt.name, tt.comma) ||
-          this.tokens.matches2(tt.name, tt.braceR) ||
-          this.tokens.matches4(tt.name, tt.name, tt.name, tt.comma) ||
-          this.tokens.matches4(tt.name, tt.name, tt.name, tt.braceR)
+          this.tokens.matches(tt.name, tt.comma) ||
+          this.tokens.matches(tt.name, tt.braceR) ||
+          this.tokens.matches(tt.name, tt.name, tt.name, tt.comma) ||
+          this.tokens.matches(tt.name, tt.name, tt.name, tt.braceR)
         ) {
           foundNonType = true;
         }
@@ -192,7 +192,7 @@ export default class CJSImportTransformer extends Transformer {
   }
 
   private removeRemainingImport(): void {
-    while (!this.tokens.matches1(tt.string)) {
+    while (!this.tokens.matches(tt.string)) {
       this.tokens.removeToken();
     }
   }
@@ -262,42 +262,42 @@ export default class CJSImportTransformer extends Transformer {
 
   processExport(): boolean {
     if (
-      this.tokens.matches2(tt._export, tt._enum) ||
-      this.tokens.matches3(tt._export, tt._const, tt._enum)
+      this.tokens.matches(tt._export, tt._enum) ||
+      this.tokens.matches(tt._export, tt._const, tt._enum)
     ) {
       // Let the TypeScript transform handle it.
       return false;
     }
-    if (this.tokens.matches2(tt._export, tt._default)) {
+    if (this.tokens.matches(tt._export, tt._default)) {
       this.processExportDefault();
       this.hadDefaultExport = true;
       return true;
     }
     this.hadNamedExport = true;
     if (
-      this.tokens.matches2(tt._export, tt._var) ||
-      this.tokens.matches2(tt._export, tt._let) ||
-      this.tokens.matches2(tt._export, tt._const)
+      this.tokens.matches(tt._export, tt._var) ||
+      this.tokens.matches(tt._export, tt._let) ||
+      this.tokens.matches(tt._export, tt._const)
     ) {
       this.processExportVar();
       return true;
     } else if (
-      this.tokens.matches2(tt._export, tt._function) ||
+      this.tokens.matches(tt._export, tt._function) ||
       // export async function
-      this.tokens.matches3(tt._export, tt.name, tt._function)
+      this.tokens.matches(tt._export, tt.name, tt._function)
     ) {
       this.processExportFunction();
       return true;
     } else if (
-      this.tokens.matches2(tt._export, tt._class) ||
-      this.tokens.matches3(tt._export, tt._abstract, tt._class)
+      this.tokens.matches(tt._export, tt._class) ||
+      this.tokens.matches(tt._export, tt._abstract, tt._class)
     ) {
       this.processExportClass();
       return true;
-    } else if (this.tokens.matches2(tt._export, tt.braceL)) {
+    } else if (this.tokens.matches(tt._export, tt.braceL)) {
       this.processExportBindings();
       return true;
-    } else if (this.tokens.matches2(tt._export, tt.star)) {
+    } else if (this.tokens.matches(tt._export, tt.star)) {
       this.processExportStar();
       return true;
     } else {
@@ -316,7 +316,7 @@ export default class CJSImportTransformer extends Transformer {
     if (identifierToken.shadowsGlobal) {
       return false;
     }
-    if (index >= 2 && this.tokens.matches1AtIndex(index - 2, tt.dot)) {
+    if (index >= 2 && this.tokens.matchesAtIndex(index - 2, tt.dot)) {
       return false;
     }
     if (index >= 2 && [tt._var, tt._let, tt._const].includes(this.tokens.tokens[index - 2].type)) {
@@ -348,7 +348,7 @@ export default class CJSImportTransformer extends Transformer {
     if (identifierToken.shadowsGlobal) {
       return false;
     }
-    if (index >= 2 && this.tokens.matches1AtIndex(index - 2, tt.dot)) {
+    if (index >= 2 && this.tokens.matchesAtIndex(index - 2, tt.dot)) {
       return false;
     }
     const assignmentSnippet = this.importProcessor.resolveExportBinding(
@@ -377,9 +377,9 @@ export default class CJSImportTransformer extends Transformer {
     // Ignore things like ++a.b and ++a[b] and ++a().b.
     if (
       index + 2 < this.tokens.tokens.length &&
-      (this.tokens.matches1AtIndex(index + 2, tt.dot) ||
-        this.tokens.matches1AtIndex(index + 2, tt.bracketL) ||
-        this.tokens.matches1AtIndex(index + 2, tt.parenL))
+      (this.tokens.matchesAtIndex(index + 2, tt.dot) ||
+        this.tokens.matchesAtIndex(index + 2, tt.bracketL) ||
+        this.tokens.matchesAtIndex(index + 2, tt.parenL))
     ) {
       return false;
     }
@@ -407,7 +407,7 @@ export default class CJSImportTransformer extends Transformer {
     if (identifierToken.shadowsGlobal) {
       return false;
     }
-    if (index >= 1 && this.tokens.matches1AtIndex(index - 1, tt.dot)) {
+    if (index >= 1 && this.tokens.matchesAtIndex(index - 1, tt.dot)) {
       return false;
     }
     const identifierName = this.tokens.identifierNameForToken(identifierToken);
@@ -432,9 +432,9 @@ export default class CJSImportTransformer extends Transformer {
 
   private processExportDefault(): void {
     if (
-      this.tokens.matches4(tt._export, tt._default, tt._function, tt.name) ||
+      this.tokens.matches(tt._export, tt._default, tt._function, tt.name) ||
       // export default async function
-      this.tokens.matches5(tt._export, tt._default, tt.name, tt._function, tt.name)
+      this.tokens.matches(tt._export, tt._default, tt.name, tt._function, tt.name)
     ) {
       this.tokens.removeInitialToken();
       this.tokens.removeToken();
@@ -443,17 +443,17 @@ export default class CJSImportTransformer extends Transformer {
       const name = this.processNamedFunction();
       this.tokens.appendCode(` exports.default = ${name};`);
     } else if (
-      this.tokens.matches4(tt._export, tt._default, tt._class, tt.name) ||
-      this.tokens.matches5(tt._export, tt._default, tt._abstract, tt._class, tt.name)
+      this.tokens.matches(tt._export, tt._default, tt._class, tt.name) ||
+      this.tokens.matches(tt._export, tt._default, tt._abstract, tt._class, tt.name)
     ) {
       this.tokens.removeInitialToken();
       this.tokens.removeToken();
-      if (this.tokens.matches1(tt._abstract)) {
+      if (this.tokens.matches(tt._abstract)) {
         this.tokens.removeToken();
       }
       const name = this.rootTransformer.processNamedClass();
       this.tokens.appendCode(` exports.default = ${name};`);
-    } else if (this.tokens.matches3(tt._export, tt._default, tt.at)) {
+    } else if (this.tokens.matches(tt._export, tt._default, tt.at)) {
       throw new Error("Export default statements with decorators are not yet supported.");
       // After this point, this is a plain "export default E" statement.
     } else if (
@@ -503,14 +503,14 @@ export default class CJSImportTransformer extends Transformer {
     tokenIndex++;
     // var/let/const
     tokenIndex++;
-    if (!this.tokens.matches1AtIndex(tokenIndex, tt.name)) {
+    if (!this.tokens.matchesAtIndex(tokenIndex, tt.name)) {
       return false;
     }
     tokenIndex++;
     while (tokenIndex < this.tokens.tokens.length && this.tokens.tokens[tokenIndex].isType) {
       tokenIndex++;
     }
-    if (!this.tokens.matches1AtIndex(tokenIndex, tt.eq)) {
+    if (!this.tokens.matchesAtIndex(tokenIndex, tt.eq)) {
       return false;
     }
     return true;
@@ -536,7 +536,7 @@ export default class CJSImportTransformer extends Transformer {
     this.tokens.copyToken();
     const varName = this.tokens.identifierName();
     // x: number  ->  x
-    while (!this.tokens.matches1(tt.eq)) {
+    while (!this.tokens.matches(tt.eq)) {
       this.rootTransformer.processToken();
     }
     const endIndex = this.tokens.currentToken().rhsEndIndex;
@@ -559,7 +559,7 @@ export default class CJSImportTransformer extends Transformer {
   private processComplexExportVar(): void {
     this.tokens.removeInitialToken();
     this.tokens.removeToken();
-    const needsParens = this.tokens.matches1(tt.braceL);
+    const needsParens = this.tokens.matches(tt.braceL);
     if (needsParens) {
       this.tokens.appendCode("(");
     }
@@ -567,22 +567,22 @@ export default class CJSImportTransformer extends Transformer {
     let depth = 0;
     while (true) {
       if (
-        this.tokens.matches1(tt.braceL) ||
-        this.tokens.matches1(tt.dollarBraceL) ||
-        this.tokens.matches1(tt.bracketL)
+        this.tokens.matches(tt.braceL) ||
+        this.tokens.matches(tt.dollarBraceL) ||
+        this.tokens.matches(tt.bracketL)
       ) {
         depth++;
         this.tokens.copyToken();
-      } else if (this.tokens.matches1(tt.braceR) || this.tokens.matches1(tt.bracketR)) {
+      } else if (this.tokens.matches(tt.braceR) || this.tokens.matches(tt.bracketR)) {
         depth--;
         this.tokens.copyToken();
       } else if (
         depth === 0 &&
-        !this.tokens.matches1(tt.name) &&
+        !this.tokens.matches(tt.name) &&
         !this.tokens.currentToken().isType
       ) {
         break;
-      } else if (this.tokens.matches1(tt.eq)) {
+      } else if (this.tokens.matches(tt.eq)) {
         // Default values might have assignments in the RHS that we want to ignore, so skip past
         // them.
         const endIndex = this.tokens.currentToken().rhsEndIndex;
@@ -639,19 +639,19 @@ export default class CJSImportTransformer extends Transformer {
    * Skip past a function with a name and return that name.
    */
   private processNamedFunction(): string {
-    if (this.tokens.matches1(tt._function)) {
+    if (this.tokens.matches(tt._function)) {
       this.tokens.copyToken();
-    } else if (this.tokens.matches2(tt.name, tt._function)) {
+    } else if (this.tokens.matches(tt.name, tt._function)) {
       if (!this.tokens.matchesContextual(ContextualKeyword._async)) {
         throw new Error("Expected async keyword in function export.");
       }
       this.tokens.copyToken();
       this.tokens.copyToken();
     }
-    if (this.tokens.matches1(tt.star)) {
+    if (this.tokens.matches(tt.star)) {
       this.tokens.copyToken();
     }
-    if (!this.tokens.matches1(tt.name)) {
+    if (!this.tokens.matches(tt.name)) {
       throw new Error("Expected identifier for exported function name.");
     }
     const name = this.tokens.identifierName();
@@ -680,7 +680,7 @@ export default class CJSImportTransformer extends Transformer {
    */
   private processExportClass(): void {
     this.tokens.removeInitialToken();
-    if (this.tokens.matches1(tt._abstract)) {
+    if (this.tokens.matches(tt._abstract)) {
       this.tokens.removeToken();
     }
     const name = this.rootTransformer.processNamedClass();
@@ -708,7 +708,7 @@ export default class CJSImportTransformer extends Transformer {
 
     const exportStatements = [];
     while (true) {
-      if (this.tokens.matches1(tt.braceR)) {
+      if (this.tokens.matches(tt.braceR)) {
         this.tokens.removeToken();
         break;
       }
@@ -728,15 +728,15 @@ export default class CJSImportTransformer extends Transformer {
         exportStatements.push(`exports.${exportedName} = ${newLocalName || localName};`);
       }
 
-      if (this.tokens.matches1(tt.braceR)) {
+      if (this.tokens.matches(tt.braceR)) {
         this.tokens.removeToken();
         break;
       }
-      if (this.tokens.matches2(tt.comma, tt.braceR)) {
+      if (this.tokens.matches(tt.comma, tt.braceR)) {
         this.tokens.removeToken();
         this.tokens.removeToken();
         break;
-      } else if (this.tokens.matches1(tt.comma)) {
+      } else if (this.tokens.matches(tt.comma)) {
         this.tokens.removeToken();
       } else {
         throw new Error(`Unexpected token: ${JSON.stringify(this.tokens.currentToken())}`);
@@ -754,19 +754,19 @@ export default class CJSImportTransformer extends Transformer {
       this.tokens.appendCode(exportStatements.join(" "));
     }
 
-    if (this.tokens.matches1(tt.semi)) {
+    if (this.tokens.matches(tt.semi)) {
       this.tokens.removeToken();
     }
   }
 
   private processExportStar(): void {
     this.tokens.removeInitialToken();
-    while (!this.tokens.matches1(tt.string)) {
+    while (!this.tokens.matches(tt.string)) {
       this.tokens.removeToken();
     }
     const path = this.tokens.stringValue();
     this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
-    if (this.tokens.matches1(tt.semi)) {
+    if (this.tokens.matches(tt.semi)) {
       this.tokens.removeToken();
     }
   }

@@ -34,7 +34,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
       return true;
     }
     if (
-      this.tokens.matches3(tt.name, tt.dot, tt.name) &&
+      this.tokens.matches(tt.name, tt.dot, tt.name) &&
       this.tokens.identifierName() === "React" &&
       this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 2) === "createClass"
     ) {
@@ -79,7 +79,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
     if (startIndex < 2) {
       return null;
     }
-    if (this.tokens.matches2AtIndex(startIndex - 2, tt.name, tt.eq)) {
+    if (this.tokens.matchesAtIndex(startIndex - 2, tt.name, tt.eq)) {
       // This is an assignment (or declaration) and the LHS is either an identifier or a member
       // expression ending in an identifier, so use that identifier name.
       return this.tokens.identifierNameAtIndex(startIndex - 2);
@@ -91,7 +91,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
       // This is an object literal value.
       return this.tokens.identifierNameAtIndex(startIndex - 2);
     }
-    if (this.tokens.matches2AtIndex(startIndex - 2, tt._export, tt._default)) {
+    if (this.tokens.matchesAtIndex(startIndex - 2, tt._export, tt._default)) {
       return this.getDisplayNameFromFilename();
     }
     return null;
@@ -117,7 +117,7 @@ export default class ReactDisplayNameTransformer extends Transformer {
    */
   private classNeedsDisplayName(): boolean {
     let index = this.tokens.currentIndex();
-    if (!this.tokens.matches2(tt.parenL, tt.braceL)) {
+    if (!this.tokens.matches(tt.parenL, tt.braceL)) {
       return false;
     }
     // The block starts on the {, and we expect any displayName key to be in
@@ -153,8 +153,8 @@ export default class ReactDisplayNameTransformer extends Transformer {
     // If we got this far, we know we have createClass with an object with no
     // display name, so we want to proceed as long as that was the only argument.
     return (
-      this.tokens.matches1AtIndex(index, tt.parenR) ||
-      this.tokens.matches2AtIndex(index, tt.comma, tt.parenR)
+      this.tokens.matchesAtIndex(index, tt.parenR) ||
+      this.tokens.matchesAtIndex(index, tt.comma, tt.parenR)
     );
   }
 }

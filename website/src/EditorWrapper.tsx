@@ -104,6 +104,7 @@ const styles = StyleSheet.create({
     // When adding a third editor, we need the container size to shrink so that
     // the Monaco layout code will adjust to the container size.
     overflowX: "hidden",
+    overflowY: "hidden",
     margin: 8,
   },
   label: {

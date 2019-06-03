@@ -10,7 +10,7 @@ import TokenProcessor from "../TokenProcessor";
  * replacement and flow type imports.
  */
 export default function getTSImportedNames(tokens: TokenProcessor): Set<string> {
-  const importedNames = new Set();
+  const importedNames = new Set<string>();
   for (let i = 0; i < tokens.tokens.length; i++) {
     if (
       tokens.matches1AtIndex(i, tt._import) &&

@@ -52,11 +52,11 @@ export default class ReactHotLoaderTransformer extends Transformer {
     return;
   }
 ${namesToRegister
-      .map(
-        ({variableName, uniqueLocalName}) =>
-          `  reactHotLoader.register(${variableName}, "${uniqueLocalName}", "${this.filePath}");`,
-      )
-      .join("\n")}
+  .map(
+    ({variableName, uniqueLocalName}) =>
+      `  reactHotLoader.register(${variableName}, "${uniqueLocalName}", "${this.filePath}");`,
+  )
+  .join("\n")}
   leaveModule(module);
 })();`;
   }

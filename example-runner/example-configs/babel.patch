@@ -1,7 +1,7 @@
-diff --git c/Gulpfile.js w/Gulpfile.js
-index a03b34f15..b8a30ddae 100644
---- c/Gulpfile.js
-+++ w/Gulpfile.js
+diff --git a/Gulpfile.js b/Gulpfile.js
+index 5df9882ca..0766fa3ca 100644
+--- a/Gulpfile.js
++++ b/Gulpfile.js
 @@ -4,7 +4,7 @@ const plumber = require("gulp-plumber");
  const through = require("through2");
  const chalk = require("chalk");
@@ -9,17 +9,9 @@ index a03b34f15..b8a30ddae 100644
 -const babel = require("gulp-babel");
 +const sucrase = require("@sucrase/gulp-plugin");
  const gulpWatch = require("gulp-watch");
- const gutil = require("gulp-util");
+ const fancyLog = require("fancy-log");
  const filter = require("gulp-filter");
-@@ -15,7 +15,6 @@ const merge = require("merge-stream");
- const rollup = require("rollup-stream");
- const source = require("vinyl-source-stream");
- const buffer = require("vinyl-buffer");
--const rollupBabel = require("rollup-plugin-babel");
- const rollupNodeResolve = require("rollup-plugin-node-resolve");
- const registerStandalonePackageTask = require("./scripts/gulp-tasks")
-   .registerStandalonePackageTask;
-@@ -79,7 +78,7 @@ function buildBabel(exclude) {
+@@ -73,7 +73,7 @@ function buildBabel(exclude) {
          .pipe(errorsLogger())
          .pipe(newer({ dest: base, map: swapSrcWithLib }))
          .pipe(compilationLogger())
@@ -28,22 +20,20 @@ index a03b34f15..b8a30ddae 100644
          .pipe(
            // Passing 'file.relative' because newer() above uses a relative
            // path and this keeps it consistent.
-@@ -113,9 +112,7 @@ function buildRollup(packages) {
+@@ -114,7 +114,7 @@ function buildRollup(packages) {
+   );
  }
  
- gulp.task("build", function() {
--  const bundles = ["packages/babel-parser"];
--
--  return merge([buildBabel(/* exclude */ bundles), buildRollup(bundles)]);
-+  return buildBabel();
- });
+-const bundles = ["packages/babel-parser"];
++const bundles = [];
  
- gulp.task("default", gulp.series("build"));
-diff --git c/Makefile w/Makefile
-index a23354d7b..0f5e4b6f8 100644
---- c/Makefile
-+++ w/Makefile
-@@ -66,7 +66,9 @@ test-only:
+ gulp.task("build-rollup", () => buildRollup(bundles));
+ gulp.task("build-babel", () => buildBabel(/* exclude */ bundles));
+diff --git a/Makefile b/Makefile
+index dc858ab2e..16cc7fd47 100644
+--- a/Makefile
++++ b/Makefile
+@@ -78,7 +78,9 @@ test-only:
  	BABEL_ENV=test ./scripts/test.sh
  	make test-clean
  
@@ -54,12 +44,9 @@ index a23354d7b..0f5e4b6f8 100644
  
  test-ci: bootstrap test-only
  
-@@ -116,8 +118,13 @@ publish:
- 	./node_modules/.bin/lerna publish --force-publish=* --exact --skip-temp-tag
- 	make clean
+@@ -154,6 +156,11 @@ endif
  
--bootstrap: clean-all
-+bootstrap:
+ bootstrap-only: clean-all
  	yarn --ignore-engines
 +	yarn link sucrase
 +	yarn link @sucrase/gulp-plugin
@@ -67,14 +54,14 @@ index a23354d7b..0f5e4b6f8 100644
 +	yarn link @sucrase/webpack-loader
 +	yarn link @sucrase/webpack-object-rest-spread-plugin
  	./node_modules/.bin/lerna bootstrap -- --ignore-engines
- 	make build
- 	cd packages/babel-runtime; \
-diff --git c/package.json w/package.json
-index 2ef4be29b..cdcb4632d 100644
---- c/package.json
-+++ w/package.json
-@@ -77,6 +77,9 @@
-     ]
+ 
+ bootstrap: bootstrap-only
+diff --git a/package.json b/package.json
+index 44df123af..61feed3e8 100644
+--- a/package.json
++++ b/package.json
+@@ -89,6 +89,9 @@
+     }
    },
    "jest": {
 +    "transform": {
@@ -83,32 +70,118 @@ index 2ef4be29b..cdcb4632d 100644
      "collectCoverageFrom": [
        "packages/*/src/**/*.mjs",
        "packages/*/src/**/*.js",
-diff --git c/packages/babel-plugin-transform-regenerator/package.json w/packages/babel-plugin-transform-regenerator/package.json
-index d7c9c2eae..efb3cc149 100644
---- c/packages/babel-plugin-transform-regenerator/package.json
-+++ w/packages/babel-plugin-transform-regenerator/package.json
-@@ -7,7 +7,7 @@
-   "repository": "https://github.com/babel/babel/tree/master/packages/babel-plugin-transform-regenerator",
-   "main": "lib/index.js",
-   "dependencies": {
--    "regenerator-transform": "^0.13.3"
-+    "regenerator-transform": "0.13.3"
-   },
-   "license": "MIT",
-   "peerDependencies": {
-diff --git c/scripts/gulp-tasks.js w/scripts/gulp-tasks.js
-index f3c696de5..5eab2452a 100644
---- c/scripts/gulp-tasks.js
-+++ w/scripts/gulp-tasks.js
-@@ -19,6 +19,7 @@ const RootMostResolvePlugin = require("webpack-dependency-suite")
- const webpack = require("webpack");
+diff --git a/packages/babel-parser/src/util/scopeflags.js b/packages/babel-parser/src/util/scopeflags.js
+index 8c9697b3a..e31b3d387 100644
+--- a/packages/babel-parser/src/util/scopeflags.js
++++ b/packages/babel-parser/src/util/scopeflags.js
+@@ -2,17 +2,19 @@
+ 
+ // Each scope gets a bitset that may contain these flags
+ // prettier-ignore
+-export const SCOPE_OTHER        = 0b000000000,
+-             SCOPE_PROGRAM      = 0b000000001,
+-             SCOPE_FUNCTION     = 0b000000010,
+-             SCOPE_ASYNC        = 0b000000100,
+-             SCOPE_GENERATOR    = 0b000001000,
+-             SCOPE_ARROW        = 0b000010000,
+-             SCOPE_SIMPLE_CATCH = 0b000100000,
+-             SCOPE_SUPER        = 0b001000000,
+-             SCOPE_DIRECT_SUPER = 0b010000000,
+-             SCOPE_CLASS        = 0b100000000,
+-             SCOPE_VAR = SCOPE_PROGRAM | SCOPE_FUNCTION;
++export const SCOPE_OTHER        = 0b000000000;
++// TODO(#455): This was changed to simpler code to work with Sucrase. Fix the
++// Sucrase bug to avoid this patch hunk.
++export const SCOPE_PROGRAM      = 0b000000001;
++export const SCOPE_FUNCTION     = 0b000000010;
++export const SCOPE_ASYNC        = 0b000000100;
++export const SCOPE_GENERATOR    = 0b000001000;
++export const SCOPE_ARROW        = 0b000010000;
++export const SCOPE_SIMPLE_CATCH = 0b000100000;
++export const SCOPE_SUPER        = 0b001000000;
++export const SCOPE_DIRECT_SUPER = 0b010000000;
++export const SCOPE_CLASS        = 0b100000000;
++export const SCOPE_VAR = SCOPE_PROGRAM | SCOPE_FUNCTION;
+ 
+ export type ScopeFlags =
+   | typeof SCOPE_OTHER
+@@ -37,39 +39,39 @@ export function functionFlags(isAsync: boolean, isGenerator: boolean) {
+ 
+ // These flags are meant to be _only_ used inside the Scope class (or subclasses).
+ // prettier-ignore
+-export const BIND_KIND_VALUE           = 0b00000_0000_01,
+-             BIND_KIND_TYPE            = 0b00000_0000_10,
++export const BIND_KIND_VALUE           = 0b00000_0000_01;
++export const BIND_KIND_TYPE            = 0b00000_0000_10;
+              // Used in checkLVal and declareName to determine the type of a binding
+-             BIND_SCOPE_VAR            = 0b00000_0001_00, // Var-style binding
+-             BIND_SCOPE_LEXICAL        = 0b00000_0010_00, // Let- or const-style binding
+-             BIND_SCOPE_FUNCTION       = 0b00000_0100_00, // Function declaration
+-             BIND_SCOPE_OUTSIDE        = 0b00000_1000_00, // Special case for function names as
++export const BIND_SCOPE_VAR            = 0b00000_0001_00; // Var-style binding
++export const BIND_SCOPE_LEXICAL        = 0b00000_0010_00; // Let- or const-style binding
++export const BIND_SCOPE_FUNCTION       = 0b00000_0100_00; // Function declaration
++export const BIND_SCOPE_OUTSIDE        = 0b00000_1000_00; // Special case for function names as
+                                                    // bound inside the function
+              // Misc flags
+-             BIND_FLAGS_NONE           = 0b00001_0000_00,
+-             BIND_FLAGS_CLASS          = 0b00010_0000_00,
+-             BIND_FLAGS_TS_ENUM        = 0b00100_0000_00,
+-             BIND_FLAGS_TS_CONST_ENUM  = 0b01000_0000_00,
+-             BIND_FLAGS_TS_EXPORT_ONLY = 0b10000_0000_00;
++export const BIND_FLAGS_NONE           = 0b00001_0000_00;
++export const BIND_FLAGS_CLASS          = 0b00010_0000_00;
++export const BIND_FLAGS_TS_ENUM        = 0b00100_0000_00;
++export const BIND_FLAGS_TS_CONST_ENUM  = 0b01000_0000_00;
++export const BIND_FLAGS_TS_EXPORT_ONLY = 0b10000_0000_00;
+ 
+ // These flags are meant to be _only_ used by Scope consumers
+ // prettier-ignore
+ /*                              =    is value?    |    is type?    |      scope          |    misc flags    */
+-export const BIND_CLASS         = BIND_KIND_VALUE | BIND_KIND_TYPE | BIND_SCOPE_LEXICAL  | BIND_FLAGS_CLASS  ,
+-             BIND_LEXICAL       = BIND_KIND_VALUE | 0              | BIND_SCOPE_LEXICAL  | 0                 ,
+-             BIND_VAR           = BIND_KIND_VALUE | 0              | BIND_SCOPE_VAR      | 0                 ,
+-             BIND_FUNCTION      = BIND_KIND_VALUE | 0              | BIND_SCOPE_FUNCTION | 0                 ,
+-             BIND_TS_INTERFACE  = 0               | BIND_KIND_TYPE | 0                   | BIND_FLAGS_CLASS  ,
+-             BIND_TS_TYPE       = 0               | BIND_KIND_TYPE | 0                   | 0                 ,
+-             BIND_TS_ENUM       = BIND_KIND_VALUE | BIND_KIND_TYPE | BIND_SCOPE_LEXICAL  | BIND_FLAGS_TS_ENUM,
+-             BIND_TS_FN_TYPE    = 0               | 0              | 0            | BIND_FLAGS_TS_EXPORT_ONLY,
++export const BIND_CLASS         = BIND_KIND_VALUE | BIND_KIND_TYPE | BIND_SCOPE_LEXICAL  | BIND_FLAGS_CLASS  ;
++export const BIND_LEXICAL       = BIND_KIND_VALUE | 0              | BIND_SCOPE_LEXICAL  | 0                 ;
++export const BIND_VAR           = BIND_KIND_VALUE | 0              | BIND_SCOPE_VAR      | 0                 ;
++export const BIND_FUNCTION      = BIND_KIND_VALUE | 0              | BIND_SCOPE_FUNCTION | 0                 ;
++export const BIND_TS_INTERFACE  = 0               | BIND_KIND_TYPE | 0                   | BIND_FLAGS_CLASS  ;
++export const BIND_TS_TYPE       = 0               | BIND_KIND_TYPE | 0                   | 0                 ;
++export const BIND_TS_ENUM       = BIND_KIND_VALUE | BIND_KIND_TYPE | BIND_SCOPE_LEXICAL  | BIND_FLAGS_TS_ENUM;
++export const BIND_TS_FN_TYPE    = 0               | 0              | 0            | BIND_FLAGS_TS_EXPORT_ONLY;
+              // These bindings don't introduce anything in the scope. They are used for assignments and
+              // function expressions IDs.
+-             BIND_NONE          = 0               | 0              | 0                   | BIND_FLAGS_NONE   ,
+-             BIND_OUTSIDE       = BIND_KIND_VALUE | 0              | 0                   | BIND_FLAGS_NONE   ,
++export const BIND_NONE          = 0               | 0              | 0                   | BIND_FLAGS_NONE   ;
++export const BIND_OUTSIDE       = BIND_KIND_VALUE | 0              | 0                   | BIND_FLAGS_NONE   ;
+ 
+-             BIND_TS_CONST_ENUM = BIND_TS_ENUM | BIND_FLAGS_TS_CONST_ENUM,
+-             BIND_TS_NAMESPACE  = BIND_TS_FN_TYPE;
++export const BIND_TS_CONST_ENUM = BIND_TS_ENUM | BIND_FLAGS_TS_CONST_ENUM;
++export const BIND_TS_NAMESPACE  = BIND_TS_FN_TYPE;
+ 
+ export type BindingTypes =
+   | typeof BIND_NONE
+diff --git a/scripts/gulp-tasks.js b/scripts/gulp-tasks.js
+index 73c1f7db2..59c35bfcf 100644
+--- a/scripts/gulp-tasks.js
++++ b/scripts/gulp-tasks.js
+@@ -23,6 +23,8 @@ const DuplicatePackageCheckerPlugin = require("duplicate-package-checker-webpack
+ const WarningsToErrorsPlugin = require("warnings-to-errors-webpack-plugin");
  const webpackStream = require("webpack-stream");
  const uglify = require("gulp-uglify");
 +const ObjectRestSpreadPlugin = require("@sucrase/webpack-object-rest-spread-plugin");
++
  
  function webpackBuild(opts) {
    const plugins = opts.plugins || [];
-@@ -37,12 +38,8 @@ function webpackBuild(opts) {
+@@ -41,12 +43,8 @@ function webpackBuild(opts) {
        rules: [
          {
            test: /\.js$/,
@@ -123,20 +196,11 @@ index f3c696de5..5eab2452a 100644
          },
        ],
      },
-@@ -59,6 +56,7 @@ function webpackBuild(opts) {
+@@ -63,6 +61,7 @@ function webpackBuild(opts) {
        libraryTarget: "umd",
      },
      plugins: [
 +      new ObjectRestSpreadPlugin(),
-       new webpack.DefinePlugin({
-         "process.env.NODE_ENV": '"production"',
-         "process.env": JSON.stringify({ NODE_ENV: "production" }),
-@@ -117,7 +115,7 @@ function registerStandalonePackageTask(
-         gulp.dest(standalonePath),
-       ].concat(
-         // Minification is super slow, so we skip it in CI.
--        process.env.CI ? [] : uglify(),
-+        // process.env.CI ? [] : uglify(),
-         rename({ extname: ".min.js" }),
-         gulp.dest(standalonePath)
-       ),
+       new WarningsToErrorsPlugin(),
+       new DuplicatePackageCheckerPlugin({
+         exclude(instance) {

@@ -88,7 +88,7 @@ async function buildDirectory(
     if ((await stat(srcChildPath)).isDirectory()) {
       await buildDirectory(srcChildPath, outChildPath, options);
     } else if (extensions.some((ext) => srcChildPath.endsWith(ext))) {
-      const outPath = outChildPath.replace(/\.\w+$/, options.outExtension);
+      const outPath = outChildPath.replace(/\.\w+$/, `.${ options.outExtension }`);
       await buildFile(srcChildPath, outPath, options);
     }
   }

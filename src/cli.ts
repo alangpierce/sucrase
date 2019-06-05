@@ -87,10 +87,8 @@ async function buildDirectory(
     const outChildPath = join(outDirPath, child);
     if ((await stat(srcChildPath)).isDirectory()) {
       await buildDirectory(srcChildPath, outChildPath, options);
-    } else if (extension.some((ext) => srcChildPath.endsWith(ext))) {
-      const outPath = `${outChildPath.substr(0, outChildPath.length - extension.length)}.${
-        options.outExtension
-      }`;
+    } else if (extensions.some((ext) => srcChildPath.endsWith(ext))) {
+      const outPath = outChildPath.replace(/\.\w+$/, options.outExtension);
       await buildFile(srcChildPath, outPath, options);
     }
   }

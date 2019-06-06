@@ -75,7 +75,9 @@ async function buildDirectory(
   outDirPath: string,
   options: CLIOptions,
 ): Promise<void> {
-  const extensions = options.sucraseOptions.transforms.includes("typescript") ? [".ts"] : [".js", ".jsx"];
+  const extensions = options.sucraseOptions.transforms.includes("typescript")
+    ? [".ts"]
+    : [".js", ".jsx"];
   if (!(await exists(outDirPath))) {
     await mkdir(outDirPath);
   }

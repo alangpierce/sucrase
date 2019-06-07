@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import commander from "commander";
 import {exists, mkdir, readdir, readFile, stat, writeFile} from "mz/fs";
-import {basename, dirname, extname, join} from "path";
+import {join} from "path";
 
 import {Options, transform} from "./index";
 

@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import commander from "commander";
 import {exists, mkdir, readdir, readFile, stat, writeFile} from "mz/fs";
-import {basename, extname, join} from "path";
+import {basename, dirname, extname, join} from "path";
 
 import {Options, transform} from "./index";
 
@@ -88,7 +88,7 @@ async function buildDirectory(
     if ((await stat(srcChildPath)).isDirectory()) {
       await buildDirectory(srcChildPath, outChildPath, options);
     } else if (extension.test(srcChildPath)) {
-      const outPath = `${basename(outChildPath, extname(outChildPath))}.${options.outExtension}`;
+      const outPath = outChildPath.replace(/\.\w+$/, `.${options.outExtension}`);
       await buildFile(srcChildPath, outPath, options);
     }
   }

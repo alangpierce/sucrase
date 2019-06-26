@@ -79,8 +79,7 @@ export default function getClassInfo(
       // Either a method or a field. Skip to the identifier part.
       const statementStartIndex = tokens.currentIndex();
       let isStatic = false;
-      // Access modifiers and generator marker.
-      while (isAccessModifier(tokens.currentToken()) || tokens.matches1(tt.star)) {
+      while (isAccessModifier(tokens.currentToken())) {
         if (tokens.matches1(tt._static)) {
           isStatic = true;
         }
@@ -258,6 +257,7 @@ function isAccessModifier(token: Token): boolean {
     tt._private,
     tt._protected,
     tt._abstract,
+    tt.star,
   ].includes(token.type);
 }
 

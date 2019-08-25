@@ -69,6 +69,7 @@
     "nyc": "^14.1.1",
     "prettier": "^1.17.1",
     "sucrase": "3.10.1",
+    "ts-interface-builder": "^0.1.8",
     "tslint": "^5.17.0",
     "typescript": "3.4",
     "typescript-tslint-plugin": "^0.4.0",
@@ -78,7 +79,8 @@
     "commander": "^2.20.0",
     "lines-and-columns": "^1.1.6",
     "mz": "^2.7.0",
-    "pirates": "^4.0.1"
+    "pirates": "^4.0.1",
+    "ts-interface-checker": "^0.1.7"
   },
   "engines": {
     "node": ">=8"

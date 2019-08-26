@@ -249,6 +249,44 @@ describe("sucrase", () => {
     );
   });
 
+  it("handles generator class methods", () => {
+    assertResult(
+      `
+      class A {
+        *foo() {
+        }
+      }
+    `,
+      `"use strict";
+      class A {
+        *foo() {
+        }
+      }
+    `,
+      {transforms: ["jsx", "imports", "typescript"]},
+    );
+  });
+
+  it("handles async generator class methods", () => {
+    assertResult(
+      `
+      class C {
+        async *m() {
+          yield await 1;
+        }
+      }
+    `,
+      `"use strict";
+      class C {
+        async *m() {
+          yield await 1;
+        }
+      }
+    `,
+      {transforms: ["jsx", "imports", "typescript"]},
+    );
+  });
+
   it("removes numeric separators from number literals", () => {
     assertResult(
       `

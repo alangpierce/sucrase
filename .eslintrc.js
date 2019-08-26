@@ -1,6 +1,6 @@
 module.exports = {
   extends: ["airbnb-base", "prettier"],
-  parser: "typescript-eslint-parser",
+  parser: "@typescript-eslint/parser",
   // Add typescript plugin but don't use it, since that tells WebStorm to run
   // ESLint for .ts files.
   plugins: ["prettier", "typescript"],

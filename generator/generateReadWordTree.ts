@@ -103,7 +103,7 @@ const ALL_KEYWORDS: Array<Keyword> = [
 ];
 
 export default function generateReadWordTree(): string {
-  const prefixes = new Set();
+  const prefixes = new Set<string>();
   for (const {name} of ALL_KEYWORDS) {
     for (let i = 0; i < name.length + 1; i++) {
       prefixes.add(name.slice(0, i));

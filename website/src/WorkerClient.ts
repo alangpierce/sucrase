@@ -18,19 +18,17 @@ let nextConfig: WorkerConfig | null = null;
 // Function to be called when the config is set.
 let notifyConfig: (() => void) | null = null;
 
-type UpdateStateFunc = (
-  values: {
-    sucraseCode?: string;
-    babelCode?: string;
-    typeScriptCode?: string;
-    tokensStr?: string;
-    sucraseTimeMs?: number | null;
-    babelTimeMs?: number | null;
-    typeScriptTimeMs?: number | null;
-    babelLoaded?: boolean;
-    typeScriptLoaded?: boolean;
-  },
-) => void;
+type UpdateStateFunc = (values: {
+  sucraseCode?: string;
+  babelCode?: string;
+  typeScriptCode?: string;
+  tokensStr?: string;
+  sucraseTimeMs?: number | null;
+  babelTimeMs?: number | null;
+  typeScriptTimeMs?: number | null;
+  babelLoaded?: boolean;
+  typeScriptLoaded?: boolean;
+}) => void;
 
 // Callback function to update the main app state. Just forwards the object to
 // setState in the App component.

@@ -28,6 +28,7 @@ module.exports = {
     "import/no-mutable-exports": "off",
     "import/prefer-default-export": "off",
     "lines-between-class-members": "off",
+    "max-classes-per-file": "off",
     "no-await-in-loop": "off",
     "no-bitwise": "off",
     "no-constant-condition": ["error", {checkLoops: false}],
@@ -51,10 +52,10 @@ module.exports = {
     "strict": "off",
   },
   settings: {
-    "import/extensions": [".js", ".ts"],
+    "import/extensions": [".js", ".ts", ".tsx"],
     "import/resolver": {
       node: {
-        extensions: [".js", ".ts"],
+        extensions: [".js", ".ts", ".tsx"],
       },
     },
   },

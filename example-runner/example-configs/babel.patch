@@ -1,5 +1,5 @@
 diff --git a/Gulpfile.js b/Gulpfile.js
-index 5df9882ca..0766fa3ca 100644
+index c8a60079b..b49041ae6 100644
 --- a/Gulpfile.js
 +++ b/Gulpfile.js
 @@ -4,7 +4,7 @@ const plumber = require("gulp-plumber");
@@ -11,16 +11,16 @@ index 5df9882ca..0766fa3ca 100644
  const gulpWatch = require("gulp-watch");
  const fancyLog = require("fancy-log");
  const filter = require("gulp-filter");
-@@ -73,7 +73,7 @@ function buildBabel(exclude) {
-         .pipe(errorsLogger())
-         .pipe(newer({ dest: base, map: swapSrcWithLib }))
-         .pipe(compilationLogger())
--        .pipe(babel())
-+        .pipe(sucrase({transforms: ["flow", "imports"]}))
-         .pipe(
-           // Passing 'file.relative' because newer() above uses a relative
-           // path and this keeps it consistent.
-@@ -114,7 +114,7 @@ function buildRollup(packages) {
+@@ -66,7 +66,7 @@ function buildBabel(exclude, sourcesGlob = defaultSourcesGlob) {
+     .pipe(errorsLogger())
+     .pipe(newer({ dest: base, map: swapSrcWithLib }))
+     .pipe(compilationLogger())
+-    .pipe(babel())
++    .pipe(sucrase({transforms: ["flow", "imports"]}))
+     .pipe(
+       // Passing 'file.relative' because newer() above uses a relative
+       // path and this keeps it consistent.
+@@ -105,7 +105,7 @@ function buildRollup(packages) {
    );
  }
  
@@ -30,37 +30,41 @@ index 5df9882ca..0766fa3ca 100644
  gulp.task("build-rollup", () => buildRollup(bundles));
  gulp.task("build-babel", () => buildBabel(/* exclude */ bundles));
 diff --git a/Makefile b/Makefile
-index dc858ab2e..16cc7fd47 100644
+index 2c077a3fb..dfa6ff5e7 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -78,7 +78,9 @@ test-only:
+@@ -129,7 +129,9 @@ test-only:
  	BABEL_ENV=test ./scripts/test.sh
- 	make test-clean
+ 	$(MAKE) test-clean
  
 -test: lint test-only
 +test:
 +	make bootstrap
 +	make test-only
  
- test-ci: bootstrap test-only
+ test-ci: jest-ci
  
-@@ -154,6 +156,11 @@ endif
+@@ -207,7 +209,14 @@ endif
+ 	rm -f .npmrc
+ 	$(MAKE) clean
  
- bootstrap-only: clean-all
- 	yarn --ignore-engines
+-bootstrap-only: lerna-bootstrap
++bootstrap-only: clean-all
++	yarn --ignore-engines
 +	yarn link sucrase
 +	yarn link @sucrase/gulp-plugin
 +	yarn link @sucrase/jest-plugin
 +	yarn link @sucrase/webpack-loader
 +	yarn link @sucrase/webpack-object-rest-spread-plugin
- 	./node_modules/.bin/lerna bootstrap -- --ignore-engines
++	./node_modules/.bin/lerna bootstrap
  
- bootstrap: bootstrap-only
+ yarn-install: clean-all
+ 	yarn --ignore-engines
 diff --git a/package.json b/package.json
-index 44df123af..61feed3e8 100644
+index a420748f1..7678c4796 100644
 --- a/package.json
 +++ b/package.json
-@@ -89,6 +89,9 @@
+@@ -91,6 +91,9 @@
      }
    },
    "jest": {
@@ -70,42 +74,186 @@ index 44df123af..61feed3e8 100644
      "collectCoverageFrom": [
        "packages/*/src/**/*.mjs",
        "packages/*/src/**/*.js",
+diff --git a/packages/babel-core/src/transformation/index.js b/packages/babel-core/src/transformation/index.js
+index e2eccd894..e0d501153 100644
+--- a/packages/babel-core/src/transformation/index.js
++++ b/packages/babel-core/src/transformation/index.js
+@@ -59,7 +59,7 @@ export function runSync(
+   try {
+     transformFile(file, config.passes);
+   } catch (e) {
+-    e.message = `${opts.filename ?? "unknown"}: ${e.message}`;
++    e.message = `${opts.filename != null ? opts.filename : "unknown"}: ${e.message}`;
+     if (!e.code) {
+       e.code = "BABEL_TRANSFORM_ERROR";
+     }
+@@ -72,7 +72,7 @@ export function runSync(
+       ({ outputCode, outputMap } = generateCode(config.passes, file));
+     }
+   } catch (e) {
+-    e.message = `${opts.filename ?? "unknown"}: ${e.message}`;
++    e.message = `${opts.filename != null ? opts.filename : "unknown"}: ${e.message}`;
+     if (!e.code) {
+       e.code = "BABEL_GENERATE_ERROR";
+     }
+diff --git a/packages/babel-core/test/config-chain.js b/packages/babel-core/test/config-chain.js
+index 078cd91dc..a01ad07fc 100644
+--- a/packages/babel-core/test/config-chain.js
++++ b/packages/babel-core/test/config-chain.js
+@@ -7,7 +7,7 @@ import { loadOptions as loadOptionsOrig } from "../lib";
+ // TODO: In Babel 8, we can directly uses fs.promises which is supported by
+ // node 8+
+ const pfs =
+-  fs.promises ??
++  fs.promises != null ? fs.promises :
+   new Proxy(fs, {
+     get(target, name) {
+       if (name === "copyFile") {
+diff --git a/packages/babel-helper-builder-react-jsx/src/index.js b/packages/babel-helper-builder-react-jsx/src/index.js
+index 64b136923..52d948427 100644
+--- a/packages/babel-helper-builder-react-jsx/src/index.js
++++ b/packages/babel-helper-builder-react-jsx/src/index.js
+@@ -95,7 +95,9 @@ You can turn on the 'throwIfNamespace' flag to bypass this warning.`,
+       value.value = value.value.replace(/\n\s+/g, " ");
+ 
+       // "raw" JSXText should not be used from a StringLiteral because it needs to be escaped.
+-      delete value.extra?.raw;
++      if (value.extra != null) {
++        delete value.extra.raw;
++      }
+     }
+ 
+     if (t.isJSXNamespacedName(node.name)) {
+diff --git a/packages/babel-helper-create-regexp-features-plugin/src/index.js b/packages/babel-helper-create-regexp-features-plugin/src/index.js
+index 49554be42..412d6c909 100644
+--- a/packages/babel-helper-create-regexp-features-plugin/src/index.js
++++ b/packages/babel-helper-create-regexp-features-plugin/src/index.js
+@@ -24,7 +24,7 @@ export function createRegExpFeaturePlugin({ name, feature, options = {} }) {
+     name,
+     pre() {
+       const { file } = this;
+-      const features = file.get(featuresKey) ?? 0;
++      const features = file.get(featuresKey) != null ? file.get(featuresKey) : 0;
+       let newFeatures = enableFeature(features, FEATURES[feature]);
+ 
+       const { useUnicodeFlag, runtime = true } = options;
+@@ -49,7 +49,7 @@ export function createRegExpFeaturePlugin({ name, feature, options = {} }) {
+         const { node } = path;
+         const { file } = this;
+         const features = file.get(featuresKey);
+-        const runtime = file.get(runtimeKey) ?? true;
++        const runtime = file.get(runtimeKey) != null ? file.get(runtimeKey) : true;
+         const regexpuOptions = generateRegexpuOptions(node, features);
+         if (regexpuOptions === null) {
+           return;
+diff --git a/packages/babel-helper-module-transforms/src/rewrite-live-references.js b/packages/babel-helper-module-transforms/src/rewrite-live-references.js
+index 8bd93f509..7514f4f5f 100644
+--- a/packages/babel-helper-module-transforms/src/rewrite-live-references.js
++++ b/packages/babel-helper-module-transforms/src/rewrite-live-references.js
+@@ -240,7 +240,7 @@ const rewriteReferencesVisitor = {
+ 
+         const exportedNames = exported.get(localName);
+         const importData = imported.get(localName);
+-        if (exportedNames?.length > 0 || importData) {
++        if ((exportedNames != null ? exportedNames.length : undefined) > 0 || importData) {
+           assert(path.node.operator === "=", "Path was not simplified");
+ 
+           const assignment = path.node;
+diff --git a/packages/babel-parser/src/parser/expression.js b/packages/babel-parser/src/parser/expression.js
+index 89088db4d..a9e94a28c 100644
+--- a/packages/babel-parser/src/parser/expression.js
++++ b/packages/babel-parser/src/parser/expression.js
+@@ -876,7 +876,7 @@ export default class ExpressionParser extends LValParser {
+       node,
+       call.arguments,
+       true,
+-      call.extra?.trailingComma,
++      call.extra != null ? call.extra.trailingComma : undefined,
+     );
+     return node;
+   }
+diff --git a/packages/babel-parser/src/parser/lval.js b/packages/babel-parser/src/parser/lval.js
+index 547441b0c..66292c434 100644
+--- a/packages/babel-parser/src/parser/lval.js
++++ b/packages/babel-parser/src/parser/lval.js
+@@ -70,7 +70,7 @@ export default class LValParser extends NodeUtils {
+             if (
+               isLast &&
+               prop.type === "RestElement" &&
+-              node.extra?.trailingComma
++              node.extra != null ? node.extra.trailingComma : undefined
+             ) {
+               this.raiseRestNotLast(node.extra.trailingComma);
+             }
+@@ -96,7 +96,7 @@ export default class LValParser extends NodeUtils {
+             node.elements,
+             isBinding,
+             contextDescription,
+-            node.extra?.trailingComma,
++            node.extra != null ? node.extra.trailingComma : undefined,
+           );
+           break;
+ 
+diff --git a/packages/babel-parser/src/plugins/flow.js b/packages/babel-parser/src/plugins/flow.js
+index ab5f646b6..aed12c839 100644
+--- a/packages/babel-parser/src/plugins/flow.js
++++ b/packages/babel-parser/src/plugins/flow.js
+@@ -953,7 +953,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
+             variance,
+             kind,
+             allowSpread,
+-            allowInexact ?? !exact,
++            allowInexact != null ? allowInexact : !exact,
+           );
+ 
+           if (propOrInexact === null) {
+@@ -1870,7 +1870,7 @@ export default (superClass: Class<Parser>): Class<Parser> =>
+         ((node.params: any): N.Expression[]),
+         true,
+         "arrow function parameters",
+-        node.extra?.trailingComma,
++        node.extra != null ? node.extra.trailingComma : undefined,
+       );
+       // Enter scope, as checkParams defines bindings
+       this.scope.enter(functionFlags(false, false) | SCOPE_ARROW);
 diff --git a/packages/babel-parser/src/util/scopeflags.js b/packages/babel-parser/src/util/scopeflags.js
-index 8c9697b3a..e31b3d387 100644
+index d92699883..2bdedecaa 100644
 --- a/packages/babel-parser/src/util/scopeflags.js
 +++ b/packages/babel-parser/src/util/scopeflags.js
-@@ -2,17 +2,19 @@
+@@ -2,18 +2,20 @@
  
  // Each scope gets a bitset that may contain these flags
  // prettier-ignore
--export const SCOPE_OTHER        = 0b000000000,
--             SCOPE_PROGRAM      = 0b000000001,
--             SCOPE_FUNCTION     = 0b000000010,
--             SCOPE_ASYNC        = 0b000000100,
--             SCOPE_GENERATOR    = 0b000001000,
--             SCOPE_ARROW        = 0b000010000,
--             SCOPE_SIMPLE_CATCH = 0b000100000,
--             SCOPE_SUPER        = 0b001000000,
--             SCOPE_DIRECT_SUPER = 0b010000000,
--             SCOPE_CLASS        = 0b100000000,
--             SCOPE_VAR = SCOPE_PROGRAM | SCOPE_FUNCTION;
-+export const SCOPE_OTHER        = 0b000000000;
+-export const SCOPE_OTHER        = 0b0000000000,
+-             SCOPE_PROGRAM      = 0b0000000001,
+-             SCOPE_FUNCTION     = 0b0000000010,
+-             SCOPE_ASYNC        = 0b0000000100,
+-             SCOPE_GENERATOR    = 0b0000001000,
+-             SCOPE_ARROW        = 0b0000010000,
+-             SCOPE_SIMPLE_CATCH = 0b0000100000,
+-             SCOPE_SUPER        = 0b0001000000,
+-             SCOPE_DIRECT_SUPER = 0b0010000000,
+-             SCOPE_CLASS        = 0b0100000000,
+-             SCOPE_TS_MODULE    = 0b1000000000,
+-             SCOPE_VAR = SCOPE_PROGRAM | SCOPE_FUNCTION | SCOPE_TS_MODULE;
++export const SCOPE_OTHER        = 0b0000000000;
 +// TODO(#455): This was changed to simpler code to work with Sucrase. Fix the
 +// Sucrase bug to avoid this patch hunk.
-+export const SCOPE_PROGRAM      = 0b000000001;
-+export const SCOPE_FUNCTION     = 0b000000010;
-+export const SCOPE_ASYNC        = 0b000000100;
-+export const SCOPE_GENERATOR    = 0b000001000;
-+export const SCOPE_ARROW        = 0b000010000;
-+export const SCOPE_SIMPLE_CATCH = 0b000100000;
-+export const SCOPE_SUPER        = 0b001000000;
-+export const SCOPE_DIRECT_SUPER = 0b010000000;
-+export const SCOPE_CLASS        = 0b100000000;
-+export const SCOPE_VAR = SCOPE_PROGRAM | SCOPE_FUNCTION;
++export const SCOPE_PROGRAM      = 0b0000000001;
++export const SCOPE_FUNCTION     = 0b0000000010;
++export const SCOPE_ASYNC        = 0b0000000100;
++export const SCOPE_GENERATOR    = 0b0000001000;
++export const SCOPE_ARROW        = 0b0000010000;
++export const SCOPE_SIMPLE_CATCH = 0b0000100000;
++export const SCOPE_SUPER        = 0b0001000000;
++export const SCOPE_DIRECT_SUPER = 0b0010000000;
++export const SCOPE_CLASS        = 0b0100000000;
++export const SCOPE_TS_MODULE    = 0b1000000000;
++export const SCOPE_VAR = SCOPE_PROGRAM | SCOPE_FUNCTION | SCOPE_TS_MODULE;
  
  export type ScopeFlags =
    | typeof SCOPE_OTHER
-@@ -37,39 +39,39 @@ export function functionFlags(isAsync: boolean, isGenerator: boolean) {
+@@ -38,39 +40,39 @@ export function functionFlags(isAsync: boolean, isGenerator: boolean) {
  
  // These flags are meant to be _only_ used inside the Scope class (or subclasses).
  // prettier-ignore
@@ -145,7 +293,7 @@ index 8c9697b3a..e31b3d387 100644
 -             BIND_TS_INTERFACE  = 0               | BIND_KIND_TYPE | 0                   | BIND_FLAGS_CLASS  ,
 -             BIND_TS_TYPE       = 0               | BIND_KIND_TYPE | 0                   | 0                 ,
 -             BIND_TS_ENUM       = BIND_KIND_VALUE | BIND_KIND_TYPE | BIND_SCOPE_LEXICAL  | BIND_FLAGS_TS_ENUM,
--             BIND_TS_FN_TYPE    = 0               | 0              | 0            | BIND_FLAGS_TS_EXPORT_ONLY,
+-             BIND_TS_AMBIENT    = 0               | 0              | 0            | BIND_FLAGS_TS_EXPORT_ONLY,
 +export const BIND_CLASS         = BIND_KIND_VALUE | BIND_KIND_TYPE | BIND_SCOPE_LEXICAL  | BIND_FLAGS_CLASS  ;
 +export const BIND_LEXICAL       = BIND_KIND_VALUE | 0              | BIND_SCOPE_LEXICAL  | 0                 ;
 +export const BIND_VAR           = BIND_KIND_VALUE | 0              | BIND_SCOPE_VAR      | 0                 ;
@@ -153,7 +301,7 @@ index 8c9697b3a..e31b3d387 100644
 +export const BIND_TS_INTERFACE  = 0               | BIND_KIND_TYPE | 0                   | BIND_FLAGS_CLASS  ;
 +export const BIND_TS_TYPE       = 0               | BIND_KIND_TYPE | 0                   | 0                 ;
 +export const BIND_TS_ENUM       = BIND_KIND_VALUE | BIND_KIND_TYPE | BIND_SCOPE_LEXICAL  | BIND_FLAGS_TS_ENUM;
-+export const BIND_TS_FN_TYPE    = 0               | 0              | 0            | BIND_FLAGS_TS_EXPORT_ONLY;
++export const BIND_TS_AMBIENT    = 0               | 0              | 0            | BIND_FLAGS_TS_EXPORT_ONLY;
               // These bindings don't introduce anything in the scope. They are used for assignments and
               // function expressions IDs.
 -             BIND_NONE          = 0               | 0              | 0                   | BIND_FLAGS_NONE   ,
@@ -162,12 +310,38 @@ index 8c9697b3a..e31b3d387 100644
 +export const BIND_OUTSIDE       = BIND_KIND_VALUE | 0              | 0                   | BIND_FLAGS_NONE   ;
  
 -             BIND_TS_CONST_ENUM = BIND_TS_ENUM | BIND_FLAGS_TS_CONST_ENUM,
--             BIND_TS_NAMESPACE  = BIND_TS_FN_TYPE;
+-             BIND_TS_NAMESPACE  = 0               | 0              | 0            | BIND_FLAGS_TS_EXPORT_ONLY;
 +export const BIND_TS_CONST_ENUM = BIND_TS_ENUM | BIND_FLAGS_TS_CONST_ENUM;
-+export const BIND_TS_NAMESPACE  = BIND_TS_FN_TYPE;
++export const BIND_TS_NAMESPACE  = 0               | 0              | 0            | BIND_FLAGS_TS_EXPORT_ONLY;
  
  export type BindingTypes =
    | typeof BIND_NONE
+diff --git a/packages/babel-polyfill/src/index.js b/packages/babel-polyfill/src/index.js
+index aa1b4639f..cca92db5a 100644
+--- a/packages/babel-polyfill/src/index.js
++++ b/packages/babel-polyfill/src/index.js
+@@ -7,7 +7,7 @@ if (global._babelPolyfill && typeof console !== "undefined" && console.warn) {
+     "@babel/polyfill is loaded more than once on this page. This is probably not desirable/intended " +
+       "and may have consequences if different versions of the polyfills are applied sequentially. " +
+       "If you do need to load the polyfill more than once, use @babel/polyfill/noConflict " +
+-      "instead to bypass the warning.",
++      "instead to bypass the warning."
+   );
+ }
+ 
+diff --git a/packages/babel-register/src/cache.js b/packages/babel-register/src/cache.js
+index b505bb494..804bdb19b 100644
+--- a/packages/babel-register/src/cache.js
++++ b/packages/babel-register/src/cache.js
+@@ -17,7 +17,7 @@ let data: Object = {};
+ let cacheDisabled = false;
+ 
+ function isCacheDisabled() {
+-  return process.env.BABEL_DISABLE_CACHE ?? cacheDisabled;
++  return process.env.BABEL_DISABLE_CACHE != null ? process.env.BABEL_DISABLE_CACHE : cacheDisabled;
+ }
+ /**
+  * Write stringified cache to disk.
 diff --git a/scripts/gulp-tasks.js b/scripts/gulp-tasks.js
 index 73c1f7db2..59c35bfcf 100644
 --- a/scripts/gulp-tasks.js

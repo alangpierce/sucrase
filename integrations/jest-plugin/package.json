@@ -7,6 +7,6 @@
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "sucrase": "^3.0.0"
+    "sucrase": "^3"
   }
 }

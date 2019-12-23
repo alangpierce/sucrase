@@ -1,9 +1,15 @@
+# 3.11.0 (2019-12-22)
+
+* Add runtime validation for options. ([#468])
+* Allow `.tsx` and `.jsx` options when running `sucrase` from the command line. ([#448]) (Ricardo Tomasi, Alexander Mextner)
+* Fix bug where generator markers in methods were removed. ([#463]) (Bjørn Tore Håvie)
+
 # 3.10.1 (2019-03-31)
 
 * Fix parsing of `a<b>c` in TypeScript. ([#438])
 * Add support for new TypeScript 3.4 syntax, other parser improvements. ([#439], [#440])
-* Elide TS `import =` statements that are only used as a type ([#441])
-* Properly handle async arrow functions with multiline type parameters ([#443])
+* Elide TS `import =` statements that are only used as a type. ([#441])
+* Properly handle async arrow functions with multiline type parameters. ([#443])
 
 # 3.10.0 (2019-03-11)
 

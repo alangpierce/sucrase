@@ -329,6 +329,15 @@ index aa1b4639f..cca92db5a 100644
    );
  }
  
+diff --git a/packages/babel-preset-env/test/fixtures.js b/packages/babel-preset-env/test/fixtures.js
+deleted file mode 100644
+index 1b534b8fc..000000000
+--- a/packages/babel-preset-env/test/fixtures.js
++++ /dev/null
+@@ -1,3 +0,0 @@
+-import runner from "@babel/helper-plugin-test-runner";
+-
+-runner(__dirname);
 diff --git a/packages/babel-register/src/cache.js b/packages/babel-register/src/cache.js
 index b505bb494..804bdb19b 100644
 --- a/packages/babel-register/src/cache.js

@@ -362,6 +362,25 @@ describe("typescript transform", () => {
     );
   });
 
+  it("handles type predicates involving this", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        foo(): this is B {
+          return false;
+        }
+      }
+    `,
+      `"use strict";
+      class A {
+        foo() {
+          return false;
+        }
+      }
+    `,
+    );
+  });
+
   it("export default functions with type parameters", () => {
     assertTypeScriptResult(
       `
@@ -1794,6 +1813,120 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       let x;
+    `,
+    );
+  });
+
+  it("allows private field syntax", () => {
+    assertTypeScriptResult(
+      `
+      class Foo {
+        readonly #x: number;
+      }
+    `,
+      `"use strict";
+      class Foo {
+        
+      }
+    `,
+    );
+  });
+
+  it("allows assertion signature syntax", () => {
+    assertTypeScriptResult(
+      `
+      function assertIsDefined<T>(x: T): asserts x is NonNullable<T> {
+        if (x == null) throw "oh no";
+      }
+    `,
+      `"use strict";
+      function assertIsDefined(x) {
+        if (x == null) throw "oh no";
+      }
+    `,
+    );
+  });
+
+  it("allows assertion signature syntax using this", () => {
+    assertTypeScriptResult(
+      `
+      class Foo {
+        isBar(): asserts this is Foo {}
+        isBaz = (): asserts this is Foo => {}
+      }
+    `,
+      `"use strict";
+      class Foo {constructor() { Foo.prototype.__init.call(this); }
+        isBar() {}
+        __init() {this.isBaz = () => {}}
+      }
+    `,
+    );
+  });
+
+  it("does not get confused by a user-defined type guard on a variable called asserts", () => {
+    assertTypeScriptResult(
+      `
+      function checkIsDefined(asserts: any): asserts is NonNullable<T> {
+        return false;
+      }
+    `,
+      `"use strict";
+      function checkIsDefined(asserts) {
+        return false;
+      }
+    `,
+    );
+  });
+
+  it("does not get confused by a return type called asserts", () => {
+    assertTypeScriptResult(
+      `
+      function checkIsDefined(x: any): asserts {
+        return false;
+      }
+    `,
+      `"use strict";
+      function checkIsDefined(x) {
+        return false;
+      }
+    `,
+    );
+  });
+
+  it("correctly parses optional chain calls with type arguments", () => {
+    assertTypeScriptResult(
+      `
+      example.inner?.greet<string>()
+    `,
+      `"use strict";
+      example.inner?.greet()
+    `,
+    );
+  });
+
+  it("allows optional async methods", () => {
+    assertTypeScriptResult(
+      `
+      class A extends B {
+        async method?(val: string): Promise<void>;
+      }
+    `,
+      `"use strict";
+      class A extends B {
+        
+      }
+    `,
+    );
+  });
+
+  it("handles trailing commas at the end of tuple type with rest", () => {
+    assertTypeScriptResult(
+      `
+      let x: [string, ...string[],]
+    `,
+      `"use strict";
+      let x
     `,
     );
   });

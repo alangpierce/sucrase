@@ -329,8 +329,7 @@ function readToken_dot(): void {
     return;
   }
 
-  const next2 = input.charCodeAt(state.pos + 2);
-  if (nextChar === charCodes.dot && next2 === charCodes.dot) {
+  if (nextChar === charCodes.dot && input.charCodeAt(state.pos + 2) === charCodes.dot) {
     state.pos += 3;
     finishToken(tt.ellipsis);
   } else {

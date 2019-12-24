@@ -847,4 +847,16 @@ describe("sucrase", () => {
       {transforms: []},
     );
   });
+
+  it("handles V8 intrinsic syntax", () => {
+    assertResult(
+      `
+      %DebugPrint(foo)
+    `,
+      `
+      %DebugPrint(foo)
+    `,
+      {transforms: []},
+    );
+  });
 });

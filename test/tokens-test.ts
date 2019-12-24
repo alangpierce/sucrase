@@ -303,4 +303,20 @@ describe("tokens", () => {
       ],
     );
   });
+
+  it("properly parses import.meta", () => {
+    assertTokens(
+      `
+      f = import.meta
+    `,
+      [
+        {type: tt.name},
+        {type: tt.eq},
+        {type: tt.name},
+        {type: tt.dot},
+        {type: tt.name},
+        {type: tt.eof},
+      ],
+    );
+  });
 });

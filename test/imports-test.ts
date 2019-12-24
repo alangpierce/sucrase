@@ -1284,6 +1284,18 @@ module.exports = exports.default;
     );
   });
 
+  it("leaves import.meta alone", () => {
+    assertResult(
+      `
+      console.log(import.meta);
+    `,
+      `"use strict";
+      console.log(import.meta);
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
   it("implements basic live bindings", () => {
     assertMultiFileOutput(
       {

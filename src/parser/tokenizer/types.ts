@@ -47,22 +47,22 @@ export enum TokenType {
   tilde = 17024, // ~ prefix
   pipeline = 17409, // |> prec:1
   nullishCoalescing = 17922, // ?? prec:2
-  logicalOR = 18434, // || prec:2
-  logicalAND = 18947, // && prec:3
-  bitwiseOR = 19460, // | prec:4
-  bitwiseXOR = 19973, // ^ prec:5
-  bitwiseAND = 20486, // & prec:6
-  equality = 20999, // ==/!= prec:7
-  lessThan = 21512, // < prec:8
-  greaterThan = 22024, // > prec:8
-  relationalOrEqual = 22536, // <=/>= prec:8
-  bitShift = 23049, // <</>> prec:9
-  plus = 23690, // + prec:10 prefix
-  minus = 24202, // - prec:10 prefix
-  modulo = 24587, // % prec:11
-  star = 25099, // * prec:11
-  slash = 25611, // / prec:11
-  exponent = 26188, // ** prec:12 rightAssociative
+  logicalOR = 18435, // || prec:3
+  logicalAND = 18948, // && prec:4
+  bitwiseOR = 19461, // | prec:5
+  bitwiseXOR = 19974, // ^ prec:6
+  bitwiseAND = 20487, // & prec:7
+  equality = 21000, // ==/!= prec:8
+  lessThan = 21513, // < prec:9
+  greaterThan = 22025, // > prec:9
+  relationalOrEqual = 22537, // <=/>= prec:9
+  bitShift = 23050, // <</>> prec:10
+  plus = 23691, // + prec:11 prefix
+  minus = 24203, // - prec:11 prefix
+  modulo = 24588, // % prec:12
+  star = 25100, // * prec:12
+  slash = 25612, // / prec:12
+  exponent = 26189, // ** prec:13 rightAssociative
   jsxName = 26624, // jsxName
   jsxText = 27136, // jsxText
   jsxTagStart = 27648, // jsxTagStart
@@ -101,8 +101,8 @@ export enum TokenType {
   _null = 44560, // null keyword
   _true = 45072, // true keyword
   _false = 45584, // false keyword
-  _in = 46104, // in prec:8 keyword
-  _instanceof = 46616, // instanceof prec:8 keyword
+  _in = 46105, // in prec:9 keyword
+  _instanceof = 46617, // instanceof prec:9 keyword
   _typeof = 47248, // typeof keyword prefix
   _void = 47760, // void keyword prefix
   _delete = 48272, // delete keyword prefix

@@ -399,6 +399,13 @@ function parseNoCallExpr(): void {
 // or `{}`.
 // Returns true if the parsed expression was an arrow function.
 export function parseExprAtom(): boolean {
+  if (eat(tt.modulo)) {
+    // V8 intrinsic expression. Just parse the identifier, and the function invocation is parsed
+    // naturally.
+    parseIdentifier();
+    return false;
+  }
+
   if (match(tt.jsxText)) {
     parseLiteral();
     return false;
@@ -429,11 +436,13 @@ export function parseExprAtom(): boolean {
       return false;
 
     case tt._import:
-      if (lookaheadType() === tt.dot) {
-        parseImportMetaProperty();
-        return false;
-      }
       next();
+      if (match(tt.dot)) {
+        // import.meta
+        state.tokens[state.tokens.length - 1].type = tt.name;
+        next();
+        parseIdentifier();
+      }
       return false;
 
     case tt.name: {
@@ -546,20 +555,9 @@ function parseFunctionExpression(): void {
   parseIdentifier();
   if (eat(tt.dot)) {
     // function.sent
-    parseMetaProperty();
+    parseIdentifier();
   }
   parseFunction(functionStart, false);
-}
-
-function parseMetaProperty(): void {
-  parseIdentifier();
-}
-
-function parseImportMetaProperty(): void {
-  parseIdentifier();
-  expect(tt.dot);
-  // import.meta
-  parseMetaProperty();
 }
 
 export function parseLiteral(): void {
@@ -652,7 +650,7 @@ function parseNew(): void {
   expect(tt._new);
   if (eat(tt.dot)) {
     // new.target
-    parseMetaProperty();
+    parseIdentifier();
     return;
   }
   parseNoCallExpr();

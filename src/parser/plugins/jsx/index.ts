@@ -3,7 +3,6 @@ import {
   finishToken,
   getTokenFromCode,
   IdentifierRole,
-  lookaheadType,
   match,
   next,
   skipSpace,
@@ -116,6 +115,7 @@ function jsxParseElementName(): void {
 function jsxParseAttributeValue(): void {
   switch (state.type) {
     case tt.braceL:
+      next();
       jsxParseExpressionContainer();
       nextJSXTagToken();
       return;
@@ -138,18 +138,16 @@ function jsxParseEmptyExpression(): void {
   // Do nothing.
 }
 
-// Parse JSX spread child
-// Does not parse the last token.
+// Parse JSX spread child, after already processing the {
+// Does not parse the closing }
 function jsxParseSpreadChild(): void {
-  expect(tt.braceL);
   expect(tt.ellipsis);
   parseExpression();
 }
 
-// Parses JSX expression enclosed into curly brackets.
-// Does not parse the last token.
+// Parses JSX expression enclosed into curly brackets, after already processing the {
+// Does not parse the closing }
 function jsxParseExpressionContainer(): void {
-  next();
   if (match(tt.braceR)) {
     jsxParseEmptyExpression();
   } else {
@@ -231,7 +229,8 @@ function jsxParseElementAt(): void {
           break;
 
         case tt.braceL:
-          if (lookaheadType() === tt.ellipsis) {
+          next();
+          if (match(tt.ellipsis)) {
             jsxParseSpreadChild();
             nextJSXExprToken();
           } else {

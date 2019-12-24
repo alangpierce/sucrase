@@ -113,8 +113,8 @@ function flowParseDeclare(): void {
     flowParseDeclareFunction();
   } else if (match(tt._var)) {
     flowParseDeclareVariable();
-  } else if (isContextual(ContextualKeyword._module)) {
-    if (lookaheadType() === tt.dot) {
+  } else if (eatContextual(ContextualKeyword._module)) {
+    if (eat(tt.dot)) {
       flowParseDeclareModuleExports();
     } else {
       flowParseDeclareModule();
@@ -139,8 +139,6 @@ function flowParseDeclareVariable(): void {
 }
 
 function flowParseDeclareModule(): void {
-  next();
-
   if (match(tt.string)) {
     parseExprAtom();
   } else {
@@ -193,8 +191,6 @@ function flowParseDeclareExportDeclaration(): void {
 }
 
 function flowParseDeclareModuleExports(): void {
-  expectContextual(ContextualKeyword._module);
-  expect(tt.dot);
   expectContextual(ContextualKeyword._exports);
   flowParseTypeAnnotation();
   semicolon();

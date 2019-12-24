@@ -226,15 +226,7 @@ function tsParseTypeMemberSemicolon(): void {
   }
 }
 
-enum SignatureMemberKind {
-  TSCallSignatureDeclaration,
-  TSConstructSignatureDeclaration,
-}
-
-function tsParseSignatureMember(kind: SignatureMemberKind): void {
-  if (kind === SignatureMemberKind.TSConstructSignatureDeclaration) {
-    expect(tt._new);
-  }
+function tsParseSignatureMember(): void {
   tsFillSignature(tt.colon);
   tsParseTypeMemberSemicolon();
 }
@@ -267,7 +259,6 @@ function tsTryParseIndexSignature(): boolean {
 }
 
 function tsParsePropertyOrMethodSignature(isReadonly: boolean): void {
-  parsePropertyName(-1 /* Types don't need context IDs. */);
   eat(tt.question);
 
   if (!isReadonly && (match(tt.parenL) || match(tt.lessThan))) {
@@ -281,11 +272,18 @@ function tsParsePropertyOrMethodSignature(isReadonly: boolean): void {
 
 function tsParseTypeMember(): void {
   if (match(tt.parenL) || match(tt.lessThan)) {
-    tsParseSignatureMember(SignatureMemberKind.TSCallSignatureDeclaration);
+    // call signature
+    tsParseSignatureMember();
     return;
   }
-  if (match(tt._new) && tsIsStartOfConstructSignature()) {
-    tsParseSignatureMember(SignatureMemberKind.TSConstructSignatureDeclaration);
+  if (match(tt._new)) {
+    next();
+    if (match(tt.parenL) || match(tt.lessThan)) {
+      // constructor signature
+      tsParseSignatureMember();
+    } else {
+      tsParsePropertyOrMethodSignature(false);
+    }
     return;
   }
   const readonly = !!tsParseModifier([ContextualKeyword._readonly]);
@@ -294,12 +292,8 @@ function tsParseTypeMember(): void {
   if (found) {
     return;
   }
+  parsePropertyName(-1 /* Types don't need context IDs. */);
   tsParsePropertyOrMethodSignature(readonly);
-}
-
-function tsIsStartOfConstructSignature(): boolean {
-  const lookahead = lookaheadType();
-  return lookahead === tt.parenL || lookahead === tt.lessThan;
 }
 
 function tsParseTypeLiteral(): void {

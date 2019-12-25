@@ -43,6 +43,7 @@ const KEYWORDS = [
 const CONTEXTUAL_KEYWORDS = [
   "abstract",
   "as",
+  "asserts",
   "async",
   "await",
   "checks",

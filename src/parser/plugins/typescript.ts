@@ -575,9 +575,9 @@ function tsIsUnambiguouslyStartOfFunctionType(): boolean {
 function tsParseTypeOrTypePredicateAnnotation(returnToken: TokenType): void {
   const oldIsType = pushTypeContext(0);
   expect(returnToken);
-  tsParseTypePredicatePrefix();
-  // Regardless of whether we found an "is" token, there's now just a regular type in front of
-  // us.
+  tsParseTypePredicateOrAssertsPrefix();
+  // Regardless of whether we found an "asserts" or "is" token, there's now just a regular type in
+  // front of us.
   tsParseType();
   popTypeContext(oldIsType);
 }
@@ -600,13 +600,32 @@ function tsTryParseType(): void {
   }
 }
 
-function tsParseTypePredicatePrefix(): void {
+function tsParseTypePredicateOrAssertsPrefix(): void {
   const snapshot = state.snapshot();
-  parseIdentifier();
-  if (isContextual(ContextualKeyword._is) && !hasPrecedingLineBreak()) {
+  if (isContextual(ContextualKeyword._asserts) && !hasPrecedingLineBreak()) {
+    // Normally this is `asserts x is T`, but at this point, it might be `asserts is T` (a user-
+    // defined type guard on the `asserts` variable) or just a type called `asserts`.
     next();
-  } else {
-    state.restoreFromSnapshot(snapshot);
+    if (isContextual(ContextualKeyword._is)) {
+      // If we see `asserts is`, then this must be of the form `asserts is T`, since
+      // `asserts is is T` isn't valid.
+      next();
+    } else if (tsIsIdentifier() || match(tt._this)) {
+      next();
+      expectContextual(ContextualKeyword._is);
+    } else {
+      // Regular type, so bail out and start type parsing from scratch.
+      state.restoreFromSnapshot(snapshot);
+    }
+  } else if (tsIsIdentifier() || match(tt._this)) {
+    // This is a regular identifier, which may or may not have "is" after it.
+    next();
+    if (isContextual(ContextualKeyword._is) && !hasPrecedingLineBreak()) {
+      next();
+    } else {
+      // Regular type, so bail out and start type parsing from scratch.
+      state.restoreFromSnapshot(snapshot);
+    }
   }
 }
 

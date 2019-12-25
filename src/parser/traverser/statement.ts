@@ -744,6 +744,7 @@ function parseClassMemberWithIsStatic(
 
     // The so-called parsed name would have been "async": get the real name.
     parseClassPropertyName(classContextId);
+    parsePostMemberNameModifiers();
     parseClassMethod(memberStart, false /* isConstructor */);
   } else if (
     (token.contextualKeyword === ContextualKeyword._get ||

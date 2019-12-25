@@ -859,4 +859,18 @@ describe("sucrase", () => {
       {transforms: []},
     );
   });
+
+  it("handles comments after trailing comma after elision", () => {
+    assertResult(
+      `
+      function foo([foo, /* not used */, /* not used */]) {
+      }
+    `,
+      `
+      function foo([foo, /* not used */, /* not used */]) {
+      }
+    `,
+      {transforms: []},
+    );
+  });
 });

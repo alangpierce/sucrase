@@ -2,6 +2,7 @@ export enum ContextualKeyword {
   NONE,
   _abstract,
   _as,
+  _asserts,
   _async,
   _await,
   _checks,

@@ -11,6 +11,7 @@ import FlowTransformer from "./FlowTransformer";
 import JSXTransformer from "./JSXTransformer";
 import NumericSeparatorTransformer from "./NumericSeparatorTransformer";
 import OptionalCatchBindingTransformer from "./OptionalCatchBindingTransformer";
+import OptionalChainingNullishTransformer from "./OptionalChainingNullishTransformer";
 import ReactDisplayNameTransformer from "./ReactDisplayNameTransformer";
 import ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
 import Transformer from "./Transformer";
@@ -38,6 +39,9 @@ export default class RootTransformer {
     this.isImportsTransformEnabled = transforms.includes("imports");
     this.isReactHotLoaderTransformEnabled = transforms.includes("react-hot-loader");
 
+    this.transformers.push(
+      new OptionalChainingNullishTransformer(tokenProcessor, this.nameManager),
+    );
     this.transformers.push(new NumericSeparatorTransformer(tokenProcessor));
     this.transformers.push(new OptionalCatchBindingTransformer(tokenProcessor, this.nameManager));
     if (transforms.includes("jsx")) {
@@ -151,10 +155,6 @@ export default class RootTransformer {
   }
 
   processToken(): void {
-    if (this.tokens.matches1(tt.nullishCoalescing)) {
-      this.tokens.replaceTokenTrimmingLeftWhitespace(", () =>");
-      return;
-    }
     if (this.tokens.matches1(tt._class)) {
       this.processClass();
       return;

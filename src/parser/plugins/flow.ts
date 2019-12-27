@@ -714,7 +714,11 @@ export function flowParseFunctionBodyAndFinish(funcContextId: number): void {
   parseFunctionBody(false, funcContextId);
 }
 
-export function flowParseSubscript(noCalls: boolean, stopState: StopState): void {
+export function flowParseSubscript(
+  startTokenIndex: number,
+  noCalls: boolean,
+  stopState: StopState,
+): void {
   if (match(tt.questionDot) && lookaheadType() === tt.lessThan) {
     if (noCalls) {
       stopState.stop = true;
@@ -736,7 +740,7 @@ export function flowParseSubscript(noCalls: boolean, stopState: StopState): void
       return;
     }
   }
-  baseParseSubscript(noCalls, stopState);
+  baseParseSubscript(startTokenIndex, noCalls, stopState);
 }
 
 export function flowStartParseNewArguments(): void {
@@ -1014,7 +1018,7 @@ export function flowParseArrow(): boolean {
   return eat(tt.arrow);
 }
 
-export function flowParseSubscripts(noCalls: boolean = false): void {
+export function flowParseSubscripts(startTokenIndex: number, noCalls: boolean = false): void {
   if (
     state.tokens[state.tokens.length - 1].contextualKeyword === ContextualKeyword._async &&
     match(tt.lessThan)
@@ -1027,7 +1031,7 @@ export function flowParseSubscripts(noCalls: boolean = false): void {
     state.restoreFromSnapshot(snapshot);
   }
 
-  baseParseSubscripts(noCalls);
+  baseParseSubscripts(startTokenIndex, noCalls);
 }
 
 // Returns true if there was an arrow function here.

@@ -4,6 +4,7 @@ import {
   IMPORT_DEFAULT_PREFIX,
   IMPORT_WILDCARD_PREFIX,
   JSX_PREFIX,
+  OPTIONAL_CHAIN_PREFIX,
 } from "./prefixes";
 import {assertResult, devProps} from "./util";
 
@@ -1899,8 +1900,8 @@ describe("typescript transform", () => {
       `
       example.inner?.greet<string>()
     `,
-      `"use strict";
-      example.inner?.greet()
+      `"use strict";${OPTIONAL_CHAIN_PREFIX}
+      _optionalChain([example, 'access', _ => _.inner, 'optionalAccess', _2 => _2.greet()])
     `,
     );
   });

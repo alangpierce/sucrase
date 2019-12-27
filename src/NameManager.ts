@@ -1,17 +1,11 @@
-import {TokenType as tt} from "./parser/tokenizer/types";
-import TokenProcessor from "./TokenProcessor";
+import {Token} from "./parser/tokenizer";
+import getIdentifierNames from "./util/getIdentifierNames";
 
 export default class NameManager {
   private readonly usedNames: Set<string> = new Set();
 
-  constructor(readonly tokens: TokenProcessor) {}
-
-  preprocessNames(): void {
-    for (let i = 0; i < this.tokens.tokens.length; i++) {
-      if (this.tokens.matches1AtIndex(i, tt.name)) {
-        this.usedNames.add(this.tokens.identifierNameAtIndex(i));
-      }
-    }
+  constructor(code: string, tokens: Array<Token>) {
+    this.usedNames = new Set(getIdentifierNames(code, tokens));
   }
 
   claimFreeName(name: string): string {

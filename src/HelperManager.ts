@@ -45,6 +45,15 @@ const HELPERS = {
         });
     }
   `,
+  nullishCoalesce: `
+    function nullishCoalesce(lhs, rhsFn) {
+      if (lhs != null) {
+        return lhs;
+      } else {
+        return rhsFn();
+      }
+    }
+  `,
 };
 
 export class HelperManager {

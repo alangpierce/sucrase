@@ -35,7 +35,6 @@ export default class CJSImportProcessor {
   private importsToReplace: Map<string, string> = new Map();
   private identifierReplacements: Map<string, string> = new Map();
   private exportBindingsByLocalName: Map<string, Array<string>> = new Map();
-  private helpers: HelperManager;
 
   constructor(
     readonly nameManager: NameManager,
@@ -43,13 +42,8 @@ export default class CJSImportProcessor {
     readonly enableLegacyTypeScriptModuleInterop: boolean,
     readonly options: Options,
     readonly isTypeScriptTransformEnabled: boolean,
-  ) {
-    this.helpers = new HelperManager(nameManager);
-  }
-
-  getPrefixCode(): string {
-    return this.helpers.emitHelpers();
-  }
+    readonly helperManager: HelperManager,
+  ) {}
 
   preprocessTokens(): void {
     for (let i = 0; i < this.tokens.tokens.length; i++) {
@@ -136,21 +130,21 @@ export default class CJSImportProcessor {
         for (const wildcardName of wildcardNames) {
           const moduleExpr = this.enableLegacyTypeScriptModuleInterop
             ? primaryImportName
-            : `${this.helpers.getHelperName("interopRequireWildcard")}(${primaryImportName})`;
+            : `${this.helperManager.getHelperName("interopRequireWildcard")}(${primaryImportName})`;
           requireCode += ` var ${wildcardName} = ${moduleExpr};`;
         }
       } else if (exportStarNames.length > 0 && secondaryImportName !== primaryImportName) {
-        requireCode += ` var ${secondaryImportName} = ${this.helpers.getHelperName(
+        requireCode += ` var ${secondaryImportName} = ${this.helperManager.getHelperName(
           "interopRequireWildcard",
         )}(${primaryImportName});`;
       } else if (defaultNames.length > 0 && secondaryImportName !== primaryImportName) {
-        requireCode += ` var ${secondaryImportName} = ${this.helpers.getHelperName(
+        requireCode += ` var ${secondaryImportName} = ${this.helperManager.getHelperName(
           "interopRequireDefault",
         )}(${primaryImportName});`;
       }
 
       for (const {importedName, localName} of namedExports) {
-        requireCode += ` ${this.helpers.getHelperName(
+        requireCode += ` ${this.helperManager.getHelperName(
           "createNamedExportFrom",
         )}(${primaryImportName}, '${localName}', '${importedName}');`;
       }
@@ -158,7 +152,9 @@ export default class CJSImportProcessor {
         requireCode += ` exports.${exportStarName} = ${secondaryImportName};`;
       }
       if (hasStarExport) {
-        requireCode += ` ${this.helpers.getHelperName("createStarExport")}(${primaryImportName});`;
+        requireCode += ` ${this.helperManager.getHelperName(
+          "createStarExport",
+        )}(${primaryImportName});`;
       }
 
       this.importsToReplace.set(path, requireCode);

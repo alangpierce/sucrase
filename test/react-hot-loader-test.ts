@@ -51,7 +51,7 @@ describe("transform react-hot-loader", () => {
       
       export default 12;
     `,
-      `"use strict";const _jsxFileName = "sample.tsx";${RHL_PREFIX}${IMPORT_DEFAULT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";const _jsxFileName = "sample.tsx";${RHL_PREFIX}${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
       
       const x = 3;

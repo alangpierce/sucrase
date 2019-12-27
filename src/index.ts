@@ -1,5 +1,6 @@
 import CJSImportProcessor from "./CJSImportProcessor";
 import computeSourceMap, {RawSourceMap} from "./computeSourceMap";
+import {HelperManager} from "./HelperManager";
 import identifyShadowedGlobals from "./identifyShadowedGlobals";
 import NameManager from "./NameManager";
 import {validateOptions} from "./Options";
@@ -20,6 +21,7 @@ export interface SucraseContext {
   scopes: Array<Scope>;
   nameManager: NameManager;
   importProcessor: CJSImportProcessor | null;
+  helperManager: HelperManager;
 }
 
 // Re-export options types in an isolatedModules-friendly way so they can be used externally.
@@ -87,9 +89,9 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
   const tokens = file.tokens;
   const scopes = file.scopes;
 
-  const tokenProcessor = new TokenProcessor(code, tokens, isFlowEnabled);
-  const nameManager = new NameManager(tokenProcessor);
-  nameManager.preprocessNames();
+  const nameManager = new NameManager(code, tokens);
+  const helperManager = new HelperManager(nameManager);
+  const tokenProcessor = new TokenProcessor(code, tokens, isFlowEnabled, helperManager);
   const enableLegacyTypeScriptModuleInterop = Boolean(options.enableLegacyTypeScriptModuleInterop);
 
   let importProcessor = null;
@@ -100,6 +102,7 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
       enableLegacyTypeScriptModuleInterop,
       options,
       options.transforms.includes("typescript"),
+      helperManager,
     );
     importProcessor.preprocessTokens();
     // We need to mark shadowed globals after processing imports so we know that the globals are,
@@ -111,5 +114,5 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
   } else if (options.transforms.includes("typescript")) {
     identifyShadowedGlobals(tokenProcessor, scopes, getTSImportedNames(tokenProcessor));
   }
-  return {tokenProcessor, scopes, nameManager, importProcessor};
+  return {tokenProcessor, scopes, nameManager, importProcessor, helperManager};
 }

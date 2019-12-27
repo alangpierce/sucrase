@@ -1,3 +1,4 @@
+import {HelperManager} from "./HelperManager";
 import {Token} from "./parser/tokenizer";
 import {ContextualKeyword} from "./parser/tokenizer/keywords";
 import {TokenType, TokenType as tt} from "./parser/tokenizer/types";
@@ -15,6 +16,7 @@ export default class TokenProcessor {
     readonly code: string,
     readonly tokens: Array<Token>,
     readonly isFlowEnabled: boolean,
+    readonly helperManager: HelperManager,
   ) {}
 
   /**
@@ -150,13 +152,17 @@ export default class TokenProcessor {
 
   replaceToken(newCode: string): void {
     this.resultCode += this.previousWhitespaceAndComments();
+    this.appendTokenPrefix();
     this.resultCode += newCode;
+    this.appendTokenSuffix();
     this.tokenIndex++;
   }
 
   replaceTokenTrimmingLeftWhitespace(newCode: string): void {
     this.resultCode += this.previousWhitespaceAndComments().replace(/[^\r\n]/g, "");
+    this.appendTokenPrefix();
     this.resultCode += newCode;
+    this.appendTokenSuffix();
     this.tokenIndex++;
   }
 
@@ -177,21 +183,44 @@ export default class TokenProcessor {
 
   copyToken(): void {
     this.resultCode += this.previousWhitespaceAndComments();
+    this.appendTokenPrefix();
     this.resultCode += this.code.slice(
       this.tokens[this.tokenIndex].start,
       this.tokens[this.tokenIndex].end,
     );
+    this.appendTokenSuffix();
     this.tokenIndex++;
   }
 
   copyTokenWithPrefix(prefix: string): void {
     this.resultCode += this.previousWhitespaceAndComments();
+    this.appendTokenPrefix();
     this.resultCode += prefix;
     this.resultCode += this.code.slice(
       this.tokens[this.tokenIndex].start,
       this.tokens[this.tokenIndex].end,
     );
+    this.appendTokenSuffix();
     this.tokenIndex++;
+  }
+
+  private appendTokenPrefix(): void {
+    const token = this.currentToken();
+    if (token.numNullishCoalesceStarts) {
+      for (let i = 0; i < token.numNullishCoalesceStarts; i++) {
+        this.resultCode += this.helperManager.getHelperName("nullishCoalesce");
+        this.resultCode += "(";
+      }
+    }
+  }
+
+  private appendTokenSuffix(): void {
+    const token = this.currentToken();
+    if (token.numNullishCoalesceEnds) {
+      for (let i = 0; i < token.numNullishCoalesceEnds; i++) {
+        this.resultCode += ")";
+      }
+    }
   }
 
   appendCode(code: string): void {

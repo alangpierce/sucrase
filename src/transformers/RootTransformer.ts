@@ -1,3 +1,4 @@
+import {HelperManager} from "../HelperManager";
 import {Options, SucraseContext, Transform} from "../index";
 import NameManager from "../NameManager";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
@@ -22,6 +23,7 @@ export default class RootTransformer {
   private generatedVariables: Array<string> = [];
   private isImportsTransformEnabled: boolean;
   private isReactHotLoaderTransformEnabled: boolean;
+  private helperManager: HelperManager;
 
   constructor(
     sucraseContext: SucraseContext,
@@ -30,6 +32,7 @@ export default class RootTransformer {
     options: Options,
   ) {
     this.nameManager = sucraseContext.nameManager;
+    this.helperManager = sucraseContext.helperManager;
     const {tokenProcessor, importProcessor} = sucraseContext;
     this.tokens = tokenProcessor;
     this.isImportsTransformEnabled = transforms.includes("imports");
@@ -104,6 +107,7 @@ export default class RootTransformer {
     for (const transformer of this.transformers) {
       prefix += transformer.getPrefixCode();
     }
+    prefix += this.helperManager.emitHelpers();
     prefix += this.generatedVariables.map((v) => ` var ${v};`).join("");
     let suffix = "";
     for (const transformer of this.transformers) {
@@ -147,6 +151,10 @@ export default class RootTransformer {
   }
 
   processToken(): void {
+    if (this.tokens.matches1(tt.nullishCoalescing)) {
+      this.tokens.replaceTokenTrimmingLeftWhitespace(", () =>");
+      return;
+    }
     if (this.tokens.matches1(tt._class)) {
       this.processClass();
       return;

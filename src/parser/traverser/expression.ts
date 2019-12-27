@@ -175,11 +175,12 @@ export function baseParseConditional(noIn: boolean): void {
 // Start the precedence parser.
 // Returns true if this was an arrow function
 function parseExprOps(noIn: boolean): boolean {
+  const startTokenIndex = state.tokens.length;
   const wasArrow = parseMaybeUnary();
   if (wasArrow) {
     return true;
   }
-  parseExprOp(-1, noIn);
+  parseExprOp(startTokenIndex, -1, noIn);
   return false;
 }
 
@@ -188,7 +189,7 @@ function parseExprOps(noIn: boolean): boolean {
 // `minPrec` provides context that allows the function to stop and
 // defer further parser to one of its callers when it encounters an
 // operator that has a lower precedence than the set it is parsing.
-function parseExprOp(minPrec: number, noIn: boolean): void {
+function parseExprOp(startTokenIndex: number, minPrec: number, noIn: boolean): void {
   if (
     isTypeScriptEnabled &&
     (tt._in & TokenType.PRECEDENCE_MASK) > minPrec &&
@@ -199,7 +200,7 @@ function parseExprOp(minPrec: number, noIn: boolean): void {
     const oldIsType = pushTypeContext(1);
     tsParseType();
     popTypeContext(oldIsType);
-    parseExprOp(minPrec, noIn);
+    parseExprOp(startTokenIndex, minPrec, noIn);
     return;
   }
 
@@ -209,9 +210,16 @@ function parseExprOp(minPrec: number, noIn: boolean): void {
       const op = state.type;
       next();
 
+      const rhsStartTokenIndex = state.tokens.length;
       parseMaybeUnary();
-      parseExprOp(op & TokenType.IS_RIGHT_ASSOCIATIVE ? prec - 1 : prec, noIn);
-      parseExprOp(minPrec, noIn);
+      // Extend the right operand of this operator if possible.
+      parseExprOp(rhsStartTokenIndex, op & TokenType.IS_RIGHT_ASSOCIATIVE ? prec - 1 : prec, noIn);
+      if (op === tt.nullishCoalescing) {
+        state.tokens[startTokenIndex].numNullishCoalesceStarts++;
+        state.tokens[state.tokens.length - 1].numNullishCoalesceEnds++;
+      }
+      // Continue with any future operator holding this expression as the left operand.
+      parseExprOp(startTokenIndex, minPrec, noIn);
     }
   }
 }

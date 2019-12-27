@@ -1054,7 +1054,7 @@ export function tsParseFunctionBodyAndFinish(functionStart: number, funcContextI
   parseFunctionBody(false, funcContextId);
 }
 
-export function tsParseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {
+export function tsParseSubscript(noCalls: boolean, stopState: StopState): void {
   if (!hasPrecedingLineBreak() && eat(tt.bang)) {
     state.tokens[state.tokens.length - 1].type = tt.nonNullAssertion;
     return;
@@ -1089,7 +1089,7 @@ export function tsParseSubscript(startPos: number, noCalls: boolean, stopState: 
       return;
     }
   }
-  baseParseSubscript(startPos, noCalls, stopState);
+  baseParseSubscript(noCalls, stopState);
 }
 
 export function tsStartParseNewArguments(): void {

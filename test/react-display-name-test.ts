@@ -163,7 +163,7 @@ describe("transform react-display-name", () => {
         }
       });
     `,
-      `"use strict";const _jsxFileName = "MyComponent.js";${IMPORT_DEFAULT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";const _jsxFileName = "MyComponent.js";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
 
       exports. default = _react2.default.createClass({displayName: 'MyComponent',

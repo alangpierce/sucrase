@@ -39,7 +39,7 @@ export default class CJSImportTransformer extends Transformer {
   }
 
   getPrefixCode(): string {
-    let prefix = this.importProcessor.getPrefixCode();
+    let prefix = "";
     if (this.hadExport) {
       prefix += 'Object.defineProperty(exports, "__esModule", {value: true});';
     }

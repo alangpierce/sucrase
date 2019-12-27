@@ -17,3 +17,5 @@ export const ESMODULE_PREFIX = 'Object.defineProperty(exports, "__esModule", {va
 export const RHL_PREFIX = `(function () { \
 var enterModule = require('react-hot-loader').enterModule; enterModule && enterModule(module); \
 })();`;
+export const NULLISH_COALESCE_PREFIX = ` function _nullishCoalesce(lhs, rhsFn) { \
+if (lhs != null) { return lhs; } else { return rhsFn(); } }`;

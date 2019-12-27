@@ -820,7 +820,7 @@ describe("typescript transform", () => {
       import A from 'a';
       export {A};
     `,
-      `"use strict";${IMPORT_DEFAULT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}
       var _a = require('a'); var _a2 = _interopRequireDefault(_a);
       exports.A = _a2.default;
     `,
@@ -862,7 +862,7 @@ describe("typescript transform", () => {
       `
       export * from './MyVars';
     `,
-      `"use strict";${CREATE_STAR_EXPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}${CREATE_STAR_EXPORT_PREFIX}
       var _MyVars = require('./MyVars'); _createStarExport(_MyVars);
     `,
     );
@@ -1557,7 +1557,7 @@ describe("typescript transform", () => {
       export {A, b, c, d, E, F, G, h, I, J};
     `,
       {
-        expectedCJSResult: `"use strict";${IMPORT_DEFAULT_PREFIX}${ESMODULE_PREFIX}
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}
       var _foo = require('./foo'); var _foo2 = _interopRequireDefault(_foo);
       var E; (function (E) { const X = 1; E[E["X"] = X] = "X"; })(E || (E = {}));
       class F {}

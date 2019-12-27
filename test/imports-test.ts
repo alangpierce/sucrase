@@ -596,7 +596,7 @@ var _moduleName = require('moduleName');
       export class Subclass extends Superclass {
       }
     `,
-      `"use strict";${IMPORT_DEFAULT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}
       var _superclass = require('./superclass'); var _superclass2 = _interopRequireDefault(_superclass);
       
        class Subclass extends _superclass2.default {
@@ -794,7 +794,7 @@ module.exports = exports.default;
       export {x} from './MyVars';
       export {a as b, c as d} from './MyOtherVars';
     `,
-      `"use strict";${CREATE_NAMED_EXPORT_FROM_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}${CREATE_NAMED_EXPORT_FROM_PREFIX}
       var _MyVars = require('./MyVars'); _createNamedExportFrom(_MyVars, 'x', 'x');
       var _MyOtherVars = require('./MyOtherVars'); _createNamedExportFrom(_MyOtherVars, 'b', 'a'); _createNamedExportFrom(_MyOtherVars, 'd', 'c');
     `,
@@ -806,7 +806,7 @@ module.exports = exports.default;
       `
       export * from './MyVars';
     `,
-      `"use strict";${CREATE_STAR_EXPORT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}${CREATE_STAR_EXPORT_PREFIX}
       var _MyVars = require('./MyVars'); _createStarExport(_MyVars);
     `,
     );
@@ -927,7 +927,7 @@ module.exports = exports.default;
       import a from 'a';
       export {a};
     `,
-      `"use strict";${IMPORT_DEFAULT_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}
       var _a = require('a'); var _a2 = _interopRequireDefault(_a);
       exports.a = _a2.default;
     `,
@@ -979,7 +979,7 @@ module.exports = exports.default;
       `
       export * as a from 'a';
     `,
-      `"use strict";${IMPORT_WILDCARD_PREFIX}${ESMODULE_PREFIX}
+      `"use strict";${ESMODULE_PREFIX}${IMPORT_WILDCARD_PREFIX}
       var _a = require('a'); var _a2 = _interopRequireWildcard(_a); exports.a = _a2;
     `,
     );

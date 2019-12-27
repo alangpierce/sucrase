@@ -1,5 +1,5 @@
-import {ESMODULE_PREFIX, IMPORT_DEFAULT_PREFIX} from "./prefixes";
-import {assertResult} from "./util";
+import {ESMODULE_PREFIX, IMPORT_DEFAULT_PREFIX, NULLISH_COALESCE_PREFIX} from "./prefixes";
+import {assertOutput, assertResult} from "./util";
 
 /**
  * Test cases that aren't associated with any particular transform.
@@ -870,6 +870,50 @@ describe("sucrase", () => {
       function foo([foo, /* not used */, /* not used */]) {
       }
     `,
+      {transforms: []},
+    );
+  });
+
+  it("transpiles basic nullish coalescing", () => {
+    assertResult(
+      `
+      const x = a ?? b;
+    `,
+      `${NULLISH_COALESCE_PREFIX}
+      const x = _nullishCoalesce(a, () => b);
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("transpiles nested nullish coalescing", () => {
+    assertResult(
+      `
+      const x = a ?? b ?? c;
+    `,
+      `${NULLISH_COALESCE_PREFIX}
+      const x = _nullishCoalesce(_nullishCoalesce(a, () => b), () => c);
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("handles falsy LHS values correctly in nullish coalescing", () => {
+    assertOutput(
+      `
+      setOutput([undefined ?? 7, null ?? 7, 0 ?? 7, false ?? 7, '' ?? 7]);
+    `,
+      [7, 7, 0, false, ""],
+      {transforms: []},
+    );
+  });
+
+  it("handles nested optional chain operations", () => {
+    assertOutput(
+      `
+      setOutput(undefined ?? 7 ?? null);
+    `,
+      7,
       {transforms: []},
     );
   });

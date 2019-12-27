@@ -19,8 +19,13 @@ export function assertExpectations(
   }
   if ("expectedOutput" in expectations) {
     const outputs: Array<unknown> = [];
-    vm.runInNewContext(resultCode, {setOutput: (value: unknown) => outputs.push(value)});
+    vm.runInNewContext(resultCode, {
+      // Convert to JSON and back so that nested objects have the right prototypes. Unfortunately,
+      // this limits us to using JSON-like values (particularly, never using undefined).
+      setOutput: (value: unknown) => outputs.push(JSON.parse(JSON.stringify(value))),
+    });
     assert.strictEqual(outputs.length, 1, "setOutput should be called exactly once");
+    assert.deepStrictEqual([1, 2], [1, 2]);
     assert.deepStrictEqual(outputs[0], expectations.expectedOutput);
   }
 }
@@ -31,6 +36,14 @@ export function assertResult(
   options: Options = {transforms: ["jsx", "imports"]},
 ): void {
   assertExpectations(code, {expectedResult}, options);
+}
+
+export function assertOutput(
+  code: string,
+  expectedOutput: unknown,
+  options: Options = {transforms: ["jsx", "imports"]},
+): void {
+  assertExpectations(code, {expectedOutput}, options);
 }
 
 export function devProps(lineNumber: number): string {

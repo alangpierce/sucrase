@@ -100,6 +100,8 @@ export class Token {
     this.contextId = null;
     this.rhsEndIndex = null;
     this.isExpression = false;
+    this.numNullishCoalesceStarts = 0;
+    this.numNullishCoalesceEnds = 0;
   }
 
   type: TokenType;
@@ -116,6 +118,10 @@ export class Token {
   rhsEndIndex: number | null;
   // For class tokens, records if the class is a class expression or a class statement.
   isExpression: boolean;
+  // Number of times to insert a `nullishCoalesce(` snippet before this token.
+  numNullishCoalesceStarts: number;
+  // Number of times to insert a `)` snippet after this token.
+  numNullishCoalesceEnds: number;
 }
 
 // ## Tokenizer

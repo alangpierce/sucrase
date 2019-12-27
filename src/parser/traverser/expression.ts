@@ -256,46 +256,45 @@ export function parseMaybeUnary(): boolean {
 // Parse call, dot, and `[]`-subscript expressions.
 // Returns true if this was an arrow function.
 export function parseExprSubscripts(): boolean {
-  const startPos = state.start;
   const wasArrow = parseExprAtom();
   if (wasArrow) {
     return true;
   }
-  parseSubscripts(startPos);
+  parseSubscripts();
   return false;
 }
 
-function parseSubscripts(startPos: number, noCalls: boolean = false): void {
+function parseSubscripts(noCalls: boolean = false): void {
   if (isFlowEnabled) {
-    flowParseSubscripts(startPos, noCalls);
+    flowParseSubscripts(noCalls);
   } else {
-    baseParseSubscripts(startPos, noCalls);
+    baseParseSubscripts(noCalls);
   }
 }
 
-export function baseParseSubscripts(startPos: number, noCalls: boolean = false): void {
+export function baseParseSubscripts(noCalls: boolean = false): void {
   const stopState = new StopState(false);
   do {
-    parseSubscript(startPos, noCalls, stopState);
+    parseSubscript(noCalls, stopState);
   } while (!stopState.stop && !state.error);
 }
 
-function parseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {
+function parseSubscript(noCalls: boolean, stopState: StopState): void {
   if (isTypeScriptEnabled) {
-    tsParseSubscript(startPos, noCalls, stopState);
+    tsParseSubscript(noCalls, stopState);
   } else if (isFlowEnabled) {
-    flowParseSubscript(startPos, noCalls, stopState);
+    flowParseSubscript(noCalls, stopState);
   } else {
-    baseParseSubscript(startPos, noCalls, stopState);
+    baseParseSubscript(noCalls, stopState);
   }
 }
 
 /** Set 'state.stop = true' to indicate that we should stop parsing subscripts. */
-export function baseParseSubscript(startPos: number, noCalls: boolean, stopState: StopState): void {
+export function baseParseSubscript(noCalls: boolean, stopState: StopState): void {
   if (!noCalls && eat(tt.doubleColon)) {
     parseNoCallExpr();
     stopState.stop = true;
-    parseSubscripts(startPos, noCalls);
+    parseSubscripts(noCalls);
   } else if (match(tt.questionDot)) {
     if (noCalls && lookaheadType() === tt.parenL) {
       stopState.stop = true;
@@ -337,7 +336,7 @@ export function baseParseSubscript(startPos: number, noCalls: boolean, stopState
         state.scopeDepth++;
 
         parseFunctionParams();
-        parseAsyncArrowFromCallExpression(startPos, startTokenIndex);
+        parseAsyncArrowFromCallExpression(startTokenIndex);
       }
     } else {
       next();
@@ -383,7 +382,7 @@ function shouldParseAsyncArrow(): boolean {
   return match(tt.colon) || match(tt.arrow);
 }
 
-function parseAsyncArrowFromCallExpression(functionStart: number, startTokenIndex: number): void {
+function parseAsyncArrowFromCallExpression(startTokenIndex: number): void {
   if (isTypeScriptEnabled) {
     tsStartParseAsyncArrowFromCallExpression();
   } else if (isFlowEnabled) {
@@ -396,9 +395,8 @@ function parseAsyncArrowFromCallExpression(functionStart: number, startTokenInde
 // Parse a no-call expression (like argument of `new` or `::` operators).
 
 function parseNoCallExpr(): void {
-  const startPos = state.start;
   parseExprAtom();
-  parseSubscripts(startPos, true);
+  parseSubscripts(true);
 }
 
 // Parse an atomic expression — either a single token that is an

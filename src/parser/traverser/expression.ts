@@ -256,51 +256,65 @@ export function parseMaybeUnary(): boolean {
 // Parse call, dot, and `[]`-subscript expressions.
 // Returns true if this was an arrow function.
 export function parseExprSubscripts(): boolean {
+  const startTokenIndex = state.tokens.length;
   const wasArrow = parseExprAtom();
   if (wasArrow) {
     return true;
   }
-  parseSubscripts();
+  parseSubscripts(startTokenIndex);
+  // If there was any optional chain operation, the start token would be marked
+  // as such, so also mark the end now.
+  if (state.tokens.length > startTokenIndex && state.tokens[startTokenIndex].isOptionalChainStart) {
+    state.tokens[state.tokens.length - 1].isOptionalChainEnd = true;
+  }
   return false;
 }
 
-function parseSubscripts(noCalls: boolean = false): void {
+function parseSubscripts(startTokenIndex: number, noCalls: boolean = false): void {
   if (isFlowEnabled) {
-    flowParseSubscripts(noCalls);
+    flowParseSubscripts(startTokenIndex, noCalls);
   } else {
-    baseParseSubscripts(noCalls);
+    baseParseSubscripts(startTokenIndex, noCalls);
   }
 }
 
-export function baseParseSubscripts(noCalls: boolean = false): void {
+export function baseParseSubscripts(startTokenIndex: number, noCalls: boolean = false): void {
   const stopState = new StopState(false);
   do {
-    parseSubscript(noCalls, stopState);
+    parseSubscript(startTokenIndex, noCalls, stopState);
   } while (!stopState.stop && !state.error);
 }
 
-function parseSubscript(noCalls: boolean, stopState: StopState): void {
+function parseSubscript(startTokenIndex: number, noCalls: boolean, stopState: StopState): void {
   if (isTypeScriptEnabled) {
-    tsParseSubscript(noCalls, stopState);
+    tsParseSubscript(startTokenIndex, noCalls, stopState);
   } else if (isFlowEnabled) {
-    flowParseSubscript(noCalls, stopState);
+    flowParseSubscript(startTokenIndex, noCalls, stopState);
   } else {
-    baseParseSubscript(noCalls, stopState);
+    baseParseSubscript(startTokenIndex, noCalls, stopState);
   }
 }
 
 /** Set 'state.stop = true' to indicate that we should stop parsing subscripts. */
-export function baseParseSubscript(noCalls: boolean, stopState: StopState): void {
+export function baseParseSubscript(
+  startTokenIndex: number,
+  noCalls: boolean,
+  stopState: StopState,
+): void {
   if (!noCalls && eat(tt.doubleColon)) {
     parseNoCallExpr();
     stopState.stop = true;
-    parseSubscripts(noCalls);
+    // Propagate startTokenIndex so that `a::b?.()` will keep `a` as the first token. We may want
+    // to revisit this in the future when fully supporting bind syntax.
+    parseSubscripts(startTokenIndex, noCalls);
   } else if (match(tt.questionDot)) {
+    state.tokens[startTokenIndex].isOptionalChainStart = true;
     if (noCalls && lookaheadType() === tt.parenL) {
       stopState.stop = true;
       return;
     }
     next();
+    state.tokens[state.tokens.length - 1].subscriptStartIndex = startTokenIndex;
 
     if (eat(tt.bracketL)) {
       parseExpression();
@@ -311,8 +325,10 @@ export function baseParseSubscript(noCalls: boolean, stopState: StopState): void
       parseIdentifier();
     }
   } else if (eat(tt.dot)) {
+    state.tokens[state.tokens.length - 1].subscriptStartIndex = startTokenIndex;
     parseMaybePrivateName();
   } else if (eat(tt.bracketL)) {
+    state.tokens[state.tokens.length - 1].subscriptStartIndex = startTokenIndex;
     parseExpression();
     expect(tt.bracketR);
   } else if (!noCalls && match(tt.parenL)) {
@@ -320,8 +336,9 @@ export function baseParseSubscript(noCalls: boolean, stopState: StopState): void
       // We see "async", but it's possible it's a usage of the name "async". Parse as if it's a
       // function call, and if we see an arrow later, backtrack and re-parse as a parameter list.
       const snapshot = state.snapshot();
-      const startTokenIndex = state.tokens.length;
+      const asyncStartTokenIndex = state.tokens.length;
       next();
+      state.tokens[state.tokens.length - 1].subscriptStartIndex = startTokenIndex;
 
       const callContextId = getNextContextId();
 
@@ -336,10 +353,11 @@ export function baseParseSubscript(noCalls: boolean, stopState: StopState): void
         state.scopeDepth++;
 
         parseFunctionParams();
-        parseAsyncArrowFromCallExpression(startTokenIndex);
+        parseAsyncArrowFromCallExpression(asyncStartTokenIndex);
       }
     } else {
       next();
+      state.tokens[state.tokens.length - 1].subscriptStartIndex = startTokenIndex;
       const callContextId = getNextContextId();
       state.tokens[state.tokens.length - 1].contextId = callContextId;
       parseCallExpressionArguments();
@@ -395,8 +413,9 @@ function parseAsyncArrowFromCallExpression(startTokenIndex: number): void {
 // Parse a no-call expression (like argument of `new` or `::` operators).
 
 function parseNoCallExpr(): void {
+  const startTokenIndex = state.tokens.length;
   parseExprAtom();
-  parseSubscripts(true);
+  parseSubscripts(startTokenIndex, true);
 }
 
 // Parse an atomic expression — either a single token that is an

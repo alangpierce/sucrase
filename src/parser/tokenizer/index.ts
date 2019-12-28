@@ -102,6 +102,9 @@ export class Token {
     this.isExpression = false;
     this.numNullishCoalesceStarts = 0;
     this.numNullishCoalesceEnds = 0;
+    this.isOptionalChainStart = false;
+    this.isOptionalChainEnd = false;
+    this.subscriptStartIndex = null;
   }
 
   type: TokenType;
@@ -122,6 +125,13 @@ export class Token {
   numNullishCoalesceStarts: number;
   // Number of times to insert a `)` snippet after this token.
   numNullishCoalesceEnds: number;
+  // If true, insert an `optionalChain([` snippet before this token.
+  isOptionalChainStart: boolean;
+  // If true, insert a `])` snippet after this token.
+  isOptionalChainEnd: boolean;
+  // Tag for `.`, `?.`, `[`, `?.[`, `(`, and `?.(` to denote the "root" token for this
+  // subscript chain. This can be used to determine if this chain is an optional chain.
+  subscriptStartIndex: number | null;
 }
 
 // ## Tokenizer

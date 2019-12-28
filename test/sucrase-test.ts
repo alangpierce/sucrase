@@ -1,4 +1,9 @@
-import {ESMODULE_PREFIX, IMPORT_DEFAULT_PREFIX, NULLISH_COALESCE_PREFIX} from "./prefixes";
+import {
+  ESMODULE_PREFIX,
+  IMPORT_DEFAULT_PREFIX,
+  NULLISH_COALESCE_PREFIX,
+  OPTIONAL_CHAIN_PREFIX,
+} from "./prefixes";
 import {assertOutput, assertResult} from "./util";
 
 /**
@@ -914,6 +919,60 @@ describe("sucrase", () => {
       setOutput(undefined ?? 7 ?? null);
     `,
       7,
+      {transforms: []},
+    );
+  });
+
+  it("transpiles various optional chaining examples", () => {
+    assertResult(
+      `
+      const x = a(b)?.c(d).e?.(f)?.[g(h)];
+    `,
+      `${OPTIONAL_CHAIN_PREFIX}
+      const x = _optionalChain([a, 'call', _ => _(b), 'optionalAccess', _2 => _2.c, 'call', _3 => _3(d), 'access', _4 => _4.e, 'optionalCall', _5 => _5(f), 'optionalAccess', _6 => _6[g(h)]]);
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("correctly accesses a nested object when using optional chaining", () => {
+    assertOutput(
+      `
+      const a = {b: {c: 15}}
+      setOutput(a?.b.c ?? 10);
+    `,
+      15,
+      {transforms: []},
+    );
+  });
+
+  it("correctly falls back to a default when using optional chaining and nullish coalescing", () => {
+    assertOutput(
+      `
+      const a = null;
+      setOutput(a?.b.c ?? 10);
+    `,
+      10,
+      {transforms: []},
+    );
+  });
+
+  it("specifies the proper this when using optional chaining on a function call", () => {
+    assertOutput(
+      `
+      class A {
+        constructor(value) {
+          this.value = value;
+        }
+        run() {
+          setOutput(this.value + 3);
+        }
+      }
+      const a = new A(5);
+      a.doThing?.();
+      a.run?.();
+    `,
+      8,
       {transforms: []},
     );
   });

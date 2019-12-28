@@ -212,10 +212,17 @@ export default class TokenProcessor {
         this.resultCode += "(";
       }
     }
+    if (token.isOptionalChainStart) {
+      this.resultCode += this.helperManager.getHelperName("optionalChain");
+      this.resultCode += "([";
+    }
   }
 
   private appendTokenSuffix(): void {
     const token = this.currentToken();
+    if (token.isOptionalChainEnd) {
+      this.resultCode += "])";
+    }
     if (token.numNullishCoalesceEnds) {
       for (let i = 0; i < token.numNullishCoalesceEnds; i++) {
         this.resultCode += ")";

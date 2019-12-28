@@ -20,11 +20,12 @@ export default class Editor extends Component<EditorProps> {
     setTimeout(this.invalidate, 0);
   }
 
-  _editorDidMount: EditorDidMount = (editor, monaco) => {
-    this.editor = editor;
+  _editorDidMount: EditorDidMount = (monacoEditor, monaco) => {
+    this.editor = monacoEditor;
     monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
       noSemanticValidation: true,
       noSyntaxValidation: true,
+      noSuggestionDiagnostics: true,
     });
     this.invalidate();
   };

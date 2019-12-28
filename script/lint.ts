@@ -40,7 +40,7 @@ async function checkProject(path: string): Promise<void> {
   await Promise.all([
     run(`${TSC} --project ${path} --noEmit`),
     run(`${TSLINT} --project ${path}`),
-    run(`${ESLINT} '${path}/src/**/*.ts'`),
+    run(`${ESLINT} '${path}/src/**/*.{ts,tsx}'`),
   ]);
 }
 

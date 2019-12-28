@@ -124,6 +124,8 @@ function runBabel(): {code: string; time: number | null} {
           "proposal-export-namespace-from",
           "proposal-numeric-separator",
           "proposal-optional-catch-binding",
+          "proposal-nullish-coalescing-operator",
+          "proposal-optional-chaining",
           "dynamic-import-node",
         ],
         parserOpts: {
@@ -159,7 +161,7 @@ function runTypeScript(): {code: string; time: number | null} {
         compilerOptions: {
           module: config.selectedTransforms.imports ? ModuleKind.CommonJS : ModuleKind.ESNext,
           jsx: config.selectedTransforms.jsx ? JsxEmit.React : JsxEmit.Preserve,
-          target: ScriptTarget.ESNext,
+          target: ScriptTarget.ES2020,
         },
       }).outputText,
   );

@@ -27,6 +27,7 @@ module.exports = {
     ],
     "import/no-mutable-exports": "off",
     "import/prefer-default-export": "off",
+    "import/no-unresolved": "off",
     "lines-between-class-members": "off",
     "max-classes-per-file": "off",
     "no-await-in-loop": "off",

@@ -213,7 +213,11 @@ export default class TokenProcessor {
       }
     }
     if (token.isOptionalChainStart) {
-      this.resultCode += this.helperManager.getHelperName("optionalChain");
+      if (this.tokenIndex > 0 && this.tokenAtRelativeIndex(-1).type === tt._delete) {
+        this.resultCode += this.helperManager.getHelperName("optionalChainDelete");
+      } else {
+        this.resultCode += this.helperManager.getHelperName("optionalChain");
+      }
       this.resultCode += "([";
     }
   }

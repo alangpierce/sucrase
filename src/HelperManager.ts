@@ -77,6 +77,12 @@ const HELPERS = {
       return value;
     }
   `,
+  optionalChainDelete: `
+    function optionalChainDelete(ops) {
+      const result = OPTIONAL_CHAIN_NAME(ops);
+      return result == null ? true : result;
+    }
+  `,
 };
 
 export class HelperManager {
@@ -95,8 +101,15 @@ export class HelperManager {
 
   emitHelpers(): string {
     let resultCode = "";
-    for (const [baseName, helperCode] of Object.entries(HELPERS)) {
+    if (this.helperNames.optionalChainDelete) {
+      this.getHelperName("optionalChain");
+    }
+    for (const [baseName, helperCodeTemplate] of Object.entries(HELPERS)) {
       const helperName = this.helperNames[baseName];
+      let helperCode = helperCodeTemplate;
+      if (baseName === "optionalChainDelete") {
+        helperCode = helperCode.replace("OPTIONAL_CHAIN_NAME", this.helperNames.optionalChain!);
+      }
       if (helperName) {
         resultCode += " ";
         resultCode += helperCode

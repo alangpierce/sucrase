@@ -2,6 +2,7 @@ import {
   ESMODULE_PREFIX,
   IMPORT_DEFAULT_PREFIX,
   NULLISH_COALESCE_PREFIX,
+  OPTIONAL_CHAIN_DELETE_PREFIX,
   OPTIONAL_CHAIN_PREFIX,
 } from "./prefixes";
 import {assertOutput, assertResult} from "./util";
@@ -913,7 +914,7 @@ describe("sucrase", () => {
     );
   });
 
-  it("handles nested optional chain operations", () => {
+  it("handles nested nullish coalescing operations", () => {
     assertOutput(
       `
       setOutput(undefined ?? 7 ?? null);
@@ -973,6 +974,54 @@ describe("sucrase", () => {
       a.run?.();
     `,
       8,
+      {transforms: []},
+    );
+  });
+
+  it("transpiles optional chain deletion", () => {
+    assertResult(
+      `
+      delete a?.b.c;
+    `,
+      `${OPTIONAL_CHAIN_PREFIX}${OPTIONAL_CHAIN_DELETE_PREFIX}
+       _optionalChainDelete([a, 'optionalAccess', _ => _.b, 'access', _2 => delete _2.c]);
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("correctly identifies last element of optional chain deletion", () => {
+    assertResult(
+      `
+      delete a?.b[c?.c];
+    `,
+      `${OPTIONAL_CHAIN_PREFIX}${OPTIONAL_CHAIN_DELETE_PREFIX}
+       _optionalChainDelete([a, 'optionalAccess', _ => _.b, 'access', _2 => delete _2[_optionalChain([c, 'optionalAccess', _3 => _3.c])]]);
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("deletes the property correctly with optional chain deletion", () => {
+    assertOutput(
+      `
+      const o = {x: 1};
+      delete o?.x;
+      setOutput(o.hasOwnProperty('x'))
+    `,
+      false,
+      {transforms: []},
+    );
+  });
+
+  it("does not crash with optional chain deletion on null", () => {
+    assertOutput(
+      `
+      const o = null;
+      delete o?.x;
+      setOutput(o)
+    `,
+      null,
       {transforms: []},
     );
   });

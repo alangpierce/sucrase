@@ -22,29 +22,78 @@ export default class OptionalChainingNullishTransformer extends Transformer {
       this.tokens.replaceTokenTrimmingLeftWhitespace(", () =>");
       return true;
     }
+    if (this.tokens.matches1(tt._delete)) {
+      const nextToken = this.tokens.tokenAtRelativeIndex(1);
+      if (nextToken.isOptionalChainStart) {
+        this.tokens.removeInitialToken();
+        return true;
+      }
+    }
     const token = this.tokens.currentToken();
-    if (
-      token.subscriptStartIndex != null &&
-      this.tokens.tokens[token.subscriptStartIndex].isOptionalChainStart
-    ) {
+    const chainStart = token.subscriptStartIndex;
+    if (chainStart != null && this.tokens.tokens[chainStart].isOptionalChainStart) {
       const param = this.nameManager.claimFreeName("_");
+      let arrowStartSnippet;
+      if (
+        chainStart > 0 &&
+        this.tokens.matches1AtIndex(chainStart - 1, tt._delete) &&
+        this.isLastSubscriptInChain()
+      ) {
+        // Delete operations are special: we already removed the delete keyword, and to still
+        // perform a delete, we need to insert a delete in the very last part of the chain, which
+        // in correct code will always be a property access.
+        arrowStartSnippet = `${param} => delete ${param}`;
+      } else {
+        arrowStartSnippet = `${param} => ${param}`;
+      }
       if (this.tokens.matches2(tt.questionDot, tt.parenL)) {
-        this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'optionalCall', ${param} => ${param}`);
+        this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'optionalCall', ${arrowStartSnippet}`);
       } else if (this.tokens.matches2(tt.questionDot, tt.bracketL)) {
-        this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'optionalAccess', ${param} => ${param}`);
+        this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'optionalAccess', ${arrowStartSnippet}`);
       } else if (this.tokens.matches1(tt.questionDot)) {
-        this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'optionalAccess', ${param} => ${param}.`);
+        this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'optionalAccess', ${arrowStartSnippet}.`);
       } else if (this.tokens.matches1(tt.dot)) {
-        this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'access', ${param} => ${param}.`);
+        this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'access', ${arrowStartSnippet}.`);
       } else if (this.tokens.matches1(tt.bracketL)) {
-        this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'access', ${param} => ${param}[`);
+        this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'access', ${arrowStartSnippet}[`);
       } else if (this.tokens.matches1(tt.parenL)) {
-        this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'call', ${param} => ${param}(`);
+        this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'call', ${arrowStartSnippet}(`);
       } else {
         throw new Error("Unexpected subscript operator in optional chain.");
       }
       return true;
     }
     return false;
+  }
+
+  /**
+   * Determine if the current token is the last of its chain, so that we know whether it's eligible
+   * to have a delete op inserted.
+   *
+   * We can do this by walking forward until we determine one way or another. Each
+   * isOptionalChainStart token must be paired with exactly one isOptionalChainEnd token after it in
+   * a nesting way, so we can track depth and walk to the end of the chain (the point where the
+   * depth goes negative) and see if any other subscript token is after us in the chain.
+   */
+  isLastSubscriptInChain(): boolean {
+    let depth = 0;
+    for (let i = this.tokens.currentIndex() + 1; ; i++) {
+      if (i >= this.tokens.tokens.length) {
+        throw new Error("Reached the end of the code while finding the end of the access chain.");
+      }
+      if (this.tokens.tokens[i].isOptionalChainStart) {
+        depth++;
+      } else if (this.tokens.tokens[i].isOptionalChainEnd) {
+        depth--;
+      }
+      if (depth < 0) {
+        return true;
+      }
+
+      // This subscript token is a later one in the same chain.
+      if (depth === 0 && this.tokens.tokens[i].subscriptStartIndex != null) {
+        return false;
+      }
+    }
   }
 }

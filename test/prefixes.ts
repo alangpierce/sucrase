@@ -28,3 +28,5 @@ if (op === 'access' || op === 'optionalAccess') { lastAccessLHS = value; value =
 else if (op === 'call' || op === 'optionalCall') { \
 value = fn((...args) => value.call(lastAccessLHS, ...args)); lastAccessLHS = undefined; \
 } } return value; }`;
+export const OPTIONAL_CHAIN_DELETE_PREFIX = ` function _optionalChainDelete(ops) { \
+const result = _optionalChain(ops); return result == null ? true : result; }`;

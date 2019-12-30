@@ -30,7 +30,8 @@
     "generator",
     "script",
     "src",
-    "test"
+    "test",
+    "test262"
   ],
   "exclude": [
     "benchmark/sample",

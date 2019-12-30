@@ -29,7 +29,7 @@ async function checkSucrase(): Promise<void> {
     run(`${TSC} --project . --noEmit`),
     run(`${TSLINT} --project .`),
     run(
-      `${ESLINT} ${["benchmark", "example-runner", "generator", "script", "src", "test"]
+      `${ESLINT} ${["benchmark", "example-runner", "generator", "script", "src", "test", "test262"]
         .map((dir) => `'${dir}/**/*.ts'`)
         .join(" ")}`,
     ),

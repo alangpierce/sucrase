@@ -14,7 +14,7 @@
   "scripts": {
     "build": "sucrase-node script/build.ts",
     "fast-build": "sucrase-node script/build.ts --fast",
-    "clean": "rm -rf ./build ./dist ./dist-self-build ./dist-types ./example-runner/example-repos",
+    "clean": "rm -rf ./build ./dist ./dist-self-build ./dist-types ./example-runner/example-repos ./test262/test262-checkout",
     "generate": "sucrase-node generator/generate.ts",
     "benchmark": "sucrase-node benchmark/benchmark.ts",
     "microbenchmark": "sucrase-node benchmark/microbenchmark.ts",
@@ -28,6 +28,7 @@
     "run-examples": "sucrase-node example-runner/example-runner.ts",
     "test": "yarn lint && yarn test-only",
     "test-only": "mocha './test/**/*.ts'",
+    "test262": "sucrase-node test262/run-test262.ts",
     "test-with-coverage": "nyc mocha './test/**/*.ts'",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
   },
@@ -58,6 +59,7 @@
     "@types/node": "^12.12.7",
     "@types/yargs-parser": "^13.1.0",
     "@typescript-eslint/parser": "^2.6.1",
+    "chalk": "2.4.1",
     "codecov": "^3.6.1",
     "eslint": "^6.6.0",
     "eslint-config-airbnb-base": "^14.0.0",
@@ -69,6 +71,7 @@
     "nyc": "^14.1.1",
     "prettier": "^1.19.1",
     "sucrase": "^3.11.0",
+    "test262-harness": "^6.5.0",
     "ts-interface-builder": "^0.2.1",
     "tslint": "^5.20.1",
     "typescript": "^3.7.2",

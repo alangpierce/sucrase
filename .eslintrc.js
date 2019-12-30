@@ -20,6 +20,7 @@ module.exports = {
           "**/example-runner/**",
           "**/generator/**",
           "**/test/**",
+          "**/test262/**",
           "**/script/**",
         ],
         optionalDependencies: false,

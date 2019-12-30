@@ -32,10 +32,6 @@ matrix:
       script:
         - yarn build
         - yarn test-only
-    - node_js: '8'
-      script:
-        - yarn build
-        - yarn test-only
   # Exclude the default build; we only want to run explicitly-included builds.
   exclude:
     node_js: '12'

@@ -46,7 +46,10 @@ export default class OptionalChainingNullishTransformer extends Transformer {
       } else {
         arrowStartSnippet = `${param} => ${param}`;
       }
-      if (this.tokens.matches2(tt.questionDot, tt.parenL)) {
+      if (
+        this.tokens.matches2(tt.questionDot, tt.parenL) ||
+        this.tokens.matches2(tt.questionDot, tt.lessThan)
+      ) {
         this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'optionalCall', ${arrowStartSnippet}`);
       } else if (this.tokens.matches2(tt.questionDot, tt.bracketL)) {
         this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'optionalAccess', ${arrowStartSnippet}`);

@@ -1901,7 +1901,7 @@ describe("typescript transform", () => {
       example.inner?.greet<string>()
     `,
       `"use strict";${OPTIONAL_CHAIN_PREFIX}
-      _optionalChain([example, 'access', _ => _.inner, 'optionalAccess', _2 => _2.greet()])
+      _optionalChain([example, 'access', _ => _.inner, 'optionalAccess', _2 => _2.greet, 'call', _3 => _3()])
     `,
     );
   });
@@ -1928,6 +1928,17 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       let x
+    `,
+    );
+  });
+
+  it("supports type arguments with optional chaining", () => {
+    assertTypeScriptResult(
+      `
+      const x = a.b?.<number>();
+    `,
+      `"use strict";${OPTIONAL_CHAIN_PREFIX}
+      const x = _optionalChain([a, 'access', _ => _.b, 'optionalCall', _2 => _2()]);
     `,
     );
   });

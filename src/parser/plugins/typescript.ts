@@ -1079,6 +1079,8 @@ export function tsParseSubscript(
     }
     tsParseTypeArguments();
     if (!noCalls && eat(tt.parenL)) {
+      // With f<T>(), the subscriptStartIndex marker is on the ( token.
+      state.tokens[state.tokens.length - 1].subscriptStartIndex = startTokenIndex;
       parseCallExpressionArguments();
     } else if (match(tt.backQuote)) {
       // Tagged template with a type argument.
@@ -1092,6 +1094,16 @@ export function tsParseSubscript(
     } else {
       return;
     }
+  } else if (!noCalls && match(tt.questionDot) && lookaheadType() === tt.lessThan) {
+    // If we see f?.<, then this must be an optional call with a type argument.
+    next();
+    state.tokens[startTokenIndex].isOptionalChainStart = true;
+    // With f?.<T>(), the subscriptStartIndex marker is on the ?. token.
+    state.tokens[state.tokens.length - 1].subscriptStartIndex = startTokenIndex;
+
+    tsParseTypeArguments();
+    expect(tt.parenL);
+    parseCallExpressionArguments();
   }
   baseParseSubscript(startTokenIndex, noCalls, stopState);
 }

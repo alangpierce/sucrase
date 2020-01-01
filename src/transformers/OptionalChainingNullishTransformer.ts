@@ -19,7 +19,12 @@ export default class OptionalChainingNullishTransformer extends Transformer {
 
   process(): boolean {
     if (this.tokens.matches1(tt.nullishCoalescing)) {
-      this.tokens.replaceTokenTrimmingLeftWhitespace(", () =>");
+      const token = this.tokens.currentToken();
+      if (this.tokens.tokens[token.nullishStartIndex!].isAsyncOperation) {
+        this.tokens.replaceTokenTrimmingLeftWhitespace(", async () =>");
+      } else {
+        this.tokens.replaceTokenTrimmingLeftWhitespace(", () =>");
+      }
       return true;
     }
     if (this.tokens.matches1(tt._delete)) {
@@ -45,6 +50,9 @@ export default class OptionalChainingNullishTransformer extends Transformer {
         arrowStartSnippet = `${param} => delete ${param}`;
       } else {
         arrowStartSnippet = `${param} => ${param}`;
+      }
+      if (this.tokens.tokens[chainStart].isAsyncOperation) {
+        arrowStartSnippet = `async ${arrowStartSnippet}`;
       }
       if (
         this.tokens.matches2(tt.questionDot, tt.parenL) ||

@@ -94,6 +94,7 @@ export class Token {
     this.contextualKeyword = state.contextualKeyword;
     this.start = state.start;
     this.end = state.end;
+    this.scopeDepth = state.scopeDepth;
     this.isType = state.isType;
     this.identifierRole = null;
     this.shadowsGlobal = false;
@@ -105,17 +106,22 @@ export class Token {
     this.isOptionalChainStart = false;
     this.isOptionalChainEnd = false;
     this.subscriptStartIndex = null;
+    this.nullishStartIndex = null;
   }
 
   type: TokenType;
   contextualKeyword: ContextualKeyword;
   start: number;
   end: number;
+  scopeDepth: number;
   isType: boolean;
   identifierRole: IdentifierRole | null;
   // Initially false for all tokens, then may be computed in a follow-up step that does scope
   // analysis.
   shadowsGlobal: boolean;
+  // Initially false for all tokens, but may be set during transform to mark it as containing an
+  // await operation.
+  isAsyncOperation: boolean;
   contextId: number | null;
   // For assignments, the index of the RHS. For export tokens, the end of the export.
   rhsEndIndex: number | null;
@@ -132,6 +138,8 @@ export class Token {
   // Tag for `.`, `?.`, `[`, `?.[`, `(`, and `?.(` to denote the "root" token for this
   // subscript chain. This can be used to determine if this chain is an optional chain.
   subscriptStartIndex: number | null;
+  // Tag for `??` operators to denote the root token for this nullish coalescing call.
+  nullishStartIndex: number | null;
 }
 
 // ## Tokenizer

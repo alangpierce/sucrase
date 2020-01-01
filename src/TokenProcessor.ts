@@ -2,6 +2,7 @@ import {HelperManager} from "./HelperManager";
 import {Token} from "./parser/tokenizer";
 import {ContextualKeyword} from "./parser/tokenizer/keywords";
 import {TokenType, TokenType as tt} from "./parser/tokenizer/types";
+import isAsyncOperation from "./util/isAsyncOperation";
 
 export interface TokenProcessorSnapshot {
   resultCode: string;
@@ -206,15 +207,32 @@ export default class TokenProcessor {
 
   private appendTokenPrefix(): void {
     const token = this.currentToken();
+    if (token.numNullishCoalesceStarts || token.isOptionalChainStart) {
+      token.isAsyncOperation = isAsyncOperation(this);
+    }
     if (token.numNullishCoalesceStarts) {
       for (let i = 0; i < token.numNullishCoalesceStarts; i++) {
-        this.resultCode += this.helperManager.getHelperName("nullishCoalesce");
+        if (token.isAsyncOperation) {
+          this.resultCode += "await ";
+          this.resultCode += this.helperManager.getHelperName("asyncNullishCoalesce");
+        } else {
+          this.resultCode += this.helperManager.getHelperName("nullishCoalesce");
+        }
         this.resultCode += "(";
       }
     }
     if (token.isOptionalChainStart) {
+      if (token.isAsyncOperation) {
+        this.resultCode += "await ";
+      }
       if (this.tokenIndex > 0 && this.tokenAtRelativeIndex(-1).type === tt._delete) {
-        this.resultCode += this.helperManager.getHelperName("optionalChainDelete");
+        if (token.isAsyncOperation) {
+          this.resultCode += this.helperManager.getHelperName("asyncOptionalChainDelete");
+        } else {
+          this.resultCode += this.helperManager.getHelperName("optionalChainDelete");
+        }
+      } else if (token.isAsyncOperation) {
+        this.resultCode += this.helperManager.getHelperName("asyncOptionalChain");
       } else {
         this.resultCode += this.helperManager.getHelperName("optionalChain");
       }

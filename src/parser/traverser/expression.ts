@@ -209,6 +209,9 @@ function parseExprOp(startTokenIndex: number, minPrec: number, noIn: boolean): v
     if (prec > minPrec) {
       const op = state.type;
       next();
+      if (op === tt.nullishCoalescing) {
+        state.tokens[state.tokens.length - 1].nullishStartIndex = startTokenIndex;
+      }
 
       const rhsStartTokenIndex = state.tokens.length;
       parseMaybeUnary();

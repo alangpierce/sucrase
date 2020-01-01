@@ -1,4 +1,7 @@
 import {
+  ASYNC_NULLISH_COALESCE_PREFIX,
+  ASYNC_OPTIONAL_CHAIN_DELETE_PREFIX,
+  ASYNC_OPTIONAL_CHAIN_PREFIX,
   ESMODULE_PREFIX,
   IMPORT_DEFAULT_PREFIX,
   NULLISH_COALESCE_PREFIX,
@@ -1022,6 +1025,70 @@ describe("sucrase", () => {
       setOutput(o)
     `,
       null,
+      {transforms: []},
+    );
+  });
+
+  it("correctly transforms async functions using await in an optional chain", () => {
+    assertResult(
+      `
+      async function foo() {
+        a?.b(await f())
+      }
+    `,
+      `${ASYNC_OPTIONAL_CHAIN_PREFIX}
+      async function foo() {
+        await _asyncOptionalChain([a, 'optionalAccess', async _ => _.b, 'call', async _2 => _2(await f())])
+      }
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("does not mistake an unrelated await keyword for an async optional chain", () => {
+    assertResult(
+      `
+      function foo() {
+        a?.b(async () => await f())
+      }
+    `,
+      `${OPTIONAL_CHAIN_PREFIX}
+      function foo() {
+        _optionalChain([a, 'optionalAccess', _ => _.b, 'call', _2 => _2(async () => await f())])
+      }
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("correctly transforms async functions using await in an optional chain deletion", () => {
+    assertResult(
+      `
+      async function foo() {
+        delete a?.[await f()];
+      }
+    `,
+      `${ASYNC_OPTIONAL_CHAIN_PREFIX}${ASYNC_OPTIONAL_CHAIN_DELETE_PREFIX}
+      async function foo() {
+         await _asyncOptionalChainDelete([a, 'optionalAccess', async _ => _[await f()]]);
+      }
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("correctly transforms async functions using await in nullish coalescing", () => {
+    assertResult(
+      `
+      async function foo() {
+        return a ?? await b();
+      }
+    `,
+      `${ASYNC_NULLISH_COALESCE_PREFIX}
+      async function foo() {
+        return await _asyncNullishCoalesce(a, async () => await b());
+      }
+    `,
       {transforms: []},
     );
   });

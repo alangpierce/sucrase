@@ -1,3 +1,11 @@
+# 3.12.0 (2020-01-01)
+
+* Add support for TypeScript assertion signature syntax, other parser
+  improvements. ([#485], [#487])
+* Implement optional chaining and nullish coalescing.
+  ([#488], [#490], [#492], [#496], [#497], [#498],
+  [tech plan](https://github.com/alangpierce/sucrase/wiki/Sucrase-Optional-Chaining-and-Nullish-Coalescing-Technical-Plan))
+
 # 3.11.0 (2019-12-22)
 
 * Add runtime validation for options. ([#468])
@@ -239,3 +247,14 @@
 [#440]: https://github.com/alangpierce/sucrase/pull/440
 [#441]: https://github.com/alangpierce/sucrase/pull/441
 [#443]: https://github.com/alangpierce/sucrase/pull/443
+[#448]: https://github.com/alangpierce/sucrase/pull/448
+[#463]: https://github.com/alangpierce/sucrase/pull/463
+[#468]: https://github.com/alangpierce/sucrase/pull/468
+[#485]: https://github.com/alangpierce/sucrase/pull/485
+[#487]: https://github.com/alangpierce/sucrase/pull/487
+[#488]: https://github.com/alangpierce/sucrase/pull/488
+[#490]: https://github.com/alangpierce/sucrase/pull/490
+[#492]: https://github.com/alangpierce/sucrase/pull/492
+[#496]: https://github.com/alangpierce/sucrase/pull/496
+[#497]: https://github.com/alangpierce/sucrase/pull/497
+[#498]: https://github.com/alangpierce/sucrase/pull/498

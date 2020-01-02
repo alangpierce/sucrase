@@ -62,6 +62,8 @@ transforms are available:
   bound methods.
 
 These proposed JS features are built-in and always transformed:
+* [Optional chaining](https://github.com/tc39/proposal-optional-chaining): `a?.b`
+* [Nullish coalescing](https://github.com/tc39/proposal-nullish-coalescing): `a ?? b`
 * [Class fields](https://github.com/tc39/proposal-class-fields): `class C { x = 1; }`.
   This includes static fields but not the `#x` private field syntax.
 * [Export namespace syntax](https://github.com/tc39/proposal-export-ns-from):
@@ -75,9 +77,9 @@ These proposed JS features are built-in and always transformed:
 
 All JS syntax not mentioned above will "pass through" and needs to be supported
 by your JS runtime. For example:
-* Decorators, private fields, `throw` expressions, optional chaining, generator
-  arrow functions, and `do` expressions are all unsupported in browsers and Node
-  (as of this writing), and Sucrase doesn't make an attempt to transpile them.
+* Decorators, private fields, `throw` expressions, generator arrow functions,
+  and `do` expressions are all unsupported in browsers and Node (as of this
+  writing), and Sucrase doesn't make an attempt to transpile them.
 * Object rest/spread, async functions, and async iterators are all recent
   features that should work fine, but might cause issues if you use older
   versions of tools like webpack. BigInt and newer regex features may or may not

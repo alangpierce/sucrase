@@ -11,6 +11,16 @@ const TEST262_DIR = "./test262/test262-checkout";
 const TEST262_REPO_URL = "https://github.com/tc39/test262.git";
 const TEST262_REVISION = "157b18d16b5d52501c4d75ac422d3a80bfad1c17";
 
+const SKIPPED_TESTS = [
+  // This test fails due to an unhandled promise rejection that seems to be unrelated to the use of
+  // optional chaining.
+  "language/expressions/optional-chaining/member-expression-async-identifier.js",
+  // This file tests a number of cases like (a?.b)(), which are currently considered out of scope.
+  // See tech plan at:
+  // https://github.com/alangpierce/sucrase/wiki/Sucrase-Optional-Chaining-and-Nullish-Coalescing-Technical-Plan
+  "language/expressions/optional-chaining/optional-call-preserves-this.js",
+];
+
 /**
  * Run the test262 suite on some tests that we know are useful.
  */
@@ -46,19 +56,26 @@ async function main(): Promise<void> {
   const harnessOutput = JSON.parse(harnessStdout);
   let numPassed = 0;
   let numFailed = 0;
+  let numSkipped = 0;
   for (const result of harnessOutput) {
     if (!result.result.pass) {
-      numFailed++;
-      console.error(`${chalk.bold(chalk.bgRed("FAIL"))} ${chalk.bold(result.file)}`);
-      console.error(result.result.message);
-      console.error(`stdout:\n${result.rawResult.stdout}`);
-      console.error(`stderr:\n${result.rawResult.stderr}`);
-      console.error();
+      if (SKIPPED_TESTS.includes(result.relative)) {
+        numSkipped++;
+        console.error(`${chalk.bold(chalk.bgYellow("SKIP"))} ${chalk.bold(result.file)}`);
+        console.error();
+      } else {
+        numFailed++;
+        console.error(`${chalk.bold(chalk.bgRed("FAIL"))} ${chalk.bold(result.file)}`);
+        console.error(result.result.message);
+        console.error(`stdout:\n${result.rawResult.stdout}`);
+        console.error(`stderr:\n${result.rawResult.stderr}`);
+        console.error();
+      }
     } else {
       numPassed++;
     }
   }
-  console.log(`${numPassed} passed, ${numFailed} failed`);
+  console.log(`${numPassed} passed, ${numFailed} failed, ${numSkipped} skipped`);
   if (numFailed > 0) {
     process.exitCode = 1;
   }

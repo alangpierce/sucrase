@@ -19,7 +19,7 @@ matrix:
         - yarn run-examples babel
     - script:
         - yarn fast-build
-        - yarn run-examples react
+        - yarn run-examples react decaffeinate decaffeinate-parser coffee-lex
     - script:
         - yarn fast-build
         - yarn run-examples tslint apollo-client
@@ -27,7 +27,7 @@ matrix:
         - yarn build
         - yarn lint
         - yarn test-with-coverage && yarn report-coverage
-        - yarn run-examples decaffeinate decaffeinate-parser coffee-lex
+        - yarn test262
     - node_js: '10'
       script:
         - yarn build

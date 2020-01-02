@@ -36,7 +36,13 @@ export default class OptionalChainingNullishTransformer extends Transformer {
     }
     const token = this.tokens.currentToken();
     const chainStart = token.subscriptStartIndex;
-    if (chainStart != null && this.tokens.tokens[chainStart].isOptionalChainStart) {
+    if (
+      chainStart != null &&
+      this.tokens.tokens[chainStart].isOptionalChainStart &&
+      // Super subscripts can't be optional (since super is never null/undefined), and the syntax
+      // relies on the subscript being intact, so leave this token alone.
+      this.tokens.tokenAtRelativeIndex(-1).type !== tt._super
+    ) {
       const param = this.nameManager.claimFreeName("_");
       let arrowStartSnippet;
       if (
@@ -58,6 +64,9 @@ export default class OptionalChainingNullishTransformer extends Transformer {
         this.tokens.matches2(tt.questionDot, tt.parenL) ||
         this.tokens.matches2(tt.questionDot, tt.lessThan)
       ) {
+        if (this.justSkippedSuper()) {
+          this.tokens.appendCode(".bind(this)");
+        }
         this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'optionalCall', ${arrowStartSnippet}`);
       } else if (this.tokens.matches2(tt.questionDot, tt.bracketL)) {
         this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'optionalAccess', ${arrowStartSnippet}`);
@@ -68,6 +77,9 @@ export default class OptionalChainingNullishTransformer extends Transformer {
       } else if (this.tokens.matches1(tt.bracketL)) {
         this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'access', ${arrowStartSnippet}[`);
       } else if (this.tokens.matches1(tt.parenL)) {
+        if (this.justSkippedSuper()) {
+          this.tokens.appendCode(".bind(this)");
+        }
         this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'call', ${arrowStartSnippet}(`);
       } else {
         throw new Error("Unexpected subscript operator in optional chain.");
@@ -105,6 +117,39 @@ export default class OptionalChainingNullishTransformer extends Transformer {
       if (depth === 0 && this.tokens.tokens[i].subscriptStartIndex != null) {
         return false;
       }
+    }
+  }
+
+  /**
+   * Determine if we are the open-paren in an expression like super.a()?.b.
+   *
+   * We can do this by walking backward to find the previous subscript. If that subscript was
+   * preceded by a super, then we must be the subscript after it, so if this is a call expression,
+   * we'll need to attach the right context.
+   */
+  justSkippedSuper(): boolean {
+    let depth = 0;
+    let index = this.tokens.currentIndex() - 1;
+    while (true) {
+      if (index < 0) {
+        throw new Error(
+          "Reached the start of the code while finding the start of the access chain.",
+        );
+      }
+      if (this.tokens.tokens[index].isOptionalChainStart) {
+        depth--;
+      } else if (this.tokens.tokens[index].isOptionalChainEnd) {
+        depth++;
+      }
+      if (depth < 0) {
+        return false;
+      }
+
+      // This subscript token is a later one in the same chain.
+      if (depth === 0 && this.tokens.tokens[index].subscriptStartIndex != null) {
+        return this.tokens.tokens[index - 1].type === tt._super;
+      }
+      index--;
     }
   }
 }

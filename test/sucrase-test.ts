@@ -1092,4 +1092,44 @@ describe("sucrase", () => {
       {transforms: []},
     );
   });
+
+  it("allows super in an optional chain", () => {
+    assertResult(
+      `
+      class A extends B {
+        foo() {
+          console.log(super.foo?.a);
+        }
+      }
+    `,
+      `${OPTIONAL_CHAIN_PREFIX}
+      class A extends B {
+        foo() {
+          console.log(_optionalChain([super.foo, 'optionalAccess', _ => _.a]));
+        }
+      }
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("allows a super method call in an optional chain", () => {
+    assertResult(
+      `
+      class A extends B {
+        foo() {
+          console.log(super.a()?.b);
+        }
+      }
+    `,
+      `${OPTIONAL_CHAIN_PREFIX}
+      class A extends B {
+        foo() {
+          console.log(_optionalChain([super.a.bind(this), 'call', _ => _(), 'optionalAccess', _2 => _2.b]));
+        }
+      }
+    `,
+      {transforms: []},
+    );
+  });
 });

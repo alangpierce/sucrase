@@ -1,3 +1,7 @@
+# 3.12.1 (2020-01-13)
+
+* Fix crash when parsing `asserts b` TypeScript return signatures. ([#504])
+
 # 3.12.0 (2020-01-01)
 
 * Add support for TypeScript assertion signature syntax, other parser
@@ -258,3 +262,4 @@
 [#496]: https://github.com/alangpierce/sucrase/pull/496
 [#497]: https://github.com/alangpierce/sucrase/pull/497
 [#498]: https://github.com/alangpierce/sucrase/pull/498
+[#504]: https://github.com/alangpierce/sucrase/pull/504

@@ -1836,6 +1836,25 @@ describe("typescript transform", () => {
   it("allows assertion signature syntax", () => {
     assertTypeScriptResult(
       `
+      function assert(condition: any, msg?: string): asserts condition {
+          if (!condition) {
+              throw new AssertionError(msg)
+          }
+      }
+    `,
+      `"use strict";
+      function assert(condition, msg) {
+          if (!condition) {
+              throw new AssertionError(msg)
+          }
+      }
+    `,
+    );
+  });
+
+  it("allows assertion signature syntax with is", () => {
+    assertTypeScriptResult(
+      `
       function assertIsDefined<T>(x: T): asserts x is NonNullable<T> {
         if (x == null) throw "oh no";
       }

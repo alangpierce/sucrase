@@ -2,7 +2,7 @@
 import commander from "commander";
 import globCb from "glob";
 import {exists, mkdir, readdir, readFile, stat, writeFile} from "mz/fs";
-import {join, relative, dirname} from "path";
+import {dirname, join, relative} from "path";
 import {promisify} from "util";
 
 import {Options, transform} from "./index";

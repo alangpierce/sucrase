@@ -118,7 +118,7 @@ Often, you'll want to use one of the build tool integrations:
 [Webpack](https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-loader),
 [Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin),
 [Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin),
-[Rollup](https://github.com/rollup/rollup-plugin-sucrase),
+[Rollup](https://github.com/rollup/plugins/tree/master/packages/sucrase),
 [Broccoli](https://github.com/stefanpenner/broccoli-sucrase).
 
 Compile on-the-fly via a require hook with some [reasonable defaults](src/register.ts):

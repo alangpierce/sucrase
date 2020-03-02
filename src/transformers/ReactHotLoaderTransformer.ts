@@ -55,7 +55,7 @@ ${namesToRegister
   .map(
     ({variableName, uniqueLocalName}) =>
       `  reactHotLoader.register(${variableName}, "${uniqueLocalName}", ${JSON.stringify(
-        this.filePath,
+        this.filePath || "",
       )});`,
   )
   .join("\n")}

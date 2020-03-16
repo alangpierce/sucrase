@@ -221,4 +221,32 @@ describe("transform react-hot-loader", () => {
       ["typescript"],
     );
   });
+
+  it("escapes file paths", () => {
+    assertResult(
+      `
+    import React from 'react';
+
+    export const App = () => <div />;
+    `,
+      `const _jsxFileName = "C:\\\\dev\\\\sample.tsx";${RHL_PREFIX}
+    import React from 'react';
+
+    export const App = () => React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 4}} );
+    
+;(function () {
+  var reactHotLoader = require('react-hot-loader').default;
+  var leaveModule = require('react-hot-loader').leaveModule;
+  if (!reactHotLoader) {
+    return;
+  }
+  reactHotLoader.register(App, "App", "C:\\\\dev\\\\sample.tsx");
+  leaveModule(module);
+})();`,
+      {
+        transforms: ["jsx", "react-hot-loader"],
+        filePath: "C:\\dev\\sample.tsx",
+      },
+    );
+  });
 });

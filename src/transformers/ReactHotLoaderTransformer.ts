@@ -54,7 +54,9 @@ export default class ReactHotLoaderTransformer extends Transformer {
 ${namesToRegister
   .map(
     ({variableName, uniqueLocalName}) =>
-      `  reactHotLoader.register(${variableName}, "${uniqueLocalName}", "${this.filePath}");`,
+      `  reactHotLoader.register(${variableName}, "${uniqueLocalName}", ${JSON.stringify(
+        this.filePath || "",
+      )});`,
   )
   .join("\n")}
   leaveModule(module);

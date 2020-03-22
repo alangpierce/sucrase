@@ -1,6 +1,4 @@
 language: node_js
-node_js:
-  - '12'
 # Theoretically we could cache node_modules and example-repos, but those end up
 # being very slow to download and are largely duplicated with yarn cache.
 cache:
@@ -11,19 +9,23 @@ branches:
     - "master"
 before_install:
   - npm install -g yarn@latest
-matrix:
+jobs:
   include:
     # Put the slowest builds first, since they are more likely to start first
-    - script:
+    - node_js: '12'
+      script:
         - yarn fast-build
         - yarn run-examples babel
-    - script:
+    - node_js: '12'
+      script:
         - yarn fast-build
         - yarn run-examples react decaffeinate decaffeinate-parser coffee-lex
-    - script:
+    - node_js: '12'
+      script:
         - yarn fast-build
         - yarn run-examples tslint apollo-client
-    - script:
+    - node_js: '12'
+      script:
         - yarn build
         - yarn lint
         - yarn test-with-coverage && yarn report-coverage
@@ -32,6 +34,3 @@ matrix:
       script:
         - yarn build
         - yarn test-only
-  # Exclude the default build; we only want to run explicitly-included builds.
-  exclude:
-    node_js: '12'

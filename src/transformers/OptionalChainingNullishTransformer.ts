@@ -21,9 +21,9 @@ export default class OptionalChainingNullishTransformer extends Transformer {
     if (this.tokens.matches1(tt.nullishCoalescing)) {
       const token = this.tokens.currentToken();
       if (this.tokens.tokens[token.nullishStartIndex!].isAsyncOperation) {
-        this.tokens.replaceTokenTrimmingLeftWhitespace(", async () =>");
+        this.tokens.replaceTokenTrimmingLeftWhitespace(", async () => (");
       } else {
-        this.tokens.replaceTokenTrimmingLeftWhitespace(", () =>");
+        this.tokens.replaceTokenTrimmingLeftWhitespace(", () => (");
       }
       return true;
     }

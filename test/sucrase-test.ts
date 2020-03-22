@@ -889,7 +889,7 @@ describe("sucrase", () => {
       const x = a ?? b;
     `,
       `${NULLISH_COALESCE_PREFIX}
-      const x = _nullishCoalesce(a, () => b);
+      const x = _nullishCoalesce(a, () => ( b));
     `,
       {transforms: []},
     );
@@ -901,7 +901,7 @@ describe("sucrase", () => {
       const x = a ?? b ?? c;
     `,
       `${NULLISH_COALESCE_PREFIX}
-      const x = _nullishCoalesce(_nullishCoalesce(a, () => b), () => c);
+      const x = _nullishCoalesce(_nullishCoalesce(a, () => ( b)), () => ( c));
     `,
       {transforms: []},
     );
@@ -957,6 +957,29 @@ describe("sucrase", () => {
       setOutput(a?.b.c ?? 10);
     `,
       10,
+      {transforms: []},
+    );
+  });
+
+  it("correctly transpiles nullish coalescing with an object right-hand side", () => {
+    assertResult(
+      `
+      null ?? {x: 5}
+    `,
+      `${NULLISH_COALESCE_PREFIX}
+      _nullishCoalesce(null, () => ( {x: 5}))
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("correctly handles nullish coalescing with an object on the right-hand side", () => {
+    assertOutput(
+      `
+      const value = null ?? {x: 5};
+      setOutput(value.x)
+    `,
+      5,
       {transforms: []},
     );
   });
@@ -1086,7 +1109,7 @@ describe("sucrase", () => {
     `,
       `${ASYNC_NULLISH_COALESCE_PREFIX}
       async function foo() {
-        return await _asyncNullishCoalesce(a, async () => await b());
+        return await _asyncNullishCoalesce(a, async () => ( await b()));
       }
     `,
       {transforms: []},

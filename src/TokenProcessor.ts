@@ -247,7 +247,7 @@ export default class TokenProcessor {
     }
     if (token.numNullishCoalesceEnds) {
       for (let i = 0; i < token.numNullishCoalesceEnds; i++) {
-        this.resultCode += ")";
+        this.resultCode += "))";
       }
     }
   }

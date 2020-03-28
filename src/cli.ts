@@ -29,7 +29,7 @@ export default function run(): void {
     )
     .option(
       "-p, --project <dir>",
-      "Compile a typescript project, will read from tsconfig.json in <dir>",
+      "Compile a TypeScript project, will read from tsconfig.json in <dir>",
     )
     .option("--out-extension <extension>", "File extension to use for all output files.", "js")
     .option("--exclude-dirs <paths>", "Names of directories that should not be traversed.")
@@ -44,19 +44,34 @@ export default function run(): void {
     .option("--jsx-fragment-pragma <string>", "Fragment component, defaults to `React.Fragment`")
     .parse(process.argv);
 
-  if (!commander.outDir && !commander.project) {
-    console.error("Out directory is required");
-    process.exit(1);
-  }
+  if (commander.project) {
+    if (
+      commander.outDir ||
+      commander.transforms ||
+      commander.args[0] ||
+      commander.enableLegacyTypescriptModuleInterop
+    ) {
+      console.error(
+        "If TypeScript project is specified, out directory, transforms, source " +
+          "directory, and --enable-legacy-typescript-module-interop may not be specified.",
+      );
+      process.exit(1);
+    }
+  } else {
+    if (!commander.outDir) {
+      console.error("Out directory is required");
+      process.exit(1);
+    }
 
-  if (!commander.transforms && !commander.project) {
-    console.error("Transforms option is required.");
-    process.exit(1);
-  }
+    if (!commander.transforms) {
+      console.error("Transforms option is required.");
+      process.exit(1);
+    }
 
-  if (!commander.args[0] && !commander.project) {
-    console.error("Source directory is required.");
-    process.exit(1);
+    if (!commander.args[0]) {
+      console.error("Source directory is required.");
+      process.exit(1);
+    }
   }
 
   const options: CLIOptions = {

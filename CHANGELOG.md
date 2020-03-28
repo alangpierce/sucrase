@@ -1,3 +1,9 @@
+# 3.13.0 (2020-03-28)
+
+* Properly escape file paths in the react-hot-loader transform. ([#512]) (Jan Zípek)
+* Fix nullish coalescing when the RHS is an object literal. ([#516])
+* Support reading CLI configuration from tsconfig.json. ([#509], [#519]) (Jake Verbaten)
+
 # 3.12.1 (2020-01-13)
 
 * Fix crash when parsing `asserts b` TypeScript return signatures. ([#504])
@@ -263,3 +269,7 @@
 [#497]: https://github.com/alangpierce/sucrase/pull/497
 [#498]: https://github.com/alangpierce/sucrase/pull/498
 [#504]: https://github.com/alangpierce/sucrase/pull/504
+[#509]: https://github.com/alangpierce/sucrase/pull/509
+[#512]: https://github.com/alangpierce/sucrase/pull/512
+[#516]: https://github.com/alangpierce/sucrase/pull/516
+[#519]: https://github.com/alangpierce/sucrase/pull/519

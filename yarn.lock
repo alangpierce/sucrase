@@ -3521,12 +3521,13 @@ stubs@^3.0.0:
   resolved "https://registry.yarnpkg.com/stubs/-/stubs-3.0.0.tgz#e8d2ba1fa9c90570303c030b6900f7d5f89abe5b"
   integrity sha1-6NK6H6nJBXAwPAMLaQD31fiavls=
 
-sucrase@^3.12.1:
-  version "3.12.1"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.12.1.tgz#85888fb0c3c39e3723b720690b6db2bde7b34c5c"
-  integrity sha512-aYG1RVImoyczRm/puVkNjbWZFus2b/LJj58RWEF7oe4XcKu/a/rudq+R9OrO69juzVx6KnPGTvjWUbIGnXTeFA==
+sucrase@^3.13.0:
+  version "3.13.0"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.13.0.tgz#68eb000dea32dd2ec84b91de97c76dcb83a1a2ff"
+  integrity sha512-koXmWc8Iq8q7quNJ9v/TuDIRBeGul1D+QL36PnfzFvYFoQbWcYpSmpJElpSM+eCa0nFthyQqgCGrEKAepnFMtQ==
   dependencies:
     commander "^4.0.0"
+    glob "7.1.6"
     lines-and-columns "^1.1.6"
     mz "^2.7.0"
     pirates "^4.0.1"

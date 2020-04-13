@@ -867,7 +867,7 @@ export function parsePropertyName(objectContextId: number): void {
     expect(tt.bracketR);
     state.tokens[state.tokens.length - 1].contextId = objectContextId;
   } else {
-    if (match(tt.num) || match(tt.string)) {
+    if (match(tt.num) || match(tt.string) || match(tt.bigint)) {
       parseExprAtom();
     } else {
       parseMaybePrivateName();

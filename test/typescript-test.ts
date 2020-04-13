@@ -1961,4 +1961,17 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("parses and removes import type statements", () => {
+    assertTypeScriptResult(
+      `
+      import type foo from 'foo';
+      console.log(foo);
+    `,
+      `"use strict";
+      
+      console.log(foo);
+    `,
+    );
+  });
 });

@@ -1160,6 +1160,9 @@ export function tsTryParseExport(): boolean {
     semicolon();
     return true;
   } else {
+    if (isContextual(ContextualKeyword._type) && lookaheadType() === tt.braceL) {
+      next();
+    }
     return false;
   }
 }

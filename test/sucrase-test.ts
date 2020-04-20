@@ -1155,4 +1155,16 @@ describe("sucrase", () => {
       {transforms: []},
     );
   });
+
+  it("allows bigint literals as object keys", () => {
+    assertResult(
+      `
+      const o = {0n: 0};
+    `,
+      `
+      const o = {0n: 0};
+    `,
+      {transforms: []},
+    );
+  });
 });

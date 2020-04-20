@@ -1036,6 +1036,9 @@ export function parseImport(): void {
     tsParseImportEqualsDeclaration();
     return;
   }
+  if (isTypeScriptEnabled) {
+    eatContextual(ContextualKeyword._type);
+  }
 
   // import '...'
   if (match(tt.string)) {

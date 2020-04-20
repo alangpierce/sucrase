@@ -59,6 +59,8 @@ async function buildSucrase(): Promise<void> {
     await mergeDirectoryContents("./dist-types/src", "./dist");
     // Link all integrations to Sucrase so that all building/linting/testing is up to date.
     await run("yarn link");
+    // browser build
+    await run("yarn run rollup -c");
   }
 }
 

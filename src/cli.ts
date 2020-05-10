@@ -88,7 +88,7 @@ export default function run(): void {
       enableLegacyBabel5ModuleInterop: commander.enableLegacyBabel5ModuleInterop,
       jsxPragma: commander.jsxPragma || "React.createElement",
       jsxFragmentPragma: commander.jsxFragmentPragma || "React.Fragment",
-      production: commander.production
+      production: commander.production,
     },
   };
 

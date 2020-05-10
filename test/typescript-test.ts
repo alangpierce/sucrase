@@ -1974,4 +1974,34 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("properly handles default args in constructors", () => {
+    assertTypeScriptResult(
+      `
+      class Foo {
+        constructor(p = -1) {}
+      }
+    `,
+      `"use strict";
+      class Foo {
+        constructor(p = -1) {}
+      }
+    `,
+    );
+  });
+
+  it("properly emits assignments with multiple constructor initializers", () => {
+    assertTypeScriptResult(
+      `
+      class Foo {
+        constructor(a: number, readonly b: number, private c: number) {}
+      }
+    `,
+      `"use strict";
+      class Foo {
+        constructor(a,  b,  c) {;this.b = b;this.c = c;}
+      }
+    `,
+    );
+  });
 });

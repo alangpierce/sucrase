@@ -614,7 +614,13 @@ export function parseFunctionParams(
   if (funcContextId) {
     state.tokens[state.tokens.length - 1].contextId = funcContextId;
   }
-  parseBindingList(tt.parenR, false /* isBlockScope */, false /* allowEmpty */, allowModifiers);
+  parseBindingList(
+    tt.parenR,
+    false /* isBlockScope */,
+    false /* allowEmpty */,
+    allowModifiers,
+    funcContextId,
+  );
   if (funcContextId) {
     state.tokens[state.tokens.length - 1].contextId = funcContextId;
   }

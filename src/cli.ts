@@ -42,6 +42,7 @@ export default function run(): void {
     .option("--enable-legacy-babel5-module-interop", "Use Babel 5 ESM/CJS interop strategy.")
     .option("--jsx-pragma <string>", "Element creation function, defaults to `React.createElement`")
     .option("--jsx-fragment-pragma <string>", "Fragment component, defaults to `React.Fragment`")
+    .option("--production", "Disable debugging information from JSX in output.")
     .parse(process.argv);
 
   if (commander.project) {
@@ -87,6 +88,7 @@ export default function run(): void {
       enableLegacyBabel5ModuleInterop: commander.enableLegacyBabel5ModuleInterop,
       jsxPragma: commander.jsxPragma || "React.createElement",
       jsxFragmentPragma: commander.jsxFragmentPragma || "React.Fragment",
+      production: commander.production,
     },
   };
 

@@ -86,6 +86,7 @@ export function parseBindingList(
   isBlockScope: boolean,
   allowEmpty: boolean = false,
   allowModifiers: boolean = false,
+  contextId: number = 0,
 ): void {
   let first = true;
 
@@ -97,6 +98,7 @@ export function parseBindingList(
       first = false;
     } else {
       expect(tt.comma);
+      state.tokens[state.tokens.length - 1].contextId = contextId;
       // After a "this" type in TypeScript, we need to set the following comma (if any) to also be
       // a type token so that it will be removed.
       if (!hasRemovedComma && state.tokens[firstItemTokenIndex].isType) {

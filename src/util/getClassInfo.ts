@@ -197,22 +197,27 @@ function processConstructor(
   if (constructorContextId == null) {
     throw new Error("Expected context ID on open-paren starting constructor params.");
   }
-  tokens.nextToken();
   // Advance through parameters looking for access modifiers.
   while (!tokens.matchesContextIdAndLabel(tt.parenR, constructorContextId)) {
-    if (isAccessModifier(tokens.currentToken())) {
+    if (tokens.currentToken().contextId === constructorContextId) {
+      // Current token is an open paren or comma just before a param, so check
+      // that param for access modifiers.
       tokens.nextToken();
-      while (isAccessModifier(tokens.currentToken())) {
+      if (isAccessModifier(tokens.currentToken())) {
         tokens.nextToken();
+        while (isAccessModifier(tokens.currentToken())) {
+          tokens.nextToken();
+        }
+        const token = tokens.currentToken();
+        if (token.type !== tt.name) {
+          throw new Error("Expected identifier after access modifiers in constructor arg.");
+        }
+        const name = tokens.identifierNameForToken(token);
+        constructorInitializerStatements.push(`this.${name} = ${name}`);
       }
-      const token = tokens.currentToken();
-      if (token.type !== tt.name) {
-        throw new Error("Expected identifier after access modifiers in constructor arg.");
-      }
-      const name = tokens.identifierNameForToken(token);
-      constructorInitializerStatements.push(`this.${name} = ${name}`);
+    } else {
+      tokens.nextToken();
     }
-    tokens.nextToken();
   }
   // )
   tokens.nextToken();

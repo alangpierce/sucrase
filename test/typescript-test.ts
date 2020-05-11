@@ -1962,15 +1962,92 @@ describe("typescript transform", () => {
     );
   });
 
-  it("parses and removes import type statements", () => {
+  it("parses and removes import type statements in CJS mode", () => {
     assertTypeScriptResult(
       `
       import type foo from 'foo';
-      console.log(foo);
+      import bar from 'bar';
+      console.log(foo, bar);
+    `,
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
+      
+      var _bar = require('bar'); var _bar2 = _interopRequireDefault(_bar);
+      console.log(foo, _bar2.default);
+    `,
+    );
+  });
+
+  it("parses and removes named import type statements in CJS mode", () => {
+    assertTypeScriptResult(
+      `
+      import type {foo} from 'foo';
+      import {bar} from 'bar';
+      console.log(foo, bar);
     `,
       `"use strict";
       
-      console.log(foo);
+      var _bar = require('bar');
+      console.log(foo, _bar.bar);
+    `,
+    );
+  });
+
+  it("parses and removes import type statements in ESM mode", () => {
+    assertTypeScriptESMResult(
+      `
+      import type foo from 'foo';
+      import bar from 'bar';
+      console.log(foo, bar);
+    `,
+      `
+
+      import bar from 'bar';
+      console.log(foo, bar);
+    `,
+    );
+  });
+
+  it("parses and removes named import type statements in ESM mode", () => {
+    assertTypeScriptESMResult(
+      `
+      import type {foo} from 'foo';
+      import {bar} from 'bar';
+      console.log(foo, bar);
+    `,
+      `
+
+      import {bar} from 'bar';
+      console.log(foo, bar);
+    `,
+    );
+  });
+
+  it("parses and removes export type statements in CJS mode", () => {
+    assertTypeScriptResult(
+      `
+      import T from './T';
+      let x: T;
+      export type {T};
+    `,
+      `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}
+      var _T = require('./T'); var _T2 = _interopRequireDefault(_T);
+      let x;
+      ;
+    `,
+    );
+  });
+
+  it("parses and removes export type statements in ESM mode", () => {
+    assertTypeScriptESMResult(
+      `
+      import T from './T';
+      let x: T;
+      export type {T};
+    `,
+      `
+      import T from './T';
+      let x;
+      ;
     `,
     );
   });

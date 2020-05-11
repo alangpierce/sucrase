@@ -55,6 +55,18 @@ export default class ESMImportTransformer extends Transformer {
     if (this.tokens.matches2(tt._export, tt.braceL)) {
       return this.processNamedExports();
     }
+    if (
+      this.tokens.matches3(tt._export, tt.name, tt.braceL) &&
+      this.tokens.matchesContextualAtIndex(this.tokens.currentIndex() + 1, ContextualKeyword._type)
+    ) {
+      // TS `export type {` case: just remove the export entirely.
+      this.tokens.removeInitialToken();
+      while (!this.tokens.matches1(tt.braceR)) {
+        this.tokens.removeToken();
+      }
+      this.tokens.removeToken();
+      return true;
+    }
     return false;
   }
 

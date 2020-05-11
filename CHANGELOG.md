@@ -1,3 +1,9 @@
+# 3.14.0 (2020-05-10)
+
+* Add support for TypeScript 3.8 type-only imports and exports. ([#523], [#532])
+* Add a `--production` flag to the CLI. ([#529])
+* Fix crash when using `+` or `-` in constructor parameter defaults. ([#531])
+
 # 3.13.0 (2020-03-28)
 
 * Properly escape file paths in the react-hot-loader transform. ([#512]) (Jan Zípek)
@@ -273,3 +279,7 @@
 [#512]: https://github.com/alangpierce/sucrase/pull/512
 [#516]: https://github.com/alangpierce/sucrase/pull/516
 [#519]: https://github.com/alangpierce/sucrase/pull/519
+[#523]: https://github.com/alangpierce/sucrase/pull/523
+[#529]: https://github.com/alangpierce/sucrase/pull/529
+[#531]: https://github.com/alangpierce/sucrase/pull/531
+[#532]: https://github.com/alangpierce/sucrase/pull/532

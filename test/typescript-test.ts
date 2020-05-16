@@ -2052,6 +2052,32 @@ describe("typescript transform", () => {
     );
   });
 
+  it("parses and removes export type re-export statements in CJS mode", () => {
+    assertTypeScriptResult(
+      `
+      export type {T} from './T';
+      export type {T1 as TX, T2 as TY} from './OtherTs';
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      ;
+      ;
+    `,
+    );
+  });
+
+  it("parses and removes export type re-export statements in ESM mode", () => {
+    assertTypeScriptESMResult(
+      `
+      export type {T} from './T';
+      export type {T1 as TX, T2 as TY} from './OtherTs';
+    `,
+      `
+      ;
+      ;
+    `,
+    );
+  });
+
   it("properly handles default args in constructors", () => {
     assertTypeScriptResult(
       `

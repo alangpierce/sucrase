@@ -310,6 +310,15 @@ export default class CJSImportTransformer extends Transformer {
         this.tokens.removeToken();
       }
       this.tokens.removeToken();
+
+      // Remove type re-export `... } from './T'`
+      if (
+        this.tokens.matchesContextual(ContextualKeyword._from) &&
+        this.tokens.matches1AtIndex(this.tokens.currentIndex() + 1, tt.string)
+      ) {
+        this.tokens.removeToken();
+        this.tokens.removeToken();
+      }
       return true;
     } else {
       throw new Error("Unrecognized export syntax.");

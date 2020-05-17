@@ -1,7 +1,11 @@
+# 3.14.1 (2020-05-17)
+
+* Add support for `export type {T} from './T';` type-only export syntax. ([#533]) (Patrik Oldsberg)
+
 # 3.14.0 (2020-05-10)
 
 * Add support for TypeScript 3.8 type-only imports and exports. ([#523], [#532])
-* Add a `--production` flag to the CLI. ([#529])
+* Add a `--production` flag to the CLI. ([#529]) (Matthew Phillips)
 * Fix crash when using `+` or `-` in constructor parameter defaults. ([#531])
 
 # 3.13.0 (2020-03-28)
@@ -283,3 +287,4 @@
 [#529]: https://github.com/alangpierce/sucrase/pull/529
 [#531]: https://github.com/alangpierce/sucrase/pull/531
 [#532]: https://github.com/alangpierce/sucrase/pull/532
+[#533]: https://github.com/alangpierce/sucrase/pull/533

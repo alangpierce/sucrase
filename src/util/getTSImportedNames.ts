@@ -1,6 +1,6 @@
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
-import TokenProcessor from "../TokenProcessor";
+import type TokenProcessor from "../TokenProcessor";
 
 /**
  * Special case code to scan for imported names in ESM TypeScript. We need to do this so we can

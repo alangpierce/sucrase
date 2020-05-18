@@ -9,7 +9,7 @@ import through = require("through2");
 const PLUGIN_NAME = "@sucrase/gulp-plugin";
 
 function gulpSucrase(options: Options): Transform {
-  return through.obj(function(
+  return through.obj(function (
     this: Transform,
     // tslint:disable-next-line no-any
     file: any,

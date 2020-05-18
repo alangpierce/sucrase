@@ -1,4 +1,4 @@
-import NameManager from "./NameManager";
+import type NameManager from "./NameManager";
 
 const HELPERS = {
   interopRequireWildcard: `
@@ -158,10 +158,7 @@ export class HelperManager {
       }
       if (helperName) {
         resultCode += " ";
-        resultCode += helperCode
-          .replace(baseName, helperName)
-          .replace(/\s+/g, " ")
-          .trim();
+        resultCode += helperCode.replace(baseName, helperName).replace(/\s+/g, " ").trim();
       }
     }
     return resultCode;

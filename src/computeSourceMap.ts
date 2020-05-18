@@ -1,4 +1,4 @@
-import {SourceMapOptions} from "./index";
+import type {SourceMapOptions} from "./index";
 import {charCodes} from "./parser/util/charcodes";
 
 export interface RawSourceMap {

@@ -1,4 +1,4 @@
-import {Options} from "../index";
+import type {Options} from "../index";
 
 export interface JSXPragmaInfo {
   base: string;

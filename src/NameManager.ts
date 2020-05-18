@@ -1,4 +1,4 @@
-import {Token} from "./parser/tokenizer";
+import type {Token} from "./parser/tokenizer";
 import getIdentifierNames from "./util/getIdentifierNames";
 
 export default class NameManager {

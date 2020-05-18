@@ -3,9 +3,9 @@ import {
   isFunctionScopedDeclaration,
   isNonTopLevelDeclaration,
 } from "./parser/tokenizer";
-import {Scope} from "./parser/tokenizer/state";
+import type {Scope} from "./parser/tokenizer/state";
 import {TokenType as tt} from "./parser/tokenizer/types";
-import TokenProcessor from "./TokenProcessor";
+import type TokenProcessor from "./TokenProcessor";
 
 /**
  * Traverse the given tokens and modify them if necessary to indicate that some names shadow global

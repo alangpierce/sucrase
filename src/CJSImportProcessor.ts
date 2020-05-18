@@ -1,10 +1,10 @@
-import {HelperManager} from "./HelperManager";
-import {Options} from "./index";
-import NameManager from "./NameManager";
+import type {HelperManager} from "./HelperManager";
+import type {Options} from "./index";
+import type NameManager from "./NameManager";
 import {isDeclaration} from "./parser/tokenizer";
 import {ContextualKeyword} from "./parser/tokenizer/keywords";
 import {TokenType as tt} from "./parser/tokenizer/types";
-import TokenProcessor from "./TokenProcessor";
+import type TokenProcessor from "./TokenProcessor";
 import {getNonTypeIdentifiers} from "./util/getNonTypeIdentifiers";
 
 interface NamedImport {

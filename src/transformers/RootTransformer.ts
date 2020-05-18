@@ -1,9 +1,9 @@
-import {HelperManager} from "../HelperManager";
-import {Options, SucraseContext, Transform} from "../index";
-import NameManager from "../NameManager";
+import type {HelperManager} from "../HelperManager";
+import type {Options, SucraseContext, Transform} from "../index";
+import type NameManager from "../NameManager";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
-import TokenProcessor from "../TokenProcessor";
+import type TokenProcessor from "../TokenProcessor";
 import getClassInfo, {ClassInfo} from "../util/getClassInfo";
 import CJSImportTransformer from "./CJSImportTransformer";
 import ESMImportTransformer from "./ESMImportTransformer";
@@ -14,7 +14,7 @@ import OptionalCatchBindingTransformer from "./OptionalCatchBindingTransformer";
 import OptionalChainingNullishTransformer from "./OptionalChainingNullishTransformer";
 import ReactDisplayNameTransformer from "./ReactDisplayNameTransformer";
 import ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
-import Transformer from "./Transformer";
+import type Transformer from "./Transformer";
 import TypeScriptTransformer from "./TypeScriptTransformer";
 
 export default class RootTransformer {

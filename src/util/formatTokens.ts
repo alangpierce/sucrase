@@ -1,5 +1,5 @@
 import LinesAndColumns from "lines-and-columns";
-import {Token} from "../parser/tokenizer";
+import type {Token} from "../parser/tokenizer";
 import {formatTokenType} from "../parser/tokenizer/types";
 
 export default function formatTokens(code: string, tokens: Array<Token>): string {

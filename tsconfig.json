@@ -9,6 +9,7 @@
     "lib": ["dom", "es2017"],
     "experimentalDecorators": true,
     "esModuleInterop": true,
+    "importsNotUsedAsValues": "error",
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,

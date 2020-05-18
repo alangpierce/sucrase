@@ -1,17 +1,17 @@
-import CJSImportProcessor from "../CJSImportProcessor";
-import NameManager from "../NameManager";
+import type CJSImportProcessor from "../CJSImportProcessor";
+import type NameManager from "../NameManager";
 import {IdentifierRole, isDeclaration, isObjectShorthandDeclaration} from "../parser/tokenizer";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
-import TokenProcessor from "../TokenProcessor";
+import type TokenProcessor from "../TokenProcessor";
 import elideImportEquals from "../util/elideImportEquals";
 import getDeclarationInfo, {
   DeclarationInfo,
   EMPTY_DECLARATION_INFO,
 } from "../util/getDeclarationInfo";
 import shouldElideDefaultExport from "../util/shouldElideDefaultExport";
-import ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
-import RootTransformer from "./RootTransformer";
+import type ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
+import type RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
 /**

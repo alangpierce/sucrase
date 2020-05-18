@@ -5,7 +5,7 @@ import identifyShadowedGlobals from "./identifyShadowedGlobals";
 import NameManager from "./NameManager";
 import {validateOptions} from "./Options";
 import {parse} from "./parser";
-import {Scope} from "./parser/tokenizer/state";
+import type {Scope} from "./parser/tokenizer/state";
 import TokenProcessor from "./TokenProcessor";
 import RootTransformer from "./transformers/RootTransformer";
 import formatTokens from "./util/formatTokens";

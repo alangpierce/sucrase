@@ -1,12 +1,12 @@
-import CJSImportProcessor from "../CJSImportProcessor";
-import {Options} from "../index";
-import NameManager from "../NameManager";
+import type CJSImportProcessor from "../CJSImportProcessor";
+import type {Options} from "../index";
+import type NameManager from "../NameManager";
 import XHTMLEntities from "../parser/plugins/jsx/xhtml";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import {charCodes} from "../parser/util/charcodes";
-import TokenProcessor from "../TokenProcessor";
+import type TokenProcessor from "../TokenProcessor";
 import getJSXPragmaInfo, {JSXPragmaInfo} from "../util/getJSXPragmaInfo";
-import RootTransformer from "./RootTransformer";
+import type RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
 const HEX_NUMBER = /^[\da-fA-F]+$/;

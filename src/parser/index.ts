@@ -1,5 +1,5 @@
-import {Token} from "./tokenizer/index";
-import {Scope} from "./tokenizer/state";
+import type {Token} from "./tokenizer/index";
+import type {Scope} from "./tokenizer/state";
 import {augmentError, initParser, state} from "./traverser/base";
 import {parseFile} from "./traverser/index";
 

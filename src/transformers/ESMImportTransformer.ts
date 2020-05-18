@@ -1,8 +1,8 @@
-import {Options} from "../index";
-import NameManager from "../NameManager";
+import type {Options} from "../index";
+import type NameManager from "../NameManager";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
-import TokenProcessor from "../TokenProcessor";
+import type TokenProcessor from "../TokenProcessor";
 import elideImportEquals from "../util/elideImportEquals";
 import getDeclarationInfo, {
   DeclarationInfo,
@@ -10,7 +10,7 @@ import getDeclarationInfo, {
 } from "../util/getDeclarationInfo";
 import {getNonTypeIdentifiers} from "../util/getNonTypeIdentifiers";
 import shouldElideDefaultExport from "../util/shouldElideDefaultExport";
-import ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
+import type ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
 import Transformer from "./Transformer";
 
 /**

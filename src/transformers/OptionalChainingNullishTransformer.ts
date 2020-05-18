@@ -1,6 +1,6 @@
-import NameManager from "../NameManager";
+import type NameManager from "../NameManager";
 import {TokenType as tt} from "../parser/tokenizer/types";
-import TokenProcessor from "../TokenProcessor";
+import type TokenProcessor from "../TokenProcessor";
 import Transformer from "./Transformer";
 
 /**

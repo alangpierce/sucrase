@@ -1,4 +1,4 @@
-import {File} from "../index";
+import type {File} from "../index";
 import {nextToken, skipLineComment} from "../tokenizer/index";
 import {charCodes} from "../util/charcodes";
 import {input, state} from "./base";

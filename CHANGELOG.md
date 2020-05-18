@@ -1,3 +1,7 @@
+# 3.15.0 (2020-05-18)
+
+* Add support for `declare` class fields in TypeScript. ([#537])
+
 # 3.14.1 (2020-05-17)
 
 * Add support for `export type {T} from './T';` type-only export syntax. ([#533]) (Patrik Oldsberg)
@@ -288,3 +292,4 @@
 [#531]: https://github.com/alangpierce/sucrase/pull/531
 [#532]: https://github.com/alangpierce/sucrase/pull/532
 [#533]: https://github.com/alangpierce/sucrase/pull/533
+[#537]: https://github.com/alangpierce/sucrase/pull/537

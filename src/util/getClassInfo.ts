@@ -263,6 +263,7 @@ function isAccessModifier(token: Token): boolean {
     tt._protected,
     tt._abstract,
     tt.star,
+    tt._declare,
   ].includes(token.type);
 }
 

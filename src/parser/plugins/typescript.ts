@@ -113,6 +113,9 @@ export function tsParseModifier(
       case ContextualKeyword._protected:
         state.tokens[state.tokens.length - 1].type = tt._protected;
         break;
+      case ContextualKeyword._declare:
+        state.tokens[state.tokens.length - 1].type = tt._declare;
+        break;
       default:
         break;
     }
@@ -1213,18 +1216,21 @@ export function tsTryParseClassMemberWithIsStatic(
   let isAbstract = false;
   let isReadonly = false;
 
-  const mod = tsParseModifier([ContextualKeyword._abstract, ContextualKeyword._readonly]);
-  switch (mod) {
-    case ContextualKeyword._readonly:
+  while (true) {
+    const mod = tsParseModifier([
+      ContextualKeyword._abstract,
+      ContextualKeyword._readonly,
+      ContextualKeyword._declare,
+    ]);
+    if (mod == null) {
+      break;
+    }
+    if (mod === ContextualKeyword._readonly) {
       isReadonly = true;
-      isAbstract = !!tsParseModifier([ContextualKeyword._abstract]);
-      break;
-    case ContextualKeyword._abstract:
+    }
+    if (mod === ContextualKeyword._abstract) {
       isAbstract = true;
-      isReadonly = !!tsParseModifier([ContextualKeyword._readonly]);
-      break;
-    default:
-      break;
+    }
   }
 
   // We no longer check for public/private/etc, but tsTryParseIndexSignature should just return

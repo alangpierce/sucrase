@@ -18,6 +18,7 @@
     "downlevelIteration": true,
     "noEmitHelpers": true,
     "importHelpers": true,
+    "useDefineForClassFields": true,
     "plugins": [
       {
         "name": "typescript-tslint-plugin",

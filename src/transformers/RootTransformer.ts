@@ -8,6 +8,7 @@ import getClassInfo, {ClassInfo} from "../util/getClassInfo";
 import CJSImportTransformer from "./CJSImportTransformer";
 import ESMImportTransformer from "./ESMImportTransformer";
 import FlowTransformer from "./FlowTransformer";
+import JestHoistTransformer from "./JestHoistTransformer";
 import JSXTransformer from "./JSXTransformer";
 import NumericSeparatorTransformer from "./NumericSeparatorTransformer";
 import OptionalCatchBindingTransformer from "./OptionalCatchBindingTransformer";
@@ -100,6 +101,9 @@ export default class RootTransformer {
         new TypeScriptTransformer(this, tokenProcessor, transforms.includes("imports")),
       );
     }
+    if (transforms.includes("jest")) {
+      this.transformers.push(new JestHoistTransformer(this, tokenProcessor, importProcessor));
+    }
   }
 
   transform(): string {
@@ -113,6 +117,9 @@ export default class RootTransformer {
     }
     prefix += this.helperManager.emitHelpers();
     prefix += this.generatedVariables.map((v) => ` var ${v};`).join("");
+    for (const transformer of this.transformers) {
+      prefix += transformer.getHoistedCode();
+    }
     let suffix = "";
     for (const transformer of this.transformers) {
       suffix += transformer.getSuffixCode();

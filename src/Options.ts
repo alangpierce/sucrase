@@ -3,7 +3,7 @@ import OptionsGenTypes from "./Options-gen-types";
 
 const {Options: OptionsChecker} = createCheckers(OptionsGenTypes);
 
-export type Transform = "jsx" | "typescript" | "flow" | "imports" | "react-hot-loader";
+export type Transform = "jsx" | "typescript" | "flow" | "imports" | "react-hot-loader" | "jest";
 
 export interface SourceMapOptions {
   /**

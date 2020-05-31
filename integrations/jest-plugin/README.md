@@ -24,5 +24,5 @@ Then add it as a transform to your Jest config in package.json:
 ```
 
 Currently, the transforms are not configurable; it uses always runs the import
-transform and uses the file extension to decide whether to run the JSX, Flow,
-and/or TypeScript transforms.
+and jest transforms and uses the file extension to decide whether to run the
+JSX, Flow, and/or TypeScript transforms.

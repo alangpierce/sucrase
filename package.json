@@ -77,7 +77,7 @@
     "tslint": "^5.20.1",
     "typescript": "^3.7.2",
     "typescript-tslint-plugin": "^0.5.4",
-    "yargs-parser": "^16.1.0"
+    "yargs-parser": "^18.1.2"
   },
   "dependencies": {
     "commander": "^4.0.0",

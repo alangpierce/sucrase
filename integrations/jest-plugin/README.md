@@ -8,12 +8,14 @@ This is a simple Jest plugin that makes it easy to use
 
 ## Usage
 
-First install the package as a dev dependency:
+First install the package as a dev dependency inside your project folder:
+
 ```
 yarn add --dev @sucrase/jest-plugin
 ```
 
 Then add it as a transform to your Jest config in package.json:
+
 ```
   "jest": {
     "transform": {
@@ -21,6 +23,17 @@ Then add it as a transform to your Jest config in package.json:
     },
     ...
   }
+```
+
+If you prefer, you can also add it to your `jest.config.js`:
+
+```
+module.exports = {
+  transform: {
+    '.(js|jsx|ts|tsx)': '@sucrase/jest-plugin',
+  },
+  ...
+}
 ```
 
 Currently, the transforms are not configurable; it uses always runs the import

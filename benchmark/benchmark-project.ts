@@ -7,7 +7,7 @@ import {FileInfo, loadProjectFiles} from "./loadProjectFiles";
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2), {boolean: ["profile"]});
-  const projectPath = args._[0];
+  const projectPath = String(args._[0]);
   const shouldProfile = args.profile;
   const numTimes = args.times || 1;
 

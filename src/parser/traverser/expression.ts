@@ -787,9 +787,9 @@ function isGetterOrSetterMethod(isPattern: boolean): boolean {
   return (
     !isPattern &&
     (match(tt.string) || // get "string"() {}
-    match(tt.num) || // get 1() {}
-    match(tt.bracketL) || // get ["string"]() {}
-    match(tt.name) || // get foo() {}
+      match(tt.num) || // get 1() {}
+      match(tt.bracketL) || // get ["string"]() {}
+      match(tt.name) || // get foo() {}
       !!(state.type & TokenType.IS_KEYWORD)) // get debugger() {}
   );
 }

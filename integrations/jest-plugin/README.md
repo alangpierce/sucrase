@@ -13,14 +13,11 @@ First install the package as a dev dependency:
 yarn add --dev @sucrase/jest-plugin
 ```
 
-Then add it as a transform to your Jest config in package.json:
+Then change the default transform in jest.config.js file:
 ```
-  "jest": {
-    "transform": {
-      ".(js|jsx|ts|tsx)": "@sucrase/jest-plugin"
-    },
-    ...
-  }
+  ...
+  transform: { ".(js|jsx|tx|tsx)": "@sucrase/jest-plugin" },
+  ...
 ```
 
 Currently, the transforms are not configurable; it uses always runs the import

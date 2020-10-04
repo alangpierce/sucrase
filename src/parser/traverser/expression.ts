@@ -328,7 +328,7 @@ export function baseParseSubscript(
     } else if (eat(tt.parenL)) {
       parseCallExpressionArguments();
     } else {
-      parseIdentifier();
+      parseMaybePrivateName();
     }
   } else if (eat(tt.dot)) {
     state.tokens[state.tokens.length - 1].subscriptStartIndex = startTokenIndex;

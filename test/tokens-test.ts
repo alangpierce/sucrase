@@ -327,6 +327,7 @@ describe("tokens", () => {
         #x = 3
       }
       this.#x = 3
+      delete this?.#x
       if (#x in obj) { }
     `,
       [
@@ -344,6 +345,12 @@ describe("tokens", () => {
         {type: tt.name},
         {type: tt.eq},
         {type: tt.num},
+
+        {type: tt._delete},
+        {type: tt._this},
+        {type: tt.questionDot},
+        {type: tt.hash},
+        {type: tt.name},
 
         {type: tt._if},
         {type: tt.parenL},

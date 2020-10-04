@@ -45,6 +45,7 @@ import {
 import {
   eat,
   IdentifierRole,
+  lookaheadCharCode,
   lookaheadType,
   match,
   next,
@@ -56,6 +57,8 @@ import {
 import {ContextualKeyword} from "../tokenizer/keywords";
 import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
+import {charCodes} from "../util/charcodes";
+import {IS_IDENTIFIER_START} from "../util/identifier";
 import {getNextContextId, isFlowEnabled, isJSXEnabled, isTypeScriptEnabled, state} from "./base";
 import {
   markPriorBindingIdentifier,
@@ -562,8 +565,13 @@ export function parseExprAtom(): boolean {
     }
 
     case tt.hash: {
+      const code = lookaheadCharCode();
+      if (IS_IDENTIFIER_START[code] || code === charCodes.backslash) {
+        parseMaybePrivateName();
+      } else {
+        next();
+      }
       // Smart pipeline topic reference.
-      next();
       return false;
     }
 

@@ -319,4 +319,43 @@ describe("tokens", () => {
       ],
     );
   });
+
+  it("properly parses private properties", () => {
+    assertTokens(
+      `
+      class {
+        #x = 3
+      }
+      this.#x = 3
+      if (#x in obj) { }
+    `,
+      [
+        {type: tt._class},
+        {type: tt.braceL},
+        {type: tt.hash},
+        {type: tt.name, identifierRole: IdentifierRole.ObjectKey},
+        {type: tt.eq},
+        {type: tt.num},
+        {type: tt.braceR},
+
+        {type: tt._this},
+        {type: tt.dot},
+        {type: tt.hash},
+        {type: tt.name},
+        {type: tt.eq},
+        {type: tt.num},
+
+        {type: tt._if},
+        {type: tt.parenL},
+        {type: tt.hash},
+        {type: tt.name},
+        {type: tt._in},
+        {type: tt.name},
+        {type: tt.parenR},
+        {type: tt.braceL},
+        {type: tt.braceR},
+        {type: tt.eof},
+      ],
+    );
+  });
 });

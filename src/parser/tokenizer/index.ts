@@ -4,7 +4,7 @@ import {input, isFlowEnabled, state} from "../traverser/base";
 import {unexpected} from "../traverser/util";
 import {charCodes} from "../util/charcodes";
 import {IS_IDENTIFIER_CHAR, IS_IDENTIFIER_START} from "../util/identifier";
-import {IS_WHITESPACE} from "../util/whitespace";
+import {IS_WHITESPACE, skipWhiteSpace} from "../util/whitespace";
 import {ContextualKeyword} from "./keywords";
 import readWord from "./readWord";
 import {TokenType, TokenType as tt} from "./types";
@@ -216,6 +216,20 @@ export function lookaheadTypeAndKeyword(): TypeAndKeyword {
   const contextualKeyword = state.contextualKeyword;
   state.restoreFromSnapshot(snapshot);
   return new TypeAndKeyword(type, contextualKeyword);
+}
+
+export function nextTokenStart(): number {
+  return nextTokenStartSince(state.pos);
+}
+
+export function nextTokenStartSince(pos: number): number {
+  skipWhiteSpace.lastIndex = pos;
+  const skip = skipWhiteSpace.exec(input);
+  return pos + skip![0].length;
+}
+
+export function lookaheadCharCode(): number {
+  return input.charCodeAt(nextTokenStart());
 }
 
 // Read a single token, updating the parser object's token-related

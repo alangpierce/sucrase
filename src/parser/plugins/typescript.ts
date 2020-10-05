@@ -367,6 +367,7 @@ function tsParseMappedType(): void {
 function tsParseTupleType(): void {
   expect(tt.bracketL);
   while (!eat(tt.bracketR) && !state.error) {
+    // Do not validate presence of either none or only labeled elements
     tsParseTupleElementType();
     eat(tt.comma);
   }
@@ -376,11 +377,17 @@ function tsParseTupleElementType(): void {
   // parses `...TsType[]`
   if (eat(tt.ellipsis)) {
     tsParseType();
-    return;
+  } else {
+    // parses `TsType?`
+    tsParseType();
+    eat(tt.question);
   }
-  // parses `TsType?`
-  tsParseType();
-  eat(tt.question);
+
+  // The type we parsed above was actually a label
+  if (eat(tt.colon)) {
+    // Labeled tuple types must affix the label with `...` or `?`, so no need to handle those here
+    tsParseType();
+  }
 }
 
 function tsParseParenthesizedType(): void {

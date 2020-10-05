@@ -2200,4 +2200,17 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("properly removes labeled tuple types", () => {
+    assertTypeScriptResult(
+      `
+      type T1 = [x: number, y?: number, ...rest: number[]];
+      function f(args: [s?: string, ...ns: number[]]) {}
+    `,
+      `"use strict";
+      
+      function f(args) {}
+    `,
+    );
+  });
 });

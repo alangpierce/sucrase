@@ -1353,6 +1353,19 @@ describe("typescript transform", () => {
     );
   });
 
+  it("allows rest elements in the middle of tuple types", () => {
+    assertTypeScriptResult(
+      `
+      let x: [...number[], string];
+      let y: [...[number, string], string];
+    `,
+      `"use strict";
+      let x;
+      let y;
+    `,
+    );
+  });
+
   it("allows overloads for constructors", () => {
     assertTypeScriptResult(
       `

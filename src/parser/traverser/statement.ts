@@ -410,6 +410,14 @@ function parseThrowStatement(): void {
   semicolon();
 }
 
+function parseCatchClauseParam(): void {
+  parseBindingAtom(true /* isBlockScope */);
+
+  if (isTypeScriptEnabled) {
+    tsTryParseTypeAnnotation();
+  }
+}
+
 function parseTryStatement(): void {
   next();
 
@@ -422,7 +430,7 @@ function parseTryStatement(): void {
       state.scopeDepth++;
       catchBindingStartTokenIndex = state.tokens.length;
       expect(tt.parenL);
-      parseBindingAtom(true /* isBlockScope */);
+      parseCatchClauseParam();
       expect(tt.parenR);
     }
     parseBlock();

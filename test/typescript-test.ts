@@ -2187,4 +2187,17 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("properly removes types from catch clauses", () => {
+    assertTypeScriptResult(
+      `
+      try {} catch (e: unknown) {}
+      try {} catch (e: string | [...number, string]) {}
+    `,
+      `"use strict";
+      try {} catch (e) {}
+      try {} catch (e) {}
+    `,
+    );
+  });
 });

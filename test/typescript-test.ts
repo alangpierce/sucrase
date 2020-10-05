@@ -1833,6 +1833,21 @@ describe("typescript transform", () => {
     );
   });
 
+  it("allows decimal literal syntax for type literals", () => {
+    assertTypeScriptResult(
+      `
+      let x: 10m;
+      type T = { n: 20m, m: -30m };
+      function f(arg: [40m]): 50m[] {};
+    `,
+      `"use strict";
+      let x;
+      
+      function f(arg) {};
+    `,
+    );
+  });
+
   it("allows private field syntax", () => {
     assertTypeScriptResult(
       `

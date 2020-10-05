@@ -48,6 +48,7 @@ class BinopTokenType extends TokenType {
 const types = {
   num: new TokenType("num"),
   bigint: new TokenType("bigint"),
+  decimal: new TokenType("decimal"),
   regexp: new TokenType("regexp"),
   string: new TokenType("string"),
   name: new TokenType("name"),

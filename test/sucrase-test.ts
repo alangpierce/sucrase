@@ -1167,4 +1167,16 @@ describe("sucrase", () => {
       {transforms: []},
     );
   });
+
+  it("allows decimal literals as object keys", () => {
+    assertResult(
+      `
+      const o = {0m: 0};
+    `,
+      `
+      const o = {0m: 0};
+    `,
+      {transforms: []},
+    );
+  });
 });

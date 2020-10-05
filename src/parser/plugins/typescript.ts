@@ -413,6 +413,7 @@ function tsParseNonArrayType(): void {
     case tt.string:
     case tt.num:
     case tt.bigint:
+    case tt.decimal:
     case tt._true:
     case tt._false:
       parseLiteral();

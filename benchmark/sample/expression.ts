@@ -408,6 +408,7 @@ export function parseExprAtom(): boolean {
     case tt.regexp:
     case tt.num:
     case tt.bigint:
+    case tt.decimal:
     case tt.string:
     case tt._null:
     case tt._true:

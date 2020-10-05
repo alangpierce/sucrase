@@ -459,6 +459,7 @@ export function parseExprAtom(): boolean {
     case tt.regexp:
     case tt.num:
     case tt.bigint:
+    case tt.decimal:
     case tt.string:
     case tt._null:
     case tt._true:
@@ -875,7 +876,7 @@ export function parsePropertyName(objectContextId: number): void {
     expect(tt.bracketR);
     state.tokens[state.tokens.length - 1].contextId = objectContextId;
   } else {
-    if (match(tt.num) || match(tt.string) || match(tt.bigint)) {
+    if (match(tt.num) || match(tt.string) || match(tt.bigint) || match(tt.decimal)) {
       parseExprAtom();
     } else {
       parseMaybePrivateName();

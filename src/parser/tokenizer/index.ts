@@ -763,13 +763,17 @@ function readInt(): void {
 
 function readRadixNumber(): void {
   let isBigInt = false;
+  const start = state.pos;
 
   state.pos += 2; // 0x
   readInt();
 
-  if (input.charCodeAt(state.pos) === charCodes.lowercaseN) {
+  const nextChar = input.charCodeAt(state.pos);
+  if (nextChar === charCodes.lowercaseN) {
     ++state.pos;
     isBigInt = true;
+  } else if (nextChar === charCodes.lowercaseM) {
+    unexpected("Invalid decimal", start);
   }
 
   if (isBigInt) {
@@ -783,6 +787,7 @@ function readRadixNumber(): void {
 // Read an integer, octal integer, or floating-point number.
 function readNumber(startsWithDot: boolean): void {
   let isBigInt = false;
+  let isDecimal = false;
 
   if (!startsWithDot) {
     readInt();
@@ -807,12 +812,21 @@ function readNumber(startsWithDot: boolean): void {
   if (nextChar === charCodes.lowercaseN) {
     ++state.pos;
     isBigInt = true;
+  } else if (nextChar === charCodes.lowercaseM) {
+    ++state.pos;
+    isDecimal = true;
   }
 
   if (isBigInt) {
     finishToken(tt.bigint);
     return;
   }
+
+  if (isDecimal) {
+    finishToken(tt.decimal);
+    return;
+  }
+
   finishToken(tt.num);
 }
 

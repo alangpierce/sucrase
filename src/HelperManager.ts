@@ -121,6 +121,21 @@ const HELPERS = {
       return result == null ? true : result;
     }
   `,
+  logicalAssign: `
+    function logicalAssign(obj, prop, op, rhsFn) {
+      if (op === '||=') {
+        return obj[prop] || (obj[prop] = rhsFn())
+      } else if (op === '&&=') {
+        return obj[prop] && (obj[prop] = rhsFn())
+      } else if (op === '??=') {
+        const val = obj[prop];
+        if (val == null) {
+          return obj[prop] = rhsFn()
+        }
+        return val
+      }
+    }
+  `,
 };
 
 export class HelperManager {

@@ -43,3 +43,8 @@ export const OPTIONAL_CHAIN_DELETE_PREFIX = ` function _optionalChainDelete(ops)
 const result = _optionalChain(ops); return result == null ? true : result; }`;
 export const ASYNC_OPTIONAL_CHAIN_DELETE_PREFIX = ` async function _asyncOptionalChainDelete(ops) { \
 const result = await _asyncOptionalChain(ops); return result == null ? true : result; }`;
+
+export const LOGICAL_ASSIGN_PREFIX = ` function _logicalAssign(obj, prop, op, rhsFn) { \
+if (op === '||=') { return obj[prop] || (obj[prop] = rhsFn()) } else if (op === '&&=') { \
+return obj[prop] && (obj[prop] = rhsFn()) } else if (op === '??=') { \
+const val = obj[prop]; if (val == null) { return obj[prop] = rhsFn() } return val } }`;

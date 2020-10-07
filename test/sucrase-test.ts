@@ -4,6 +4,7 @@ import {
   ASYNC_OPTIONAL_CHAIN_PREFIX,
   ESMODULE_PREFIX,
   IMPORT_DEFAULT_PREFIX,
+  LOGICAL_ASSIGN_PREFIX,
   NULLISH_COALESCE_PREFIX,
   OPTIONAL_CHAIN_DELETE_PREFIX,
   OPTIONAL_CHAIN_PREFIX,
@@ -515,17 +516,51 @@ describe("sucrase", () => {
     );
   });
 
-  it("handles logical assignment operators", () => {
+  it("transforms logical assignment operations", () => {
     assertResult(
       `
-      a &&= b;
-      c ||= d;
-      e ??= f;
+      x1 &&= y1
+      x2 ??= z?.y2()
+      y/*  */ . /* ok */x3 ||= (x3a &&= y3b)
+      y.x['x4'] ??= y4
+      x5 ??= await y5
+      y6a[y6b[x6] &&= z6a] ||= z6b
+      x ??= y ??= z ?? w
     `,
-      `"use strict";
-      a &&= b;
-      c ||= d;
-      e ??= f;
+      `"use strict";${NULLISH_COALESCE_PREFIX}${OPTIONAL_CHAIN_PREFIX}${LOGICAL_ASSIGN_PREFIX}
+      x1 && (x1 = y1)
+      x2 != null ? x2 : (x2 = _optionalChain([z, 'optionalAccess', _ => _.y2, 'call', _2 => _2()]))
+      _logicalAssign(y, 'x3', '||=', () =>  (x3a && (x3a = y3b)))
+      _logicalAssign(y.x, 'x4', '??=', () =>  y4)
+      x5 != null ? x5 : (x5 = await y5)
+      _logicalAssign(y6a, _logicalAssign(y6b, x6, '&&=', () =>  z6a), '||=', () =>  z6b)
+      x != null ? x : (x = y != null ? y : (y = _nullishCoalesce(z, () => ( w))))
+    `,
+      {transforms: ["jsx", "imports", "typescript"]},
+    );
+  });
+
+  it("transforms logical assignment operations inside class bodies", () => {
+    assertResult(
+      `
+      class {
+        get prop() {
+          this['value'] &&= (this.x ??= this.y)
+        }
+        method() {
+          this[this.x &&= this?.y] ||= this.y
+        }
+      }
+    `,
+      `"use strict";${OPTIONAL_CHAIN_PREFIX}${LOGICAL_ASSIGN_PREFIX}
+      class {
+        get prop() {
+          _logicalAssign(this, 'value', '&&=', () =>  (_logicalAssign(this, 'x', '??=', () =>  this.y)))
+        }
+        method() {
+          _logicalAssign(this, _logicalAssign(this, 'x', '&&=', () =>  _optionalChain([this, 'optionalAccess', _ => _.y])), '||=', () =>  this.y)
+        }
+      }
     `,
       {transforms: ["jsx", "imports", "typescript"]},
     );

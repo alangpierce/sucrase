@@ -59,7 +59,14 @@ import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
 import {charCodes} from "../util/charcodes";
 import {IS_IDENTIFIER_START} from "../util/identifier";
-import {getNextContextId, isFlowEnabled, isJSXEnabled, isTypeScriptEnabled, state} from "./base";
+import {
+  getNextContextId,
+  input,
+  isFlowEnabled,
+  isJSXEnabled,
+  isTypeScriptEnabled,
+  state,
+} from "./base";
 import {
   markPriorBindingIdentifier,
   parseBindingIdentifier,
@@ -132,6 +139,9 @@ export function baseParseMaybeAssign(noIn: boolean, isWithinParens: boolean): bo
     return false;
   }
 
+  // In case it's a logical assignment we want to keep track of where it starts.
+  const startIndex = state.tokens.length;
+
   if (match(tt.parenL) || match(tt.name) || match(tt._yield)) {
     state.potentialArrowAt = state.start;
   }
@@ -142,7 +152,26 @@ export function baseParseMaybeAssign(noIn: boolean, isWithinParens: boolean): bo
   }
   if (state.type & TokenType.IS_ASSIGN) {
     next();
+    const assignTokenIndex = state.tokens.length - 1;
+    const opToken = state.tokens[assignTokenIndex];
+
     parseMaybeAssign(noIn);
+
+    if (opToken.type === tt.assign) {
+      const opCode = input.slice(opToken.start, opToken.end);
+
+      // Check whether the assignment is a logical assignment, and in that case assign
+      // the needed token properties for the transform
+      if (["&&=", "||=", "??="].includes(opCode)) {
+        opToken.rhsEndIndex = state.tokens.length;
+
+        // If the LHS is a single token we don't need to use the helper, it can use the simpler
+        // transform method, e.g. `x &&= y` -> `x && (x = y)`
+        if (assignTokenIndex - startIndex > 1) {
+          state.tokens[startIndex].isLogicalAssignStart = true;
+        }
+      }
+    }
     return false;
   }
   return wasArrow;

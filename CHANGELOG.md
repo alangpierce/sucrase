@@ -1,3 +1,8 @@
+# 3.16.0 (2020-10-12)
+
+* Add support for TypeScript 4.0 type syntax: labeled tuples, catch clause
+  `unknown`. ([#556]) (Patrik Oldsberg)
+
 # 3.15.0 (2020-05-18)
 
 * Add support for `declare` class fields in TypeScript. ([#537])
@@ -293,3 +298,4 @@
 [#532]: https://github.com/alangpierce/sucrase/pull/532
 [#533]: https://github.com/alangpierce/sucrase/pull/533
 [#537]: https://github.com/alangpierce/sucrase/pull/537
+[#556]: https://github.com/alangpierce/sucrase/pull/556

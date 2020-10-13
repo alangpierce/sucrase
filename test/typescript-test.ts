@@ -1353,6 +1353,19 @@ describe("typescript transform", () => {
     );
   });
 
+  it("allows rest elements in the middle of tuple types", () => {
+    assertTypeScriptResult(
+      `
+      let x: [...number[], string];
+      let y: [...[number, string], string];
+    `,
+      `"use strict";
+      let x;
+      let y;
+    `,
+    );
+  });
+
   it("allows overloads for constructors", () => {
     assertTypeScriptResult(
       `
@@ -1818,6 +1831,36 @@ describe("typescript transform", () => {
     );
   });
 
+  it("allows bigint literal syntax for type literals", () => {
+    assertTypeScriptResult(
+      `
+      let x: 10n;
+      type T = { n: 20n, m: -30n };
+      function f(arg: [40n]): 50n[] {};
+    `,
+      `"use strict";
+      let x;
+      
+      function f(arg) {};
+    `,
+    );
+  });
+
+  it("allows decimal literal syntax for type literals", () => {
+    assertTypeScriptResult(
+      `
+      let x: 10m;
+      type T = { n: 20m, m: -30m };
+      function f(arg: [40m]): 50m[] {};
+    `,
+      `"use strict";
+      let x;
+      
+      function f(arg) {};
+    `,
+    );
+  });
+
   it("allows private field syntax", () => {
     assertTypeScriptResult(
       `
@@ -2141,6 +2184,32 @@ describe("typescript transform", () => {
               console.log('Hi');
           }
       }
+    `,
+    );
+  });
+
+  it("properly removes types from catch clauses", () => {
+    assertTypeScriptResult(
+      `
+      try {} catch (e: unknown) {}
+      try {} catch (e: string | [...number, string]) {}
+    `,
+      `"use strict";
+      try {} catch (e) {}
+      try {} catch (e) {}
+    `,
+    );
+  });
+
+  it("properly removes labeled tuple types", () => {
+    assertTypeScriptResult(
+      `
+      type T1 = [x: number, y?: number, ...rest: number[]];
+      function f(args: [s?: string, ...ns: number[]]) {}
+    `,
+      `"use strict";
+      
+      function f(args) {}
     `,
     );
   });

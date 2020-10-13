@@ -41,13 +41,16 @@ import {
   lookaheadTypeAndKeyword,
   match,
   next,
+  nextTokenStart,
+  nextTokenStartSince,
   popTypeContext,
   pushTypeContext,
 } from "../tokenizer";
 import {ContextualKeyword} from "../tokenizer/keywords";
 import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
-import {getNextContextId, isFlowEnabled, isTypeScriptEnabled, state} from "./base";
+import {charCodes} from "../util/charcodes";
+import {getNextContextId, input, isFlowEnabled, isTypeScriptEnabled, state} from "./base";
 import {
   parseCallExpressionArguments,
   parseExprAtom,
@@ -407,6 +410,14 @@ function parseThrowStatement(): void {
   semicolon();
 }
 
+function parseCatchClauseParam(): void {
+  parseBindingAtom(true /* isBlockScope */);
+
+  if (isTypeScriptEnabled) {
+    tsTryParseTypeAnnotation();
+  }
+}
+
 function parseTryStatement(): void {
   next();
 
@@ -419,7 +430,7 @@ function parseTryStatement(): void {
       state.scopeDepth++;
       catchBindingStartTokenIndex = state.tokens.length;
       expect(tt.parenL);
-      parseBindingAtom(true /* isBlockScope */);
+      parseCatchClauseParam();
       expect(tt.parenR);
     }
     parseBlock();
@@ -944,11 +955,19 @@ function isExportDefaultSpecifier(): boolean {
     return false;
   }
 
+  const _next = nextTokenStart();
   const lookahead = lookaheadTypeAndKeyword();
-  return (
-    lookahead.type === tt.comma ||
-    (lookahead.type === tt.name && lookahead.contextualKeyword === ContextualKeyword._from)
-  );
+  const hasFrom =
+    lookahead.type === tt.name && lookahead.contextualKeyword === ContextualKeyword._from;
+  if (lookahead.type === tt.comma) {
+    return true;
+  }
+  // lookahead again when `export default from` is seen
+  if (hasFrom) {
+    const nextAfterFrom = input.charCodeAt(nextTokenStartSince(_next + 4));
+    return nextAfterFrom === charCodes.quotationMark || nextAfterFrom === charCodes.apostrophe;
+  }
+  return false;
 }
 
 function parseExportSpecifiersMaybe(): void {

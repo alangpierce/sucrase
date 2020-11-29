@@ -1859,6 +1859,38 @@ describe("typescript transform", () => {
     );
   });
 
+  it("allows template literal substitutions in literal string types", () => {
+    assertTypeScriptResult(
+      `
+      type Color = "red" | "blue";
+      type Quantity = "one" | "two";
+      
+      type SeussFish = \`\${Quantity | Color} fish\`;
+      const fish: SeussFish = "blue fish";
+    `,
+      `"use strict";
+      
+
+
+
+      const fish = "blue fish";
+    `,
+    );
+  });
+
+  it("allows complex template literal substitutions in literal string types", () => {
+    // Uppercase<T> is an example of a type expression that isn't a valid value
+    // expression, ensuring that we're using a type parser for the substitution.
+    assertTypeScriptResult(
+      `
+      type EnthusiasticGreeting<T extends string> = \`\${Uppercase<T>}\`;
+    `,
+      `"use strict";
+      
+    `,
+    );
+  });
+
   it("allows bigint literal syntax for type literals", () => {
     assertTypeScriptResult(
       `
@@ -2238,6 +2270,106 @@ describe("typescript transform", () => {
       `"use strict";
       
       function f(args) {}
+    `,
+    );
+  });
+
+  it("properly handles a >= symbol after an `as` cast", () => {
+    assertTypeScriptResult(
+      `
+      const x: string | number = 1;
+      if (x as number >= 5) {}
+    `,
+      `"use strict";
+      const x = 1;
+      if (x  >= 5) {}
+    `,
+    );
+  });
+
+  it("handles simple template literal interpolations in types", () => {
+    assertTypeScriptResult(
+      `
+      type A = \`make\${A | B}\`;
+    `,
+      `"use strict";
+      
+    `,
+    );
+  });
+
+  it("handles complex template literal interpolations in types", () => {
+    assertTypeScriptResult(
+      `
+      type A = \`foo\${{ [k: string]: number}}\`;
+    `,
+      `"use strict";
+      
+    `,
+    );
+  });
+
+  it("handles mapped type `as` clauses", () => {
+    assertTypeScriptResult(
+      `
+      type MappedTypeWithNewKeys<T> = {
+        [K in keyof T as NewKeyType]: T[K]
+      };
+      
+      type RemoveKindField<T> = {
+        [K in keyof T as Exclude<K, "kind">]: T[K]
+      };
+      
+      type PickByValueType<T, U> = {
+        [K in keyof T as T[K] extends U ? K : never]: T[K]
+      };
+    `,
+      `"use strict";
+      
+
+
+
+
+
+
+
+
+
+
+    `,
+    );
+  });
+
+  it("handles an arrow function with typed destructured params", () => {
+    assertTypeScriptResult(
+      `
+      (
+        { a, b }: T,
+      ): T => {};
+    `,
+      `"use strict";
+      (
+        { a, b },
+      ) => {};
+    `,
+    );
+  });
+
+  it("handles various forms of optional parameters in an interface", () => {
+    assertTypeScriptResult(
+      `
+      interface B {
+        foo([]?): void;
+        bar({}, []?): any;
+        baz(a: string, b: number, []?): void;
+      }
+    `,
+      `"use strict";
+      
+
+
+
+
     `,
     );
   });

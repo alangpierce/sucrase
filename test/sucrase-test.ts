@@ -1179,4 +1179,58 @@ describe("sucrase", () => {
       {transforms: []},
     );
   });
+
+  it("parses and passes through class static blocks", () => {
+    assertResult(
+      `
+      class A {
+        static {
+          console.log("Initialized the class");
+        }
+        static foo() {
+          return 3;
+        }
+      }
+    `,
+      `
+      class A {
+        static {
+          console.log("Initialized the class");
+        }
+        static foo() {
+          return 3;
+        }
+      }
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("correctly handles scope analysis within static blocks", () => {
+    assertResult(
+      `
+      import {x, y, z} from './foo';
+      
+      class A {
+        static {
+          const x = 3;
+          console.log(x);
+          console.log(y);
+        }
+      }
+    `,
+      `
+      import { y,} from './foo';
+      
+      class A {
+        static {
+          const x = 3;
+          console.log(x);
+          console.log(y);
+        }
+      }
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
 });

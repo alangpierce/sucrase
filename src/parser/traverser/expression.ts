@@ -521,7 +521,7 @@ export function parseExprAtom(): boolean {
 
     case tt._do: {
       next();
-      parseBlock(false);
+      parseBlock();
       return false;
     }
 
@@ -933,7 +933,7 @@ export function parseFunctionBody(allowExpression: boolean, funcContextId: numbe
   if (isExpression) {
     parseMaybeAssign();
   } else {
-    parseBlock(true /* allowDirectives */, true /* isFunctionScope */, funcContextId);
+    parseBlock(true /* isFunctionScope */, funcContextId);
   }
 }
 

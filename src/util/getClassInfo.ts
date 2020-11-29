@@ -92,12 +92,17 @@ export default function getClassInfo(
         ({constructorInitializerStatements, constructorInsertPos} = processConstructor(tokens));
         continue;
       }
+      const isStaticBlock = tokens.matches1(tt.braceL);
+
       const nameStartIndex = tokens.currentIndex();
-      skipFieldName(tokens);
-      if (tokens.matches1(tt.lessThan) || tokens.matches1(tt.parenL)) {
-        // This is a method, so just skip to the next method/field. To do that, we seek forward to
-        // the next start of a class name (either an open bracket or an identifier, or the closing
-        // curly brace), then seek backward to include any access modifiers.
+      if (!isStaticBlock) {
+        skipFieldName(tokens);
+      }
+      if (isStaticBlock || tokens.matches1(tt.lessThan) || tokens.matches1(tt.parenL)) {
+        // This is a static block or method, so just skip to the next method/field. To do that, we
+        // seek forward to the next start of a class name (either an open bracket or an identifier,
+        // or the closing curly brace), then seek backward to include any access modifiers.
+        tokens.nextToken();
         while (tokens.currentToken().contextId !== classContextId) {
           tokens.nextToken();
         }

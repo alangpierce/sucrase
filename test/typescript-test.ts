@@ -1595,6 +1595,34 @@ describe("typescript transform", () => {
     );
   });
 
+  it("preserves exported variables assigned with a destructure", () => {
+    assertTypeScriptImportResult(
+      `
+      const o = {x: 1};
+      const {x} = o;
+      const {x: y} = o;
+      type z = number;
+      export {x, y, z};
+    `,
+      {
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}
+      const o = {x: 1};
+      const {x} = o;
+      const {x: y} = o;
+      
+      exports.x = x; exports.y = y;
+    `,
+        expectedESMResult: `
+      const o = {x: 1};
+      const {x} = o;
+      const {x: y} = o;
+      
+      export {x, y,};
+    `,
+      },
+    );
+  });
+
   it("elides export default when the value is an identifier declared as a type", () => {
     assertTypeScriptImportResult(
       `

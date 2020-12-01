@@ -837,13 +837,19 @@ function parseObjectProperty(isPattern: boolean, isBlockScope: boolean): void {
   // If we're in a destructuring, we've now discovered that the key was actually an assignee, so
   // we need to tag it as a declaration with the appropriate scope. Otherwise, we might need to
   // transform it on access, so mark it as a normal object shorthand.
+  let identifierRole;
   if (isPattern) {
-    state.tokens[state.tokens.length - 1].identifierRole = isBlockScope
-      ? IdentifierRole.ObjectShorthandBlockScopedDeclaration
-      : IdentifierRole.ObjectShorthandFunctionScopedDeclaration;
+    if (state.scopeDepth === 0) {
+      identifierRole = IdentifierRole.ObjectShorthandTopLevelDeclaration;
+    } else if (isBlockScope) {
+      identifierRole = IdentifierRole.ObjectShorthandBlockScopedDeclaration;
+    } else {
+      identifierRole = IdentifierRole.ObjectShorthandFunctionScopedDeclaration;
+    }
   } else {
-    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ObjectShorthand;
+    identifierRole = IdentifierRole.ObjectShorthand;
   }
+  state.tokens[state.tokens.length - 1].identifierRole = identifierRole;
 
   // Regardless of whether we know this to be a pattern or if we're in an ambiguous context, allow
   // parsing as if there's a default value.

@@ -39,13 +39,15 @@ export function parseImportedIdentifier(): void {
 }
 
 export function markPriorBindingIdentifier(isBlockScope: boolean): void {
+  let identifierRole;
   if (state.scopeDepth === 0) {
-    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.TopLevelDeclaration;
+    identifierRole = IdentifierRole.TopLevelDeclaration;
+  } else if (isBlockScope) {
+    identifierRole = IdentifierRole.BlockScopedDeclaration;
   } else {
-    state.tokens[state.tokens.length - 1].identifierRole = isBlockScope
-      ? IdentifierRole.BlockScopedDeclaration
-      : IdentifierRole.FunctionScopedDeclaration;
+    identifierRole = IdentifierRole.FunctionScopedDeclaration;
   }
+  state.tokens[state.tokens.length - 1].identifierRole = identifierRole;
 }
 
 // Parses lvalue (assignable) atom.

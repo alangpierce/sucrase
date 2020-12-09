@@ -4,6 +4,7 @@ import {
   lookaheadTypeAndKeyword,
   match,
   next,
+  nextTemplateToken,
   popTypeContext,
   pushTypeContext,
 } from "../tokenizer/index";
@@ -59,6 +60,17 @@ function tsIsIdentifier(): boolean {
   return match(tt.name);
 }
 
+function isLiteralPropertyName(): boolean {
+  return (
+    match(tt.name) ||
+    Boolean(state.type & TokenType.IS_KEYWORD) ||
+    match(tt.string) ||
+    match(tt.num) ||
+    match(tt.bigint) ||
+    match(tt.decimal)
+  );
+}
+
 function tsNextTokenCanFollowModifier(): boolean {
   // Note: TypeScript's implementation is much more complicated because
   // more things are considered modifiers there.
@@ -68,13 +80,13 @@ function tsNextTokenCanFollowModifier(): boolean {
 
   next();
   const canFollowModifier =
-    !hasPrecedingLineBreak() &&
-    !match(tt.parenL) &&
-    !match(tt.parenR) &&
-    !match(tt.colon) &&
-    !match(tt.eq) &&
-    !match(tt.question) &&
-    !match(tt.bang);
+    (match(tt.bracketL) ||
+      match(tt.braceL) ||
+      match(tt.star) ||
+      match(tt.ellipsis) ||
+      match(tt.hash) ||
+      isLiteralPropertyName()) &&
+    !hasPrecedingLineBreak();
 
   if (canFollowModifier) {
     return true;
@@ -352,6 +364,9 @@ function tsParseMappedType(): void {
   }
   expect(tt.bracketL);
   tsParseMappedTypeParameter();
+  if (eatContextual(ContextualKeyword._as)) {
+    tsParseType();
+  }
   expect(tt.bracketR);
   if (match(tt.plus) || match(tt.minus)) {
     next();
@@ -394,6 +409,22 @@ function tsParseParenthesizedType(): void {
   expect(tt.parenL);
   tsParseType();
   expect(tt.parenR);
+}
+
+function tsParseTemplateLiteralType(): void {
+  // Finish `, read quasi
+  nextTemplateToken();
+  // Finish quasi, read ${
+  nextTemplateToken();
+  while (!match(tt.backQuote) && !state.error) {
+    expect(tt.dollarBraceL);
+    tsParseType();
+    // Finish }, read quasi
+    nextTemplateToken();
+    // Finish quasi, read either ${ or `
+    nextTemplateToken();
+  }
+  next();
 }
 
 enum FunctionType {
@@ -456,7 +487,7 @@ function tsParseNonArrayType(): void {
       tsParseParenthesizedType();
       return;
     case tt.backQuote:
-      parseTemplate();
+      tsParseTemplateLiteralType();
       return;
     default:
       if (state.type & TokenType.IS_KEYWORD) {

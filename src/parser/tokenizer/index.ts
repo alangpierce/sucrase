@@ -476,11 +476,6 @@ function readToken_plus_min(code: number): void {
 
 // '<>'
 function readToken_lt_gt(code: number): void {
-  // Avoid right-shift for things like Array<Array<string>>.
-  if (code === charCodes.greaterThan && state.isType) {
-    finishOp(tt.greaterThan, 1);
-    return;
-  }
   const nextChar = input.charCodeAt(state.pos + 1);
 
   if (nextChar === code) {
@@ -490,6 +485,11 @@ function readToken_lt_gt(code: number): void {
         : 2;
     if (input.charCodeAt(state.pos + size) === charCodes.equalsTo) {
       finishOp(tt.assign, size + 1);
+      return;
+    }
+    // Avoid right-shift for things like Array<Array<string>>.
+    if (code === charCodes.greaterThan && state.isType) {
+      finishOp(tt.greaterThan, 1);
       return;
     }
     finishOp(tt.bitShift, size);

@@ -481,15 +481,8 @@ function parseIdentifierStatement(contextualKeyword: ContextualKeyword): void {
   }
 }
 
-// Parse a semicolon-enclosed block of statements, handling `"use
-// strict"` declarations when `allowStrict` is true (used for
-// function bodies).
-
-export function parseBlock(
-  allowDirectives: boolean = false,
-  isFunctionScope: boolean = false,
-  contextId: number = 0,
-): void {
+// Parse a semicolon-enclosed block of statements.
+export function parseBlock(isFunctionScope: boolean = false, contextId: number = 0): void {
   const startTokenIndex = state.tokens.length;
   state.scopeDepth++;
   expect(tt.braceL);
@@ -716,6 +709,14 @@ function parseClassMember(memberStart: number, classContextId: number): void {
     // otherwise something static
     state.tokens[state.tokens.length - 1].type = tt._static;
     isStatic = true;
+
+    if (match(tt.braceL)) {
+      // This is a static block. Mark the word "static" with the class context ID for class element
+      // detection and parse as a regular block.
+      state.tokens[state.tokens.length - 1].contextId = classContextId;
+      parseBlock();
+      return;
+    }
   }
 
   parseClassMemberWithIsStatic(memberStart, isStatic, classContextId);

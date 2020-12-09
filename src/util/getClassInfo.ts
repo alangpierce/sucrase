@@ -85,6 +85,11 @@ export default function getClassInfo(
         }
         tokens.nextToken();
       }
+      if (isStatic && tokens.matches1(tt.braceL)) {
+        // This is a static block, so don't process it in any special way.
+        skipToNextClassElement(tokens, classContextId);
+        continue;
+      }
       if (
         tokens.matchesContextual(ContextualKeyword._constructor) &&
         !tokens.currentToken().isType
@@ -92,18 +97,12 @@ export default function getClassInfo(
         ({constructorInitializerStatements, constructorInsertPos} = processConstructor(tokens));
         continue;
       }
+
       const nameStartIndex = tokens.currentIndex();
       skipFieldName(tokens);
       if (tokens.matches1(tt.lessThan) || tokens.matches1(tt.parenL)) {
-        // This is a method, so just skip to the next method/field. To do that, we seek forward to
-        // the next start of a class name (either an open bracket or an identifier, or the closing
-        // curly brace), then seek backward to include any access modifiers.
-        while (tokens.currentToken().contextId !== classContextId) {
-          tokens.nextToken();
-        }
-        while (isAccessModifier(tokens.tokenAtRelativeIndex(-1))) {
-          tokens.previousToken();
-        }
+        // This is a method, so nothing to process.
+        skipToNextClassElement(tokens, classContextId);
         continue;
       }
       // There might be a type annotation that we need to skip.
@@ -153,6 +152,23 @@ export default function getClassInfo(
     fields,
     rangesToRemove,
   };
+}
+
+/**
+ * Move the token processor to the next method/field in the class.
+ *
+ * To do that, we seek forward to the next start of a class name (either an open
+ * bracket or an identifier, or the closing curly brace), then seek backward to
+ * include any access modifiers.
+ */
+function skipToNextClassElement(tokens: TokenProcessor, classContextId: number): void {
+  tokens.nextToken();
+  while (tokens.currentToken().contextId !== classContextId) {
+    tokens.nextToken();
+  }
+  while (isAccessModifier(tokens.tokenAtRelativeIndex(-1))) {
+    tokens.previousToken();
+  }
 }
 
 function processClassHeader(tokens: TokenProcessor): ClassHeaderInfo {

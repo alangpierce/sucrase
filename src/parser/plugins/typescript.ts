@@ -84,7 +84,6 @@ function tsNextTokenCanFollowModifier(): boolean {
       match(tt.braceL) ||
       match(tt.star) ||
       match(tt.ellipsis) ||
-      match(tt.hash) ||
       isLiteralPropertyName()) &&
     !hasPrecedingLineBreak();
 

@@ -228,10 +228,6 @@ export function nextTokenStartSince(pos: number): number {
   return pos + skip![0].length;
 }
 
-export function lookaheadCharCode(): number {
-  return input.charCodeAt(nextTokenStart());
-}
-
 // Read a single token, updating the parser object's token-related
 // properties.
 export function nextToken(): void {
@@ -549,11 +545,6 @@ function readToken_question(): void {
 
 export function getTokenFromCode(code: number): void {
   switch (code) {
-    case charCodes.numberSign:
-      ++state.pos;
-      finishToken(tt.hash);
-      return;
-
     // The interpretation of a dot depends on whether it is followed
     // by a digit or another two dots.
 

@@ -45,7 +45,6 @@ import {
 import {
   eat,
   IdentifierRole,
-  lookaheadCharCode,
   lookaheadType,
   match,
   next,
@@ -57,8 +56,6 @@ import {
 import {ContextualKeyword} from "../tokenizer/keywords";
 import {Scope} from "../tokenizer/state";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
-import {charCodes} from "../util/charcodes";
-import {IS_IDENTIFIER_START} from "../util/identifier";
 import {getNextContextId, isFlowEnabled, isJSXEnabled, isTypeScriptEnabled, state} from "./base";
 import {
   markPriorBindingIdentifier,
@@ -328,11 +325,11 @@ export function baseParseSubscript(
     } else if (eat(tt.parenL)) {
       parseCallExpressionArguments();
     } else {
-      parseMaybePrivateName();
+      parseIdentifier();
     }
   } else if (eat(tt.dot)) {
     state.tokens[state.tokens.length - 1].subscriptStartIndex = startTokenIndex;
-    parseMaybePrivateName();
+    parseIdentifier();
   } else if (eat(tt.bracketL)) {
     state.tokens[state.tokens.length - 1].subscriptStartIndex = startTokenIndex;
     parseExpression();
@@ -565,26 +562,10 @@ export function parseExprAtom(): boolean {
       return false;
     }
 
-    case tt.hash: {
-      const code = lookaheadCharCode();
-      if (IS_IDENTIFIER_START[code] || code === charCodes.backslash) {
-        parseMaybePrivateName();
-      } else {
-        next();
-      }
-      // Smart pipeline topic reference.
-      return false;
-    }
-
     default:
       unexpected();
       return false;
   }
-}
-
-function parseMaybePrivateName(): void {
-  eat(tt.hash);
-  parseIdentifier();
 }
 
 function parseFunctionExpression(): void {
@@ -885,7 +866,7 @@ export function parsePropertyName(objectContextId: number): void {
     if (match(tt.num) || match(tt.string) || match(tt.bigint) || match(tt.decimal)) {
       parseExprAtom();
     } else {
-      parseMaybePrivateName();
+      parseIdentifier();
     }
 
     state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ObjectKey;

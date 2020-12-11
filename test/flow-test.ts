@@ -312,8 +312,6 @@ describe("transform flow", () => {
     );
   });
 
-  // Note that we don't actually transform private fields at the moment, this just makes sure it
-  // parses.
   it("allows private properties with type annotations", () => {
     assertFlowResult(
       `
@@ -325,7 +323,7 @@ describe("transform flow", () => {
       `"use strict";
       class A {constructor() { A.prototype.__init.call(this); }
         
-        __init() {this.prop2 = value}
+        __init() {this.#prop2 = value}
       }
     `,
     );

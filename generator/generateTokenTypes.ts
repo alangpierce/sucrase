@@ -76,7 +76,6 @@ const types = {
   backQuote: new TokenType("`"),
   dollarBraceL: new TokenType("${"),
   at: new TokenType("@"),
-  hash: new TokenType("#"),
 
   eq: new TokenType("=", {isAssign}),
   assign: new TokenType("_=", {isAssign}),

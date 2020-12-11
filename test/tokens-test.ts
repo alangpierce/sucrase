@@ -333,7 +333,6 @@ describe("tokens", () => {
       [
         {type: tt._class},
         {type: tt.braceL},
-        {type: tt.hash},
         {type: tt.name, identifierRole: IdentifierRole.ObjectKey},
         {type: tt.eq},
         {type: tt.num},
@@ -341,7 +340,6 @@ describe("tokens", () => {
 
         {type: tt._this},
         {type: tt.dot},
-        {type: tt.hash},
         {type: tt.name},
         {type: tt.eq},
         {type: tt.num},
@@ -349,12 +347,10 @@ describe("tokens", () => {
         {type: tt._delete},
         {type: tt._this},
         {type: tt.questionDot},
-        {type: tt.hash},
         {type: tt.name},
 
         {type: tt._if},
         {type: tt.parenL},
-        {type: tt.hash},
         {type: tt.name},
         {type: tt._in},
         {type: tt.name},

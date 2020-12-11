@@ -2,6 +2,7 @@ import {charCodes} from "./charcodes";
 import {WHITESPACE_CHARS} from "./whitespace";
 
 function computeIsIdentifierChar(code: number): boolean {
+  if (code < 36) return code === 35;
   if (code < 48) return code === 36;
   if (code < 58) return true;
   if (code < 65) return false;

@@ -39,7 +39,6 @@ export enum TokenType {
   backQuote = 12800, // `
   dollarBraceL = 13312, // ${
   at = 13824, // @
-  hash = 14336, // #
   eq = 14880, // = isAssign
   assign = 15392, // _= isAssign
   preIncDec = 16256, // ++/-- prefix postfix
@@ -180,8 +179,6 @@ export function formatTokenType(tokenType: TokenType): string {
       return "${";
     case TokenType.at:
       return "@";
-    case TokenType.hash:
-      return "#";
     case TokenType.eq:
       return "=";
     case TokenType.assign:

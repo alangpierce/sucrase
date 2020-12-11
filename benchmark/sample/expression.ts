@@ -301,7 +301,7 @@ export function baseParseSubscript(
       parseIdentifier();
     }
   } else if (eat(tt.dot)) {
-    parseMaybePrivateName();
+    parseIdentifier();
   } else if (eat(tt.bracketL)) {
     parseExpression();
     expect(tt.bracketR);
@@ -506,11 +506,6 @@ export function parseExprAtom(): boolean {
     default:
       throw unexpected();
   }
-}
-
-function parseMaybePrivateName(): void {
-  eat(tt.hash);
-  parseIdentifier();
 }
 
 function parseFunctionExpression(): void {
@@ -839,7 +834,7 @@ export function parsePropertyName(objectContextId: number): void {
     if (match(tt.num) || match(tt.string)) {
       parseExprAtom();
     } else {
-      parseMaybePrivateName();
+      parseIdentifier();
     }
 
     state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ObjectKey;

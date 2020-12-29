@@ -1,9 +1,13 @@
-// @ts-ignore: no types available.
 import * as pirates from "pirates";
 
 import {Options, transform} from "./index";
 
-export function addHook(extension: string, options: Options): void {
+export interface HookOptions {
+  matcher?: (code: string) => boolean;
+  ignoreNodeModules?: boolean;
+}
+
+export function addHook(extension: string, options: Options, hookOptions?: HookOptions): void {
   pirates.addHook(
     (code: string, filePath: string): string => {
       const {code: transformedCode, sourceMap} = transform(code, {
@@ -15,7 +19,7 @@ export function addHook(extension: string, options: Options): void {
       const suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
       return `${transformedCode}\n${suffix}`;
     },
-    {exts: [extension]},
+    {...hookOptions, exts: [extension]},
   );
 }
 

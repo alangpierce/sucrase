@@ -52,6 +52,9 @@
     "test": "node scripts/test.js --env=jsdom",
     "publish-website": "scripts/publish.sh"
   },
+  "resolutions": {
+    "**/@types/react": "16.14.2"
+  },
   "jest": {
     "collectCoverageFrom": [
       "src/**/*.{js,jsx}"

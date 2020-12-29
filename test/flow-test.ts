@@ -323,9 +323,9 @@ describe("transform flow", () => {
       }
     `,
       `"use strict";
-      class A {constructor() { A.prototype.__init.call(this); }
-        
-        __init() {this.prop2 = value}
+      class A {
+        #prop1;
+        #prop2 = value;
       }
     `,
     );

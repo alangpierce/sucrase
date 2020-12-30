@@ -1,0 +1,52 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  lint-and-test:
+    name: "Lint and core tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+      - run: yarn
+      - run: yarn build
+      - run: yarn lint
+      - run: yarn test-with-coverage && yarn report-coverage
+      - run: yarn test262
+  test-older-node:
+    name: "Test on older node versions"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - node_version: '10'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node_version }}
+      - run: yarn
+      - run: yarn build
+      - run: yarn test-only
+  test-examples:
+    name: "Test example projects"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: 
+        include:
+          - projects: "babel"
+          - projects: "react decaffeinate decaffeinate-parser coffee-lex"
+          - projects: "tslint apollo-client"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+      - run: yarn
+      - run: yarn fast-build
+      - run: yarn run-examples ${{ matrix.projects }}

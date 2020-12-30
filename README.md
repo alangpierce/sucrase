@@ -1,6 +1,6 @@
 # Sucrase
 
-[![Build Status](https://github.com/alangpierce/sucrase/workflows/All%20tests/badge.svg)
+[![Build Status](https://github.com/alangpierce/sucrase/workflows/All%20tests/badge.svg)](https://github.com/alangpierce/sucrase/actions)
 [![npm version](https://img.shields.io/npm/v/sucrase.svg)](https://www.npmjs.com/package/sucrase)
 [![Install Size](https://packagephobia.now.sh/badge?p=sucrase)](https://packagephobia.now.sh/result?p=sucrase)
 [![MIT License](https://img.shields.io/npm/l/express.svg?maxAge=2592000)](LICENSE)

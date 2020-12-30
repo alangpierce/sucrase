@@ -2,8 +2,8 @@ on:
   push:
     branches:
       - master
-  pull_request
-  
+  pull_request:
+
 jobs:
   lint-and-test:
     name: "Lint and core tests"

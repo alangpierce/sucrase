@@ -9,6 +9,7 @@ import CJSImportTransformer from "./CJSImportTransformer";
 import ESMImportTransformer from "./ESMImportTransformer";
 import FlowTransformer from "./FlowTransformer";
 import JSXTransformer from "./JSXTransformer";
+import LogicalAssignmentTransformer from "./LogicalAssignmentTransformer";
 import NumericSeparatorTransformer from "./NumericSeparatorTransformer";
 import OptionalCatchBindingTransformer from "./OptionalCatchBindingTransformer";
 import OptionalChainingNullishTransformer from "./OptionalChainingNullishTransformer";
@@ -39,6 +40,9 @@ export default class RootTransformer {
     this.isImportsTransformEnabled = transforms.includes("imports");
     this.isReactHotLoaderTransformEnabled = transforms.includes("react-hot-loader");
 
+    this.transformers.push(
+      new LogicalAssignmentTransformer(this, tokenProcessor, this.helperManager),
+    );
     this.transformers.push(
       new OptionalChainingNullishTransformer(tokenProcessor, this.nameManager),
     );

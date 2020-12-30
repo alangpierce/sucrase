@@ -1,4 +1,8 @@
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request
   
 jobs:
   lint-and-test:
@@ -9,6 +13,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '12'
+      - run: yarn
       - run: yarn build
       - run: yarn lint
       - run: yarn test-with-coverage && yarn report-coverage
@@ -25,6 +30,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node_version }}
+      - run: yarn
       - run: yarn build
       - run: yarn test-only
   test-examples:
@@ -41,5 +47,6 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '12'
+      - run: yarn
       - run: yarn fast-build
       - run: yarn run-examples ${{ matrix.projects }}

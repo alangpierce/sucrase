@@ -1,3 +1,5 @@
+name: "All tests"
+
 on:
   push:
     branches:

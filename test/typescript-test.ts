@@ -2233,13 +2233,13 @@ describe("typescript transform", () => {
     `,
       `"use strict";
       class Foo {
-           
-           
-           
           
-           
-           
-           
+          
+          
+          
+          
+          
+          
           
           
           constructor() {
@@ -2372,6 +2372,37 @@ describe("typescript transform", () => {
 
 
 
+    `,
+    );
+  });
+
+  it("correctly handles methods and fields named declare", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        declare() {
+        }
+      }
+      class B {
+        static declare() {
+        }
+      }
+      class C {
+        declare = 2;
+      }
+    `,
+      `"use strict";
+      class A {
+        declare() {
+        }
+      }
+      class B {
+        static declare() {
+        }
+      }
+      class C {constructor() { C.prototype.__init.call(this); }
+        __init() {this.declare = 2}
+      }
     `,
     );
   });

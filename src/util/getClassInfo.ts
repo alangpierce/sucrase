@@ -79,14 +79,23 @@ export default function getClassInfo(
       // Either a method or a field. Skip to the identifier part.
       const statementStartIndex = tokens.currentIndex();
       let isStatic = false;
+      let isESPrivate = false;
       while (isAccessModifier(tokens.currentToken())) {
         if (tokens.matches1(tt._static)) {
           isStatic = true;
+        }
+        if (tokens.matches1(tt.hash)) {
+          isESPrivate = true;
         }
         tokens.nextToken();
       }
       if (isStatic && tokens.matches1(tt.braceL)) {
         // This is a static block, so don't process it in any special way.
+        skipToNextClassElement(tokens, classContextId);
+        continue;
+      }
+      if (isESPrivate) {
+        // Sucrase doesn't attempt to transpile private fields; just leave them as-is.
         skipToNextClassElement(tokens, classContextId);
         continue;
       }
@@ -280,6 +289,7 @@ function isAccessModifier(token: Token): boolean {
     tt._abstract,
     tt.star,
     tt._declare,
+    tt.hash,
   ].includes(token.type);
 }
 

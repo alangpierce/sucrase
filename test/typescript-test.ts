@@ -1926,11 +1926,13 @@ describe("typescript transform", () => {
       `
       class Foo {
         readonly #x: number;
+        readonly #y: number;
       }
     `,
       `"use strict";
       class Foo {
-        
+         #x;
+         #y;
       }
     `,
     );

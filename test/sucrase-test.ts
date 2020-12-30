@@ -1233,4 +1233,46 @@ describe("sucrase", () => {
       {transforms: ["typescript"]},
     );
   });
+
+  it("correctly preserves private fields, static fields, and methods", () => {
+    assertResult(
+      `
+      class A {
+        #x = 1;
+        y = 2;
+        
+        static #privateStaticField = 3;
+        
+        #privateMethod() {
+          return A.#privateStaticField;
+        }
+        
+        printValues() {
+          console.log(this.#x);
+          console.log(this.y);
+          console.log(this.#privateMethod());
+        }
+      }
+    `,
+      `
+      class A {constructor() { A.prototype.__init.call(this); }
+        #x = 1;
+        __init() {this.y = 2}
+        
+        static #privateStaticField = 3;
+        
+        #privateMethod() {
+          return A.#privateStaticField;
+        }
+        
+        printValues() {
+          console.log(this.#x);
+          console.log(this.y);
+          console.log(this.#privateMethod());
+        }
+      }
+    `,
+      {transforms: []},
+    );
+  });
 });

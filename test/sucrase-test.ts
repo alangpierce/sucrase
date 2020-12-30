@@ -153,6 +153,7 @@ describe("sucrase", () => {
         set bar(b) {
         }
       }
+      TESTING A TEST FAILURE -- REMOVE ME
     `,
       {transforms: ["jsx", "imports", "typescript"]},
     );

@@ -26,6 +26,7 @@ import {
   tsParseIdentifierStatement,
   tsParseImportEqualsDeclaration,
   tsParseMaybeDecoratorArguments,
+  tsParseModifier,
   tsStartParseFunctionParams,
   tsTryParseClassMemberWithIsStatic,
   tsTryParseExport,
@@ -692,9 +693,9 @@ function parseClassBody(classContextId: number): void {
 
 function parseClassMember(memberStart: number, classContextId: number): void {
   if (isTypeScriptEnabled) {
-    eatContextual(ContextualKeyword._declare);
+    tsParseModifier([ContextualKeyword._declare]);
     tsParseAccessModifier();
-    eatContextual(ContextualKeyword._declare);
+    tsParseModifier([ContextualKeyword._declare]);
   }
   let isStatic = false;
   if (match(tt.name) && state.contextualKeyword === ContextualKeyword._static) {

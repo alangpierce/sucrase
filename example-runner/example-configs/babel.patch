@@ -16,7 +16,7 @@ index c8a60079b..b49041ae6 100644
      .pipe(newer({ dest: base, map: swapSrcWithLib }))
      .pipe(compilationLogger())
 -    .pipe(babel())
-+    .pipe(sucrase({{transforms: ["flow", "imports"]}))
++    .pipe(sucrase({transforms: ["flow", "imports"]}))
      .pipe(
        // Passing 'file.relative' because newer() above uses a relative
        // path and this keeps it consistent.

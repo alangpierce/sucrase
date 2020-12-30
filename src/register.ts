@@ -23,39 +23,47 @@ export function addHook(extension: string, options: Options, hookOptions?: HookO
   );
 }
 
-export function registerJS(): void {
-  addHook(".js", {transforms: ["imports", "flow", "jsx"]});
+export function registerJS(hookOptions?: HookOptions): void {
+  addHook(".js", {transforms: ["imports", "flow", "jsx"]}, hookOptions);
 }
 
-export function registerJSX(): void {
-  addHook(".jsx", {transforms: ["imports", "flow", "jsx"]});
+export function registerJSX(hookOptions?: HookOptions): void {
+  addHook(".jsx", {transforms: ["imports", "flow", "jsx"]}, hookOptions);
 }
 
-export function registerTS(): void {
-  addHook(".ts", {transforms: ["imports", "typescript"]});
+export function registerTS(hookOptions?: HookOptions): void {
+  addHook(".ts", {transforms: ["imports", "typescript"]}, hookOptions);
 }
 
-export function registerTSX(): void {
-  addHook(".tsx", {transforms: ["imports", "typescript", "jsx"]});
+export function registerTSX(hookOptions?: HookOptions): void {
+  addHook(".tsx", {transforms: ["imports", "typescript", "jsx"]}, hookOptions);
 }
 
-export function registerTSLegacyModuleInterop(): void {
-  addHook(".ts", {
-    transforms: ["imports", "typescript"],
-    enableLegacyTypeScriptModuleInterop: true,
-  });
+export function registerTSLegacyModuleInterop(hookOptions?: HookOptions): void {
+  addHook(
+    ".ts",
+    {
+      transforms: ["imports", "typescript"],
+      enableLegacyTypeScriptModuleInterop: true,
+    },
+    hookOptions,
+  );
 }
 
-export function registerTSXLegacyModuleInterop(): void {
-  addHook(".tsx", {
-    transforms: ["imports", "typescript", "jsx"],
-    enableLegacyTypeScriptModuleInterop: true,
-  });
+export function registerTSXLegacyModuleInterop(hookOptions?: HookOptions): void {
+  addHook(
+    ".tsx",
+    {
+      transforms: ["imports", "typescript", "jsx"],
+      enableLegacyTypeScriptModuleInterop: true,
+    },
+    hookOptions,
+  );
 }
 
-export function registerAll(): void {
-  registerJS();
-  registerJSX();
-  registerTS();
-  registerTSX();
+export function registerAll(hookOptions?: HookOptions): void {
+  registerJS(hookOptions);
+  registerJSX(hookOptions);
+  registerTS(hookOptions);
+  registerTSX(hookOptions);
 }

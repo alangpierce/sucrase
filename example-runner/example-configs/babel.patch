@@ -61,10 +61,18 @@ index 2c077a3fb..dfa6ff5e7 100644
  yarn-install: clean-all
  	yarn --ignore-engines
 diff --git a/package.json b/package.json
-index a420748f1..7678c4796 100644
+index a420748f1..0b421c34b 100644
 --- a/package.json
 +++ b/package.json
-@@ -91,6 +91,9 @@
+@@ -76,7 +76,6 @@
+     "@lerna/**/@lerna/collect-updates": "https://github.com/babel/lerna.git#babel-collect-updates"
+   },
+   "engines": {
+-    "node": ">= 6.9.0 < 14.0.0",
+     "npm": ">= 3.x <= 6.x",
+     "yarn": ">=0.27.5 || >=1.0.0-20170811"
+   },
+@@ -91,6 +90,9 @@
      }
    },
    "jest": {

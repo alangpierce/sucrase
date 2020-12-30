@@ -1,3 +1,18 @@
+# 3.17.0 (2020-12-29)
+
+* Fix incorrect export removal when exporting a variable defined using a
+  destructure declaration. ([#564])
+* Add support for new type syntax in TypeScript 4.1: template interpolations in
+  string literal types and `as` to remap keys in mapped types. Also add parsing
+  for static blocks and pass them through in the output. ([#567])
+* Allow passing `pirates` options `matcher` and `ignoreNodeModules` when
+  directly calling `registerJS` and related functions. ([#571], [#573])
+  (Gordon Leigh)
+* Properly emit private class field declarations in the output code so that
+  private  fields can be used when they're supported by the target JS engine.
+  ([#574])
+* Fix parse error when a method or field has the name `declare`. ([#575])
+
 # 3.16.0 (2020-10-12)
 
 * Add support for TypeScript 4.0 type syntax: labeled tuples, catch clause
@@ -299,3 +314,9 @@
 [#533]: https://github.com/alangpierce/sucrase/pull/533
 [#537]: https://github.com/alangpierce/sucrase/pull/537
 [#556]: https://github.com/alangpierce/sucrase/pull/556
+[#564]: https://github.com/alangpierce/sucrase/pull/564
+[#567]: https://github.com/alangpierce/sucrase/pull/567
+[#571]: https://github.com/alangpierce/sucrase/pull/571
+[#573]: https://github.com/alangpierce/sucrase/pull/573
+[#574]: https://github.com/alangpierce/sucrase/pull/574
+[#575]: https://github.com/alangpierce/sucrase/pull/575

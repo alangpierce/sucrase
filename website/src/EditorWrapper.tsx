@@ -34,7 +34,7 @@ export default class EditorWrapper extends Component<EditorWrapperProps, State> 
     }
   }
 
-  invalidate = () => {
+  invalidate = (): void => {
     if (this.editor) {
       this.editor.invalidate();
     }

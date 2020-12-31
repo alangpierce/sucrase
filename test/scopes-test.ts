@@ -1,4 +1,5 @@
 import * as assert from "assert";
+
 import {parse} from "../src/parser";
 import {Scope} from "../src/parser/tokenizer/state";
 

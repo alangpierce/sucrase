@@ -1,4 +1,5 @@
 import * as assert from "assert";
+
 import {parse} from "../src/parser";
 import {IdentifierRole, Token} from "../src/parser/tokenizer";
 import {TokenType as tt} from "../src/parser/tokenizer/types";

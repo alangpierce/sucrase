@@ -3,10 +3,9 @@
  * in a single webpack chunk.
  */
 // @ts-ignore
-import {registerPlugin, transform} from "@babel/standalone";
-
-// @ts-ignore
 import NumericSeparatorPlugin from "@babel/plugin-proposal-numeric-separator";
+// @ts-ignore
+import {registerPlugin, transform} from "@babel/standalone";
 // @ts-ignore
 import DynamicImportPlugin from "babel-plugin-dynamic-import-node";
 // @ts-ignore

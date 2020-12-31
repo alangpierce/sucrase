@@ -4,6 +4,7 @@
 import * as babel from "@babel/core";
 import * as fs from "fs";
 import * as TypeScript from "typescript";
+
 import * as sucrase from "../src/index";
 import runBenchmark from "./runBenchmark";
 

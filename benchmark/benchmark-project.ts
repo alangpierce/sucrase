@@ -24,14 +24,14 @@ async function main(): Promise<void> {
 
   if (shouldProfile) {
     console.log(`Make sure you have Chrome DevTools for Node open.`);
-    // tslint:disable-next-line no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (console as any).profile(`Sucrase ${projectPath}`);
     for (let i = 0; i < numTimes; i++) {
       for (const fileInfo of projectFiles) {
         runTransform(fileInfo);
       }
     }
-    // tslint:disable-next-line no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (console as any).profileEnd(`Sucrase ${projectPath}`);
   } else {
     const startTime = process.hrtime();

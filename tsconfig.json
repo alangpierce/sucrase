@@ -11,12 +11,6 @@
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
     "lib": ["es2020"],
-    "plugins": [
-      {
-        "name": "typescript-tslint-plugin",
-        "ignoreDefinitionFiles": true
-      }
-    ]
   },
   "include": [
     "benchmark",

@@ -1,4 +1,5 @@
 import {throws} from "assert";
+
 import {transform} from "../src";
 
 describe("errors", () => {

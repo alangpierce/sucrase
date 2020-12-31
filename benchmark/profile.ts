@@ -10,14 +10,14 @@ function main(): void {
     `Profiling Sucrase on ${sampleFile}. Make sure you have Chrome DevTools for Node open.`,
   );
   const code = fs.readFileSync(`./benchmark/sample/${sampleFile}`).toString();
-  // tslint:disable-next-line no-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (console as any).profile("Sucrase");
   for (let i = 0; i < 3000; i++) {
     sucrase.transform(code, {
       transforms: ["jsx", "imports", "typescript"],
     });
   }
-  // tslint:disable-next-line no-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (console as any).profileEnd("Sucrase");
 }
 

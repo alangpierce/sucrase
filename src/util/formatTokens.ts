@@ -1,4 +1,5 @@
 import LinesAndColumns from "lines-and-columns";
+
 import type {Token} from "../parser/tokenizer";
 import {formatTokenType} from "../parser/tokenizer/types";
 
@@ -39,7 +40,7 @@ export default function formatTokens(code: string, tokens: Array<Token>): string
     ];
   }
 
-  // tslint:disable-next-line no-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function formatValue(value: any, key: string): string {
     if (value === true) {
       return key;

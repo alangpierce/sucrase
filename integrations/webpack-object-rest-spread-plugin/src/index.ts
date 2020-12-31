@@ -1,4 +1,6 @@
-/* eslint-disable import/first */
+// This is ugly integration code and a lot is copied and pasted from Webpack, so just allow "any"
+// everywhere.
+/* eslint-disable import/first, @typescript-eslint/no-explicit-any */
 // @ts-ignore: No types.
 import bareAcorn = require("acorn");
 // @ts-ignore: No types.
@@ -8,16 +10,12 @@ import injectObjectRestSpread = require("acorn-object-rest-spread/inject");
 
 const acorn = injectObjectRestSpread(injectDynamicImport(bareAcorn));
 
-// This is ugly integration code and a lot is copied and pasted from Webpack, so just allow "any"
-// everywhere.
-// tslint:disable
-
 /**
  * Patch the webpack parser to allow object rest/spread. This is heavily based on the
  * webpack-async-await project: https://github.com/MatAtBread/webpack-async-await
  */
 export = class ObjectRestSpreadPlugin {
-  apply(compiler: any) {
+  apply(compiler: any): void {
     compiler.plugin("compilation", (compilation: any, params: any) => {
       params.normalModuleFactory.plugin("parser", (parser: any) => {
         parser.parse = patchedParse;

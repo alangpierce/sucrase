@@ -139,7 +139,7 @@ async function waitForConfig(): Promise<WorkerConfig> {
     nextConfig = null;
     return config;
   } else {
-    const waitPromise = new Promise((resolve) => {
+    const waitPromise = new Promise<void>((resolve) => {
       notifyConfig = resolve;
     });
     await waitPromise;

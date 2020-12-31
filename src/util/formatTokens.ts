@@ -32,7 +32,9 @@ export default function formatTokens(code: string, tokens: Array<Token>): string
       formatRange(token.start, token.end),
       formatTokenType(token.type),
       truncate(String(raw), 14),
+      // @ts-ignore: Intentional dynamic access by key.
       ...tokenKeys.map((key) => formatValue(token[key], key)),
+      // @ts-ignore: Intentional dynamic access by key.
       ...typeKeys.map((key) => formatValue(token.type[key], key)),
     ];
   }

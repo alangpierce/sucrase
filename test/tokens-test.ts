@@ -12,6 +12,7 @@ function assertTokens(code: string, expectedTokens: Array<TokenExpectation>): vo
   const projectedTokens = tokens.map((token, i) => {
     const result = {};
     for (const key of Object.keys(expectedTokens[i])) {
+      // @ts-ignore: Intentional dynamic access by key.
       result[key] = token[key];
     }
     return result;

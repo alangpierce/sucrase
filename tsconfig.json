@@ -1,24 +1,16 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "strictNullChecks": true,
-    "target": "es2017",
+    // We never emit JS code (only type declarations) from TSC, so ignore those
+    // options.
+    "strict": true,
+    "target": "es2020",
     "module": "commonjs",
     "isolatedModules": true,
-    "typeRoots": ["node_modules/@types"],
-    "lib": ["dom", "es2017"],
-    "experimentalDecorators": true,
     "esModuleInterop": true,
     "importsNotUsedAsValues": "error",
-    "noImplicitAny": true,
     "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "suppressImplicitAnyIndexErrors": true,
-    "noImplicitThis": true,
-    "downlevelIteration": true,
-    "noEmitHelpers": true,
-    "importHelpers": true,
-    "useDefineForClassFields": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["es2020"],
     "plugins": [
       {
         "name": "typescript-tslint-plugin",

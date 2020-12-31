@@ -3,7 +3,7 @@
 import {exists, readFile} from "mz/fs";
 import run from "../script/run";
 
-const EXAMPLES = {
+const EXAMPLES: {[name: string]: string} = {
   decaffeinate: "https://github.com/decaffeinate/decaffeinate.git",
   "decaffeinate-parser": "https://github.com/decaffeinate/decaffeinate-parser.git",
   "coffee-lex": "https://github.com/decaffeinate/coffee-lex.git",

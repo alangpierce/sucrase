@@ -1,4 +1,8 @@
 // Special TS project just for source files so we can build types for those.
 {
-  "extends": "../tsconfig.json"
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true
+  }
 }

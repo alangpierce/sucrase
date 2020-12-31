@@ -98,6 +98,7 @@ export class Token {
     this.isType = state.isType;
     this.identifierRole = null;
     this.shadowsGlobal = false;
+    this.isAsyncOperation = false;
     this.contextId = null;
     this.rhsEndIndex = null;
     this.isExpression = false;

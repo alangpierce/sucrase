@@ -1,6 +1,6 @@
 import type NameManager from "./NameManager";
 
-const HELPERS = {
+const HELPERS: {[name: string]: string} = {
   interopRequireWildcard: `
     function interopRequireWildcard(obj) {
       if (obj && obj.__esModule) {

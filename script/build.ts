@@ -53,9 +53,7 @@ async function buildSucrase(): Promise<void> {
     );
     await run("diff -r ./dist ./dist-self-build");
     // Also add in .d.ts files from tsc, which only need to be compiled once.
-    await run(
-      `${TSC} --emitDeclarationOnly --declaration --isolatedModules false --project ./src --outDir ./dist-types`,
-    );
+    await run(`${TSC} --project ./src --outDir ./dist-types`);
     await mergeDirectoryContents("./dist-types/src", "./dist");
     // Link all integrations to Sucrase so that all building/linting/testing is up to date.
     await run("yarn link");

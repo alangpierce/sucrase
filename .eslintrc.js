@@ -1,9 +1,7 @@
 module.exports = {
   extends: ["airbnb-base", "prettier"],
   parser: "@typescript-eslint/parser",
-  // Add typescript plugin but don't use it, since that tells WebStorm to run
-  // ESLint for .ts files.
-  plugins: ["prettier", "typescript"],
+  plugins: ["prettier", "@typescript-eslint"],
   rules: {
     camelcase: "off",
     "class-methods-use-this": "off",
@@ -43,6 +41,7 @@ module.exports = {
     "no-plusplus": "off",
     "no-restricted-syntax": "off",
     "no-restricted-globals": "off",
+    "no-shadow": "off",
     "no-undef": "off",
     "no-underscore-dangle": "off",
     "no-unused-vars": "off",
@@ -51,7 +50,9 @@ module.exports = {
     "no-useless-constructor": "off",
     "prefer-destructuring": "off",
     "prettier/prettier": "error",
-    "strict": "off",
+    strict: "off",
+    "@typescript-eslint/no-shadow": "error",
+    "@typescript-eslint/no-unused-vars": ["error", {args: "none"}],
   },
   settings: {
     "import/extensions": [".js", ".ts", ".tsx"],

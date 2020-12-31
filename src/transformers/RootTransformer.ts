@@ -209,11 +209,11 @@ export default class RootTransformer {
     this.processClassBody(classInfo, className);
 
     const staticInitializerStatements = classInfo.staticInitializerNames.map(
-      (name) => `${className}.${name}()`,
+      (name) => `${className!}.${name}()`,
     );
     if (needsCommaExpression) {
       this.tokens.appendCode(
-        `, ${staticInitializerStatements.map((s) => `${s}, `).join("")}${className})`,
+        `, ${staticInitializerStatements.map((s) => `${s}, `).join("")}${className!})`,
       );
     } else if (classInfo.staticInitializerNames.length > 0) {
       this.tokens.appendCode(` ${staticInitializerStatements.map((s) => `${s};`).join(" ")}`);

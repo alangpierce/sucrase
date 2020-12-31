@@ -1,4 +1,5 @@
 import {throws} from "assert";
+
 import {transform} from "../src";
 import {IMPORT_DEFAULT_PREFIX} from "./prefixes";
 import {assertResult} from "./util";

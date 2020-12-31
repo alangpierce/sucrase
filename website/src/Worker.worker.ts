@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-globals */
 import * as Sucrase from "sucrase";
+
 import {TRANSFORMS} from "./Constants";
 import getTokens from "./getTokens";
 import {compressCode} from "./URLHashState";
@@ -52,7 +53,7 @@ self.addEventListener("message", ({data}) => {
   postMessage({type: "RESPONSE", response: processEvent(data)});
 });
 
-// tslint:disable-next-line no-floating-promises
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 loadDependencies();
 
 function processEvent(data: Message): unknown {

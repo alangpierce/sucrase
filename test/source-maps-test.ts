@@ -1,4 +1,5 @@
 import * as assert from "assert";
+
 import {transform} from "../src";
 
 describe("source maps", () => {

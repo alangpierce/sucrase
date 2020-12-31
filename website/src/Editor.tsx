@@ -16,7 +16,7 @@ interface EditorProps {
 export default class Editor extends Component<EditorProps> {
   editor: editor.IStandaloneCodeEditor | null = null;
 
-  async componentDidMount(): Promise<void> {
+  componentDidMount(): void {
     setTimeout(this.invalidate, 0);
   }
 
@@ -30,7 +30,7 @@ export default class Editor extends Component<EditorProps> {
     this.invalidate();
   };
 
-  invalidate = () => {
+  invalidate = (): void => {
     if (this.editor) {
       this.editor.layout();
     }

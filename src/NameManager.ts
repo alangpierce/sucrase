@@ -19,9 +19,9 @@ export default class NameManager {
       return name;
     }
     let suffixNum = 2;
-    while (this.usedNames.has(name + suffixNum)) {
+    while (this.usedNames.has(name + String(suffixNum))) {
       suffixNum++;
     }
-    return name + suffixNum;
+    return name + String(suffixNum);
   }
 }

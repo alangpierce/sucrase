@@ -33,8 +33,8 @@ interface State {
   typeScriptLoaded: boolean;
 }
 
-class App extends Component<{}, State> {
-  constructor(props: {}) {
+class App extends Component<unknown, State> {
+  constructor(props: unknown) {
     super(props);
     this.state = {
       code: INITIAL_CODE,
@@ -89,7 +89,7 @@ class App extends Component<{}, State> {
     this.postConfigToWorker();
   }
 
-  componentDidUpdate(prevProps: {}, prevState: State): void {
+  componentDidUpdate(prevProps: unknown, prevState: State): void {
     if (
       this.state.code !== prevState.code ||
       this.state.selectedTransforms !== prevState.selectedTransforms ||
@@ -114,21 +114,21 @@ class App extends Component<{}, State> {
     });
   }
 
-  _handleCodeChange = (newCode: string) => {
+  _handleCodeChange = (newCode: string): void => {
     this.setState({
       code: newCode,
     });
   };
 
-  _toggleCompareWithBabel = () => {
+  _toggleCompareWithBabel = (): void => {
     this.setState({compareWithBabel: !this.state.compareWithBabel});
   };
 
-  _toggleCompareWithTypeScript = () => {
+  _toggleCompareWithTypeScript = (): void => {
     this.setState({compareWithTypeScript: !this.state.compareWithTypeScript});
   };
 
-  _toggleShowTokens = () => {
+  _toggleShowTokens = (): void => {
     this.setState({showTokens: !this.state.showTokens});
   };
 

@@ -1,4 +1,5 @@
 import * as assert from "assert";
+
 import CJSImportProcessor from "../src/CJSImportProcessor";
 import {HelperManager} from "../src/HelperManager";
 import {hasShadowedGlobals} from "../src/identifyShadowedGlobals";

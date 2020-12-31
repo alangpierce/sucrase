@@ -1,9 +1,8 @@
-import {Transform} from "stream";
-
-import {Options, transform} from "sucrase";
-
+/* eslint-disable import/first */
 import PluginError = require("plugin-error");
 import replaceExt = require("replace-ext");
+import {Transform} from "stream";
+import {Options, transform} from "sucrase";
 import through = require("through2");
 
 const PLUGIN_NAME = "@sucrase/gulp-plugin";
@@ -11,10 +10,10 @@ const PLUGIN_NAME = "@sucrase/gulp-plugin";
 function gulpSucrase(options: Options): Transform {
   return through.obj(function (
     this: Transform,
-    // tslint:disable-next-line no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     file: any,
     enc: string,
-    // tslint:disable-next-line no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cb: (err?: any, data?: any) => void,
   ): void {
     if (file.isNull()) {

@@ -24,7 +24,7 @@ export default class ReactHotLoaderTransformer extends Transformer {
   }
 
   getSuffixCode(): string {
-    const topLevelNames = new Set();
+    const topLevelNames = new Set<string>();
     for (const token of this.tokens.tokens) {
       if (
         !token.isType &&

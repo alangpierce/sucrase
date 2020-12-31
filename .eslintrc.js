@@ -1,6 +1,14 @@
 module.exports = {
-  extends: ["airbnb-base", "prettier"],
+  extends: [
+    "airbnb-base",
+    "prettier",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+  ],
   parser: "@typescript-eslint/parser",
+  parserOptions: {
+    project: `${__dirname}/tsconfig.json`,
+  },
   plugins: ["prettier", "@typescript-eslint"],
   rules: {
     camelcase: "off",
@@ -10,6 +18,18 @@ module.exports = {
     // This rule has TypeScript false positives, so just disable for now.
     "import/named": "off",
     "import/no-cycle": "off",
+    "import/order": [
+      "error",
+      {
+        groups: [
+          ["builtin", "external", "internal"],
+          ["unknown", "parent", "sibling", "index"],
+          "object",
+        ],
+        "newlines-between": "always",
+        alphabetize: {order: "asc", caseInsensitive: true},
+      },
+    ],
     "import/no-extraneous-dependencies": [
       "error",
       {
@@ -51,8 +71,32 @@ module.exports = {
     "prefer-destructuring": "off",
     "prettier/prettier": "error",
     strict: "off",
+    "@typescript-eslint/array-type": ["error", {default: "generic"}],
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+    "@typescript-eslint/explicit-function-return-type": ["error", {allowExpressions: true}],
+    // Disable in favor of explicit-function-return-type.
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-confusing-void-expression": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-inferrable-types": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/no-shadow": "error",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
     "@typescript-eslint/no-unused-vars": ["error", {args: "none"}],
+    "@typescript-eslint/restrict-template-expressions": [
+      "error",
+      {
+        allowNumber: true,
+        allowBoolean: true,
+        allowAny: true,
+        allowNullish: true,
+      },
+    ],
+    "@typescript-eslint/typedef": "error",
   },
   settings: {
     "import/extensions": [".js", ".ts", ".tsx"],

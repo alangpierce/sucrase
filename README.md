@@ -28,16 +28,20 @@ the [Benchling](https://benchling.com/) frontend code,
 [decaffeinate](https://github.com/decaffeinate/decaffeinate)
 with all tests passing, about 1 million lines of code total.
 
-**Sucrase is about 20x faster than Babel.** Here's one measurement of how Sucrase
-compares with other tools on a large TypeScript codebase with 4045 files and
-661081 lines of code:
+**Sucrase is about 20x faster than Babel.** Here's one measurement of how
+Sucrase compares with other tools when compiling the Jest codebase 3 times,
+about 360k lines of code total:
 ```
-             Time      Speed
-Sucrase      2.928s    225752 lines per second
-swc          13.782s   47966 lines per second
-TypeScript   39.603s   16693 lines per second
-Babel        52.598s   12569 lines per second
+            Time            Speed
+Sucrase     1.64 seconds    220221 lines per second
+swc         2.13 seconds    169502 lines per second
+esbuild     3.02 seconds    119738 lines per second
+TypeScript  24.18 seconds   14937 lines per second
+Babel       27.22 seconds   13270 lines per second
 ```
+Details: Measured on January 2021. Tools run in single-threaded mode without warm-up. See the
+[benchmark code](https://github.com/alangpierce/sucrase/blob/master/benchmark/benchmark.ts)
+for methodology and caveats.
 
 ## Transforms
 

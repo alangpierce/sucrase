@@ -3,7 +3,6 @@
 import {next} from "../src/parser/tokenizer";
 import {initParser} from "../src/parser/traverser/base";
 import {hasPrecedingLineBreak} from "../src/parser/traverser/util";
-import runBenchmark from "./runBenchmark";
 
 function main(): void {
   const benchmark = process.argv[2] || "all";
@@ -13,7 +12,7 @@ function main(): void {
     next();
     next();
     next();
-    runBenchmark(
+    runMicrobenchmark(
       "hasPredecingLineBreak",
       () => {
         hasPrecedingLineBreak();
@@ -25,6 +24,18 @@ function main(): void {
       1000000,
     );
   }
+}
+
+function runMicrobenchmark(name: string, runTrial: () => void, times: number = 100): void {
+  // Run before starting the clock to warm up the JIT, caches, etc.
+  for (let i = 0; i < 10; i++) {
+    runTrial();
+  }
+  console.time(name);
+  for (let i = 0; i < times; i++) {
+    runTrial();
+  }
+  console.timeEnd(name);
 }
 
 main();

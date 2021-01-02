@@ -1,0 +1,20 @@
+{
+  "name": "sucrase-benchmark",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/plugin-proposal-decorators": "^7.12.12",
+    "@babel/plugin-proposal-export-namespace-from": "^7.12.1",
+    "@babel/plugin-syntax-top-level-await": "^7.12.1",
+    "@babel/plugin-transform-modules-commonjs": "^7.12.1",
+    "@babel/preset-react": "^7.12.10",
+    "@babel/preset-typescript": "^7.12.7",
+    "@swc/core": "^1.2.43",
+    "@types/yargs-parser": "^20.2.0",
+    "esbuild": "^0.8.28",
+    "mz": "^2.7.0",
+    "typescript": "^4.1.3",
+    "yargs-parser": "^20.2.4"
+  }
+}

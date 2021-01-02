@@ -16,7 +16,7 @@
     "fast-build": "sucrase-node script/build.ts --fast",
     "clean": "rm -rf ./build ./dist ./dist-self-build ./dist-types ./example-runner/example-repos ./test262/test262-checkout",
     "generate": "sucrase-node generator/generate.ts",
-    "benchmark": "sucrase-node benchmark/benchmark.ts",
+    "benchmark": "cd benchmark && yarn && sucrase-node ./benchmark.ts",
     "microbenchmark": "sucrase-node benchmark/microbenchmark.ts",
     "benchmark-react": "sucrase-node benchmark/benchmark-react.ts",
     "benchmark-project": "sucrase-node benchmark/benchmark-project.ts",
@@ -46,14 +46,6 @@
     "url": "https://github.com/alangpierce/sucrase/issues"
   },
   "devDependencies": {
-    "@babel/cli": "^7.7.0",
-    "@babel/core": "^7.7.2",
-    "@babel/plugin-proposal-class-properties": "^7.7.0",
-    "@babel/plugin-proposal-object-rest-spread": "^7.6.2",
-    "@babel/plugin-transform-modules-commonjs": "^7.7.0",
-    "@babel/preset-flow": "^7.0.0",
-    "@babel/preset-react": "^7.7.0",
-    "@babel/preset-typescript": "^7.7.2",
     "@types/glob": "7.1.1",
     "@types/mocha": "^5.2.7",
     "@types/mz": "^0.0.32",
@@ -73,8 +65,7 @@
     "sucrase": "^3.17.0",
     "test262-harness": "^6.5.0",
     "ts-interface-builder": "^0.2.1",
-    "typescript": "^4.1.3",
-    "yargs-parser": "^19.0.4"
+    "typescript": "^4.1.3"
   },
   "dependencies": {
     "commander": "^4.0.0",

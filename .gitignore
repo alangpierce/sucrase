@@ -8,3 +8,4 @@ test262/test262-checkout
 integrations/gulp-plugin/dist
 .nyc_output
 coverage.lcov
+benchmark/sample/jest

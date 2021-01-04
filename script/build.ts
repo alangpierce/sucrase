@@ -13,6 +13,7 @@ const fast = process.argv.includes("--fast");
 
 async function main(): Promise<void> {
   const promiseFactories = [
+    () => buildBenchmark(),
     () => buildSucrase(),
     () => buildIntegration("./integrations/gulp-plugin"),
     () => buildIntegration("./integrations/jest-plugin"),
@@ -26,6 +27,16 @@ async function main(): Promise<void> {
     for (const f of promiseFactories) {
       await f();
     }
+  }
+}
+
+async function buildBenchmark(): Promise<void> {
+  if (!fast) {
+    console.log("Installing benchmark dependencies");
+    const originalDir = process.cwd();
+    process.chdir("./benchmark");
+    await run("yarn");
+    process.chdir(originalDir);
   }
 }
 

@@ -19,6 +19,7 @@ async function main(): Promise<void> {
     () => buildIntegration("./integrations/webpack-loader"),
     () => buildIntegration("./integrations/webpack-object-rest-spread-plugin"),
     () => buildWebsite(),
+    () => buildBenchmark(),
   ];
   if (fast) {
     await Promise.all(promiseFactories.map((f) => f()));
@@ -90,6 +91,16 @@ async function buildWebsite(): Promise<void> {
     process.chdir("./website");
     await run("yarn");
     await run("yarn link sucrase");
+    process.chdir(originalDir);
+  }
+}
+
+async function buildBenchmark(): Promise<void> {
+  if (!fast) {
+    console.log("Installing benchmark dependencies");
+    const originalDir = process.cwd();
+    process.chdir("./benchmark");
+    await run("yarn");
     process.chdir(originalDir);
   }
 }

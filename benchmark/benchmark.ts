@@ -18,6 +18,10 @@ async function main(): Promise<void> {
   const benchmark = process.argv[2] || "jest";
   if (benchmark === "jest") {
     await benchmarkJest();
+  } else if (benchmark === "jest-diff") {
+    await benchmarkJestForDiff();
+  } else if (benchmark === "jest-dev") {
+    await benchmarkJestForDev();
   } else if (benchmark === "project") {
     await benchmarkProject();
   } else if (benchmark === "sample") {
@@ -78,6 +82,10 @@ async function main(): Promise<void> {
  * spot-check the output for various simple cases.
  */
 async function benchmarkJest(): Promise<void> {
+  await benchmarkFiles({files: await getJestFiles(), numIterations: 3});
+}
+
+async function getJestFiles(): Promise<Array<FileInfo>> {
   if (!(await exists("./sample/jest"))) {
     await run("git clone https://github.com/facebook/jest.git ./sample/jest");
     process.chdir("./sample/jest");
@@ -97,7 +105,33 @@ async function benchmarkJest(): Promise<void> {
   files = files.filter(
     ({path}) => !path.includes("jest/e2e/native-esm/__tests__/native-esm-tla.test.js"),
   );
-  await benchmarkFiles({files, numIterations: 3, warmUp: false, printOutput: false});
+  return files;
+}
+
+/**
+ * Run the Jest benchmark with JSON stdout so that external tools can read it.
+ */
+async function benchmarkJestForDiff(): Promise<void> {
+  await benchmarkFiles({
+    files: await getJestFiles(),
+    numIterations: 15,
+    warmUp: true,
+    sucraseOnly: true,
+    jsonOutput: true,
+  });
+}
+
+/**
+ * Run the Jest benchmark many times with warm-up to test Sucrase's performance
+ * in response to code changes.
+ */
+async function benchmarkJestForDev(): Promise<void> {
+  await benchmarkFiles({
+    files: await getJestFiles(),
+    numIterations: 15,
+    warmUp: true,
+    sucraseOnly: true,
+  });
 }
 
 /**
@@ -107,7 +141,7 @@ async function benchmarkJest(): Promise<void> {
 async function benchmarkProject(): Promise<void> {
   const projectPath = process.argv[3];
   const files = await loadProjectFiles(projectPath);
-  await benchmarkFiles({files, numIterations: 1, warmUp: false, printOutput: false});
+  await benchmarkFiles({files, numIterations: 1});
 }
 
 /**
@@ -116,12 +150,7 @@ async function benchmarkProject(): Promise<void> {
  */
 async function benchmarkSample(): Promise<void> {
   const code = fs.readFileSync(`./sample/sample.tsx`).toString();
-  await benchmarkFiles({
-    files: [{code, path: "sample.tsx"}],
-    numIterations: 100,
-    warmUp: true,
-    printOutput: false,
-  });
+  await benchmarkFiles({files: [{code, path: "sample.tsx"}], numIterations: 100, warmUp: true});
 }
 
 /**
@@ -147,19 +176,32 @@ export default class App {
   } 
 }
 `;
-  await benchmarkFiles({
-    files: [{code, path: "sample.tsx"}],
-    numIterations: 1,
-    warmUp: false,
-    printOutput: true,
-  });
+  await benchmarkFiles({files: [{code, path: "sample.tsx"}], numIterations: 1, printOutput: true});
 }
 
 interface BenchmarkOptions {
+  // File contents to process in each iteration.
   files: Array<FileInfo>;
+  // Number of times to compile the entire list of files.
   numIterations: number;
-  warmUp: boolean;
-  printOutput: boolean;
+  // If true, run each benchmark for a few seconds untimed before starting the
+  // timed portion. This leads to a more stable benchmark result, but is not
+  // necessarily representative of the speed that would be seen in a typical
+  // build system (where warm-up cost often matters).
+  warmUp?: boolean;
+  // If true, print the resulting source code whenever a file is compiled. This
+  // is useful to spot check the output to ensure that each compiler is
+  // configured similarly.
+  printOutput?: boolean;
+  // If true, stop after benchmarking Sucrase. This is useful when comparing
+  // Sucrase to itself in different scenarios rather than when comparing it with
+  // other tools.
+  sucraseOnly?: boolean;
+  // If true, rather than printing human-readable text to stdout, print JSON
+  // (one JSON line per benchmark, though currently this is only used with
+  // sucraseOnly, so in that case stdout as a whole is valid JSON), so that the
+  // timing results can be read by other tools.
+  jsonOutput?: boolean;
 }
 
 /**
@@ -168,7 +210,9 @@ interface BenchmarkOptions {
  * to disable JSX parsing in that case.
  */
 async function benchmarkFiles(benchmarkOptions: BenchmarkOptions): Promise<void> {
-  console.log(`Testing against ${numLines(benchmarkOptions)} LOC`);
+  if (!benchmarkOptions.jsonOutput) {
+    console.log(`Testing against ${numLines(benchmarkOptions)} LOC`);
+  }
   /* eslint-disable @typescript-eslint/require-await */
   await runBenchmark("Sucrase", benchmarkOptions, async (code: string, path: string) => {
     return sucrase.transform(code, {
@@ -177,6 +221,9 @@ async function benchmarkFiles(benchmarkOptions: BenchmarkOptions): Promise<void>
         : ["jsx", "imports", "typescript"],
     }).code;
   });
+  if (benchmarkOptions.sucraseOnly) {
+    return;
+  }
   // To run swc in single-threaded mode, we call into it repeatedly using
   // transformSync, which seems to have minimal overhead.
   await runBenchmark("swc", benchmarkOptions, async (code: string, path: string) => {
@@ -247,7 +294,7 @@ export default async function runBenchmark(
   runTrial: (code: string, path: string) => Promise<string>,
 ): Promise<void> {
   if (benchmarkOptions.warmUp) {
-    const warmUpTimeNanos = 2e9;
+    const warmUpTimeNanos = 3e9;
     const warmUpStart = process.hrtime.bigint();
     while (process.hrtime.bigint() - warmUpStart < warmUpTimeNanos) {
       for (const file of benchmarkOptions.files) {
@@ -280,7 +327,18 @@ export default async function runBenchmark(
   }
   await Promise.all(promises);
   const totalTime = Number(process.hrtime.bigint() - startTime) / 1e9;
-  console.log(getSummary(name, totalTime, benchmarkOptions));
+  if (benchmarkOptions.jsonOutput) {
+    console.log(
+      JSON.stringify({
+        name,
+        totalTime,
+        linesPerSecond: Math.round(numLines(benchmarkOptions) / totalTime),
+        totalLines: numLines(benchmarkOptions),
+      }),
+    );
+  } else {
+    console.log(getSummary(name, totalTime, benchmarkOptions));
+  }
 }
 
 function getSummary(name: string, totalTime: number, benchmarkOptions: BenchmarkOptions): string {

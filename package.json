@@ -17,6 +17,7 @@
     "clean": "rm -rf ./build ./dist ./dist-self-build ./dist-types ./example-runner/example-repos ./test262/test262-checkout",
     "generate": "sucrase-node generator/generate.ts",
     "benchmark": "cd benchmark && yarn && sucrase-node ./benchmark.ts",
+    "benchmark-compare": "sucrase-node ./benchmark/compare-performance.ts",
     "microbenchmark": "sucrase-node benchmark/microbenchmark.ts",
     "lint": "sucrase-node script/lint.ts",
     "profile": "node --inspect-brk ./node_modules/.bin/sucrase-node ./benchmark/profile",

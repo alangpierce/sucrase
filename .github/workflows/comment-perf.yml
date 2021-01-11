@@ -1,0 +1,74 @@
+name: "Post performance comparison comment on PR"
+
+on:
+  workflow_run:
+    workflows: ["All tests"]
+    types:
+      - completed
+
+# This is based off of the code snippets from:
+# https://securitylab.github.com/research/github-actions-preventing-pwn-requests
+jobs:
+  post-perf-comparison:
+    name: "Post performance comparison"
+    runs-on: ubuntu-latest
+    if: >
+      ${{ github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: 'Download artifact'
+        uses: actions/github-script@v3.1.0
+        with:
+          script: |
+            const artifacts = await github.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: ${{github.event.workflow_run.id }},
+            });
+            const matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "perf-comparison"
+            })[0];
+            const download = await github.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            const fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/perf-comparison.zip', Buffer.from(download.data));
+      - run: unzip perf-comparison.zip
+
+      - name: 'Comment on PR'
+        uses: actions/github-script@v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const prNumber = Number(fs.readFileSync('./pr-number.txt'));
+            const summary = fs.readFileSync('./summary.txt').toString();
+            
+            const prComments = await github.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const existingComment = prComments.data.find(
+              (comment) => comment.body.includes("## Benchmark results")
+            );
+            
+            if (existingComment) {
+              await github.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: summary,
+              });
+            } else {
+              await github.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: summary,
+              });
+            }

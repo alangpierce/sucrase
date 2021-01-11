@@ -18,8 +18,6 @@
     "generate": "sucrase-node generator/generate.ts",
     "benchmark": "cd benchmark && yarn && sucrase-node ./benchmark.ts",
     "microbenchmark": "sucrase-node benchmark/microbenchmark.ts",
-    "benchmark-react": "sucrase-node benchmark/benchmark-react.ts",
-    "benchmark-project": "sucrase-node benchmark/benchmark-project.ts",
     "lint": "sucrase-node script/lint.ts",
     "profile": "node --inspect-brk ./node_modules/.bin/sucrase-node ./benchmark/profile",
     "profile-project": "node --inspect-brk ./node_modules/.bin/sucrase-node ./benchmark/benchmark-project.ts --profile",

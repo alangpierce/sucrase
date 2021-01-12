@@ -44,7 +44,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
+            
             const prNumber = Number(fs.readFileSync('./pr-number.txt'));
+            if (!prNumber) {
+              return;
+            }
+            
             const summary = fs.readFileSync('./summary.txt').toString();
             
             const prComments = await github.issues.listComments({

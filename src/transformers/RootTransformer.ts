@@ -39,17 +39,9 @@ export default class RootTransformer {
     this.isImportsTransformEnabled = transforms.includes("imports");
     this.isReactHotLoaderTransformEnabled = transforms.includes("react-hot-loader");
 
-    this.transformers.push(
-      new OptionalChainingNullishTransformer(tokenProcessor, this.nameManager),
-    );
-    this.transformers.push(new NumericSeparatorTransformer(tokenProcessor));
-    this.transformers.push(new OptionalCatchBindingTransformer(tokenProcessor, this.nameManager));
     if (transforms.includes("jsx")) {
       this.transformers.push(
         new JSXTransformer(this, tokenProcessor, importProcessor, this.nameManager, options),
-      );
-      this.transformers.push(
-        new ReactDisplayNameTransformer(this, tokenProcessor, importProcessor, options),
       );
     }
 

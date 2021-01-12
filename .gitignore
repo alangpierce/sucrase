@@ -9,3 +9,4 @@ integrations/gulp-plugin/dist
 .nyc_output
 coverage.lcov
 benchmark/sample/jest
+.perf-comparison

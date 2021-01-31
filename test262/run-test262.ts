@@ -30,7 +30,7 @@ async function main(): Promise<void> {
     await run(`git clone ${TEST262_REPO_URL} ${TEST262_DIR}`);
   }
 
-  // Force a specific revision so we don't get a breakage from changes to the master branch.
+  // Force a specific revision so we don't get a breakage from changes to the main branch.
   const originalCwd = process.cwd();
   try {
     process.chdir(TEST262_DIR);

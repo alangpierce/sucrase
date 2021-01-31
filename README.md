@@ -40,7 +40,7 @@ TypeScript  24.18 seconds   14937 lines per second
 Babel       27.22 seconds   13270 lines per second
 ```
 Details: Measured on January 2021. Tools run in single-threaded mode without warm-up. See the
-[benchmark code](https://github.com/alangpierce/sucrase/blob/master/benchmark/benchmark.ts)
+[benchmark code](https://github.com/alangpierce/sucrase/blob/main/benchmark/benchmark.ts)
 for methodology and caveats.
 
 ## Transforms
@@ -49,7 +49,7 @@ The main configuration option in Sucrase is an array of transform names. These
 transforms are available:
 * **jsx**: Transforms JSX syntax to `React.createElement`, e.g. `<div a={b} />`
   becomes `React.createElement('div', {a: b})`. Behaves like Babel 7's
-  [React preset](https://github.com/babel/babel/tree/master/packages/babel-preset-react),
+  [React preset](https://github.com/babel/babel/tree/main/packages/babel-preset-react),
   including adding `createReactClass` display names and JSX context information.
 * **typescript**: Compiles TypeScript code to JavaScript, removing type
   annotations and handling features like enums. Does not check types. Sucrase
@@ -119,9 +119,9 @@ yarn add --dev sucrase  # Or npm install --save-dev sucrase
 ```
 
 Often, you'll want to use one of the build tool integrations:
-[Webpack](https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-loader),
-[Gulp](https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin),
-[Jest](https://github.com/alangpierce/sucrase/tree/master/integrations/jest-plugin),
+[Webpack](https://github.com/alangpierce/sucrase/tree/main/integrations/webpack-loader),
+[Gulp](https://github.com/alangpierce/sucrase/tree/main/integrations/gulp-plugin),
+[Jest](https://github.com/alangpierce/sucrase/tree/main/integrations/jest-plugin),
 [Rollup](https://github.com/rollup/plugins/tree/master/packages/sucrase),
 [Broccoli](https://github.com/stefanpenner/broccoli-sucrase).
 
@@ -228,7 +228,7 @@ to learn how to get started.
 ## License and attribution
 
 Sucrase is MIT-licensed. A large part of Sucrase is based on a fork of the
-[Babel parser](https://github.com/babel/babel/tree/master/packages/babel-parser),
+[Babel parser](https://github.com/babel/babel/tree/main/packages/babel-parser),
 which is also MIT-licensed.
 
 ## Why the name?

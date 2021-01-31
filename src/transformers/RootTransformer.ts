@@ -286,9 +286,11 @@ export default class RootTransformer {
         fieldIndex++;
       } else if (
         rangeToRemoveIndex < rangesToRemove.length &&
-        this.tokens.currentIndex() === rangesToRemove[rangeToRemoveIndex].start
+        this.tokens.currentIndex() >= rangesToRemove[rangeToRemoveIndex].start
       ) {
-        this.tokens.removeInitialToken();
+        if (this.tokens.currentIndex() < rangesToRemove[rangeToRemoveIndex].end) {
+          this.tokens.removeInitialToken();
+        }
         while (this.tokens.currentIndex() < rangesToRemove[rangeToRemoveIndex].end) {
           this.tokens.removeToken();
         }

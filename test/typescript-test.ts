@@ -2406,4 +2406,23 @@ describe("typescript transform", () => {
     `,
     );
   });
+
+  it("correctly handles field declarations after function overloads", () => {
+    assertTypeScriptResult(
+      `
+      class Class {
+        method(a: number);
+        method(a: unknown) {}
+        declare field: number;
+      }
+    `,
+      `"use strict";
+      class Class {
+        
+        method(a) {}
+        
+      }
+    `,
+    );
+  });
 });

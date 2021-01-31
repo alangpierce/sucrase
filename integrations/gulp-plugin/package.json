@@ -5,7 +5,7 @@
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
   "main": "dist/index.js",
-  "repository": "https://github.com/alangpierce/sucrase/tree/master/integrations/gulp-plugin",
+  "repository": "https://github.com/alangpierce/sucrase/tree/main/integrations/gulp-plugin",
   "files": [
     "dist"
   ],

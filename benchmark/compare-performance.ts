@@ -33,10 +33,10 @@ state at the end, but prefer using it while in a clean git state and
 double-check the git state after running.
 `);
   const branchRef = await getBranchRef();
-  let baseRef = "origin/master";
-  if (branchRef === "master") {
+  let baseRef = "origin/main";
+  if (branchRef === "main") {
     // If this is a default branch build, compare with the previous commit.
-    baseRef = "origin/master~1";
+    baseRef = "origin/main~1";
   }
   console.log(`Branch ref: ${branchRef}, base ref: ${baseRef}`);
   try {

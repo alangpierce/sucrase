@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Webpack loader for Sucrase",
   "main": "dist/index.js",
-  "repository": "https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-loader",
+  "repository": "https://github.com/alangpierce/sucrase/tree/main/integrations/webpack-loader",
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
   "peerDependencies": {

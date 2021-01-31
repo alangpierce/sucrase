@@ -8,7 +8,7 @@ This is a simple Webpack loader that makes it easy to use
 
 **Note: Object rest/spread syntax (e.g. `{...a, b: c}`) requires Webpack 4. For
 earlier Webpack versions, you can use
-[webpack-object-rest-spread-plugin](https://github.com/alangpierce/sucrase/tree/master/integrations/webpack-object-rest-spread-plugin)
+[webpack-object-rest-spread-plugin](https://github.com/alangpierce/sucrase/tree/main/integrations/webpack-object-rest-spread-plugin)
 alongside this loader.**
 
 ## Usage

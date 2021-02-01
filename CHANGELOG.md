@@ -1,3 +1,8 @@
+# 3.17.1 (2021-01-31)
+
+* Fix bug where TS method overloads in a class would cause later class fields to
+  not be handled properly. ([#593])
+
 # 3.17.0 (2020-12-29)
 
 * Fix incorrect export removal when exporting a variable defined using a
@@ -320,3 +325,4 @@
 [#573]: https://github.com/alangpierce/sucrase/pull/573
 [#574]: https://github.com/alangpierce/sucrase/pull/574
 [#575]: https://github.com/alangpierce/sucrase/pull/575
+[#593]: https://github.com/alangpierce/sucrase/pull/593

@@ -31,7 +31,7 @@
     "object-assign": "^4.1.1",
     "promise": "^8.0.3",
     "react": "^16.11.0",
-    "react-dev-utils": "^11.0.1",
+    "react-dev-utils": "^11.0.4",
     "react-dom": "^16.11.0",
     "react-hot-loader": "^4.12.16",
     "react-monaco-editor": "^0.32.1",

@@ -68,7 +68,7 @@ export function registerTSXLegacyModuleInterop(hookOptions?: HookOptions): Rever
 }
 
 export function registerAll(hookOptions?: HookOptions): RevertFunction {
-  const functions = [
+  const reverts = [
     registerJS(hookOptions),
     registerJSX(hookOptions),
     registerTS(hookOptions),
@@ -76,7 +76,7 @@ export function registerAll(hookOptions?: HookOptions): RevertFunction {
   ];
 
   return () => {
-    functions.forEach((fn) => {
+    reverts.forEach((fn) => {
       fn();
     });
   };

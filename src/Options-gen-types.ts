@@ -10,6 +10,7 @@ export const Transform = t.union(
   t.lit("flow"),
   t.lit("imports"),
   t.lit("react-hot-loader"),
+  t.lit("jest"),
 );
 
 export const SourceMapOptions = t.iface([], {

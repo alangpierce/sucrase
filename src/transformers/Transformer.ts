@@ -6,6 +6,10 @@ export default abstract class Transformer {
     return "";
   }
 
+  getHoistedCode(): string {
+    return "";
+  }
+
   getSuffixCode(): string {
     return "";
   }

@@ -21,5 +21,5 @@ Then change the default transform in jest.config.js file:
 ```
 
 Currently, the transforms are not configurable; it uses always runs the import
-transform and uses the file extension to decide whether to run the JSX, Flow,
-and/or TypeScript transforms.
+and jest transforms and uses the file extension to decide whether to run the
+JSX, Flow, and/or TypeScript transforms.

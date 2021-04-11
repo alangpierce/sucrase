@@ -64,6 +64,9 @@ transforms are available:
   transform in the [react-hot-loader](https://github.com/gaearon/react-hot-loader)
   project. This enables advanced hot reloading use cases such as editing of
   bound methods.
+* **jest**: Hoist desired [jest](https://jestjs.io/) method calls above imports in
+  the same way as [babel-plugin-jest-hoist](https://github.com/facebook/jest/tree/master/packages/babel-plugin-jest-hoist).
+  Does not validate the arguments passed to `jest.mock`, but the same rules still apply.
 
 These proposed JS features are built-in and always transformed:
 * [Optional chaining](https://github.com/tc39/proposal-optional-chaining): `a?.b`

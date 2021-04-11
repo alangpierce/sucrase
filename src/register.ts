@@ -76,8 +76,8 @@ export function registerAll(hookOptions?: HookOptions): RevertFunction {
   ];
 
   return () => {
-    reverts.forEach((fn) => {
+    for (const fn of reverts) {
       fn();
-    });
+    }
   };
 }

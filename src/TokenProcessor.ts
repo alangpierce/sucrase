@@ -168,7 +168,8 @@ export default class TokenProcessor {
   }
 
   removeInitialToken(): void {
-    this.replaceToken("");
+    this.resultCode += this.previousWhitespaceAndComments();
+    this.tokenIndex++;
   }
 
   removeToken(): void {

@@ -1,3 +1,9 @@
+# 3.18.0 (2021-04-11)
+
+* Add `jest` transform analogous to `babel-plugin-jest-hoist`. ([#540]) (Patrik Oldsberg)
+* When calling a `register` function or `addHook`, return a function that
+  reverts the hook. ([#604]) (Anthony Fu)
+
 # 3.17.1 (2021-01-31)
 
 * Fix bug where TS method overloads in a class would cause later class fields to
@@ -326,3 +332,5 @@
 [#574]: https://github.com/alangpierce/sucrase/pull/574
 [#575]: https://github.com/alangpierce/sucrase/pull/575
 [#593]: https://github.com/alangpierce/sucrase/pull/593
+[#540]: https://github.com/alangpierce/sucrase/pull/540
+[#604]: https://github.com/alangpierce/sucrase/pull/604

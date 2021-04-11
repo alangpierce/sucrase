@@ -42,6 +42,7 @@ export const TRANSFORMS: Array<TransformInfo> = [
   {name: "flow", presetName: "flow"},
   {name: "imports", babelName: "transform-modules-commonjs"},
   {name: "react-hot-loader", babelName: "react-hot-loader"},
+  {name: "jest", babelName: "jest-hoist"},
 ];
 
 export const DEFAULT_TRANSFORMS = ["jsx", "typescript", "imports"];

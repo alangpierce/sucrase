@@ -9,10 +9,13 @@ import {registerPlugin, transform} from "@babel/standalone";
 // @ts-ignore
 import DynamicImportPlugin from "babel-plugin-dynamic-import-node";
 // @ts-ignore
+import JestHoistPlugin from "babel-plugin-jest-hoist";
+// @ts-ignore
 import ReactHotLoaderPlugin from "react-hot-loader/dist/babel.development";
 
 registerPlugin("proposal-numeric-separator", NumericSeparatorPlugin);
 registerPlugin("dynamic-import-node", DynamicImportPlugin);
 registerPlugin("react-hot-loader", ReactHotLoaderPlugin);
+registerPlugin("jest-hoist", JestHoistPlugin);
 
 export {transform};

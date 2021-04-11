@@ -1,4 +1,5 @@
 import type CJSImportProcessor from "../CJSImportProcessor";
+import type NameManager from "../NameManager";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import type TokenProcessor from "../TokenProcessor";
 import type RootTransformer from "./RootTransformer";
@@ -10,13 +11,18 @@ const HOISTED_METHODS = ["mock", "unmock", "enableAutomock", "disableAutomock"];
 /**
  * Implementation of babel-plugin-jest-hoist, which hoists up some jest method
  * calls above the imports to allow them to override other imports.
+ *
+ * To preserve line numbers, rather than directly moving the jest.mock code, we
+ * wrap each invocation in a function statement and then call the function from
+ * the top of the file.
  */
 export default class JestHoistTransformer extends Transformer {
-  private readonly hoistedCalls: Array<string> = [];
+  private readonly hoistedFunctionNames: Array<string> = [];
 
   constructor(
     readonly rootTransformer: RootTransformer,
     readonly tokens: TokenProcessor,
+    readonly nameManager: NameManager,
     readonly importProcessor: CJSImportProcessor | null,
   ) {
     super();
@@ -40,10 +46,10 @@ export default class JestHoistTransformer extends Transformer {
   }
 
   getHoistedCode(): string {
-    if (this.hoistedCalls.length > 0) {
+    if (this.hoistedFunctionNames.length > 0) {
       // This will be placed before module interop code, but that's fine since
       // imports aren't allowed in module mock factories.
-      return `\n${JEST_GLOBAL_NAME}${this.hoistedCalls.join("")};`;
+      return this.hoistedFunctionNames.map((name) => `${name}();`).join("");
     }
     return "";
   }
@@ -57,46 +63,46 @@ export default class JestHoistTransformer extends Transformer {
    * We do not apply the same checks of the arguments as babel-plugin-jest-hoist does.
    */
   private extractHoistedCalls(): boolean {
-    // We remove the `jest` expression, then add it back later if we find a non-hoisted call
+    // We're handling a chain of calls where `jest` may or may not need to be inserted for each call
+    // in the chain, so remove the initial `jest` to make the loop implementation cleaner.
     this.tokens.removeToken();
-    let restoredJest = false;
+    // Track some state so that multiple non-hoisted chained calls in a row keep their chaining
+    // syntax.
+    let followsNonHoistedJestCall = false;
 
-    // Iterate through all chained calls on the jest object
+    // Iterate through all chained calls on the jest object.
     while (this.tokens.matches3(tt.dot, tt.name, tt.parenL)) {
       const methodName = this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 1);
       const shouldHoist = HOISTED_METHODS.includes(methodName);
       if (shouldHoist) {
-        // We've matched e.g. `.mock(...)` or similar call
-        // Start by applying transforms to the entire call, including parameters
-        const snapshotBefore = this.tokens.snapshot();
-        this.tokens.copyToken();
+        // We've matched e.g. `.mock(...)` or similar call.
+        // Replace the initial `.` with `function __jestHoist(){jest.`
+        const hoistedFunctionName = this.nameManager.claimFreeName("__jestHoist");
+        this.hoistedFunctionNames.push(hoistedFunctionName);
+        this.tokens.replaceToken(`function ${hoistedFunctionName}(){${JEST_GLOBAL_NAME}.`);
         this.tokens.copyToken();
         this.tokens.copyToken();
         this.rootTransformer.processBalancedCode();
         this.tokens.copyExpectedToken(tt.parenR);
-        const snapshotAfter = this.tokens.snapshot();
-
-        // Then grab the transformed code and store it for hoisting
-        const processedCall = snapshotAfter.resultCode.slice(snapshotBefore.resultCode.length);
-        this.hoistedCalls.push(processedCall);
-
-        // Now go back and remove the entire method call
-        const endIndex = this.tokens.currentIndex();
-        this.tokens.restoreToSnapshot(snapshotBefore);
-        while (this.tokens.currentIndex() < endIndex) {
-          this.tokens.removeToken();
-        }
+        this.tokens.appendCode(";}");
+        followsNonHoistedJestCall = false;
       } else {
-        if (!restoredJest) {
-          restoredJest = true;
-          this.tokens.appendCode(JEST_GLOBAL_NAME);
+        // This is a non-hoisted method, so just transform the code as usual.
+        if (followsNonHoistedJestCall) {
+          // If we didn't hoist the previous call, we can leave the code as-is to chain off of the
+          // previous method call. It's important to preserve the code here because we don't know
+          // for sure that the method actually returned the jest object for chaining.
+          this.tokens.copyToken();
+        } else {
+          // If we hoisted the previous call, we know it returns the jest object back, so we insert
+          // the identifier `jest` to continue the chain.
+          this.tokens.replaceToken(`${JEST_GLOBAL_NAME}.`);
         }
-        // When not hoisting we just transform the method call as usual
-        this.tokens.copyToken();
         this.tokens.copyToken();
         this.tokens.copyToken();
         this.rootTransformer.processBalancedCode();
         this.tokens.copyExpectedToken(tt.parenR);
+        followsNonHoistedJestCall = true;
       }
     }
 

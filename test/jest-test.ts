@@ -34,13 +34,12 @@ describe("transform jest", () => {
       jest.mock('c', () => {}).mock('d', () => {});
       jest.doMock('a', () => {});
     `,
-      `
-jest.mock('a').unmock('b').enableAutomock().disableAutomock().mock('c', () => {}).mock('d', () => {});
+      `__jestHoist();__jestHoist2();__jestHoist3();__jestHoist4();__jestHoist5();__jestHoist6();
       import 'moduleName';
-;
-jest.unknown();
-
-;
+function __jestHoist(){jest.mock('a');};
+function __jestHoist2(){jest.unmock('b');}jest.unknown()function __jestHoist3(){jest.enableAutomock();};
+function __jestHoist4(){jest.disableAutomock();}
+function __jestHoist5(){jest.mock('c', () => {});}function __jestHoist6(){jest.mock('d', () => {});};
 jest.doMock('a', () => {});
     `,
     );
@@ -57,23 +56,21 @@ jest.doMock('a', () => {});
         jest.unmock('c')
       `,
       {
-        expectedCJSResult: `"use strict";${IMPORT_DEFAULT_PREFIX}
-jest.mock('a').mock('b', () => ({})).unmock('c');
+        expectedCJSResult: `"use strict";${IMPORT_DEFAULT_PREFIX}__jestHoist();__jestHoist2();__jestHoist3();
         var _a = require('a');
-;
+function __jestHoist(){jest.mock('a');};
         var _b = require('b');
-;
+function __jestHoist2(){jest.mock('b', () => ({}));};
         var _c = require('c'); var _c2 = _interopRequireDefault(_c);
-
+function __jestHoist3(){jest.unmock('c');}
       `,
-        expectedESMResult: `
-jest.mock('a').mock('b', () => ({})).unmock('c');
+        expectedESMResult: `__jestHoist();__jestHoist2();__jestHoist3();
         import {A} from 'a';
-;
+function __jestHoist(){jest.mock('a');};
         import {B} from 'b';
-;
+function __jestHoist2(){jest.mock('b', () => ({}));};
         import C from 'c';
-
+function __jestHoist3(){jest.unmock('c');}
       `,
       },
     );
@@ -88,11 +85,10 @@ jest.mock('a').mock('b', () => ({})).unmock('c');
 
       export const x = 1
     `,
-      `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}
-jest.mock('a');
+      `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}__jestHoist();
       var _a = require('./a'); var _a2 = _interopRequireDefault(_a);
       var _b = require('./b');
-;
+function __jestHoist(){jest.mock('a');};
 
        const x = 1; exports.x = x
     `,
@@ -109,18 +105,13 @@ jest.mock('a', () => ({
   }
 }));
     `,
-      `"use strict";${IMPORT_DEFAULT_PREFIX}${NULLISH_COALESCE_PREFIX}${OPTIONAL_CHAIN_PREFIX}
-jest.mock('a', () => ({
+      `"use strict";${IMPORT_DEFAULT_PREFIX}${NULLISH_COALESCE_PREFIX}${OPTIONAL_CHAIN_PREFIX}__jestHoist();
+      var _a = require('./a'); var _a2 = _interopRequireDefault(_a);
+function __jestHoist(){jest.mock('a', () => ({
   f(x) {
     return _nullishCoalesce(_optionalChain([x, 'optionalAccess', _ => _.a]), () => ( 0));
   }
-}));
-      var _a = require('./a'); var _a2 = _interopRequireDefault(_a);
-
-
-
-
-;
+}));};
     `,
     );
   });
@@ -136,18 +127,13 @@ jest.mock('a'! as number, (arg: unknown) => ({
 }) as any);
       x()
     `,
-      `"use strict";
-jest.mock('a' , (arg) => ({
+      `"use strict";__jestHoist();
+      var _a = require('./a');
+function __jestHoist(){jest.mock('a' , (arg) => ({
   f(x) {
     return x ;
   }
-}) );
-      var _a = require('./a');
-
-
-
-
-;
+}) );};
       _a.x.call(void 0, )
     `,
       {transforms: ["jsx", "jest", "imports", "typescript"]},
@@ -165,18 +151,13 @@ jest.mock('a': number, (arg: string) => ({
 }): any);
       x()
     `,
-      `"use strict";
-jest.mock('a', (arg) => ({
+      `"use strict";__jestHoist();
+      var _a = require('./a');
+function __jestHoist(){jest.mock('a', (arg) => ({
   f(x) {
     return (x);
   }
-}));
-      var _a = require('./a');
-
-
-
-
-;
+}));};
       _a.x.call(void 0, )
     `,
       {transforms: ["jsx", "jest", "imports", "flow"]},
@@ -195,19 +176,14 @@ jest.mock('a', (arg) => ({
       }));
       x()
     `,
-      `"use strict";${JSX_PREFIX}${IMPORT_DEFAULT_PREFIX}
-jest.mock('a', (arg) => ({
+      `"use strict";${JSX_PREFIX}${IMPORT_DEFAULT_PREFIX}__jestHoist();
+      var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+      var _a = require('./a');
+function __jestHoist(){jest.mock('a', (arg) => ({
         f(x) {
           return _react2.default.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 6}} );
         }
-      }));
-      var _react = require('react'); var _react2 = _interopRequireDefault(_react);
-      var _a = require('./a');
-
-
-
-
-;
+      }));};
       _a.x.call(void 0, )
     `,
       {transforms: ["jsx", "jest", "imports"]},
@@ -226,10 +202,9 @@ jest.mock('a', (arg) => ({
       _a.jest.mock('x');
     `,
         // Note that this behavior is incorrect, but jest requires imports transform for now.
-        expectedESMResult: `
-jest.mock('x');
+        expectedESMResult: `__jestHoist();
       import {jest} from './a';
-;
+function __jestHoist(){jest.mock('x');};
     `,
       },
     );
@@ -248,6 +223,20 @@ jest.mock('x');
       _b.jest.mock('x');
     `,
       {transforms: ["jsx", "jest", "imports", "typescript"]},
+    );
+  });
+
+  it("allows chained unknown methods", () => {
+    assertResult(
+      `
+      import './a';
+      console.log(jest.spyOn({foo() {}}, 'foo').getMockName());
+    `,
+      `"use strict";
+      require('./a');
+      console.log(jest.spyOn({foo() {}}, 'foo').getMockName());
+    `,
+      {transforms: ["jest", "imports"]},
     );
   });
 });

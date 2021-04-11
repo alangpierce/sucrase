@@ -102,7 +102,9 @@ export default class RootTransformer {
       );
     }
     if (transforms.includes("jest")) {
-      this.transformers.push(new JestHoistTransformer(this, tokenProcessor, importProcessor));
+      this.transformers.push(
+        new JestHoistTransformer(this, tokenProcessor, this.nameManager, importProcessor),
+      );
     }
   }
 

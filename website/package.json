@@ -9,7 +9,7 @@
     "@sucrase/webpack-loader": "^2.0.0",
     "@types/base64-js": "^1.2.5",
     "@types/gzip-js": "^0.3.1",
-    "@types/react": "^16.9.11",
+    "@types/react": "^16",
     "@types/react-dom": "^16.9.4",
     "@types/react-virtualized": "^9.21.5",
     "aphrodite": "^2.4.0",
@@ -52,7 +52,7 @@
     "publish-website": "scripts/publish.sh"
   },
   "resolutions": {
-    "**/@types/react": "16.14.2",
+    "**/@types/react": "16.14.5",
     "**/immer": "8.0.1"
   },
   "jest": {

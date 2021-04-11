@@ -1,6 +1,7 @@
 import {
   ESMODULE_PREFIX,
   IMPORT_DEFAULT_PREFIX,
+  JSX_PREFIX,
   NULLISH_COALESCE_PREFIX,
   OPTIONAL_CHAIN_PREFIX,
 } from "./prefixes";
@@ -185,20 +186,22 @@ jest.mock('a', (arg) => ({
   it("transforms jsx in parameters", () => {
     assertResult(
       `
-      import {x, X} from './a';
-jest.mock('a': number, (arg: string) => ({
-  f(x: string): void {
-    return (x: X);
-  }
-}): any);
+      import React from 'react';
+      import {x} from './a';
+      jest.mock('a', (arg) => ({
+        f(x) {
+          return <div />;
+        }
+      }));
       x()
     `,
-      `"use strict";
+      `"use strict";${JSX_PREFIX}${IMPORT_DEFAULT_PREFIX}
 jest.mock('a', (arg) => ({
-  f(x) {
-    return (x);
-  }
-}));
+        f(x) {
+          return _react2.default.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 6}} );
+        }
+      }));
+      var _react = require('react'); var _react2 = _interopRequireDefault(_react);
       var _a = require('./a');
 
 
@@ -207,7 +210,7 @@ jest.mock('a', (arg) => ({
 ;
       _a.x.call(void 0, )
     `,
-      {transforms: ["jsx", "jest", "imports", "flow"]},
+      {transforms: ["jsx", "jest", "imports"]},
     );
   });
 

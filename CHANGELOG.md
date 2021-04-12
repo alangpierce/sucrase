@@ -1,3 +1,8 @@
+# 3.18.1 (2021-04-12)
+
+* Fix regression causing incomplete nullish coalescing and optional chaining in
+  some cases. ([#610])
+
 # 3.18.0 (2021-04-11)
 
 * Add `jest` transform analogous to `babel-plugin-jest-hoist`. ([#540]) (Patrik Oldsberg)
@@ -334,3 +339,4 @@
 [#593]: https://github.com/alangpierce/sucrase/pull/593
 [#540]: https://github.com/alangpierce/sucrase/pull/540
 [#604]: https://github.com/alangpierce/sucrase/pull/604
+[#610]: https://github.com/alangpierce/sucrase/pull/610

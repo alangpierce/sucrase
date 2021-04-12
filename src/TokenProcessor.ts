@@ -168,13 +168,11 @@ export default class TokenProcessor {
   }
 
   removeInitialToken(): void {
-    this.resultCode += this.previousWhitespaceAndComments();
-    this.tokenIndex++;
+    this.replaceToken("");
   }
 
   removeToken(): void {
-    this.resultCode += this.previousWhitespaceAndComments().replace(/[^\r\n]/g, "");
-    this.tokenIndex++;
+    this.replaceTokenTrimmingLeftWhitespace("");
   }
 
   copyExpectedToken(tokenType: TokenType): void {

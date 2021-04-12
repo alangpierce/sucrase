@@ -1052,6 +1052,32 @@ describe("sucrase", () => {
     );
   });
 
+  it("does not crash with nullish coalescing followed by TS `as`", () => {
+    assertOutput(
+      `
+      setOutput(1 ?? 2 as any);
+    `,
+      1,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("correctly transforms nullish coalescing followed by TS `as`", () => {
+    assertResult(
+      `
+      const foo = {
+        bar: baz ?? null as any
+      }
+    `,
+      `${NULLISH_COALESCE_PREFIX}
+      const foo = {
+        bar: _nullishCoalesce(baz, () => ( null ))
+      }
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
   it("correctly transforms async functions using await in an optional chain", () => {
     assertResult(
       `

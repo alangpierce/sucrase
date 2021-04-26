@@ -16,7 +16,7 @@ yarn add --dev @sucrase/jest-plugin
 Then change the default transform in jest.config.js file:
 ```
   ...
-  transform: { ".(js|jsx|tx|tsx)": "@sucrase/jest-plugin" },
+  transform: { ".(js|jsx|ts|tsx)": "@sucrase/jest-plugin" },
   ...
 ```
 

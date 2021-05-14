@@ -46,6 +46,12 @@ export interface Options {
    * If specified, omit any development-specific code in the output.
    */
   production?: boolean;
+
+  /**
+   * If specified, keep unused import specifiers on typescript.
+   * This feature is needed by svelte compiler to tell template block from script block.
+   */
+  keepUnusedImports?: boolean;
 }
 
 export function validateOptions(options: Options): void {

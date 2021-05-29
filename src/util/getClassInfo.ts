@@ -212,9 +212,10 @@ function processClassHeader(tokens: TokenProcessor): ClassHeaderInfo {
 /**
  * Extract useful information out of a constructor, starting at the "constructor" name.
  */
-function processConstructor(
-  tokens: TokenProcessor,
-): {constructorInitializerStatements: Array<string>; constructorInsertPos: number} {
+function processConstructor(tokens: TokenProcessor): {
+  constructorInitializerStatements: Array<string>;
+  constructorInsertPos: number;
+} {
   const constructorInitializerStatements = [];
 
   tokens.nextToken();

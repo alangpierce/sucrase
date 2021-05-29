@@ -37,16 +37,8 @@ export default class Editor extends Component<EditorProps> {
   };
 
   render(): JSX.Element {
-    const {
-      MonacoEditor,
-      code,
-      onChange,
-      isReadOnly,
-      isPlaintext,
-      options,
-      width,
-      height,
-    } = this.props;
+    const {MonacoEditor, code, onChange, isReadOnly, isPlaintext, options, width, height} =
+      this.props;
     return (
       <MonacoEditor
         editorDidMount={this._editorDidMount}

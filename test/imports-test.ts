@@ -402,6 +402,23 @@ var _moduleName = require('moduleName');
     );
   });
 
+  it("transforms named default import access to property access", () => {
+    assertResult(
+      `
+      import {default as foo} from 'my-module';
+      
+      foo.test();
+      test.foo();
+    `,
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
+      var _mymodule = require('my-module'); var _mymodule2 = _interopRequireDefault(_mymodule);
+      
+      _mymodule2.default.test();
+      test.foo();
+    `,
+    );
+  });
+
   it("transforms named import access to property access", () => {
     assertResult(
       `

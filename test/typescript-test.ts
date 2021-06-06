@@ -414,7 +414,7 @@ describe("typescript transform", () => {
     assertTypeScriptResult(
       `
       import A from 'a';
-      import B from 'b';
+      import {default as B} from 'b';
       import 'c';
       import D from 'd';
       import 'd';

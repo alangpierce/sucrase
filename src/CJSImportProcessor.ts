@@ -178,7 +178,7 @@ export default class CJSImportProcessor {
   private preprocessImportAtIndex(index: number): void {
     const defaultNames: Array<string> = [];
     const wildcardNames: Array<string> = [];
-    let namedImports: Array<NamedImport> = [];
+    const namedImports: Array<NamedImport> = [];
 
     index++;
     if (
@@ -212,8 +212,17 @@ export default class CJSImportProcessor {
     }
 
     if (this.tokens.matches1AtIndex(index, tt.braceL)) {
-      index++;
-      ({newIndex: index, namedImports} = this.getNamedImports(index));
+      const result = this.getNamedImports(index + 1);
+      index = result.newIndex;
+
+      for (const namedImport of result.namedImports) {
+        // Treat {default as X} as a default import to ensure usage of require interop helper
+        if (namedImport.importedName === "default") {
+          defaultNames.push(namedImport.localName);
+        } else {
+          namedImports.push(namedImport);
+        }
+      }
     }
 
     if (this.tokens.matchesContextualAtIndex(index, ContextualKeyword._from)) {

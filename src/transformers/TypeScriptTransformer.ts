@@ -1,3 +1,4 @@
+import type {Token} from "../parser/tokenizer";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import type TokenProcessor from "../TokenProcessor";
 import isIdentifier from "../util/isIdentifier";
@@ -69,88 +70,209 @@ export default class TypeScriptTransformer extends Transformer {
   }
 
   /**
-   * Rather than try to compute the actual enum values at compile time, we just create variables for
-   * each one and let everything evaluate at runtime. There's some additional complexity due to
-   * handling string literal names, including ones that happen to be valid identifiers.
+   * Transform an enum into equivalent JS. This has complexity in a few places:
+   * - TS allows string enums, numeric enums, and a mix of the two styles within an enum.
+   * - Enum keys are allowed to be referenced in later enum values.
+   * - Enum keys are allowed to be strings.
+   * - When enum values are omitted, they should follow an auto-increment behavior.
    */
   processEnumBody(enumName: string): void {
-    let isPreviousValidIdentifier = false;
-    let lastValueReference = null;
+    // Code that can be used to reference the previous enum member, or null if this is the first
+    // enum member.
+    let previousValueCode = null;
     while (true) {
       if (this.tokens.matches1(tt.braceR)) {
         break;
       }
-      const nameToken = this.tokens.currentToken();
-      let name;
-      let nameStringCode;
-      if (nameToken.type === tt.name) {
-        name = this.tokens.identifierNameForToken(nameToken);
-        nameStringCode = `"${name}"`;
-      } else if (nameToken.type === tt.string) {
-        name = this.tokens.stringValueForToken(nameToken);
-        nameStringCode = this.tokens.code.slice(nameToken.start, nameToken.end);
-      } else {
-        throw new Error("Expected name or string at beginning of enum element.");
-      }
-      const isValidIdentifier = isIdentifier(name);
+      const {nameStringCode, variableName} = this.extractEnumKeyInfo(this.tokens.currentToken());
       this.tokens.removeInitialToken();
 
-      let valueIsString;
-      let valueCode;
-
-      if (this.tokens.matches1(tt.eq)) {
-        const rhsEndIndex = this.tokens.currentToken().rhsEndIndex!;
-        if (rhsEndIndex == null) {
-          throw new Error("Expected rhsEndIndex on enum assign.");
-        }
-        this.tokens.removeToken();
-        if (
-          this.tokens.matches2(tt.string, tt.comma) ||
-          this.tokens.matches2(tt.string, tt.braceR)
-        ) {
-          valueIsString = true;
-        }
-        const startToken = this.tokens.currentToken();
-        while (this.tokens.currentIndex() < rhsEndIndex) {
-          this.tokens.removeToken();
-        }
-        valueCode = this.tokens.code.slice(
-          startToken.start,
-          this.tokens.tokenAtRelativeIndex(-1).end,
-        );
+      if (
+        this.tokens.matches3(tt.eq, tt.string, tt.comma) ||
+        this.tokens.matches3(tt.eq, tt.string, tt.braceR)
+      ) {
+        this.processStringLiteralEnumMember(enumName, nameStringCode, variableName);
+      } else if (this.tokens.matches1(tt.eq)) {
+        this.processExplicitValueEnumMember(enumName, nameStringCode, variableName);
       } else {
-        valueIsString = false;
-        if (lastValueReference != null) {
-          if (isPreviousValidIdentifier) {
-            valueCode = `${lastValueReference} + 1`;
-          } else {
-            valueCode = `(${lastValueReference}) + 1`;
-          }
-        } else {
-          valueCode = "0";
-        }
+        this.processImplicitValueEnumMember(
+          enumName,
+          nameStringCode,
+          variableName,
+          previousValueCode,
+        );
       }
       if (this.tokens.matches1(tt.comma)) {
         this.tokens.removeToken();
       }
 
-      let valueReference;
-      if (isValidIdentifier) {
-        this.tokens.appendCode(`const ${name} = ${valueCode}; `);
-        valueReference = name;
+      if (variableName != null) {
+        previousValueCode = variableName;
       } else {
-        valueReference = valueCode;
+        previousValueCode = `${enumName}[${nameStringCode}]`;
       }
-
-      if (valueIsString) {
-        this.tokens.appendCode(`${enumName}[${nameStringCode}] = ${valueReference};`);
-      } else {
-        this.tokens.appendCode(
-          `${enumName}[${enumName}[${nameStringCode}] = ${valueReference}] = ${nameStringCode};`,
-        );
-      }
-      lastValueReference = valueReference;
-      isPreviousValidIdentifier = isValidIdentifier;
     }
+  }
+
+  /**
+   * Detect name information about this enum key, which will be used to determine which code to emit
+   * and whether we should declare a variable as part of this declaration.
+   *
+   * Some cases to keep in mind:
+   * - Enum keys can be implicitly referenced later, e.g. `X = 1, Y = X`. In Sucrase, we implement
+   *   this by declaring a variable `X` so that later expressions can use it.
+   * - In addition to the usual identifier key syntax, enum keys are allowed to be string literals,
+   *   e.g. `"hello world" = 3,`. Template literal syntax is NOT allowed.
+   * - Even if the enum key is defined as a string literal, it may still be referenced by identifier
+   *   later, e.g. `"X" = 1, Y = X`. That means that we need to detect whether or not a string
+   *   literal is identifier-like and emit a variable if so, even if the declaration did not use an
+   *   identifier.
+   * - Reserved keywords like `break` are valid enum keys, but are not valid to be referenced later
+   *   and would be a syntax error if we emitted a variable, so we need to skip the variable
+   *   declaration in those cases.
+   *
+   * The variableName return value captures these nuances: if non-null, we can and must emit a
+   * variable declaration, and if null, we can't and shouldn't.
+   */
+  extractEnumKeyInfo(nameToken: Token): {nameStringCode: string; variableName: string | null} {
+    if (nameToken.type === tt.name) {
+      const name = this.tokens.identifierNameForToken(nameToken);
+      return {
+        nameStringCode: `"${name}"`,
+        variableName: isIdentifier(name) ? name : null,
+      };
+    } else if (nameToken.type === tt.string) {
+      const name = this.tokens.stringValueForToken(nameToken);
+      return {
+        nameStringCode: this.tokens.code.slice(nameToken.start, nameToken.end),
+        variableName: isIdentifier(name) ? name : null,
+      };
+    } else {
+      throw new Error("Expected name or string at beginning of enum element.");
+    }
+  }
+
+  /**
+   * Handle an enum member where the RHS is just a string literal (not omitted, not a number, and
+   * not a complex expression). This is the typical form for TS string enums, and in this case, we
+   * do *not* create a reverse mapping.
+   *
+   * This is called after deleting the key token, when the token processor is at the equals sign.
+   *
+   * Example 1:
+   * someKey = "some value"
+   * ->
+   * const someKey = "some value"; MyEnum["someKey"] = someKey;
+   *
+   * Example 2:
+   * "some key" = "some value"
+   * ->
+   * MyEnum["some key"] = "some value";
+   */
+  processStringLiteralEnumMember(
+    enumName: string,
+    nameStringCode: string,
+    variableName: string | null,
+  ): void {
+    if (variableName != null) {
+      this.tokens.appendCode(`const ${variableName}`);
+      // =
+      this.tokens.copyToken();
+      // value string
+      this.tokens.copyToken();
+      this.tokens.appendCode(`; ${enumName}[${nameStringCode}] = ${variableName};`);
+    } else {
+      this.tokens.appendCode(`${enumName}[${nameStringCode}]`);
+      // =
+      this.tokens.copyToken();
+      // value string
+      this.tokens.copyToken();
+      this.tokens.appendCode(";");
+    }
+  }
+
+  /**
+   * Handle an enum member initialized with an expression on the right-hand side (other than a
+   * string literal). In these cases, we should transform the expression and emit code that sets up
+   * a reverse mapping.
+   *
+   * The TypeScript implementation of this operation distinguishes between expressions that can be
+   * "constant folded" at compile time (i.e. consist of number literals and simple math operations
+   * on those numbers) and ones that are dynamic. For constant expressions, it emits the resolved
+   * numeric value, and auto-incrementing is only allowed in that case. Evaluating expressions at
+   * compile time would add significant complexity to Sucrase, so Sucrase instead leaves the
+   * expression as-is, and will later emit something like `MyEnum["previousKey"] + 1` to implement
+   * auto-incrementing.
+   *
+   * This is called after deleting the key token, when the token processor is at the equals sign.
+   *
+   * Example 1:
+   * someKey = 1 + 1
+   * ->
+   * const someKey = 1 + 1; MyEnum[MyEnum["someKey"] = someKey] = "someKey";
+   *
+   * Example 2:
+   * "some key" = 1 + 1
+   * ->
+   * MyEnum[MyEnum["some key"] = 1 + 1] = "some key";
+   */
+  processExplicitValueEnumMember(
+    enumName: string,
+    nameStringCode: string,
+    variableName: string | null,
+  ): void {
+    const rhsEndIndex = this.tokens.currentToken().rhsEndIndex!;
+    if (rhsEndIndex == null) {
+      throw new Error("Expected rhsEndIndex on enum assign.");
+    }
+
+    if (variableName != null) {
+      this.tokens.appendCode(`const ${variableName}`);
+      this.tokens.copyToken();
+      while (this.tokens.currentIndex() < rhsEndIndex) {
+        this.rootTransformer.processToken();
+      }
+      this.tokens.appendCode(
+        `; ${enumName}[${enumName}[${nameStringCode}] = ${variableName}] = ${nameStringCode};`,
+      );
+    } else {
+      this.tokens.appendCode(`${enumName}[${enumName}[${nameStringCode}]`);
+      this.tokens.copyToken();
+      while (this.tokens.currentIndex() < rhsEndIndex) {
+        this.rootTransformer.processToken();
+      }
+      this.tokens.appendCode(`] = ${nameStringCode};`);
+    }
+  }
+
+  /**
+   * Handle an enum member with no right-hand side expression. In this case, the value is the
+   * previous value plus 1, or 0 if there was no previous value. We should also always emit a
+   * reverse mapping.
+   *
+   * Example 1:
+   * someKey2
+   * ->
+   * const someKey2 = someKey1 + 1; MyEnum[MyEnum["someKey2"] = someKey2] = "someKey2";
+   *
+   * Example 2:
+   * "some key 2"
+   * ->
+   * MyEnum[MyEnum["some key 2"] = someKey1 + 1] = "some key 2";
+   */
+  processImplicitValueEnumMember(
+    enumName: string,
+    nameStringCode: string,
+    variableName: string | null,
+    previousValueCode: string | null,
+  ): void {
+    let valueCode = previousValueCode != null ? `${previousValueCode} + 1` : "0";
+    if (variableName != null) {
+      this.tokens.appendCode(`const ${variableName} = ${valueCode}; `);
+      valueCode = variableName;
+    }
+    this.tokens.appendCode(
+      `${enumName}[${enumName}[${nameStringCode}] = ${valueCode}] = ${nameStringCode};`,
+    );
   }
 }

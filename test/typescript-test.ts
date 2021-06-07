@@ -571,21 +571,23 @@ describe("typescript transform", () => {
         "\\n",
         ",",
         "'",
+        "f f" = "g g"
       }
     `,
       `"use strict";
       var Foo; (function (Foo) {
         const A = 15.5; Foo[Foo["A"] = A] = "A";
         Foo[Foo["Hello world"] = A / 2] = "Hello world";
-        Foo[Foo[""] = (A / 2) + 1] = "";
+        Foo[Foo[""] = Foo["Hello world"] + 1] = "";
         const D = "foo".length; Foo[Foo["D"] = D] = "D";
         const E = D / D; Foo[Foo["E"] = E] = "E";
         Foo[Foo["debugger"] = 4] = "debugger";
         Foo[Foo["default"] = 7] = "default";
         Foo[Foo["!"] = E << E] = "!";
-        Foo[Foo["\\n"] = (E << E) + 1] = "\\n";
-        Foo[Foo[","] = ((E << E) + 1) + 1] = ",";
-        Foo[Foo["'"] = (((E << E) + 1) + 1) + 1] = "'";
+        Foo[Foo["\\n"] = Foo["!"] + 1] = "\\n";
+        Foo[Foo[","] = Foo["\\n"] + 1] = ",";
+        Foo[Foo["'"] = Foo[","] + 1] = "'";
+        Foo["f f"] = "g g";
       })(Foo || (Foo = {}));
     `,
     );
@@ -2422,6 +2424,27 @@ describe("typescript transform", () => {
         method(a) {}
         
       }
+    `,
+    );
+  });
+
+  it("correctly transforms enum expressions", () => {
+    assertTypeScriptResult(
+      `
+      import A from './A';
+      
+      enum E {
+        Foo = A.Foo,
+        Bar = A.Bar,
+      }
+    `,
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
+      var _A = require('./A'); var _A2 = _interopRequireDefault(_A);
+      
+      var E; (function (E) {
+        const Foo = _A2.default.Foo; E[E["Foo"] = Foo] = "Foo";
+        const Bar = _A2.default.Bar; E[E["Bar"] = Bar] = "Bar";
+      })(E || (E = {}));
     `,
     );
   });

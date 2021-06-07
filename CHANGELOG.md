@@ -1,3 +1,11 @@
+# 3.18.2 (2021-06-07)
+
+* Properly handle imports like `import {default as myFunc} from './myFunc';`
+  when importing from files that are not ES modules. ([#619]) (Patrik Oldsberg)
+* Fix bug where other transforms were not being applied to enum value
+  expressions, so enum declarations like `A = EnumInOtherFile.A` didn't work.
+  ([#621])
+
 # 3.18.1 (2021-04-12)
 
 * Fix regression causing incomplete nullish coalescing and optional chaining in
@@ -340,3 +348,5 @@
 [#540]: https://github.com/alangpierce/sucrase/pull/540
 [#604]: https://github.com/alangpierce/sucrase/pull/604
 [#610]: https://github.com/alangpierce/sucrase/pull/610
+[#619]: https://github.com/alangpierce/sucrase/pull/619
+[#621]: https://github.com/alangpierce/sucrase/pull/621

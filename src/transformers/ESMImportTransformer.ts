@@ -20,7 +20,7 @@ import Transformer from "./Transformer";
 export default class ESMImportTransformer extends Transformer {
   private nonTypeIdentifiers: Set<string>;
   private declarationInfo: DeclarationInfo;
-
+  private keepUnusedImports: boolean = false;
   constructor(
     readonly tokens: TokenProcessor,
     readonly nameManager: NameManager,
@@ -29,6 +29,7 @@ export default class ESMImportTransformer extends Transformer {
     options: Options,
   ) {
     super();
+    this.keepUnusedImports = options.keepUnusedImports ?? false;
     this.nonTypeIdentifiers = isTypeScriptTransformEnabled
       ? getNonTypeIdentifiers(tokens, options)
       : new Set();
@@ -132,6 +133,10 @@ export default class ESMImportTransformer extends Transformer {
     if (this.tokens.matches1(tt.string)) {
       // This is a bare import, so we should proceed with the import.
       this.tokens.copyToken();
+      return false;
+    }
+
+    if (this.keepUnusedImports) {
       return false;
     }
 

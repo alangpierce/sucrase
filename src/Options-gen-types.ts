@@ -26,6 +26,7 @@ export const Options = t.iface([], {
   sourceMapOptions: t.opt("SourceMapOptions"),
   filePath: t.opt("string"),
   production: t.opt("boolean"),
+  keepUnusedImports: t.opt("boolean"),
 });
 
 const exportedTypeSuite: t.ITypeSuite = {

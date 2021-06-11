@@ -10,8 +10,8 @@ import TokenProcessor from "../src/TokenProcessor";
 function assertHasShadowedGlobals(code: string, expected: boolean): void {
   const file = parse(code, false, false, false);
   const nameManager = new NameManager(code, file.tokens);
-  const helperManager = new HelperManager(nameManager);
-  const tokenProcessor = new TokenProcessor(code, file.tokens, false, helperManager);
+  const helperManager = new HelperManager(nameManager, false);
+  const tokenProcessor = new TokenProcessor(code, file.tokens, false, false, helperManager);
   const importProcessor = new CJSImportProcessor(
     nameManager,
     tokenProcessor,

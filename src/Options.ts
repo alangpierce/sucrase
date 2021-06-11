@@ -47,7 +47,7 @@ export interface Options {
    */
   production?: boolean;
   /**
-   * Opts out ES syntax transformations, like optional chaining, nullish coalescing, class fields, numeric
+   * Opts out ES syntax transformations, like optional chaining, nullish coalescing, numeric
    * separators, etc.
    */
   disableESTransforms?: boolean;

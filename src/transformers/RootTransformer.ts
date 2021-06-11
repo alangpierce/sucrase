@@ -41,7 +41,9 @@ export default class RootTransformer {
     this.isReactHotLoaderTransformEnabled = transforms.includes("react-hot-loader");
 
     if (!options.disableESTransforms) {
-      this.transformers.push(new OptionalChainingNullishTransformer(tokenProcessor, this.nameManager));
+      this.transformers.push(
+        new OptionalChainingNullishTransformer(tokenProcessor, this.nameManager),
+      );
       this.transformers.push(new NumericSeparatorTransformer(tokenProcessor));
       this.transformers.push(new OptionalCatchBindingTransformer(tokenProcessor, this.nameManager));
     }

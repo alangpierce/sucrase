@@ -1,6 +1,6 @@
 import type NameManager from "./NameManager";
 
-const HELPERS: {[name: string]: string} = {
+const HELPERS = {
   interopRequireWildcard: `
     function interopRequireWildcard(obj) {
       if (obj && obj.__esModule) {
@@ -123,11 +123,22 @@ const HELPERS: {[name: string]: string} = {
   `,
 };
 
-export class HelperManager {
-  helperNames: {[baseName in keyof typeof HELPERS]?: string} = {};
-  constructor(readonly nameManager: NameManager) {}
+export type HelperName = keyof typeof HELPERS;
 
-  getHelperName(baseName: keyof typeof HELPERS): string {
+const esTransformHelperNames: Array<HelperName> = [
+  "optionalChain",
+  "optionalChainDelete",
+  "nullishCoalesce",
+  "asyncOptionalChain",
+  "asyncOptionalChainDelete",
+  "asyncNullishCoalesce",
+];
+
+export class HelperManager {
+  helperNames: {[baseName in HelperName]?: string} = {};
+  constructor(readonly nameManager: NameManager, readonly disableESTransforms: boolean) {}
+
+  getHelperName(baseName: HelperName): string {
     let helperName = this.helperNames[baseName];
     if (helperName) {
       return helperName;
@@ -145,20 +156,26 @@ export class HelperManager {
     if (this.helperNames.asyncOptionalChainDelete) {
       this.getHelperName("asyncOptionalChain");
     }
-    for (const [baseName, helperCodeTemplate] of Object.entries(HELPERS)) {
-      const helperName = this.helperNames[baseName];
-      let helperCode = helperCodeTemplate;
-      if (baseName === "optionalChainDelete") {
-        helperCode = helperCode.replace("OPTIONAL_CHAIN_NAME", this.helperNames.optionalChain!);
-      } else if (baseName === "asyncOptionalChainDelete") {
-        helperCode = helperCode.replace(
-          "ASYNC_OPTIONAL_CHAIN_NAME",
-          this.helperNames.asyncOptionalChain!,
-        );
-      }
-      if (helperName) {
-        resultCode += " ";
-        resultCode += helperCode.replace(baseName, helperName).replace(/\s+/g, " ").trim();
+    for (const [rawBaseName, helperCodeTemplate] of Object.entries(HELPERS)) {
+      const baseName = rawBaseName as HelperName;
+      const shouldOmitHelper =
+        this.disableESTransforms && esTransformHelperNames.includes(baseName);
+
+      if (!shouldOmitHelper) {
+        const helperName = this.helperNames[baseName];
+        let helperCode = helperCodeTemplate;
+        if (baseName === "optionalChainDelete") {
+          helperCode = helperCode.replace("OPTIONAL_CHAIN_NAME", this.helperNames.optionalChain!);
+        } else if (baseName === "asyncOptionalChainDelete") {
+          helperCode = helperCode.replace(
+            "ASYNC_OPTIONAL_CHAIN_NAME",
+            this.helperNames.asyncOptionalChain!,
+          );
+        }
+        if (helperName) {
+          resultCode += " ";
+          resultCode += helperCode.replace(baseName, helperName).replace(/\s+/g, " ").trim();
+        }
       }
     }
     return resultCode;

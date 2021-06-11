@@ -1305,12 +1305,14 @@ describe("sucrase", () => {
   it("omits optional changing nullish transformations if ES transforms disabled", () => {
     assertResult(
       `
-      navigator.share?.({})
+      await navigator.share?.({});
+      console.log(window.globalStore?.value);
     `,
       `
-      navigator.share?.({})
+      await navigator.share?.({});
+      console.log(window.globalStore?.value);
     `,
-        {transforms: [], disableESTransforms: true},
+      {transforms: [], disableESTransforms: true},
     );
   });
 
@@ -1330,7 +1332,7 @@ describe("sucrase", () => {
         console.log('Caught');
       }
     `,
-        {transforms: [], disableESTransforms: true},
+      {transforms: [], disableESTransforms: true},
     );
   });
 
@@ -1342,7 +1344,7 @@ describe("sucrase", () => {
       `
       console.log(123_456.777_888_999);
     `,
-        {transforms: [], disableESTransforms: true},
+      {transforms: [], disableESTransforms: true},
     );
   });
 });

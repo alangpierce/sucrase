@@ -91,7 +91,7 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
   const scopes = file.scopes;
 
   const nameManager = new NameManager(code, tokens);
-  const helperManager = new HelperManager(nameManager, disableESTransforms);
+  const helperManager = new HelperManager(nameManager);
   const tokenProcessor = new TokenProcessor(
     code,
     tokens,

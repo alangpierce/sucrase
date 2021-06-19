@@ -17,6 +17,7 @@ export default class TokenProcessor {
     readonly code: string,
     readonly tokens: Array<Token>,
     readonly isFlowEnabled: boolean,
+    readonly disableESTransforms: boolean,
     readonly helperManager: HelperManager,
   ) {}
 
@@ -210,6 +211,12 @@ export default class TokenProcessor {
     if (token.numNullishCoalesceStarts || token.isOptionalChainStart) {
       token.isAsyncOperation = isAsyncOperation(this);
     }
+    if (this.disableESTransforms) {
+      if (token.isAsyncOperation) {
+        this.resultCode += "await ";
+      }
+      return;
+    }
     if (token.numNullishCoalesceStarts) {
       for (let i = 0; i < token.numNullishCoalesceStarts; i++) {
         if (token.isAsyncOperation) {
@@ -242,10 +249,10 @@ export default class TokenProcessor {
 
   private appendTokenSuffix(): void {
     const token = this.currentToken();
-    if (token.isOptionalChainEnd) {
+    if (token.isOptionalChainEnd && !this.disableESTransforms) {
       this.resultCode += "])";
     }
-    if (token.numNullishCoalesceEnds) {
+    if (token.numNullishCoalesceEnds && !this.disableESTransforms) {
       for (let i = 0; i < token.numNullishCoalesceEnds; i++) {
         this.resultCode += "))";
       }

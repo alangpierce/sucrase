@@ -85,13 +85,20 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
   const isJSXEnabled = options.transforms.includes("jsx");
   const isTypeScriptEnabled = options.transforms.includes("typescript");
   const isFlowEnabled = options.transforms.includes("flow");
+  const disableESTransforms = options.disableESTransforms === true;
   const file = parse(code, isJSXEnabled, isTypeScriptEnabled, isFlowEnabled);
   const tokens = file.tokens;
   const scopes = file.scopes;
 
   const nameManager = new NameManager(code, tokens);
   const helperManager = new HelperManager(nameManager);
-  const tokenProcessor = new TokenProcessor(code, tokens, isFlowEnabled, helperManager);
+  const tokenProcessor = new TokenProcessor(
+    code,
+    tokens,
+    isFlowEnabled,
+    disableESTransforms,
+    helperManager,
+  );
   const enableLegacyTypeScriptModuleInterop = Boolean(options.enableLegacyTypeScriptModuleInterop);
 
   let importProcessor = null;

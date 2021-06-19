@@ -46,6 +46,11 @@ export interface Options {
    * If specified, omit any development-specific code in the output.
    */
   production?: boolean;
+  /**
+   * Opts out ES syntax transformations, like optional chaining, nullish coalescing, numeric
+   * separators, etc.
+   */
+  disableESTransforms?: boolean;
 }
 
 export function validateOptions(options: Options): void {

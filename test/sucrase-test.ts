@@ -1301,4 +1301,50 @@ describe("sucrase", () => {
       {transforms: []},
     );
   });
+
+  it("omits optional changing nullish transformations if ES transforms disabled", () => {
+    assertResult(
+      `
+      await navigator.share?.({});
+      console.log(window.globalStore?.value);
+    `,
+      `
+      await navigator.share?.({});
+      console.log(window.globalStore?.value);
+    `,
+      {transforms: [], disableESTransforms: true},
+    );
+  });
+
+  it("omits optional catch binding transformations if ES transforms disabled", () => {
+    assertResult(
+      `
+      try {
+        throw 0;
+      } catch {
+        console.log('Caught');
+      }
+    `,
+      `
+      try {
+        throw 0;
+      } catch {
+        console.log('Caught');
+      }
+    `,
+      {transforms: [], disableESTransforms: true},
+    );
+  });
+
+  it("omits numeric separator transformations if ES transforms disabled", () => {
+    assertResult(
+      `
+      console.log(123_456.777_888_999);
+    `,
+      `
+      console.log(123_456.777_888_999);
+    `,
+      {transforms: [], disableESTransforms: true},
+    );
+  });
 });

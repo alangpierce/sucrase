@@ -1,4 +1,6 @@
-import type {Transform} from "../src";
+import * as assert from "assert";
+
+import {Transform, transform} from "../src";
 import {ESMODULE_PREFIX, IMPORT_DEFAULT_PREFIX, RHL_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
@@ -248,5 +250,20 @@ describe("transform react-hot-loader", () => {
         filePath: "C:\\dev\\sample.tsx",
       },
     );
+  });
+
+  it("checks that filePath is specified", () => {
+    assert.throws(() => {
+      transform(
+        `
+          import React from 'react';
+      
+          export const App = () => <div />;
+          `,
+        {
+          transforms: ["jsx", "imports", "react-hot-loader"],
+        },
+      );
+    }, new Error("filePath is required when using the react-hot-loader transform."));
   });
 });

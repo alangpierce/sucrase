@@ -212,9 +212,6 @@ export default class TokenProcessor {
       token.isAsyncOperation = isAsyncOperation(this);
     }
     if (this.disableESTransforms) {
-      if (token.isAsyncOperation) {
-        this.resultCode += "await ";
-      }
       return;
     }
     if (token.numNullishCoalesceStarts) {

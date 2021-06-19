@@ -1302,7 +1302,7 @@ describe("sucrase", () => {
     );
   });
 
-  it("omits optional changing nullish transformations if ES transforms disabled", () => {
+  it("omits optional chaining nullish transformations if ES transforms disabled", () => {
     assertResult(
       `
       await navigator.share?.({});
@@ -1311,6 +1311,22 @@ describe("sucrase", () => {
       `
       await navigator.share?.({});
       console.log(window.globalStore?.value);
+    `,
+      {transforms: [], disableESTransforms: true},
+    );
+  });
+
+  it("properly skips optional chaining transform when the right-hand side uses await", () => {
+    assertResult(
+      `
+      async function foo() {
+        a?.b(await f());
+      }
+    `,
+      `
+      async function foo() {
+        a?.b(await f());
+      }
     `,
       {transforms: [], disableESTransforms: true},
     );

@@ -1,3 +1,4 @@
+import type {Options} from "../src/Options";
 import {
   CREATE_STAR_EXPORT_PREFIX,
   ESMODULE_PREFIX,
@@ -8,12 +9,20 @@ import {
 } from "./prefixes";
 import {assertResult, devProps} from "./util";
 
-function assertTypeScriptResult(code: string, expectedResult: string): void {
-  assertResult(code, expectedResult, {transforms: ["jsx", "imports", "typescript"]});
+function assertTypeScriptResult(
+  code: string,
+  expectedResult: string,
+  options: Partial<Options> = {},
+): void {
+  assertResult(code, expectedResult, {transforms: ["jsx", "imports", "typescript"], ...options});
 }
 
-function assertTypeScriptESMResult(code: string, expectedResult: string): void {
-  assertResult(code, expectedResult, {transforms: ["jsx", "typescript"]});
+function assertTypeScriptESMResult(
+  code: string,
+  expectedResult: string,
+  options: Partial<Options> = {},
+): void {
+  assertResult(code, expectedResult, {transforms: ["jsx", "typescript"], ...options});
 }
 
 function assertTypeScriptImportResult(
@@ -2446,6 +2455,74 @@ describe("typescript transform", () => {
         const Bar = _A2.default.Bar; E[E["Bar"] = Bar] = "Bar";
       })(E || (E = {}));
     `,
+    );
+  });
+
+  it("transforms constructor initializers even with disableESTransforms", () => {
+    assertTypeScriptESMResult(
+      `
+      class A extends B {
+        constructor(readonly x, private y = 2, z: number = 3) {
+          console.log("Hello");
+          super();
+          console.log("World");
+        }
+      }
+    `,
+      `
+      class A extends B {
+        constructor( x,  y = 2, z = 3) {
+          console.log("Hello");
+          super();this.x = x;this.y = y;;
+          console.log("World");
+        }
+      }
+    `,
+      {disableESTransforms: true},
+    );
+  });
+
+  it("removes types from class fields with disableESTransforms", () => {
+    assertTypeScriptESMResult(
+      `
+      class A {
+        x: number = 3;
+        static y: string = "Hello";
+        z: boolean;
+        static s: unknown;
+      }
+    `,
+      `
+      class A {
+        x = 3;
+        static y = "Hello";
+        z;
+        static s;
+      }
+    `,
+      {disableESTransforms: true},
+    );
+  });
+
+  it("removes declare fields with disableESTransforms", () => {
+    assertTypeScriptESMResult(
+      `
+      class A {
+        abstract readonly a: number = 3;
+        declare b: string;
+        declare static c: string;
+        static declare d: string;
+      }
+    `,
+      `
+      class A {
+          a = 3;
+        ;
+        ;
+        ;
+      }
+    `,
+      {disableESTransforms: true},
     );
   });
 });

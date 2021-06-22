@@ -1363,4 +1363,40 @@ describe("sucrase", () => {
       {transforms: [], disableESTransforms: true},
     );
   });
+
+  it("skips class field transform when ES transforms are disabled", () => {
+    assertResult(
+      `
+      class A {
+        x = 1;
+        static y = 2;
+      }
+    `,
+      `
+      class A {
+        x = 1;
+        static y = 2;
+      }
+    `,
+      {transforms: [], disableESTransforms: true},
+    );
+  });
+
+  it("skips class field transform for expression classes when ES transforms are disabled", () => {
+    assertResult(
+      `
+      C = class {
+        x = 1;
+        static y = 2;
+      }
+    `,
+      `
+      C = class {
+        x = 1;
+        static y = 2;
+      }
+    `,
+      {transforms: [], disableESTransforms: true},
+    );
+  });
 });

@@ -1,3 +1,7 @@
+# 3.19.0 (2021-06-23)
+
+* Add option to disable ES transforms. ([#623], [#624], [#625]) (Denys Kniazevych, Alan Pierce)
+
 # 3.18.2 (2021-06-07)
 
 * Properly handle imports like `import {default as myFunc} from './myFunc';`
@@ -350,3 +354,6 @@
 [#610]: https://github.com/alangpierce/sucrase/pull/610
 [#619]: https://github.com/alangpierce/sucrase/pull/619
 [#621]: https://github.com/alangpierce/sucrase/pull/621
+[#623]: https://github.com/alangpierce/sucrase/pull/623
+[#624]: https://github.com/alangpierce/sucrase/pull/624
+[#625]: https://github.com/alangpierce/sucrase/pull/625

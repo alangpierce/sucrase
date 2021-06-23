@@ -1,15 +1,23 @@
 import {throws} from "assert";
 
-import {transform} from "../src";
+import {transform, Options} from "../src";
 import {IMPORT_DEFAULT_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
-function assertFlowResult(code: string, expectedResult: string): void {
-  assertResult(code, expectedResult, {transforms: ["jsx", "imports", "flow"]});
+function assertFlowResult(
+  code: string,
+  expectedResult: string,
+  options: Partial<Options> = {},
+): void {
+  assertResult(code, expectedResult, {transforms: ["jsx", "imports", "flow"], ...options});
 }
 
-function assertFlowESMResult(code: string, expectedResult: string): void {
-  assertResult(code, expectedResult, {transforms: ["jsx", "flow"]});
+function assertFlowESMResult(
+  code: string,
+  expectedResult: string,
+  options: Partial<Options> = {},
+): void {
+  assertResult(code, expectedResult, {transforms: ["jsx", "flow"], ...options});
 }
 
 describe("transform flow", () => {
@@ -425,6 +433,24 @@ describe("transform flow", () => {
         }}
       }
     `,
+    );
+  });
+
+  it("properly removes class property variance markers with ES transforms disabled", () => {
+    assertFlowResult(
+      `
+      class C {
+        +foo: number;
+        -bar: number;
+      }
+    `,
+      `"use strict";
+      class C {
+        foo;
+        bar;
+      }
+    `,
+      {disableESTransforms: true},
     );
   });
 });

@@ -25,6 +25,7 @@ export default class RootTransformer {
   private generatedVariables: Array<string> = [];
   private isImportsTransformEnabled: boolean;
   private isReactHotLoaderTransformEnabled: boolean;
+  private disableESTransforms: boolean;
   private helperManager: HelperManager;
 
   constructor(
@@ -39,6 +40,7 @@ export default class RootTransformer {
     this.tokens = tokenProcessor;
     this.isImportsTransformEnabled = transforms.includes("imports");
     this.isReactHotLoaderTransformEnabled = transforms.includes("react-hot-loader");
+    this.disableESTransforms = Boolean(options.disableESTransforms);
 
     if (!options.disableESTransforms) {
       this.transformers.push(
@@ -193,7 +195,7 @@ export default class RootTransformer {
   }
 
   processClass(): void {
-    const classInfo = getClassInfo(this, this.tokens, this.nameManager);
+    const classInfo = getClassInfo(this, this.tokens, this.nameManager, this.disableESTransforms);
 
     // Both static and instance initializers need a class name to use to invoke the initializer, so
     // assign to one if necessary.

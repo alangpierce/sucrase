@@ -49,6 +49,7 @@ export default function getClassInfo(
   rootTransformer: RootTransformer,
   tokens: TokenProcessor,
   nameManager: NameManager,
+  disableESTransforms: boolean,
 ): ClassInfo {
   const snapshot = tokens.snapshot();
 
@@ -71,7 +72,9 @@ export default function getClassInfo(
     if (tokens.matchesContextual(ContextualKeyword._constructor) && !tokens.currentToken().isType) {
       ({constructorInitializerStatements, constructorInsertPos} = processConstructor(tokens));
     } else if (tokens.matches1(tt.semi)) {
-      rangesToRemove.push({start: tokens.currentIndex(), end: tokens.currentIndex() + 1});
+      if (!disableESTransforms) {
+        rangesToRemove.push({start: tokens.currentIndex(), end: tokens.currentIndex() + 1});
+      }
       tokens.nextToken();
     } else if (tokens.currentToken().isType) {
       tokens.nextToken();
@@ -80,12 +83,16 @@ export default function getClassInfo(
       const statementStartIndex = tokens.currentIndex();
       let isStatic = false;
       let isESPrivate = false;
+      let isDeclare = false;
       while (isAccessModifier(tokens.currentToken())) {
         if (tokens.matches1(tt._static)) {
           isStatic = true;
         }
         if (tokens.matches1(tt.hash)) {
           isESPrivate = true;
+        }
+        if (tokens.matches1(tt._declare)) {
+          isDeclare = true;
         }
         tokens.nextToken();
       }
@@ -144,23 +151,47 @@ export default function getClassInfo(
           start: nameStartIndex,
           end: tokens.currentIndex(),
         });
-      } else {
-        // This is just a declaration, so doesn't need to produce any code in the output.
+      } else if (!disableESTransforms || isDeclare) {
+        // This is a regular field declaration, like `x;`. With the class transform enabled, we just
+        // remove the line so that no output is produced. With the class transform disabled, we
+        // usually want to preserve the declaration (but still strip types), but if the `declare`
+        // keyword is specified, we should remove the line to avoid initializing the value to
+        // undefined.
         rangesToRemove.push({start: statementStartIndex, end: tokens.currentIndex()});
       }
     }
   }
 
   tokens.restoreToSnapshot(snapshot);
-  return {
-    headerInfo,
-    constructorInitializerStatements,
-    instanceInitializerNames,
-    staticInitializerNames,
-    constructorInsertPos,
-    fields,
-    rangesToRemove,
-  };
+  if (disableESTransforms) {
+    // With ES transforms disabled, we don't want to transform regular class
+    // field declarations, and we don't need to do any additional tricks to
+    // reference the constructor for static init, but we still need to transform
+    // TypeScript field initializers defined as constructor parameters and we
+    // still need to remove `declare` fields. For now, we run the same code
+    // path but omit any field information, as if the class had no field
+    // declarations. In the future, when we fully drop the class fields
+    // transform, we can simplify this code significantly.
+    return {
+      headerInfo,
+      constructorInitializerStatements,
+      instanceInitializerNames: [],
+      staticInitializerNames: [],
+      constructorInsertPos,
+      fields: [],
+      rangesToRemove,
+    };
+  } else {
+    return {
+      headerInfo,
+      constructorInitializerStatements,
+      instanceInitializerNames,
+      staticInitializerNames,
+      constructorInsertPos,
+      fields,
+      rangesToRemove,
+    };
+  }
 }
 
 /**

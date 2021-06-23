@@ -698,6 +698,7 @@ function flowParseTypeAnnotatableIdentifier(): void {
 export function flowParseVariance(): void {
   if (match(tt.plus) || match(tt.minus)) {
     next();
+    state.tokens[state.tokens.length - 1].isType = true;
   }
 }
 

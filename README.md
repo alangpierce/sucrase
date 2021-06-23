@@ -68,17 +68,23 @@ transforms are available:
   the same way as [babel-plugin-jest-hoist](https://github.com/facebook/jest/tree/master/packages/babel-plugin-jest-hoist).
   Does not validate the arguments passed to `jest.mock`, but the same rules still apply.
 
-These proposed JS features are built-in and always transformed:
+These newer JS features are transformed by default:
 * [Optional chaining](https://github.com/tc39/proposal-optional-chaining): `a?.b`
 * [Nullish coalescing](https://github.com/tc39/proposal-nullish-coalescing): `a ?? b`
 * [Class fields](https://github.com/tc39/proposal-class-fields): `class C { x = 1; }`.
   This includes static fields but not the `#x` private field syntax.
-* [Export namespace syntax](https://github.com/tc39/proposal-export-ns-from):
-  `export * as a from 'a';`
 * [Numeric separators](https://github.com/tc39/proposal-numeric-separator):
   `const n = 1_234;`
 * [Optional catch binding](https://github.com/tc39/proposal-optional-catch-binding):
   `try { doThing(); } catch { }`.
+
+If your target runtime supports these features, you can specify
+`disableESTransforms: true` so that Sucrase preserves the syntax rather than
+trying to transform it. Note that transpiled and standard class fields behave
+slightly differently; see the
+[TypeScript 3.7 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#the-usedefineforclassfields-flag-and-the-declare-property-modifier)
+for details. If you use TypeScript, you can enable the TypeScript option
+`useDefineForClassFields` to enable error checking related to these differences.
 
 ### Unsupported syntax
 

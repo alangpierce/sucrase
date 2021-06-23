@@ -10,7 +10,8 @@
     "importsNotUsedAsValues": "error",
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": ["es2020"],
+    "useDefineForClassFields": true,
+    "lib": ["es2020"]
   },
   "include": [
     "benchmark",

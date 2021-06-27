@@ -164,6 +164,7 @@ const types = {
   _public: new KeywordTokenType("public"),
   _private: new KeywordTokenType("private"),
   _protected: new KeywordTokenType("protected"),
+  _override: new KeywordTokenType("override"),
   _as: new KeywordTokenType("as"),
   _enum: new KeywordTokenType("enum"),
   _type: new KeywordTokenType("type"),

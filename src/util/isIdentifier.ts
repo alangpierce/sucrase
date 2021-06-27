@@ -46,6 +46,7 @@ const RESERVED_WORDS = new Set([
   "implements",
   "interface",
   "let",
+  "override",
   "package",
   "private",
   "protected",

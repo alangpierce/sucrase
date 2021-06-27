@@ -23,6 +23,7 @@ export enum ContextualKeyword {
   _namespace,
   _of,
   _opaque,
+  _override,
   _private,
   _protected,
   _proto,

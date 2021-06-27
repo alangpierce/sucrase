@@ -64,6 +64,7 @@ const CONTEXTUAL_KEYWORDS = [
   "namespace",
   "of",
   "opaque",
+  "override",
   "private",
   "protected",
   "proto",

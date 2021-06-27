@@ -125,6 +125,9 @@ export function tsParseModifier(
       case ContextualKeyword._protected:
         state.tokens[state.tokens.length - 1].type = tt._protected;
         break;
+      case ContextualKeyword._override:
+        state.tokens[state.tokens.length - 1].type = tt._override;
+        break;
       case ContextualKeyword._declare:
         state.tokens[state.tokens.length - 1].type = tt._declare;
         break;

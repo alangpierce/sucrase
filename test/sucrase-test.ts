@@ -1399,4 +1399,26 @@ describe("sucrase", () => {
       {transforms: [], disableESTransforms: true},
     );
   });
+
+  it("parses module blocks (but doesn't transform them specially)", () => {
+    assertResult(
+      `
+      const workerBlock = module {
+        const x: number = 3;
+        console.log("Hello");
+      };
+      const worker: Worker = new Worker(workerBlock, {type: "module"});
+      console.log("World");
+    `,
+      `
+      const workerBlock = module {
+        const x = 3;
+        console.log("Hello");
+      };
+      const worker = new Worker(workerBlock, {type: "module"});
+      console.log("World");
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
 });

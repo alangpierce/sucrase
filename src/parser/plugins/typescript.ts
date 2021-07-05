@@ -430,10 +430,14 @@ function tsParseTemplateLiteralType(): void {
 enum FunctionType {
   TSFunctionType,
   TSConstructorType,
+  TSAbstractConstructorType,
 }
 
 function tsParseFunctionOrConstructorType(type: FunctionType): void {
-  if (type === FunctionType.TSConstructorType) {
+  if (type === FunctionType.TSAbstractConstructorType) {
+    expectContextual(ContextualKeyword._abstract);
+  }
+  if (type === FunctionType.TSConstructorType || type === FunctionType.TSAbstractConstructorType) {
     expect(tt._new);
   }
   tsFillSignature(tt.arrow);
@@ -710,6 +714,10 @@ export function tsParseType(): void {
   tsParseType();
 }
 
+function isAbstractConstructorSignature(): boolean {
+  return isContextual(ContextualKeyword._abstract) && lookaheadType() === tt._new;
+}
+
 export function tsParseNonConditionalType(): void {
   if (tsIsStartOfFunctionType()) {
     tsParseFunctionOrConstructorType(FunctionType.TSFunctionType);
@@ -718,6 +726,10 @@ export function tsParseNonConditionalType(): void {
   if (match(tt._new)) {
     // As in `new () => Date`
     tsParseFunctionOrConstructorType(FunctionType.TSConstructorType);
+    return;
+  } else if (isAbstractConstructorSignature()) {
+    // As in `abstract new () => Date`
+    tsParseFunctionOrConstructorType(FunctionType.TSAbstractConstructorType);
     return;
   }
   tsParseUnionTypeOrHigher();
@@ -1198,9 +1210,13 @@ export function tsStartParseNewArguments(): void {
 }
 
 export function tsTryParseExport(): boolean {
-  if (match(tt._import)) {
-    // `export import A = B;`
-    expect(tt._import);
+  if (eat(tt._import)) {
+    // One of these cases:
+    // export import A = B;
+    // export import type A = require("A");
+    if (isContextual(ContextualKeyword._type) && lookaheadType() !== tt.eq) {
+      expectContextual(ContextualKeyword._type);
+    }
     tsParseImportEqualsDeclaration();
     return true;
   } else if (eat(tt.eq)) {

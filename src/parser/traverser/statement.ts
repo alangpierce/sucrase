@@ -1065,8 +1065,28 @@ export function parseImport(): void {
     tsParseImportEqualsDeclaration();
     return;
   }
-  if (isTypeScriptEnabled) {
-    eatContextual(ContextualKeyword._type);
+  if (isTypeScriptEnabled && isContextual(ContextualKeyword._type)) {
+    const lookahead = lookaheadType();
+    if (lookahead === tt.name) {
+      // One of these `import type` cases:
+      // import type T = require('T')
+      // import type A from 'A';
+      expectContextual(ContextualKeyword._type);
+      if (lookaheadType() === tt.eq) {
+        tsParseImportEqualsDeclaration();
+        return;
+      }
+      // If this is a regular `import type`, then we already ate the type token,
+      // so proceed as normal.
+    } else if (lookahead === tt.star || lookahead === tt.braceL) {
+      // One of these `import type` cases, in which case we can eat the type token
+      // and proceed as normal:
+      // import type * as A from 'A';
+      // import type {a} from 'A';
+      expectContextual(ContextualKeyword._type);
+      // Fall through
+    }
+    // Otherwise, we are importing the name "type".
   }
 
   // import '...'

@@ -638,6 +638,23 @@ describe("typescript transform", () => {
     );
   });
 
+  it("handles and removes `declare module` syntax with an identifier", () => {
+    assertTypeScriptResult(
+      `
+      declare module Builtins {
+        let result: string[];
+        export = result;
+      }
+    `,
+      `"use strict";
+      
+
+
+
+    `,
+    );
+  });
+
   it("handles and removes `declare global` syntax", () => {
     assertTypeScriptResult(
       `
@@ -2454,6 +2471,69 @@ describe("typescript transform", () => {
         const Foo = _A2.default.Foo; E[E["Foo"] = Foo] = "Foo";
         const Bar = _A2.default.Bar; E[E["Bar"] = Bar] = "Bar";
       })(E || (E = {}));
+    `,
+    );
+  });
+
+  it("does not handle a module declaration split by newlines", () => {
+    // See https://github.com/babel/babel/issues/12773 , the proper parsing of
+    // this code is to treat each line as separate valid JS.
+    assertTypeScriptESMResult(
+      `
+      declare
+      module
+      "A"
+      {}
+    `,
+      `
+      declare
+      module
+      "A"
+      {}
+    `,
+    );
+  });
+
+  it("allows and removes namespace statements", () => {
+    assertTypeScriptESMResult(
+      `
+      namespace foo {}
+    `,
+      `
+      
+    `,
+    );
+  });
+
+  it("allows and removes export namespace statements", () => {
+    assertTypeScriptESMResult(
+      `
+      export namespace foo {}
+    `,
+      `
+      
+    `,
+    );
+  });
+
+  it("allows and removes module statements", () => {
+    assertTypeScriptESMResult(
+      `
+      module foo {}
+    `,
+      `
+      
+    `,
+    );
+  });
+
+  it("allows and removes export module statements", () => {
+    assertTypeScriptESMResult(
+      `
+      export module foo {}
+    `,
+      `
+      
     `,
     );
   });

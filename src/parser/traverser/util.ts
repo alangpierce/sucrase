@@ -1,4 +1,4 @@
-import {eat, finishToken, lookaheadTypeAndKeyword, match, nextTokenStart} from "../tokenizer/index";
+import {eat, finishToken, lookaheadTypeAndKeyword, match} from "../tokenizer/index";
 import type {ContextualKeyword} from "../tokenizer/keywords";
 import {formatTokenType, TokenType, TokenType as tt} from "../tokenizer/types";
 import {charCodes} from "../util/charcodes";
@@ -37,22 +37,6 @@ export function hasPrecedingLineBreak(): boolean {
   const prevToken = state.tokens[state.tokens.length - 1];
   const lastTokEnd = prevToken ? prevToken.end : 0;
   for (let i = lastTokEnd; i < state.start; i++) {
-    const code = input.charCodeAt(i);
-    if (
-      code === charCodes.lineFeed ||
-      code === charCodes.carriageReturn ||
-      code === 0x2028 ||
-      code === 0x2029
-    ) {
-      return true;
-    }
-  }
-  return false;
-}
-
-export function hasFollowingLineBreak(): boolean {
-  const nextStart = nextTokenStart();
-  for (let i = state.end; i < nextStart; i++) {
     const code = input.charCodeAt(i);
     if (
       code === charCodes.lineFeed ||

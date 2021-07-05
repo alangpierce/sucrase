@@ -45,7 +45,6 @@ import {
   eatContextual,
   expect,
   expectContextual,
-  hasFollowingLineBreak,
   hasPrecedingLineBreak,
   isContextual,
   isLineTerminator,
@@ -1039,9 +1038,9 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
 
 function tsCheckLineTerminator(isBeforeToken: boolean): boolean {
   if (isBeforeToken) {
-    if (hasFollowingLineBreak()) {
-      return false;
-    }
+    // Babel checks hasFollowingLineBreak here and returns false, but this
+    // doesn't actually come up, e.g. `export interface` can never be on its own
+    // line in valid code.
     next();
     return true;
   } else {

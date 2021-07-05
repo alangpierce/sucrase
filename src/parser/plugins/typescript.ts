@@ -955,13 +955,22 @@ function tsParseExpressionStatement(contextualKeyword: ContextualKeyword): boole
   return false;
 }
 
-// Common to tsTryParseDeclare, tsTryParseExportDeclaration, and tsParseExpressionStatement.
-// Returns true if it matched a declaration.
+/**
+ * Common code for parsing a declaration.
+ *
+ * isBeforeToken indicates that the current parser state is at the contextual
+ * keyword (and that it is not yet emitted) rather than reading the token after
+ * it. When isBeforeToken is true, we may be preceded by an `export` token and
+ * should include that token in a type context we create, e.g. to handle
+ * `export interface` or `export type`. (This is a bit of a hack and should be
+ * cleaned up at some point.)
+ *
+ * Returns true if it matched a declaration.
+ */
 function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken: boolean): boolean {
   switch (contextualKeyword) {
     case ContextualKeyword._abstract:
-      if (tsCheckLineTerminatorAndMatch(tt._class, isBeforeToken)) {
-        if (isBeforeToken) next();
+      if (tsCheckLineTerminator(isBeforeToken) && match(tt._class)) {
         state.tokens[state.tokens.length - 1].type = tt._abstract;
         parseClass(/* isStatement */ true, /* optionalId */ false);
         return true;
@@ -969,8 +978,7 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
       break;
 
     case ContextualKeyword._enum:
-      if (tsCheckLineTerminatorAndMatch(tt.name, isBeforeToken)) {
-        if (isBeforeToken) next();
+      if (tsCheckLineTerminator(isBeforeToken) && match(tt.name)) {
         state.tokens[state.tokens.length - 1].type = tt._enum;
         tsParseEnumDeclaration();
         return true;
@@ -978,11 +986,10 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
       break;
 
     case ContextualKeyword._interface:
-      if (tsCheckLineTerminatorAndMatch(tt.name, isBeforeToken)) {
+      if (tsCheckLineTerminator(isBeforeToken) && match(tt.name)) {
         // `next` is true in "export" and "declare" contexts, so we want to remove that token
         // as well.
-        const oldIsType = pushTypeContext(1);
-        if (isBeforeToken) next();
+        const oldIsType = pushTypeContext(isBeforeToken ? 2 : 1);
         tsParseInterfaceDeclaration();
         popTypeContext(oldIsType);
         return true;
@@ -990,25 +997,24 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
       break;
 
     case ContextualKeyword._module:
-      if (isBeforeToken) next();
-      if (match(tt.string)) {
-        const oldIsType = pushTypeContext(isBeforeToken ? 2 : 1);
-        tsParseAmbientExternalModuleDeclaration();
-        popTypeContext(oldIsType);
-        return true;
-      } else if (tsCheckLineTerminatorAndMatch(tt.name, isBeforeToken)) {
-        const oldIsType = pushTypeContext(isBeforeToken ? 2 : 1);
-        if (isBeforeToken) next();
-        tsParseModuleOrNamespaceDeclaration();
-        popTypeContext(oldIsType);
-        return true;
+      if (tsCheckLineTerminator(isBeforeToken)) {
+        if (match(tt.string)) {
+          const oldIsType = pushTypeContext(isBeforeToken ? 2 : 1);
+          tsParseAmbientExternalModuleDeclaration();
+          popTypeContext(oldIsType);
+          return true;
+        } else if (match(tt.name)) {
+          const oldIsType = pushTypeContext(isBeforeToken ? 2 : 1);
+          tsParseModuleOrNamespaceDeclaration();
+          popTypeContext(oldIsType);
+          return true;
+        }
       }
       break;
 
     case ContextualKeyword._namespace:
-      if (tsCheckLineTerminatorAndMatch(tt.name, isBeforeToken)) {
-        const oldIsType = pushTypeContext(1);
-        if (isBeforeToken) next();
+      if (tsCheckLineTerminator(isBeforeToken) && match(tt.name)) {
+        const oldIsType = pushTypeContext(isBeforeToken ? 2 : 1);
         tsParseModuleOrNamespaceDeclaration();
         popTypeContext(oldIsType);
         return true;
@@ -1016,9 +1022,8 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
       break;
 
     case ContextualKeyword._type:
-      if (tsCheckLineTerminatorAndMatch(tt.name, isBeforeToken)) {
-        const oldIsType = pushTypeContext(1);
-        if (isBeforeToken) next();
+      if (tsCheckLineTerminator(isBeforeToken) && match(tt.name)) {
+        const oldIsType = pushTypeContext(isBeforeToken ? 2 : 1);
         tsParseTypeAliasDeclaration();
         popTypeContext(oldIsType);
         return true;
@@ -1031,8 +1036,16 @@ function tsParseDeclaration(contextualKeyword: ContextualKeyword, isBeforeToken:
   return false;
 }
 
-function tsCheckLineTerminatorAndMatch(tokenType: TokenType, isBeforeToken: boolean): boolean {
-  return !isLineTerminator() && (isBeforeToken || match(tokenType));
+function tsCheckLineTerminator(isBeforeToken: boolean): boolean {
+  if (isBeforeToken) {
+    // Babel checks hasFollowingLineBreak here and returns false, but this
+    // doesn't actually come up, e.g. `export interface` can never be on its own
+    // line in valid code.
+    next();
+    return true;
+  } else {
+    return !isLineTerminator();
+  }
 }
 
 // Returns true if there was a generic async arrow function.

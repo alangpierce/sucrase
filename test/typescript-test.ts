@@ -2538,6 +2538,50 @@ describe("typescript transform", () => {
     );
   });
 
+  it("handles abstract constructor signatures", () => {
+    assertTypeScriptESMResult(
+      `
+      let x: abstract new () => void = X;
+    `,
+      `
+      let x = X;
+    `,
+    );
+  });
+
+  it("handles import type =", () => {
+    assertTypeScriptESMResult(
+      `
+      import type A = require("A");
+    `,
+      `
+      ;
+    `,
+    );
+  });
+
+  it("handles importing an identifier named type", () => {
+    assertTypeScriptESMResult(
+      `
+      import type = require("A");
+    `,
+      `
+      ;
+    `,
+    );
+  });
+
+  it("handles export import type =", () => {
+    assertTypeScriptESMResult(
+      `
+      export import type B = require("B");
+    `,
+      `
+      ;
+    `,
+    );
+  });
+
   it("transforms constructor initializers even with disableESTransforms", () => {
     assertTypeScriptESMResult(
       `

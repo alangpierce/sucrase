@@ -69,6 +69,7 @@ import {
 } from "./lval";
 import {
   parseBlock,
+  parseBlockBody,
   parseClass,
   parseDecorators,
   parseFunction,
@@ -78,6 +79,8 @@ import {
   canInsertSemicolon,
   eatContextual,
   expect,
+  expectContextual,
+  hasFollowingLineBreak,
   hasPrecedingLineBreak,
   isContextual,
   unexpected,
@@ -237,7 +240,14 @@ export function parseMaybeUnary(): boolean {
     tsParseTypeAssertion();
     return false;
   }
-
+  if (
+    isContextual(ContextualKeyword._module) &&
+    lookaheadCharCode() === charCodes.leftCurlyBrace &&
+    !hasFollowingLineBreak()
+  ) {
+    parseModuleExpression();
+    return false;
+  }
   if (state.type & TokenType.IS_PREFIX) {
     next();
     parseMaybeUnary();
@@ -988,4 +998,14 @@ function parseYield(): void {
     eat(tt.star);
     parseMaybeAssign();
   }
+}
+
+// https://github.com/tc39/proposal-js-module-blocks
+function parseModuleExpression(): void {
+  expectContextual(ContextualKeyword._module);
+  expect(tt.braceL);
+  // For now, just call parseBlockBody to parse the block. In the future when we
+  // implement full support, we'll want to emit scopes and possibly other
+  // information.
+  parseBlockBody(tt.braceR);
 }

@@ -42,8 +42,32 @@ export default class ESMImportTransformer extends Transformer {
     if (this.tokens.matches3(tt._import, tt.name, tt.eq)) {
       return this.processImportEquals();
     }
+    if (
+      this.tokens.matches4(tt._import, tt.name, tt.name, tt.eq) &&
+      this.tokens.matchesContextualAtIndex(this.tokens.currentIndex() + 1, ContextualKeyword._type)
+    ) {
+      // import type T = require('T')
+      this.tokens.removeInitialToken();
+      // This construct is always exactly 8 tokens long, so remove the 7 remaining tokens.
+      for (let i = 0; i < 7; i++) {
+        this.tokens.removeToken();
+      }
+      return true;
+    }
     if (this.tokens.matches2(tt._export, tt.eq)) {
       this.tokens.replaceToken("module.exports");
+      return true;
+    }
+    if (
+      this.tokens.matches5(tt._export, tt._import, tt.name, tt.name, tt.eq) &&
+      this.tokens.matchesContextualAtIndex(this.tokens.currentIndex() + 2, ContextualKeyword._type)
+    ) {
+      // export import type T = require('T')
+      this.tokens.removeInitialToken();
+      // This construct is always exactly 9 tokens long, so remove the 8 remaining tokens.
+      for (let i = 0; i < 8; i++) {
+        this.tokens.removeToken();
+      }
       return true;
     }
     if (this.tokens.matches1(tt._import)) {

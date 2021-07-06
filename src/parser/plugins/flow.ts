@@ -645,7 +645,13 @@ function flowParsePostfixType(): void {
   flowParsePrimaryType();
   while (!canInsertSemicolon() && match(tt.bracketL)) {
     expect(tt.bracketL);
-    expect(tt.bracketR);
+    if (eat(tt.bracketR)) {
+      // Array type
+    } else {
+      // Indexed access type
+      flowParseType();
+      expect(tt.bracketR);
+    }
   }
 }
 

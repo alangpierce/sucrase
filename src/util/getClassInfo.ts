@@ -318,6 +318,7 @@ function isAccessModifier(token: Token): boolean {
     tt._public,
     tt._private,
     tt._protected,
+    tt._override,
     tt._abstract,
     tt.star,
     tt._declare,

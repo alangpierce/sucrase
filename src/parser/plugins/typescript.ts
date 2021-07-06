@@ -32,11 +32,8 @@ import {
   baseParseMaybeDecoratorArguments,
   parseBlockBody,
   parseClass,
-  parseClassProperty,
-  parseClassPropertyName,
   parseFunction,
   parseFunctionParams,
-  parsePostMemberNameModifiers,
   parseStatement,
   parseVarStatement,
 } from "../traverser/statement";
@@ -96,6 +93,15 @@ function tsNextTokenCanFollowModifier(): boolean {
   }
 }
 
+export function tsParseModifiers(allowedModifiers: Array<ContextualKeyword>): void {
+  while (true) {
+    const modifier = tsParseModifier(allowedModifiers);
+    if (modifier === null) {
+      break;
+    }
+  }
+}
+
 /** Parses a modifier matching one the given modifier names. */
 export function tsParseModifier(
   allowedModifiers: Array<ContextualKeyword>,
@@ -124,6 +130,9 @@ export function tsParseModifier(
         break;
       case ContextualKeyword._protected:
         state.tokens[state.tokens.length - 1].type = tt._protected;
+        break;
+      case ContextualKeyword._override:
+        state.tokens[state.tokens.length - 1].type = tt._override;
         break;
       case ContextualKeyword._declare:
         state.tokens[state.tokens.length - 1].type = tt._declare;
@@ -306,6 +315,13 @@ function tsParseTypeMember(): void {
   const found = tsTryParseIndexSignature();
   if (found) {
     return;
+  }
+  if (
+    (isContextual(ContextualKeyword._get) || isContextual(ContextualKeyword._set)) &&
+    tsNextTokenCanFollowModifier()
+  ) {
+    // This is a getter/setter on a type. The tsNextTokenCanFollowModifier
+    // function already called next() for us, so continue parsing the name.
   }
   parsePropertyName(-1 /* Types don't need context IDs. */);
   tsParsePropertyOrMethodSignature(readonly);
@@ -1279,44 +1295,28 @@ export function tsParseAccessModifier(): void {
   ]);
 }
 
-export function tsTryParseClassMemberWithIsStatic(
-  isStatic: boolean,
-  classContextId: number,
-): boolean {
-  let isAbstract = false;
-  let isReadonly = false;
+export function tsTryParseClassMemberWithIsStatic(isStatic: boolean): boolean {
+  const memberStartIndexAfterStatic = state.tokens.length;
+  tsParseModifiers([
+    ContextualKeyword._abstract,
+    ContextualKeyword._readonly,
+    ContextualKeyword._declare,
+    ContextualKeyword._static,
+    ContextualKeyword._override,
+  ]);
 
-  while (true) {
-    const mod = tsParseModifier([
-      ContextualKeyword._abstract,
-      ContextualKeyword._readonly,
-      ContextualKeyword._declare,
-    ]);
-    if (mod == null) {
-      break;
+  const modifiersEndIndex = state.tokens.length;
+  const found = tsTryParseIndexSignature();
+  if (found) {
+    // Index signatures are type declarations, so set the modifiers tokens as
+    // type tokens. Most tokens could be assumed to be type tokens, but `static`
+    // is ambiguous unless we set it explicitly here.
+    const memberStartIndex = isStatic
+      ? memberStartIndexAfterStatic - 1
+      : memberStartIndexAfterStatic;
+    for (let i = memberStartIndex; i < modifiersEndIndex; i++) {
+      state.tokens[i].isType = true;
     }
-    if (mod === ContextualKeyword._readonly) {
-      isReadonly = true;
-    }
-    if (mod === ContextualKeyword._abstract) {
-      isAbstract = true;
-    }
-  }
-
-  // We no longer check for public/private/etc, but tsTryParseIndexSignature should just return
-  // false in that case for valid code.
-  if (!isAbstract && !isStatic) {
-    const found = tsTryParseIndexSignature();
-    if (found) {
-      return true;
-    }
-  }
-
-  if (isReadonly) {
-    // Must be a property (if not an index signature).
-    parseClassPropertyName(classContextId);
-    parsePostMemberNameModifiers();
-    parseClassProperty();
     return true;
   }
   return false;

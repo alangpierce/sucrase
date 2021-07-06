@@ -1,9 +1,5 @@
 import {flowParseAssignableListItemTypes} from "../plugins/flow";
-import {
-  tsParseAccessModifier,
-  tsParseAssignableListItemTypes,
-  tsParseModifier,
-} from "../plugins/typescript";
+import {tsParseAssignableListItemTypes, tsParseModifiers} from "../plugins/typescript";
 import {
   eat,
   IdentifierRole,
@@ -127,8 +123,12 @@ export function parseBindingList(
 
 function parseAssignableListItem(allowModifiers: boolean, isBlockScope: boolean): void {
   if (allowModifiers) {
-    tsParseAccessModifier();
-    tsParseModifier([ContextualKeyword._readonly]);
+    tsParseModifiers([
+      ContextualKeyword._public,
+      ContextualKeyword._protected,
+      ContextualKeyword._private,
+      ContextualKeyword._readonly,
+    ]);
   }
 
   parseMaybeDefault(isBlockScope);

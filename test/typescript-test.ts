@@ -2582,6 +2582,116 @@ describe("typescript transform", () => {
     );
   });
 
+  it("allows static index signatures", () => {
+    assertTypeScriptESMResult(
+      `
+      class C {
+        static [x: string]: any;
+      }
+    `,
+      `
+      class C {
+        
+      }
+    `,
+    );
+  });
+
+  it("allows static index signatures with other modifiers", () => {
+    assertTypeScriptESMResult(
+      `
+      class C {
+        static readonly [x: string]: any;
+      }
+    `,
+      `
+      class C {
+        
+      }
+    `,
+    );
+  });
+
+  it("allows static index signatures not starting with static", () => {
+    assertTypeScriptESMResult(
+      `
+      class C {
+        readonly static [x: string]: any;
+      }
+    `,
+      `
+      class C {
+        
+      }
+    `,
+    );
+  });
+
+  it("allows and removes the override keyword on class methods", () => {
+    assertTypeScriptESMResult(
+      `
+      class A extends B {
+        override method1(): void {}
+        public override method2(): void {}
+        override public method3(): void {}
+        override field1 = 1;
+        static override field2 = 2;
+      }
+    `,
+      `
+      class A extends B {constructor(...args) { super(...args); A.prototype.__init.call(this); }
+         method1() {}
+          method2() {}
+          method3() {}
+         __init() {this.field1 = 1}
+        static  __initStatic() {this.field2 = 2}
+      } A.__initStatic();
+    `,
+    );
+  });
+
+  it("allows getters and setters on interfaces and object types", () => {
+    assertTypeScriptESMResult(
+      `
+      interface A {
+        get foo(): string;
+        set foo(s: string);
+      }
+      type T = {
+        get bar(): number;
+        set bar(n: number);
+      }
+    `,
+      `
+      
+
+
+
+
+
+
+
+    `,
+    );
+  });
+
+  it("allows keys named get and set", () => {
+    assertTypeScriptESMResult(
+      `
+      type T = {
+        get: 3,
+        set: 4,
+      }
+    `,
+      `
+      
+
+
+
+    `,
+    );
+  });
+
   it("transforms constructor initializers even with disableESTransforms", () => {
     assertTypeScriptESMResult(
       `

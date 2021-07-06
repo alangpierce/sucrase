@@ -1215,6 +1215,7 @@ export function tsTryParseExport(): boolean {
     // export import A = B;
     // export import type A = require("A");
     if (isContextual(ContextualKeyword._type) && lookaheadType() !== tt.eq) {
+      // Eat a `type` token, unless it's actually an identifier name.
       expectContextual(ContextualKeyword._type);
     }
     tsParseImportEqualsDeclaration();

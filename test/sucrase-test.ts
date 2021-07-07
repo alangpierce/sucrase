@@ -388,6 +388,38 @@ describe("sucrase", () => {
     );
   });
 
+  it("properly converts exported anonymous classes with static fields", () => {
+    assertResult(
+      `
+      export default class {
+        static x = 3;
+      }
+    `,
+      `"use strict";${ESMODULE_PREFIX} var _class;
+      exports. default = (_class = class {
+        static __initStatic() {this.x = 3}
+      }, _class.__initStatic(), _class)
+    `,
+      {transforms: ["jsx", "imports", "typescript"]},
+    );
+  });
+
+  it("properly converts exported anonymous classes with instance fields", () => {
+    assertResult(
+      `
+      export default class {
+        x = 3
+      }
+    `,
+      `"use strict";${ESMODULE_PREFIX} var _class;
+      exports. default = (_class = class {constructor() { _class.prototype.__init.call(this); }
+        __init() {this.x = 3}
+      }, _class)
+    `,
+      {transforms: ["jsx", "imports", "typescript"]},
+    );
+  });
+
   it("properly resolves imported names in class fields", () => {
     assertResult(
       `

@@ -643,7 +643,8 @@ function flowParsePrimaryType(): void {
 
 function flowParsePostfixType(): void {
   flowParsePrimaryType();
-  while (!canInsertSemicolon() && match(tt.bracketL)) {
+  while (!canInsertSemicolon() && (match(tt.bracketL) || match(tt.questionDot))) {
+    eat(tt.questionDot);
     expect(tt.bracketL);
     if (eat(tt.bracketR)) {
       // Array type

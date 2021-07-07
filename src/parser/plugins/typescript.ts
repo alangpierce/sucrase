@@ -1287,14 +1287,6 @@ export function tsTryParseStatementContent(): boolean {
   return false;
 }
 
-export function tsParseAccessModifier(): void {
-  tsParseModifier([
-    ContextualKeyword._public,
-    ContextualKeyword._protected,
-    ContextualKeyword._private,
-  ]);
-}
-
 export function tsTryParseClassMemberWithIsStatic(isStatic: boolean): boolean {
   const memberStartIndexAfterStatic = state.tokens.length;
   tsParseModifiers([

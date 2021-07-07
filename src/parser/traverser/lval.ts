@@ -128,6 +128,7 @@ function parseAssignableListItem(allowModifiers: boolean, isBlockScope: boolean)
       ContextualKeyword._protected,
       ContextualKeyword._private,
       ContextualKeyword._readonly,
+      ContextualKeyword._override,
     ]);
   }
 

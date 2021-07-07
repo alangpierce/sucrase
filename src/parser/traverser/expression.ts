@@ -505,8 +505,8 @@ export function parseExprAtom(): boolean {
         return false;
       } else if (
         canBeArrow &&
-        !canInsertSemicolon() &&
         contextualKeyword === ContextualKeyword._async &&
+        !canInsertSemicolon() &&
         match(tt.name)
       ) {
         state.scopeDepth++;
@@ -515,6 +515,10 @@ export function parseExprAtom(): boolean {
         // let foo = async bar => {};
         parseArrowExpression(startTokenIndex);
         return true;
+      } else if (match(tt._do) && !canInsertSemicolon()) {
+        next();
+        parseBlock();
+        return false;
       }
 
       if (canBeArrow && !canInsertSemicolon() && match(tt.arrow)) {

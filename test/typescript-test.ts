@@ -2650,6 +2650,23 @@ describe("typescript transform", () => {
     );
   });
 
+  it("allows override on constructor params", () => {
+    assertTypeScriptESMResult(
+      `
+      class A extends B {
+        constructor(override foo: string) {
+        }
+      }
+    `,
+      `
+      class A extends B {
+        constructor( foo) {;this.foo = foo;
+        }
+      }
+    `,
+    );
+  });
+
   it("allows getters and setters on interfaces and object types", () => {
     assertTypeScriptESMResult(
       `

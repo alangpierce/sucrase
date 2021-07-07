@@ -449,6 +449,19 @@ describe("transform flow", () => {
     );
   });
 
+  it("recognizes flow optional indexed access types", () => {
+    assertFlowResult(
+      `
+      type A = Obj?.['a'];
+      type B = Array<string>?.[number];
+    `,
+      `"use strict";
+      
+
+    `,
+    );
+  });
+
   it("properly removes class property variance markers with ES transforms disabled", () => {
     assertFlowResult(
       `

@@ -1308,7 +1308,7 @@ export function tsTryParseClassMemberWithIsStatic(isStatic: boolean): boolean {
   const modifiersEndIndex = state.tokens.length;
   const found = tsTryParseIndexSignature();
   if (found) {
-    // Index signatures are type declarations, so set the modifiers tokens as
+    // Index signatures are type declarations, so set the modifier tokens as
     // type tokens. Most tokens could be assumed to be type tokens, but `static`
     // is ambiguous unless we set it explicitly here.
     const memberStartIndex = isStatic

@@ -28,6 +28,7 @@ export default class TypeScriptTransformer extends Transformer {
       this.tokens.matches1(tt._private) ||
       this.tokens.matches1(tt._abstract) ||
       this.tokens.matches1(tt._readonly) ||
+      this.tokens.matches1(tt._override) ||
       this.tokens.matches1(tt.nonNullAssertion)
     ) {
       this.tokens.removeInitialToken();

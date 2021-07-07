@@ -117,10 +117,11 @@ export enum TokenType {
   _public = 52752, // public keyword
   _private = 53264, // private keyword
   _protected = 53776, // protected keyword
-  _as = 54288, // as keyword
-  _enum = 54800, // enum keyword
-  _type = 55312, // type keyword
-  _implements = 55824, // implements keyword
+  _override = 54288, // override keyword
+  _as = 54800, // as keyword
+  _enum = 55312, // enum keyword
+  _type = 55824, // type keyword
+  _implements = 56336, // implements keyword
 }
 export function formatTokenType(tokenType: TokenType): string {
   switch (tokenType) {
@@ -336,6 +337,8 @@ export function formatTokenType(tokenType: TokenType): string {
       return "private";
     case TokenType._protected:
       return "protected";
+    case TokenType._override:
+      return "override";
     case TokenType._as:
       return "as";
     case TokenType._enum:

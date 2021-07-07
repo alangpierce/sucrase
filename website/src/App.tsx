@@ -269,7 +269,7 @@ export default hot(App);
 
 const styles = StyleSheet.create({
   app: {
-    height: "100%",
+    minHeight: "100vh",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -301,7 +301,9 @@ const styles = StyleSheet.create({
     flex: 1,
     display: "flex",
     flexDirection: "row",
-    alignItems: "center",
     width: "100%",
+    '@media (max-width: 800px)': {
+      flexDirection: "column",
+    },
   },
 });

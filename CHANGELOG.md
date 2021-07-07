@@ -1,3 +1,12 @@
+# 3.20.0 (2021-07-07)
+
+* Various small bug fixes and upcoming JS feature support in the parser. ([#632], [#635], [#637])
+* Add support for TypeScript 4.2 abstract constructor signatures. ([#635])
+* Add support for TypeScript 4.3 override, static index signatures, and get/set
+  type members. ([#636]) (Lucas Garron, Alan Pierce)
+* Add support for Flow indexed access types and optional indexed access types.
+  ([#636], [#637])
+
 # 3.19.0 (2021-06-23)
 
 * Add option to disable ES transforms. ([#623], [#624], [#625]) (Denys Kniazevych, Alan Pierce)
@@ -357,3 +366,7 @@
 [#623]: https://github.com/alangpierce/sucrase/pull/623
 [#624]: https://github.com/alangpierce/sucrase/pull/624
 [#625]: https://github.com/alangpierce/sucrase/pull/625
+[#632]: https://github.com/alangpierce/sucrase/pull/632
+[#635]: https://github.com/alangpierce/sucrase/pull/635
+[#636]: https://github.com/alangpierce/sucrase/pull/636
+[#637]: https://github.com/alangpierce/sucrase/pull/637

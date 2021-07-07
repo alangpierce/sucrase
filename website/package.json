@@ -38,7 +38,7 @@
     "react-monaco-editor": "^0.32.1",
     "react-virtualized": "^9.21.1",
     "style-loader": "^1.0.0",
-    "sucrase": "^3.19.0",
+    "sucrase": "^3.20.0",
     "typescript": "^4.1.3",
     "url-loader": "^2.2.0",
     "webpack": "^4.41.2",

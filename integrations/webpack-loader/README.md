@@ -27,7 +27,11 @@ module: {
       use: {
         loader: '@sucrase/webpack-loader',
         options: {
-          transforms: ['jsx']
+          transforms: ['jsx'],
+          fallback: {
+            test: `() => false`,
+            loader: 'babel-loader',
+          },
         }
       }
     }

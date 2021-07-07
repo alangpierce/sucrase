@@ -1302,6 +1302,22 @@ describe("sucrase", () => {
     );
   });
 
+  it("parses and passes through `async do` expressions", () => {
+    assertResult(
+      `
+      async do {
+        await foo();
+      }
+    `,
+      `
+      async do {
+        await foo();
+      }
+    `,
+      {transforms: []},
+    );
+  });
+
   it("omits optional chaining nullish transformations if ES transforms disabled", () => {
     assertResult(
       `

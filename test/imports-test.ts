@@ -639,6 +639,29 @@ var _moduleName = require('moduleName');
     );
   });
 
+  it("properly handles React.createElement with shadowing", () => {
+    assertResult(
+      `
+      import React from 'react';
+      import Foo from './Foo';
+      
+      const fn = () => {
+        const Foo = div;
+        return <Foo />;
+      }
+    `,
+      `"use strict";${JSX_PREFIX}${IMPORT_DEFAULT_PREFIX}
+      var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+      var _Foo = require('./Foo'); var _Foo2 = _interopRequireDefault(_Foo);
+      
+      const fn = () => {
+        const Foo = div;
+        return _react2.default.createElement(Foo, {${devProps(7)}} );
+      }
+    `,
+    );
+  });
+
   it("properly transforms imported JSX props", () => {
     assertResult(
       `

@@ -19,3 +19,5 @@ export function process(src: string, filename: string): string {
     return src;
   }
 }
+
+export default {process};

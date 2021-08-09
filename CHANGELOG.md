@@ -1,3 +1,8 @@
+# 3.20.1 (2021-08-09)
+
+* Fix transformation of anonymous "export default" classes. ([#614]) (Matthieu Gicquel)
+* Handle shadowed globals when they are JSX names. ([#642]) (Matthieu Gicquel)
+
 # 3.20.0 (2021-07-07)
 
 * Various small bug fixes and upcoming JS feature support in the parser. ([#632], [#635], [#637])
@@ -361,6 +366,7 @@
 [#540]: https://github.com/alangpierce/sucrase/pull/540
 [#604]: https://github.com/alangpierce/sucrase/pull/604
 [#610]: https://github.com/alangpierce/sucrase/pull/610
+[#614]: https://github.com/alangpierce/sucrase/pull/614
 [#619]: https://github.com/alangpierce/sucrase/pull/619
 [#621]: https://github.com/alangpierce/sucrase/pull/621
 [#623]: https://github.com/alangpierce/sucrase/pull/623
@@ -370,3 +376,4 @@
 [#635]: https://github.com/alangpierce/sucrase/pull/635
 [#636]: https://github.com/alangpierce/sucrase/pull/636
 [#637]: https://github.com/alangpierce/sucrase/pull/637
+[#642]: https://github.com/alangpierce/sucrase/pull/642

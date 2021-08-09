@@ -200,7 +200,7 @@ export default class RootTransformer {
     // Both static and instance initializers need a class name to use to invoke the initializer, so
     // assign to one if necessary.
     const needsCommaExpression =
-      classInfo.headerInfo.isExpression &&
+      (classInfo.headerInfo.isExpression || !classInfo.headerInfo.className) &&
       classInfo.staticInitializerNames.length + classInfo.instanceInitializerNames.length > 0;
 
     let className = classInfo.headerInfo.className;

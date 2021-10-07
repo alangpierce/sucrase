@@ -1,3 +1,8 @@
+# 3.20.2 (2021-10-07)
+
+* Fix ASI issue that broke function declarations immediately following a default
+  export. ([#648]) (Ben Lambert)
+
 # 3.20.1 (2021-08-09)
 
 * Fix transformation of anonymous "export default" classes. ([#614]) (Matthieu Gicquel)
@@ -377,3 +382,4 @@
 [#636]: https://github.com/alangpierce/sucrase/pull/636
 [#637]: https://github.com/alangpierce/sucrase/pull/637
 [#642]: https://github.com/alangpierce/sucrase/pull/642
+[#648]: https://github.com/alangpierce/sucrase/pull/648

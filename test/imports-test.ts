@@ -1168,6 +1168,36 @@ module.exports = exports.default;
     );
   });
 
+  it("should transform export function blocks", () => {
+    assertResult(
+      `
+      const a = {}
+      export default a
+      function b() {}
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      const a = {}
+      exports. default = a
+      function b() {}
+    `,
+      {transforms: ["imports", "typescript"]},
+    );
+  });
+
+  it("should recognize 'export default async function'", () => {
+    assertResult(
+      `
+      export default async function blah() {}
+      blah();
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       async function blah() {} exports.default = blah;
+      blah();
+    `,
+      {transforms: ["imports", "typescript"]},
+    );
+  });
+
   it("properly handles shadowing for simple arrow functions", () => {
     assertResult(
       `

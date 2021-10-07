@@ -35,7 +35,10 @@ jobs:
         with:
           node-version: ${{ matrix.node_version }}
       - run: yarn
-      - run: yarn build
+      # Do a fast build to avoid trying to run yarn on subprojects. Some
+      # website dependencies don't support old node versions, so yarn would
+      # fail for those.
+      - run: yarn fast-build
       - run: yarn test-only
   test-examples:
     name: "Test example projects"

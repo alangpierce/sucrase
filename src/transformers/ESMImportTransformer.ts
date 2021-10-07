@@ -280,7 +280,11 @@ export default class ESMImportTransformer extends Transformer {
     const alreadyHasName =
       this.tokens.matches4(tt._export, tt._default, tt._function, tt.name) ||
       // export default async function
-      this.tokens.matches5(tt._export, tt._default, tt.name, tt._function, tt.name) ||
+      (this.tokens.matches5(tt._export, tt._default, tt.name, tt._function, tt.name) &&
+        this.tokens.matchesContextualAtIndex(
+          this.tokens.currentIndex() + 2,
+          ContextualKeyword._async,
+        )) ||
       this.tokens.matches4(tt._export, tt._default, tt._class, tt.name) ||
       this.tokens.matches5(tt._export, tt._default, tt._abstract, tt._class, tt.name);
 

@@ -203,6 +203,33 @@ describe("transform react-hot-loader", () => {
     );
   });
 
+  it("should register unnamed default export followed by function declaration", () => {
+    assertESMResult(
+      `
+      const a = 1
+      export default a
+      function f() {}
+    `,
+      `${RHL_PREFIX}
+      const a = 1
+      let _default; export default _default = a
+      function f() {}
+    
+;(function () {
+  var reactHotLoader = require('react-hot-loader').default;
+  var leaveModule = require('react-hot-loader').leaveModule;
+  if (!reactHotLoader) {
+    return;
+  }
+  reactHotLoader.register(a, "a", "sample.tsx");
+  reactHotLoader.register(f, "f", "sample.tsx");
+  reactHotLoader.register(_default, "default", "sample.tsx");
+  leaveModule(module);
+})();`,
+      ["typescript"],
+    );
+  });
+
   it("guards against ASI issues by starting the suffix with a semicolon", () => {
     assertESMResult(
       `

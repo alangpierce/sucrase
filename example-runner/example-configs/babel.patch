@@ -1,5 +1,5 @@
 diff --git a/Gulpfile.js b/Gulpfile.js
-index c8a60079b..b49041ae6 100644
+index c8a60079bf..b49041ae6f 100644
 --- a/Gulpfile.js
 +++ b/Gulpfile.js
 @@ -4,7 +4,7 @@ const plumber = require("gulp-plumber");
@@ -30,7 +30,7 @@ index c8a60079b..b49041ae6 100644
  gulp.task("build-rollup", () => buildRollup(bundles));
  gulp.task("build-babel", () => buildBabel(/* exclude */ bundles));
 diff --git a/Makefile b/Makefile
-index 2c077a3fb..dfa6ff5e7 100644
+index 2c077a3fbd..dfa6ff5e71 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -129,7 +129,9 @@ test-only:
@@ -61,7 +61,7 @@ index 2c077a3fb..dfa6ff5e7 100644
  yarn-install: clean-all
  	yarn --ignore-engines
 diff --git a/package.json b/package.json
-index a420748f1..0b421c34b 100644
+index a420748f11..0b421c34bc 100644
 --- a/package.json
 +++ b/package.json
 @@ -76,7 +76,6 @@
@@ -83,7 +83,7 @@ index a420748f1..0b421c34b 100644
        "packages/*/src/**/*.mjs",
        "packages/*/src/**/*.js",
 diff --git a/packages/babel-parser/src/util/scopeflags.js b/packages/babel-parser/src/util/scopeflags.js
-index d92699883..2bdedecaa 100644
+index d926998835..2bdedecaac 100644
 --- a/packages/babel-parser/src/util/scopeflags.js
 +++ b/packages/babel-parser/src/util/scopeflags.js
 @@ -2,18 +2,20 @@
@@ -184,20 +184,20 @@ index d92699883..2bdedecaa 100644
    | typeof BIND_NONE
 diff --git a/packages/babel-plugin-proposal-dynamic-import/test/fixtures/commonjs/to-string/input.js b/packages/babel-plugin-proposal-dynamic-import/test/fixtures/commonjs/to-string/input.js
 deleted file mode 100644
-index 130d3cafa..000000000
+index 130d3cafa5..0000000000
 --- a/packages/babel-plugin-proposal-dynamic-import/test/fixtures/commonjs/to-string/input.js
 +++ /dev/null
 @@ -1 +0,0 @@
 -import(2);
 diff --git a/packages/babel-plugin-proposal-dynamic-import/test/fixtures/commonjs/to-string/output.js b/packages/babel-plugin-proposal-dynamic-import/test/fixtures/commonjs/to-string/output.js
 deleted file mode 100644
-index 1babb42d8..000000000
+index 1babb42d8c..0000000000
 --- a/packages/babel-plugin-proposal-dynamic-import/test/fixtures/commonjs/to-string/output.js
 +++ /dev/null
 @@ -1 +0,0 @@
 -Promise.resolve().then(() => babelHelpers.interopRequireWildcard(require(`${2}`)));
 diff --git a/packages/babel-plugin-transform-classes/test/fixtures/regression/T6755/output.js b/packages/babel-plugin-transform-classes/test/fixtures/regression/T6755/output.js
-index 204120c62..1950ebc1c 100644
+index 204120c62c..1950ebc1cc 100644
 --- a/packages/babel-plugin-transform-classes/test/fixtures/regression/T6755/output.js
 +++ b/packages/babel-plugin-transform-classes/test/fixtures/regression/T6755/output.js
 @@ -20,7 +20,7 @@ function () {
@@ -210,16 +210,16 @@ index 204120c62..1950ebc1c 100644
  
    _proto.test2 =
 diff --git a/packages/babel-plugin-transform-dotall-regex/test/fixtures/dotall-regex/with-unicode-property-escape/output.js b/packages/babel-plugin-transform-dotall-regex/test/fixtures/dotall-regex/with-unicode-property-escape/output.js
-index a8ddf757d..c00aa15a9 100644
+index a8ddf757d9..9e43c1e52d 100644
 --- a/packages/babel-plugin-transform-dotall-regex/test/fixtures/dotall-regex/with-unicode-property-escape/output.js
 +++ b/packages/babel-plugin-transform-dotall-regex/test/fixtures/dotall-regex/with-unicode-property-escape/output.js
 @@ -1,2 +1,2 @@
 -var a = /[\u3400-\u4DB5\u4E00-\u9FEF\uFA0E\uFA0F\uFA11\uFA13\uFA14\uFA1F\uFA21\uFA23\uFA24\uFA27-\uFA29\u{20000}-\u{2A6D6}\u{2A700}-\u{2B734}\u{2B740}-\u{2B81D}\u{2B820}-\u{2CEA1}\u{2CEB0}-\u{2EBE0}][\0-\t\x0B\f\x0E-\u2027\u202A-\u{10FFFF}]/u;
 -var b = /[\u3400-\u4DB5\u4E00-\u9FEF\uFA0E\uFA0F\uFA11\uFA13\uFA14\uFA1F\uFA21\uFA23\uFA24\uFA27-\uFA29\u{20000}-\u{2A6D6}\u{2A700}-\u{2B734}\u{2B740}-\u{2B81D}\u{2B820}-\u{2CEA1}\u{2CEB0}-\u{2EBE0}][\0-\u{10FFFF}]/u;
-+var a = /[\u3400-\u4DBF\u4E00-\u9FFC\uFA0E\uFA0F\uFA11\uFA13\uFA14\uFA1F\uFA21\uFA23\uFA24\uFA27-\uFA29\u{20000}-\u{2A6DD}\u{2A700}-\u{2B734}\u{2B740}-\u{2B81D}\u{2B820}-\u{2CEA1}\u{2CEB0}-\u{2EBE0}\u{30000}-\u{3134A}][\0-\t\x0B\f\x0E-\u2027\u202A-\u{10FFFF}]/u;
-+var b = /[\u3400-\u4DBF\u4E00-\u9FFC\uFA0E\uFA0F\uFA11\uFA13\uFA14\uFA1F\uFA21\uFA23\uFA24\uFA27-\uFA29\u{20000}-\u{2A6DD}\u{2A700}-\u{2B734}\u{2B740}-\u{2B81D}\u{2B820}-\u{2CEA1}\u{2CEB0}-\u{2EBE0}\u{30000}-\u{3134A}][\0-\u{10FFFF}]/u;
++var a = /[\u3400-\u4DBF\u4E00-\u9FFF\uFA0E\uFA0F\uFA11\uFA13\uFA14\uFA1F\uFA21\uFA23\uFA24\uFA27-\uFA29\u{20000}-\u{2A6DF}\u{2A700}-\u{2B738}\u{2B740}-\u{2B81D}\u{2B820}-\u{2CEA1}\u{2CEB0}-\u{2EBE0}\u{30000}-\u{3134A}][\0-\t\x0B\f\x0E-\u2027\u202A-\u{10FFFF}]/u;
++var b = /[\u3400-\u4DBF\u4E00-\u9FFF\uFA0E\uFA0F\uFA11\uFA13\uFA14\uFA1F\uFA21\uFA23\uFA24\uFA27-\uFA29\u{20000}-\u{2A6DF}\u{2A700}-\u{2B738}\u{2B740}-\u{2B81D}\u{2B820}-\u{2CEA1}\u{2CEB0}-\u{2EBE0}\u{30000}-\u{3134A}][\0-\u{10FFFF}]/u;
 diff --git a/packages/babel-plugin-transform-regenerator/test/fixtures/regression/4219/output.js b/packages/babel-plugin-transform-regenerator/test/fixtures/regression/4219/output.js
-index a3b8fd1f2..3fa934c71 100644
+index a3b8fd1f26..3fa934c71f 100644
 --- a/packages/babel-plugin-transform-regenerator/test/fixtures/regression/4219/output.js
 +++ b/packages/babel-plugin-transform-regenerator/test/fixtures/regression/4219/output.js
 @@ -12,6 +12,6 @@ function test(fn) {
@@ -231,7 +231,7 @@ index a3b8fd1f2..3fa934c71 100644
    };
  }
 diff --git a/packages/babel-polyfill/src/index.js b/packages/babel-polyfill/src/index.js
-index aa1b4639f..cca92db5a 100644
+index aa1b4639f1..cca92db5ab 100644
 --- a/packages/babel-polyfill/src/index.js
 +++ b/packages/babel-polyfill/src/index.js
 @@ -7,7 +7,7 @@ if (global._babelPolyfill && typeof console !== "undefined" && console.warn) {
@@ -245,7 +245,7 @@ index aa1b4639f..cca92db5a 100644
  
 diff --git a/packages/babel-preset-env/test/fixtures.js b/packages/babel-preset-env/test/fixtures.js
 deleted file mode 100644
-index 1b534b8fc..000000000
+index 1b534b8fc6..0000000000
 --- a/packages/babel-preset-env/test/fixtures.js
 +++ /dev/null
 @@ -1,3 +0,0 @@
@@ -253,7 +253,7 @@ index 1b534b8fc..000000000
 -
 -runner(__dirname);
 diff --git a/scripts/gulp-tasks.js b/scripts/gulp-tasks.js
-index 73c1f7db2..59c35bfcf 100644
+index 73c1f7db2e..59c35bfcf9 100644
 --- a/scripts/gulp-tasks.js
 +++ b/scripts/gulp-tasks.js
 @@ -23,6 +23,8 @@ const DuplicatePackageCheckerPlugin = require("duplicate-package-checker-webpack

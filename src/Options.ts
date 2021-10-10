@@ -51,6 +51,10 @@ export interface Options {
    * separators, etc.
    */
   disableESTransforms?: boolean;
+  /**
+   * Remove comments attached to removed TypeScript constructs.
+   */
+  removeTypeComments?: boolean;
 }
 
 export function validateOptions(options: Options): void {

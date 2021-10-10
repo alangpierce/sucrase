@@ -98,6 +98,7 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
     isFlowEnabled,
     disableESTransforms,
     helperManager,
+    options.removeTypeComments,
   );
   const enableLegacyTypeScriptModuleInterop = Boolean(options.enableLegacyTypeScriptModuleInterop);
 

@@ -27,6 +27,7 @@ export const Options = t.iface([], {
   filePath: t.opt("string"),
   production: t.opt("boolean"),
   disableESTransforms: t.opt("boolean"),
+  removeTypeComments: t.opt("boolean"),
 });
 
 const exportedTypeSuite: t.ITypeSuite = {

@@ -19,6 +19,7 @@ export default class TokenProcessor {
     readonly isFlowEnabled: boolean,
     readonly disableESTransforms: boolean,
     readonly helperManager: HelperManager,
+    readonly removeTypeComments = false,
   ) {}
 
   /**
@@ -168,12 +169,38 @@ export default class TokenProcessor {
     this.tokenIndex++;
   }
 
+  removeTokenTrimmingAttachedComments(): void {
+    let prev = this.previousWhitespaceAndComments();
+
+    const matches = prev.match(/\r?\n\s*\r?\n/g);
+    if (matches) {
+      const lastMatch = matches[matches.length - 1];
+      const pos = prev.lastIndexOf(lastMatch);
+      prev = prev.slice(0, pos);
+    } else {
+      prev = "";
+    }
+
+    this.resultCode += prev;
+    this.appendTokenPrefix();
+    this.appendTokenSuffix();
+    this.tokenIndex++;
+  }
+
   removeInitialToken(): void {
-    this.replaceToken("");
+    if (this.removeTypeComments) {
+      this.removeTokenTrimmingAttachedComments();
+    } else {
+      this.replaceToken("");
+    }
   }
 
   removeToken(): void {
-    this.replaceTokenTrimmingLeftWhitespace("");
+    if (this.removeTypeComments) {
+      this.removeTokenTrimmingAttachedComments();
+    } else {
+      this.replaceTokenTrimmingLeftWhitespace("");
+    }
   }
 
   copyExpectedToken(tokenType: TokenType): void {

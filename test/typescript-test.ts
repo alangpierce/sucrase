@@ -2776,4 +2776,21 @@ describe("typescript transform", () => {
       {disableESTransforms: true},
     );
   });
+
+  it("removes comments attached to TypeScript-only constructs", () => {
+    assertTypeScriptESMResult(
+      `// This stays
+
+      // This goes
+      interface Foo {}
+
+      // This stays too
+      `,
+      `// This stays
+
+      // This stays too
+      `,
+      {removeTypeComments: true},
+    );
+  });
 });

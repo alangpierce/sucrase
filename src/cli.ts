@@ -22,6 +22,7 @@ const glob = promisify(globCb);
 export default function run(): void {
   commander
     .description(`Sucrase: super-fast Babel alternative.`)
+    .version("fatih")
     .usage("[options] <srcDir>")
     .option(
       "-d, --out-dir <out>",
@@ -43,6 +44,7 @@ export default function run(): void {
     .option("--jsx-pragma <string>", "Element creation function, defaults to `React.createElement`")
     .option("--jsx-fragment-pragma <string>", "Fragment component, defaults to `React.Fragment`")
     .option("--production", "Disable debugging information from JSX in output.")
+    .option("--remove-type-comments", "Remove comments attached to removed TypeScript constructs.")
     .parse(process.argv);
 
   if (commander.project) {
@@ -89,6 +91,7 @@ export default function run(): void {
       jsxPragma: commander.jsxPragma || "React.createElement",
       jsxFragmentPragma: commander.jsxFragmentPragma || "React.Fragment",
       production: commander.production,
+      removeTypeComments: commander.removeTypeComments,
     },
   };
 

@@ -189,6 +189,13 @@ export function eat(type: TokenType): boolean {
   }
 }
 
+export function eatTypeToken(tokenType: TokenType): void {
+  const oldIsType = state.isType;
+  state.isType = true;
+  eat(tokenType);
+  state.isType = oldIsType;
+}
+
 export function match(type: TokenType): boolean {
   return state.type === type;
 }

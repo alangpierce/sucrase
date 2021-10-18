@@ -1074,6 +1074,22 @@ describe("typescript transform", () => {
     );
   });
 
+  it("handles definite assignment assertions in classes with disableESTransforms", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        foo!: number;
+      }
+    `,
+      `"use strict";
+      class A {
+        foo;
+      }
+    `,
+      {disableESTransforms: true},
+    );
+  });
+
   it("handles definite assignment assertions on variables", () => {
     assertTypeScriptResult(
       `
@@ -1086,6 +1102,37 @@ describe("typescript transform", () => {
       initX();
       console.log(x + 1);
     `,
+    );
+  });
+
+  it("handles definite assignment assertions on private fields in classes", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        #a!: number;
+      }
+    `,
+      `"use strict";
+      class A {
+        #a;
+      }
+    `,
+    );
+  });
+
+  it("handles definite assignment assertions on private fields in classes with disableESTransforms", () => {
+    assertTypeScriptResult(
+      `
+      class A {
+        #a!: number;
+      }
+    `,
+      `"use strict";
+      class A {
+        #a;
+      }
+    `,
+      {disableESTransforms: true},
     );
   });
 

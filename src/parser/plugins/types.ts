@@ -1,6 +1,6 @@
-import {eat, lookaheadType, match} from "../tokenizer/index";
+import {eatTypeToken, lookaheadType, match} from "../tokenizer/index";
 import {TokenType as tt} from "../tokenizer/types";
-import {isFlowEnabled, isTypeScriptEnabled, state} from "../traverser/base";
+import {isFlowEnabled, isTypeScriptEnabled} from "../traverser/base";
 import {baseParseConditional} from "../traverser/expression";
 import {flowParseTypeAnnotation} from "./flow";
 import {tsParseTypeAnnotation} from "./typescript";
@@ -26,9 +26,7 @@ export function typedParseConditional(noIn: boolean): void {
 // Note: These "type casts" are *not* valid TS expressions.
 // But we parse them here and change them when completing the arrow function.
 export function typedParseParenItem(): void {
-  if (eat(tt.question)) {
-    state.tokens[state.tokens.length - 1].isType = true;
-  }
+  eatTypeToken(tt.question);
   if (match(tt.colon)) {
     if (isTypeScriptEnabled) {
       tsParseTypeAnnotation();

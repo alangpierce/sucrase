@@ -1,3 +1,9 @@
+# 3.20.3 (2021-10-18)
+
+* Allow the names `true`, `false`, and `null` as TS enum keys. ([#656], [#657]) (pushkine, Alan Pierce)
+* Properly handle TS definite assignment assertions for private fields and when
+  disabling the class transform. ([#658])
+
 # 3.20.2 (2021-10-07)
 
 * Fix ASI issue that broke function declarations immediately following a default
@@ -383,3 +389,6 @@
 [#637]: https://github.com/alangpierce/sucrase/pull/637
 [#642]: https://github.com/alangpierce/sucrase/pull/642
 [#648]: https://github.com/alangpierce/sucrase/pull/648
+[#656]: https://github.com/alangpierce/sucrase/pull/656
+[#657]: https://github.com/alangpierce/sucrase/pull/657
+[#658]: https://github.com/alangpierce/sucrase/pull/658

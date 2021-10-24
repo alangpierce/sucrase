@@ -14,7 +14,14 @@ function getTransforms(filename: string): Array<Transform> | null {
 export function process(src: string, filename: string): string {
   const transforms = getTransforms(filename);
   if (transforms !== null) {
-    return transform(src, {transforms, filePath: filename}).code;
+    const {code, sourceMap} = transform(src, {
+      transforms,
+      sourceMapOptions: {compiledFilename: filename},
+      filePath: filename,
+    });
+    const mapBase64 = Buffer.from(JSON.stringify(sourceMap)).toString("base64");
+    const suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+    return `${code}\n${suffix}`;
   } else {
     return src;
   }

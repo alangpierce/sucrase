@@ -1,3 +1,8 @@
+# 2.2.0 (2021-10-24)
+
+* Include inline source maps when transforming code. This fixes debugging in
+  WebStorm. ([#661])
+
 # 2.1.1 (2021-08-09)
 
 * Add support for Jest 27. ([#640]) (Victor Pontis)
@@ -11,3 +16,4 @@
 * Switch Sucrase dependency to `^3`, update code to use new return type.
 
 [#640]: https://github.com/alangpierce/sucrase/pull/640
+[#661]: https://github.com/alangpierce/sucrase/pull/661

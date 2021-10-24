@@ -5,11 +5,19 @@ import run from "./run";
 import sleep from "./sleep";
 
 /**
- * To use:
+ * This script releases the core sucrase package (NOT any integrations). To use:
  * 1.) Update package.json to the new version without committing.
  * 2.) Add changelog notes for the new version without committing.
  * 3.) Run this script with "yarn release" from the root directory.
  * 4.) Verify that everything in the commit looks right and push.
+ *
+ * To release an integration, take the equivalent manual steps:
+ * 1.) Update the version in the integration's package.json.
+ * 2.) Add changelog notes in the integration's CHANGELOG.md.
+ * 3.) Run "yarn build" at the top level to make sure the integration is fully
+ *     built.
+ * 4.) Run "yarn publish" in the integration directory.
+ * 5.) Commit and push the change.
  */
 async function main(): Promise<void> {
   const packageJSON = JSON.parse((await readFile("./package.json")).toString());

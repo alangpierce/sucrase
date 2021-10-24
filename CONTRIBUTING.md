@@ -87,3 +87,13 @@ several smaller packages/projects). Here are the most important directories:
   run with `yarn benchmark`.
 * The `script` directory has all build scripts (written in TypeScript and
   compiled with Sucrase).
+
+## Publishing
+
+The main release script is lives in `script/release.ts`, and also contains
+documentation on how to prepare and perform a release. Here's a summary:
+* To release the core `sucrase` package, update `package.json` and the
+  release notes, then run `yarn release`, which also updates the internal
+  Sucrase dependency and re-publishes the website.
+* To release an integration, update the version and release notes, then run
+  `yarn build` at the top level and `yarn publish` in the integration directory.

@@ -20,6 +20,15 @@ Then change the default transform in jest.config.js file:
   ...
 ```
 
-Currently, the transforms are not configurable; it uses always runs the import
-and jest transforms and uses the file extension to decide whether to run the
-JSX, Flow, and/or TypeScript transforms.
+Passing options to the transformer:
+```
+module.exports = {
+  ...
+  transform: {
+    "\\.(js|jsx|ts|tsx)$": [
+      "@sucrase/jest-plugin",
+      { jsxPragma: "h", jsxFragment: "Fragment" }
+    ],
+  ...
+}
+```

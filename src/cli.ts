@@ -43,6 +43,7 @@ export default function run(): void {
     .option("--jsx-pragma <string>", "Element creation function, defaults to `React.createElement`")
     .option("--jsx-fragment-pragma <string>", "Fragment component, defaults to `React.Fragment`")
     .option("--production", "Disable debugging information from JSX in output.")
+    .option("--disable-es-transforms", "Disable transforming new ES features.")
     .parse(process.argv);
 
   if (commander.project) {
@@ -89,6 +90,7 @@ export default function run(): void {
       jsxPragma: commander.jsxPragma || "React.createElement",
       jsxFragmentPragma: commander.jsxFragmentPragma || "React.Fragment",
       production: commander.production,
+      disableESTransforms: commander.disableEsTransforms,
     },
   };
 

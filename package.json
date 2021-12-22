@@ -49,6 +49,7 @@
     "@types/mocha": "^5.2.7",
     "@types/mz": "^0.0.32",
     "@types/node": "^12.12.7",
+    "@types/source-map-support": "^0.5.4",
     "@typescript-eslint/eslint-plugin": "^4.11.1",
     "@typescript-eslint/parser": "^4.11.1",
     "chalk": "2.4.1",
@@ -72,6 +73,7 @@
     "lines-and-columns": "^1.1.6",
     "mz": "^2.7.0",
     "pirates": "^4.0.1",
+    "source-map-support": "^0.5.21",
     "ts-interface-checker": "^0.1.9"
   },
   "engines": {

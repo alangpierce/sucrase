@@ -2844,4 +2844,30 @@ describe("typescript transform", () => {
       {disableESTransforms: true},
     );
   });
+
+  it("doesn't get confused by += within an arrow function in a ternary", () => {
+    // https://github.com/alangpierce/sucrase/issues/666
+    assertResult(
+      `
+      0 ? a => (a += 0) : a => 0
+    `,
+      `
+      0 ? a => (a += 0) : a => 0
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("doesn't get confused by parenthesized arrow/ternary combination", () => {
+    // Regression test for code from https://github.com/babel/babel/issues/13644
+    assertResult(
+      `
+      (a ? v => (sum += 1) : v => 0);
+    `,
+      `
+      (a ? v => (sum += 1) : v => 0);
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
 });

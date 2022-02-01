@@ -113,7 +113,7 @@ configured for any JSX use case.
 
 ### Legacy CommonJS interop
 
-Two legacy modes can be used with the `import` transform:
+Two legacy modes can be used with the `imports` transform:
 
 * **enableLegacyTypeScriptModuleInterop**: Use the default TypeScript approach
   to CommonJS interop instead of assuming that TypeScript's `--esModuleInterop`

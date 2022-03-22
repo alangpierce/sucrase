@@ -374,12 +374,12 @@ function processEntity(text: string, indexAfterAmpersand: number): {entity: stri
     if (ch === ";") {
       if (str[0] === "#") {
         if (str[1] === "x") {
-          str = str.substr(2);
+          str = str.slice(2);
           if (HEX_NUMBER.test(str)) {
             entity = String.fromCodePoint(parseInt(str, 16));
           }
         } else {
-          str = str.substr(1);
+          str = str.slice(1);
           if (DECIMAL_NUMBER.test(str)) {
             entity = String.fromCodePoint(parseInt(str, 10));
           }

@@ -72,7 +72,7 @@ export function loadHashState(): Partial<BaseHashState> | null {
     if (!hashContents.startsWith("#")) {
       return null;
     }
-    const components = hashContents.substr(1).split("&");
+    const components = hashContents.slice(1).split("&");
     const result: Partial<HashState> = {};
     for (const component of components) {
       const [key, value] = component.split("=");

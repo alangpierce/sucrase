@@ -672,7 +672,7 @@ function tsTryParseType(): void {
  */
 function tsParseTypePredicateOrAssertsPrefix(): boolean {
   const snapshot = state.snapshot();
-  if (isContextual(ContextualKeyword._asserts) && !hasPrecedingLineBreak()) {
+  if (isContextual(ContextualKeyword._asserts)) {
     // Normally this is `asserts x is T`, but at this point, it might be `asserts is T` (a user-
     // defined type guard on the `asserts` variable) or just a type called `asserts`.
     next();
@@ -1453,7 +1453,9 @@ export function tsStartParseFunctionParams(): void {
 // `let x: number;`
 export function tsAfterParseVarHead(): void {
   const oldIsType = pushTypeContext(0);
-  eat(tt.bang);
+  if (!hasPrecedingLineBreak()) {
+    eat(tt.bang);
+  }
   tsTryParseTypeAnnotation();
   popTypeContext(oldIsType);
 }

@@ -31,7 +31,8 @@ with all tests passing, about 1 million lines of code total.
 **Sucrase is about 20x faster than Babel.** Here's one measurement of how
 Sucrase compares with other tools when compiling the Jest codebase 3 times,
 about 360k lines of code total:
-```
+
+```text
             Time            Speed
 Sucrase     1.64 seconds    220221 lines per second
 swc         2.13 seconds    169502 lines per second
@@ -39,6 +40,7 @@ esbuild     3.02 seconds    119738 lines per second
 TypeScript  24.18 seconds   14937 lines per second
 Babel       27.22 seconds   13270 lines per second
 ```
+
 Details: Measured on January 2021. Tools run in single-threaded mode without warm-up. See the
 [benchmark code](https://github.com/alangpierce/sucrase/blob/main/benchmark/benchmark.ts)
 for methodology and caveats.
@@ -47,6 +49,7 @@ for methodology and caveats.
 
 The main configuration option in Sucrase is an array of transform names. These
 transforms are available:
+
 * **jsx**: Transforms JSX syntax to `React.createElement`, e.g. `<div a={b} />`
   becomes `React.createElement('div', {a: b})`. Behaves like Babel 7's
   [React preset](https://github.com/babel/babel/tree/main/packages/babel-preset-react),
@@ -69,6 +72,7 @@ transforms are available:
   Does not validate the arguments passed to `jest.mock`, but the same rules still apply.
 
 These newer JS features are transformed by default:
+
 * [Optional chaining](https://github.com/tc39/proposal-optional-chaining): `a?.b`
 * [Nullish coalescing](https://github.com/tc39/proposal-nullish-coalescing): `a ?? b`
 * [Class fields](https://github.com/tc39/proposal-class-fields): `class C { x = 1; }`.
@@ -90,6 +94,7 @@ for details. If you use TypeScript, you can enable the TypeScript option
 
 All JS syntax not mentioned above will "pass through" and needs to be supported
 by your JS runtime. For example:
+
 * Decorators, private fields, `throw` expressions, generator arrow functions,
   and `do` expressions are all unsupported in browsers and Node (as of this
   writing), and Sucrase doesn't make an attempt to transpile them.
@@ -99,13 +104,17 @@ by your JS runtime. For example:
   work, based on your tooling.
 
 ### JSX Options
+
 Like Babel, Sucrase compiles JSX to React functions by default, but can be
 configured for any JSX use case.
+
 * **jsxPragma**: Element creation function, defaults to `React.createElement`.
 * **jsxFragmentPragma**: Fragment component, defaults to `React.Fragment`.
 
 ### Legacy CommonJS interop
-Two legacy modes can be used with the `import` transform:
+
+Two legacy modes can be used with the `imports` transform:
+
 * **enableLegacyTypeScriptModuleInterop**: Use the default TypeScript approach
   to CommonJS interop instead of assuming that TypeScript's `--esModuleInterop`
   flag is enabled. For example, if a CJS module exports a function, legacy
@@ -123,7 +132,7 @@ Two legacy modes can be used with the `import` transform:
 
 Installation:
 
-```
+```bash
 yarn add --dev sucrase  # Or npm install --save-dev sucrase
 ```
 
@@ -145,13 +154,13 @@ require("sucrase/register");
 
 Compile on-the-fly via a drop-in replacement for node:
 
-```
+```bash
 sucrase-node index.ts
 ```
 
 Run on a directory:
 
-```
+```bash
 sucrase ./srcDir -d ./outDir --transforms typescript,imports
 ```
 
@@ -215,6 +224,7 @@ Only step 4 gets faster when disabling plugins, so there's always a fixed cost
 to running Babel regardless of how many transforms are enabled.
 
 Sucrase bypasses most of these steps, and works like this:
+
 1. Tokenize the input source code into a token stream using a trimmed-down fork
    of the Babel parser. This fork does not produce a full AST, but still
    produces meaningful token metadata specifically designed for the later

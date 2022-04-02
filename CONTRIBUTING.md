@@ -5,6 +5,7 @@
 Thanks for taking a look at the project and thinking about contributing!
 
 There are two main ways to communicate about Sucrase development:
+
 * Join the [Gitter room](https://gitter.im/sucrasejs/Lobby) and feel free to ask
   questions or discuss anything.
 * File an issue or PR in this repository. Issues don't need to be bug reports;
@@ -45,7 +46,7 @@ more concrete suggestions.
 
 Sucrase uses `yarn` for everything.
 
-```
+```bash
 git clone git@github.com:alangpierce/sucrase.git
 cd sucrase
 yarn  # Install dependencies.
@@ -67,6 +68,7 @@ details of the change and references to any issues closed by the change.
 
 The code is organized as a monorepo (with one primary `sucrase` package and
 several smaller packages/projects). Here are the most important directories:
+
 * The `src` directory is where the main code lives. Much of the code is in the
   `parser` subdirectory, which is a heavily modified fork of Babel's parser. The
   rest of the code handles transforming the code given the result of the parser.
@@ -92,6 +94,7 @@ several smaller packages/projects). Here are the most important directories:
 
 The main release script is lives in `script/release.ts`, and also contains
 documentation on how to prepare and perform a release. Here's a summary:
+
 * To release the core `sucrase` package, update `package.json` and the
   release notes, then run `yarn release`, which also updates the internal
   Sucrase dependency and re-publishes the website.

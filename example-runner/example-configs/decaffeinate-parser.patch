@@ -1,20 +1,42 @@
+diff --git a/jest.config.js b/jest.config.js
+index 87e2017..97f9819 100644
+--- a/jest.config.js
++++ b/jest.config.js
+@@ -55,11 +55,11 @@ module.exports = {
+   // globalTeardown: null,
+ 
+   // A set of global variables that need to be available in all test environments
+-  globals: {
+-    'ts-jest': {
+-      tsConfig: 'tsconfig.json',
+-    },
+-  },
++  // globals: {
++  //   'ts-jest': {
++  //     tsConfig: 'tsconfig.json',
++  //   },
++  // },
+ 
+   // An array of directory names to be searched recursively up from the requiring module's location
+   // moduleDirectories: [
+@@ -156,7 +156,7 @@ module.exports = {
+ 
+   // A map from regular expressions to paths to transformers
+   transform: {
+-    '^.+\\.(ts|tsx)$': 'ts-jest',
++    '^.+\\.(ts|tsx)$': '@sucrase/jest-plugin',
+   },
+ 
+   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
 diff --git a/package.json b/package.json
-index e2e9927..548a42f 100644
+index 4094fa0..dc5e31c 100644
 --- a/package.json
 +++ b/package.json
-@@ -9,7 +9,6 @@
+@@ -23,7 +23,6 @@
      "build": "./script/build",
-     "lint": "eslint src test && tslint --config tslint.json --project tsconfig.json --type-check",
-     "lint-fix": "eslint src test --fix && tslint --config tslint.json --project tsconfig.json --type-check --fix",
--    "pretest": "npm run lint",
-     "test": "mocha"
+     "lint": "eslint '{src,test}/**/*.ts'",
+     "lint:fix": "yarn lint --fix",
+-    "pretest": "yarn lint",
+     "test": "jest",
+     "test:ci": "jest --ci"
    },
-   "keywords": [
-diff --git a/test/mocha.opts b/test/mocha.opts
-index 1aee96b..d084985 100644
---- a/test/mocha.opts
-+++ b/test/mocha.opts
-@@ -1,2 +1,2 @@
----compilers ts:ts-node/register,js:babel-register
-+--compilers ts:sucrase/register/ts-legacy-module-interop
- --recursive

@@ -30,8 +30,7 @@ export type SourceMapOptions = import("./Options").SourceMapOptions;
 export type Transform = import("./Options").Transform;
 
 export function getVersion(): string {
-  // eslint-disable-next-line
-  return require("../package.json").version;
+  return "3.20.3";
 }
 
 export function transform(code: string, options: Options): TransformResult {

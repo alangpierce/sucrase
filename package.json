@@ -4,9 +4,9 @@
   "description": "Super-fast alternative to Babel for when you can target modern JS runtimes",
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
-  "main": "dist/index",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "main": "dist/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
   "bin": {
     "sucrase": "./bin/sucrase",
     "sucrase-node": "./bin/sucrase-node"

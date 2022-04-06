@@ -8,8 +8,9 @@ import sleep from "./sleep";
  * This script releases the core sucrase package (NOT any integrations). To use:
  * 1.) Update package.json to the new version without committing.
  * 2.) Add changelog notes for the new version without committing.
- * 3.) Run this script with "yarn release" from the root directory.
- * 4.) Verify that everything in the commit looks right and push.
+ * 3.) Update getVersion in index.ts without committing.
+ * 4.) Run this script with "yarn release" from the root directory.
+ * 5.) Verify that everything in the commit looks right and push.
  *
  * To release an integration, take the equivalent manual steps:
  * 1.) Update the version in the integration's package.json.
@@ -25,6 +26,10 @@ async function main(): Promise<void> {
   const changelogText = await readFile("./CHANGELOG.md");
   if (!changelogText.includes(version)) {
     throw new Error("Release notes must be already added to changelog.");
+  }
+  const indexTSText = await readFile("./src/index.ts");
+  if (!indexTSText.includes(version)) {
+    throw new Error("getVersion must be updated to the new version.");
   }
   console.log(`Version ${version} is valid and found in changelog.`);
   try {

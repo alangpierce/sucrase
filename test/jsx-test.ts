@@ -233,6 +233,39 @@ describe("transform JSX", () => {
     );
   });
 
+  it("handles hex unicode HTML entities", () => {
+    assertResult(
+      `
+      <span>a&#x3E;b</span>
+    `,
+      `${JSX_PREFIX}
+      React.createElement('span', {${devProps(2)}}, "a>b")
+    `,
+    );
+  });
+
+  it("handles decimal unicode HTML entities", () => {
+    assertResult(
+      `
+      <span>a&#62;b</span>
+    `,
+      `${JSX_PREFIX}
+      React.createElement('span', {${devProps(2)}}, "a>b")
+    `,
+    );
+  });
+
+  it("handles ampersand in HTML", () => {
+    assertResult(
+      `
+      <span>Rock & Roll</span>
+    `,
+      `${JSX_PREFIX}
+      React.createElement('span', {${devProps(2)}}, "Rock & Roll"  )
+    `,
+    );
+  });
+
   it("handles non-breaking spaces in JSX text", () => {
     /* eslint-disable no-irregular-whitespace */
     assertResult(

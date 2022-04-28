@@ -1,3 +1,7 @@
+# 2.2.1 (2022-04-28)
+
+* Add support for Jest 28. ([#695]) (Viktor Luft)
+
 # 2.2.0 (2021-10-24)
 
 * Include inline source maps when transforming code. This fixes debugging in
@@ -17,3 +21,4 @@
 
 [#640]: https://github.com/alangpierce/sucrase/pull/640
 [#661]: https://github.com/alangpierce/sucrase/pull/661
+[#695]: https://github.com/alangpierce/sucrase/pull/695

@@ -1,4 +1,5 @@
 import * as pirates from "pirates";
+import sourceMapSupport from "source-map-support";
 
 import {Options, transform} from "./index";
 
@@ -29,23 +30,36 @@ export function addHook(
   );
 }
 
+let sourceMapInstalled = false;
+
+const installSourceMap = (): void => {
+  if (sourceMapInstalled) return;
+  sourceMapInstalled = true;
+  sourceMapSupport.install();
+};
+
 export function registerJS(hookOptions?: HookOptions): RevertFunction {
+  installSourceMap();
   return addHook(".js", {transforms: ["imports", "flow", "jsx"]}, hookOptions);
 }
 
 export function registerJSX(hookOptions?: HookOptions): RevertFunction {
+  installSourceMap();
   return addHook(".jsx", {transforms: ["imports", "flow", "jsx"]}, hookOptions);
 }
 
 export function registerTS(hookOptions?: HookOptions): RevertFunction {
+  installSourceMap();
   return addHook(".ts", {transforms: ["imports", "typescript"]}, hookOptions);
 }
 
 export function registerTSX(hookOptions?: HookOptions): RevertFunction {
+  installSourceMap();
   return addHook(".tsx", {transforms: ["imports", "typescript", "jsx"]}, hookOptions);
 }
 
 export function registerTSLegacyModuleInterop(hookOptions?: HookOptions): RevertFunction {
+  installSourceMap();
   return addHook(
     ".ts",
     {
@@ -57,6 +71,7 @@ export function registerTSLegacyModuleInterop(hookOptions?: HookOptions): Revert
 }
 
 export function registerTSXLegacyModuleInterop(hookOptions?: HookOptions): RevertFunction {
+  installSourceMap();
   return addHook(
     ".tsx",
     {

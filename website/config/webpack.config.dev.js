@@ -28,11 +28,7 @@ module.exports = {
   // We care about seeing the compiled output, and Sucrase makes it pretty
   // readable anyway.
   devtool: "eval",
-  entry: [
-    `${require.resolve("webpack-dev-server/client")}?/`,
-    require.resolve("webpack/hot/only-dev-server"),
-    paths.appIndexJs,
-  ],
+  entry: [paths.appIndexJs],
   output: {
     // Next line is not used in dev but WebpackDevServer crashes without it:
     path: paths.appBuild,
@@ -135,7 +131,6 @@ module.exports = {
     // Makes some environment variables available to the JS code, for example:
     // if (process.env.NODE_ENV === 'development') { ... }. See `./env.js`.
     new webpack.DefinePlugin(env.stringified),
-    new webpack.HotModuleReplacementPlugin(),
     // Watcher doesn't work well if you mistype casing in a path so we use
     // a plugin that prints an error when you attempt to do this.
     // See https://github.com/facebookincubator/create-react-app/issues/240

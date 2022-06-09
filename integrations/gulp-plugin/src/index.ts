@@ -1,7 +1,12 @@
 /* eslint-disable import/first */
 import PluginError = require("plugin-error");
 import replaceExt = require("replace-ext");
+// TODO: ESLint now rightfully complains about ESM syntax in a CJS file.
+//  Keeping as-is to avoid unintended issues, but this could be resolved
+//  when revisiting this plugin.
+// eslint-disable-next-line import/no-import-module-exports
 import {Transform} from "stream";
+// eslint-disable-next-line import/no-import-module-exports
 import {Options, transform} from "sucrase";
 import through = require("through2");
 

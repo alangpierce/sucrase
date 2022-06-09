@@ -214,34 +214,40 @@ async function benchmarkFiles(benchmarkOptions: BenchmarkOptions): Promise<void>
     console.log(`Testing against ${numLines(benchmarkOptions)} LOC`);
   }
   /* eslint-disable @typescript-eslint/require-await */
-  await runBenchmark("Sucrase", benchmarkOptions, async (code: string, path: string) => {
-    return sucrase.transform(code, {
-      transforms: path.endsWith(".ts")
-        ? ["imports", "typescript"]
-        : ["jsx", "imports", "typescript"],
-    }).code;
-  });
+  await runBenchmark(
+    "Sucrase",
+    benchmarkOptions,
+    async (code: string, path: string) =>
+      sucrase.transform(code, {
+        transforms: path.endsWith(".ts")
+          ? ["imports", "typescript"]
+          : ["jsx", "imports", "typescript"],
+      }).code,
+  );
   if (benchmarkOptions.sucraseOnly) {
     return;
   }
   // To run swc in single-threaded mode, we call into it repeatedly using
   // transformSync, which seems to have minimal overhead.
-  await runBenchmark("swc", benchmarkOptions, async (code: string, path: string) => {
-    return swc.transformSync(code, {
-      jsc: {
-        parser: {
-          syntax: "typescript",
-          tsx: !path.endsWith(".ts"),
-          dynamicImport: true,
-          decorators: true,
+  await runBenchmark(
+    "swc",
+    benchmarkOptions,
+    async (code: string, path: string) =>
+      swc.transformSync(code, {
+        jsc: {
+          parser: {
+            syntax: "typescript",
+            tsx: !path.endsWith(".ts"),
+            dynamicImport: true,
+            decorators: true,
+          },
+          target: "es2019",
         },
-        target: "es2019",
-      },
-      module: {
-        type: "commonjs",
-      },
-    }).code;
-  });
+        module: {
+          type: "commonjs",
+        },
+      }).code,
+  );
   // esbuild's transformSync has significant overhead since it spins up an
   // external process, so instead create a "service" process and communicate to
   // it. One way to force a single-threaded behavior is to sequentially call
@@ -251,40 +257,49 @@ async function benchmarkFiles(benchmarkOptions: BenchmarkOptions): Promise<void>
   process.env.GOMAXPROCS = "1";
   const esbuildService = await esbuild.startService();
   try {
-    await runBenchmark("esbuild", benchmarkOptions, async (code: string, path: string) => {
-      return (
-        await esbuildService.transform(code, {
-          loader: path.endsWith(".ts") ? "ts" : "tsx",
-          format: "cjs",
-        })
-      ).code;
-    });
+    await runBenchmark(
+      "esbuild",
+      benchmarkOptions,
+      async (code: string, path: string) =>
+        (
+          await esbuildService.transform(code, {
+            loader: path.endsWith(".ts") ? "ts" : "tsx",
+            format: "cjs",
+          })
+        ).code,
+    );
   } finally {
     esbuildService.stop();
   }
-  await runBenchmark("TypeScript", benchmarkOptions, async (code: string) => {
-    return TypeScript.transpileModule(code, {
-      compilerOptions: {
-        module: TypeScript.ModuleKind.CommonJS,
-        jsx: TypeScript.JsxEmit.React,
-        target: TypeScript.ScriptTarget.ESNext,
-      },
-    }).outputText;
-  });
-  await runBenchmark("Babel", benchmarkOptions, async (code: string, path: string) => {
-    return babel.transformSync(code, {
-      filename: path.endsWith(".ts") ? "sample.ts" : "sample.tsx",
-      presets: path.endsWith(".ts")
-        ? ["@babel/preset-typescript"]
-        : ["@babel/preset-react", "@babel/preset-typescript"],
-      plugins: [
-        "@babel/plugin-transform-modules-commonjs",
-        "@babel/plugin-syntax-top-level-await",
-        "@babel/plugin-proposal-export-namespace-from",
-        ["@babel/plugin-proposal-decorators", {legacy: true}],
-      ],
-    }).code;
-  });
+  await runBenchmark(
+    "TypeScript",
+    benchmarkOptions,
+    async (code: string) =>
+      TypeScript.transpileModule(code, {
+        compilerOptions: {
+          module: TypeScript.ModuleKind.CommonJS,
+          jsx: TypeScript.JsxEmit.React,
+          target: TypeScript.ScriptTarget.ESNext,
+        },
+      }).outputText,
+  );
+  await runBenchmark(
+    "Babel",
+    benchmarkOptions,
+    async (code: string, path: string) =>
+      babel.transformSync(code, {
+        filename: path.endsWith(".ts") ? "sample.ts" : "sample.tsx",
+        presets: path.endsWith(".ts")
+          ? ["@babel/preset-typescript"]
+          : ["@babel/preset-react", "@babel/preset-typescript"],
+        plugins: [
+          "@babel/plugin-transform-modules-commonjs",
+          "@babel/plugin-syntax-top-level-await",
+          "@babel/plugin-proposal-export-namespace-from",
+          ["@babel/plugin-proposal-decorators", {legacy: true}],
+        ],
+      }).code,
+  );
   /* eslint-enable @typescript-eslint/require-await */
 }
 

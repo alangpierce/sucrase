@@ -54,7 +54,8 @@ export function transform(code: string, options: Options): TransformResult {
       };
     }
     return result;
-  } catch (e) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (e: any) {
     if (options.filePath) {
       e.message = `Error transforming ${options.filePath}: ${e.message}`;
     }

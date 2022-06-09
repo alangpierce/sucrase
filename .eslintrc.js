@@ -18,6 +18,9 @@ module.exports = {
     // This rule has TypeScript false positives, so just disable for now.
     "import/named": "off",
     "import/no-cycle": "off",
+    // Currently we need to do relative imports for cross-project references.
+    // This could be resolved by switching to lerna or yarn workspaces.
+    "import/no-relative-packages": "off",
     "import/order": [
       "error",
       {
@@ -82,6 +85,7 @@ module.exports = {
     "@typescript-eslint/no-inferrable-types": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/no-shadow": "error",
+    "@typescript-eslint/no-unsafe-argument": "off",
     "@typescript-eslint/no-unsafe-assignment": "off",
     "@typescript-eslint/no-unsafe-call": "off",
     "@typescript-eslint/no-unsafe-member-access": "off",

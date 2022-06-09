@@ -24,6 +24,7 @@
   ],
   "exclude": [
     "benchmark/sample",
-    "example-runner/example-repos"
+    "example-runner/example-repos",
+    "test262/test262-checkout"
   ]
 }

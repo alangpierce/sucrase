@@ -26,7 +26,7 @@ const HELPERS: {[name: string]: string} = {
   `,
   createNamedExportFrom: `
     function createNamedExportFrom(obj, localName, importedName) {
-      Object.defineProperty(exports, localName, {enumerable: true, get: () => obj[importedName]});
+      Object.defineProperty(exports, localName, {enumerable: true, configurable: true, get: () => obj[importedName]});
     }
   `,
   // Note that TypeScript and Babel do this differently; TypeScript does a simple existence
@@ -41,7 +41,7 @@ const HELPERS: {[name: string]: string} = {
           if (exports.hasOwnProperty(key)) {
             return;
           }
-          Object.defineProperty(exports, key, {enumerable: true, get: () => obj[key]});
+          Object.defineProperty(exports, key, {enumerable: true, configurable: true, get: () => obj[key]});
         });
     }
   `,

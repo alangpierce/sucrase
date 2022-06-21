@@ -1485,4 +1485,26 @@ module.exports = exports.default;
       5,
     );
   });
+
+  it("allows named re-export after star re-export of same name", () => {
+    assertMultiFileOutput(
+      {
+        main: `
+          export { a as output } from 'lib';
+      `,
+        lib: `
+          export * from 'lib1';
+          export * from 'lib2';
+          export { a } from 'lib2';
+        `,
+        lib1: `
+          export const a = 1;
+        `,
+        lib2: `
+          export const a = 2;
+      `,
+      },
+      2,
+    );
+  });
 });

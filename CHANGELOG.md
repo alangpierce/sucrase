@@ -1,3 +1,7 @@
+# 3.21.1 (2022-06-21)
+
+* Allow re-export after star export of same name. ([#698]) (Cameron Pitt)
+
 # 3.21.0 (2022-04-06)
 
 * Restructure package directory layout to better support ESM. ([#684]) (Neo Nie)
@@ -397,3 +401,4 @@
 [#657]: https://github.com/alangpierce/sucrase/pull/657
 [#658]: https://github.com/alangpierce/sucrase/pull/658
 [#684]: https://github.com/alangpierce/sucrase/pull/684
+[#698]: https://github.com/alangpierce/sucrase/pull/698

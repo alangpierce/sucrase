@@ -19,13 +19,20 @@ function postMessage(message: WorkerMessage): void {
 
 /**
  * Hacky workaround for the fact that chunk loading in workers is normally
- * synchronous. We determine the chunk name based on how the webpack config
- * chooses names, then load that up-front in a fetch (which is actually async).
- * This makes it so the later import() will be able to pull the JS from cache,
- * and thus block the worker for a much shorter period of time.
+ * synchronous (importScripts). We determine the chunk name based on how the
+ * webpack config chooses names, then load that up-front in a fetch (which is
+ * actually async). This makes it so the later import() will be able to pull
+ * the JS from cache, and thus block the worker for a much shorter period of
+ * time.
+ *
+ * TODO: Figure out how to get webpack to use true ESM imports for async loading
+ * in workers, which would avoid this need.
  */
 async function prefetchChunk(chunkName: string): Promise<void> {
-  const path = location.pathname.replace(/\/\d+\./, `/${chunkName}.`);
+  // Chunks have the filename "[name].[fullhash:8].chunk.js", so we can chop off
+  // the first part of this chunk's name and replace it with the chunkName to
+  // get the filename of the chunk to load.
+  const path = location.pathname.replace(/\/[^.]+\./, `/${chunkName}.`);
   const response = await fetch(path);
   await response.text();
 }

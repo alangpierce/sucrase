@@ -1,7 +1,7 @@
 import {css, StyleSheet} from "aphrodite";
 import {editor} from "monaco-editor";
 import React, {Component} from "react";
-import {AutoSizer} from "react-virtualized/dist/es/AutoSizer";
+import AutoSizer from "react-virtualized-auto-sizer";
 
 import Editor from "./Editor";
 import FallbackEditor from "./FallbackEditor";

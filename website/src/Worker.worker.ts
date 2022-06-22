@@ -25,7 +25,10 @@ function postMessage(message: WorkerMessage): void {
  * and thus block the worker for a much shorter period of time.
  */
 async function prefetchChunk(chunkName: string): Promise<void> {
-  const path = location.pathname.replace(/\/\d+\./, `/${chunkName}.`);
+  // Chunks have the filename "[name].[fullhash:8].chunk.js", so we can chop off
+  // the first part of this chunk's name and replace it with the chunkName to
+  // get the filename of the chunk to load.
+  const path = location.pathname.replace(/\/[^.]+\./, `/${chunkName}.`);
   const response = await fetch(path);
   await response.text();
 }

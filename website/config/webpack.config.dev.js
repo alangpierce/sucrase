@@ -6,7 +6,6 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
-const WorkerPlugin = require("worker-plugin");
 const getClientEnvironment = require("./env");
 const paths = require("./paths");
 
@@ -32,12 +31,6 @@ module.exports = {
   output: {
     // Next line is not used in dev but WebpackDevServer crashes without it:
     path: paths.appBuild,
-    // Add /* filename */ comments to generated require()s in the output.
-    pathinfo: true,
-    // This does not produce a real file. It's just the virtual path that is
-    // served by WebpackDevServer in development. This is the JS bundle
-    // containing code from all our entry points, and the Webpack runtime.
-    filename: "bundle.js",
     // There are also additional JS chunk files if you use code splitting.
     chunkFilename: "[name].chunk.js",
     // This is the URL that app is served from. We use "/" in development.
@@ -54,12 +47,14 @@ module.exports = {
     // https://github.com/facebookincubator/create-react-app/issues/253
     modules: ["node_modules", paths.appNodeModules],
     extensions: [".js", ".mjs", ".json", ".ts", ".tsx"],
+    alias: {
+      // TypeScript requires this node-internal module in code we don't use.
+      perf_hooks: false,
+    },
   },
   module: {
     strictExportPresence: true,
     rules: [
-      // Disable require.ensure as it's not a standard language feature.
-      {parser: {requireEnsure: false}},
       {
         type: "javascript/auto",
         test: /\.mjs$/,
@@ -135,28 +130,23 @@ module.exports = {
     // a plugin that prints an error when you attempt to do this.
     // See https://github.com/facebookincubator/create-react-app/issues/240
     new CaseSensitivePathsPlugin(),
-    // Moment.js is an extremely popular library that bundles large locale files
-    // by default due to how Webpack interprets its code. This is a practical
-    // solution that requires the user to opt into importing specific locales.
-    // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
-    // You can remove this if you don't use Moment.js:
-    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
     new MonacoWebpackPlugin({languages: ["typescript"]}),
-    new WorkerPlugin(),
+    // babel-plugin-jest-hoist pulls in @babel/template, which transitively
+    // pulls in chalk, which has a dependency on process.
+    new webpack.ProvidePlugin({process: "process/browser"}),
   ],
-  // Some libraries import Node modules but don't use them in the browser.
-  // Tell Webpack to provide empty mocks for them so importing them works.
-  node: {
-    dgram: "empty",
-    fs: "empty",
-    net: "empty",
-    tls: "empty",
-    child_process: "empty",
-  },
   // Turn off performance hints during development because we don't do any
   // splitting or minification in interest of speed. These warnings become
   // cumbersome.
   performance: {
     hints: false,
+  },
+  optimization: {
+    splitChunks: {
+      // Don't split async chunks. This is needed for the prefetchChunk function
+      // to work right; Babel and TS should be loaded as one large chunk each so
+      // that we can fully pre-fetch them.
+      chunks: "initial",
+    },
   },
 };

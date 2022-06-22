@@ -41,7 +41,7 @@ type HandleCompressedCodeFunc = (compressedCode: string) => void;
 let handleCompressedCodeFn: HandleCompressedCodeFunc | null = null;
 
 function initWorker(): void {
-  worker = new Worker("./Worker.worker", {type: "module"});
+  worker = new Worker(new URL("./Worker.worker", import.meta.url));
   worker.addEventListener("message", ({data}: {data: WorkerMessage}) => {
     if (data.type === "RESPONSE") {
       if (!nextResolve) {

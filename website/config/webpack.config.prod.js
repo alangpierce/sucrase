@@ -3,10 +3,8 @@
 const path = require("path");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const ManifestPlugin = require("webpack-manifest-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
-const WorkerPlugin = require("worker-plugin");
 const paths = require("./paths");
 const getClientEnvironment = require("./env");
 
@@ -45,8 +43,8 @@ module.exports = {
     // Generated JS file names (with nested folders).
     // There will be one main bundle, and one file per asynchronous chunk.
     // We don't currently advertise code splitting but Webpack supports it.
-    filename: "[name].[hash:8].js",
-    chunkFilename: "[name].[hash:8].chunk.js",
+    filename: "[name].[fullhash:8].js",
+    chunkFilename: "[name].[fullhash:8].chunk.js",
     // We inferred the "public path" (such as / or /my-project) from homepage.
     publicPath,
     // Point sourcemap entries to original disk location (format as URL on Windows)
@@ -61,12 +59,14 @@ module.exports = {
     // https://github.com/facebookincubator/create-react-app/issues/253
     modules: ["node_modules", paths.appNodeModules],
     extensions: [".js", ".mjs", ".json", ".ts", ".tsx"],
+    alias: {
+      // TypeScript requires this node-internal module in code we don't use.
+      perf_hooks: false,
+    },
   },
   module: {
     strictExportPresence: true,
     rules: [
-      // Disable require.ensure as it's not a standard language feature.
-      {parser: {requireEnsure: false}},
       {
         type: "javascript/auto",
         test: /\.mjs$/,
@@ -152,19 +152,17 @@ module.exports = {
     // It is absolutely essential that NODE_ENV was set to production here.
     // Otherwise React will be compiled in the very slow development mode.
     new webpack.DefinePlugin(env.stringified),
-    new ManifestPlugin({
-      fileName: "asset-manifest.json",
-    }),
     new MonacoWebpackPlugin({languages: ["typescript"]}),
-    new WorkerPlugin(),
+    // babel-plugin-jest-hoist pulls in @babel/template, which transitively
+    // pulls in chalk, which has a dependency on process.
+    new webpack.ProvidePlugin({process: "process/browser"}),
   ],
-  // Some libraries import Node modules but don't use them in the browser.
-  // Tell Webpack to provide empty mocks for them so importing them works.
-  node: {
-    dgram: "empty",
-    fs: "empty",
-    net: "empty",
-    tls: "empty",
-    child_process: "empty",
+  optimization: {
+    splitChunks: {
+      // Don't split async chunks. This is needed for the prefetchChunk function
+      // to work right; Babel and TS should be loaded as one large chunk each so
+      // that we can fully pre-fetch them.
+      chunks: "initial",
+    },
   },
 };

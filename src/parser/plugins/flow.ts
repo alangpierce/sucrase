@@ -933,9 +933,11 @@ export function flowParseImportSpecifier(): void {
       // `import {type as foo`
       parseIdentifier();
     }
-  } else if (isTypeKeyword && (match(tt.name) || !!(state.type & TokenType.IS_KEYWORD))) {
-    // `import {type foo`
-    parseIdentifier();
+  } else {
+    if (isTypeKeyword && (match(tt.name) || !!(state.type & TokenType.IS_KEYWORD))) {
+      // `import {type foo`
+      parseIdentifier();
+    }
     if (eatContextual(ContextualKeyword._as)) {
       parseIdentifier();
     }

@@ -664,6 +664,15 @@ function parseParenAndDistinguishExpression(canBeArrow: boolean): boolean {
       parseFunctionParams();
       parseArrow();
       parseArrowExpression(startTokenIndex);
+      if (state.error) {
+        // Nevermind! This must have been something that looks very much like an
+        // arrow function but where its "parameter list" isn't actually a valid
+        // parameter list. Force non-arrow parsing.
+        // See https://github.com/alangpierce/sucrase/issues/666 for an example.
+        state.restoreFromSnapshot(snapshot);
+        parseParenAndDistinguishExpression(false);
+        return false;
+      }
       return true;
     }
   }

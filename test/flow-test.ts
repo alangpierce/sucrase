@@ -479,4 +479,15 @@ describe("transform flow", () => {
       {disableESTransforms: true},
     );
   });
+
+  it("properly parses `as as` in an import statement", () => {
+    assertFlowResult(
+      `
+      import {foo as as} from "./Foo";
+    `,
+      `"use strict";
+      var _Foo = require('./Foo');
+    `,
+    );
+  });
 });

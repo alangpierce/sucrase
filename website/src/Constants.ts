@@ -39,7 +39,7 @@ interface TransformInfo {
 export const TRANSFORMS: Array<TransformInfo> = [
   {name: "jsx", presetName: ["react", {development: true}]},
   {name: "typescript", presetName: ["typescript", {allowDeclareFields: true}]},
-  {name: "flow", presetName: "flow"},
+  {name: "flow", presetName: "flow", babelName: "transform-flow-enums"},
   {name: "imports", babelName: "transform-modules-commonjs"},
   {name: "react-hot-loader", babelName: "react-hot-loader"},
   {name: "jest", babelName: "jest-hoist"},

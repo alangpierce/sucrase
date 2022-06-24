@@ -2,14 +2,22 @@ import * as assert from "assert";
 
 import {parse} from "../src/parser";
 import {IdentifierRole, Token} from "../src/parser/tokenizer";
+import {ContextualKeyword} from "../src/parser/tokenizer/keywords";
 import {TokenType as tt} from "../src/parser/tokenizer/types";
 
 type SimpleToken = Token & {label?: string};
 type TokenExpectation = {[K in keyof SimpleToken]?: SimpleToken[K]};
 
-function assertTokens(code: string, expectedTokens: Array<TokenExpectation>): void {
-  const tokens: Array<SimpleToken> = parse(code, true, true, false).tokens;
-  assert.strictEqual(tokens.length, expectedTokens.length);
+function assertTokens(
+  code: string,
+  expectedTokens: Array<TokenExpectation>,
+  {isFlow = false}: {isFlow?: boolean} = {},
+): void {
+  const tokens: Array<SimpleToken> = parse(code, true, !isFlow, isFlow).tokens;
+  const helpMessage = `Tokens did not match. Starting point with just token types: [${tokens
+    .map((t) => `{type: tt.${tt[t.type]}}`)
+    .join(", ")}]`;
+  assert.strictEqual(tokens.length, expectedTokens.length, helpMessage);
   const projectedTokens = tokens.map((token, i) => {
     const result = {};
     for (const key of Object.keys(expectedTokens[i])) {
@@ -18,7 +26,7 @@ function assertTokens(code: string, expectedTokens: Array<TokenExpectation>): vo
     }
     return result;
   });
-  assert.deepStrictEqual(projectedTokens, expectedTokens);
+  assert.deepStrictEqual(projectedTokens, expectedTokens, helpMessage);
 }
 
 describe("tokens", () => {
@@ -365,6 +373,129 @@ describe("tokens", () => {
         {type: tt.braceR},
         {type: tt.eof},
       ],
+    );
+  });
+
+  it("parses simple flow enums", () => {
+    assertTokens(
+      `
+      enum E {
+        A,
+        B,
+        ...
+      }
+    `,
+      [
+        {type: tt._enum},
+        {type: tt.name},
+        {type: tt.braceL},
+        {type: tt.name},
+        {type: tt.comma},
+        {type: tt.name},
+        {type: tt.comma},
+        {type: tt.ellipsis},
+        {type: tt.braceR},
+        {type: tt.eof},
+      ],
+      {isFlow: true},
+    );
+  });
+
+  it("parses flow enums with assignments", () => {
+    assertTokens(
+      `
+      enum E {
+        A = 1,
+        B = 2,
+      }
+    `,
+      [
+        {type: tt._enum},
+        {type: tt.name},
+        {type: tt.braceL},
+        {type: tt.name},
+        {type: tt.eq},
+        {type: tt.num},
+        {type: tt.comma},
+        {type: tt.name},
+        {type: tt.eq},
+        {type: tt.num},
+        {type: tt.comma},
+        {type: tt.braceR},
+        {type: tt.eof},
+      ],
+      {isFlow: true},
+    );
+  });
+
+  it("parses flow symbol enums", () => {
+    assertTokens(
+      `
+      enum E of symbol {
+        A,
+        B
+      }
+    `,
+      [
+        {type: tt._enum},
+        {type: tt.name},
+        {type: tt.name, contextualKeyword: ContextualKeyword._of},
+        {type: tt.name, contextualKeyword: ContextualKeyword._symbol},
+        {type: tt.braceL},
+        {type: tt.name},
+        {type: tt.comma},
+        {type: tt.name},
+        {type: tt.braceR},
+        {type: tt.eof},
+      ],
+      {isFlow: true},
+    );
+  });
+
+  it("parses flow named export enums", () => {
+    assertTokens(
+      `
+      export enum E {
+        A,
+        B
+      }
+    `,
+      [
+        {type: tt._export},
+        {type: tt._enum},
+        {type: tt.name},
+        {type: tt.braceL},
+        {type: tt.name},
+        {type: tt.comma},
+        {type: tt.name},
+        {type: tt.braceR},
+        {type: tt.eof},
+      ],
+      {isFlow: true},
+    );
+  });
+
+  it("parses flow default export enums", () => {
+    assertTokens(
+      `
+      export default enum E {
+        A,
+        B
+      }
+    `,
+      [
+        {type: tt._export},
+        {type: tt._default},
+        {type: tt._enum},
+        {type: tt.name},
+        {type: tt.braceL},
+        {type: tt.name},
+        {type: tt.comma},
+        {type: tt.name},
+        {type: tt.braceR},
+        {type: tt.eof},
+      ],
+      {isFlow: true},
     );
   });
 });

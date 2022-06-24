@@ -769,9 +769,19 @@ export function flowTryParseStatement(): boolean {
     flowParseInterface();
     popTypeContext(oldIsType);
     return true;
-  } else {
-    return false;
+  } else if (isContextual(ContextualKeyword._enum)) {
+    flowParseEnumDeclaration();
+    return true;
   }
+  return false;
+}
+
+export function flowTryParseExportDefaultExpression(): boolean {
+  if (isContextual(ContextualKeyword._enum)) {
+    flowParseEnumDeclaration();
+    return true;
+  }
+  return false;
 }
 
 // declares, interfaces and type aliases
@@ -811,7 +821,8 @@ export function flowShouldParseExportDeclaration(): boolean {
   return (
     isContextual(ContextualKeyword._type) ||
     isContextual(ContextualKeyword._interface) ||
-    isContextual(ContextualKeyword._opaque)
+    isContextual(ContextualKeyword._opaque) ||
+    isContextual(ContextualKeyword._enum)
   );
 }
 
@@ -820,7 +831,8 @@ export function flowShouldDisallowExportDefaultSpecifier(): boolean {
     match(tt.name) &&
     (state.contextualKeyword === ContextualKeyword._type ||
       state.contextualKeyword === ContextualKeyword._interface ||
-      state.contextualKeyword === ContextualKeyword._opaque)
+      state.contextualKeyword === ContextualKeyword._opaque ||
+      state.contextualKeyword === ContextualKeyword._enum)
   );
 }
 
@@ -1054,4 +1066,40 @@ function parseAsyncArrowWithTypeParameters(): boolean {
   }
   parseArrowExpression(startTokenIndex);
   return true;
+}
+
+function flowParseEnumDeclaration(): void {
+  expectContextual(ContextualKeyword._enum);
+  state.tokens[state.tokens.length - 1].type = tt._enum;
+  parseIdentifier();
+  flowParseEnumBody();
+}
+
+function flowParseEnumBody(): void {
+  if (eatContextual(ContextualKeyword._of)) {
+    next();
+  }
+  expect(tt.braceL);
+  flowParseEnumMembers();
+  expect(tt.braceR);
+}
+
+function flowParseEnumMembers(): void {
+  while (!match(tt.braceR) && !state.error) {
+    if (eat(tt.ellipsis)) {
+      break;
+    }
+    flowParseEnumMember();
+    if (!match(tt.braceR)) {
+      expect(tt.comma);
+    }
+  }
+}
+
+function flowParseEnumMember(): void {
+  parseIdentifier();
+  if (eat(tt.eq)) {
+    // Flow enum values are always just one token (a string, number, or boolean literal).
+    next();
+  }
 }

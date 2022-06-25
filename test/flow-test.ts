@@ -1,7 +1,7 @@
 import {throws} from "assert";
 
 import {transform, Options} from "../src";
-import {IMPORT_DEFAULT_PREFIX} from "./prefixes";
+import {ESMODULE_PREFIX, IMPORT_DEFAULT_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 
 function assertFlowResult(
@@ -150,6 +150,17 @@ describe("transform flow", () => {
     `,
       `"use strict";
       
+    `,
+    );
+  });
+
+  it("handles plain default exports when parsing flow", () => {
+    assertFlowResult(
+      `
+      export default 3;
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      exports. default = 3;
     `,
     );
   });

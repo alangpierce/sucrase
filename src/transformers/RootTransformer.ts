@@ -99,7 +99,9 @@ export default class RootTransformer {
     }
 
     if (transforms.includes("flow")) {
-      this.transformers.push(new FlowTransformer(this, tokenProcessor));
+      this.transformers.push(
+        new FlowTransformer(this, tokenProcessor, transforms.includes("imports")),
+      );
     }
     if (transforms.includes("typescript")) {
       this.transformers.push(

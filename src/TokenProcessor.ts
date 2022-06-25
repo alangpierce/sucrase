@@ -55,6 +55,10 @@ export default class TokenProcessor {
     return this.identifierNameForToken(this.tokens[index]);
   }
 
+  identifierNameAtRelativeIndex(relativeIndex: number): string {
+    return this.identifierNameForToken(this.tokenAtRelativeIndex(relativeIndex));
+  }
+
   identifierName(): string {
     return this.identifierNameForToken(this.currentToken());
   }

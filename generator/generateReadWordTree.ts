@@ -73,6 +73,7 @@ const CONTEXTUAL_KEYWORDS = [
   "require",
   "set",
   "static",
+  "symbol",
   "type",
   "unique",
 ];

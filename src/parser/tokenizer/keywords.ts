@@ -32,6 +32,7 @@ export enum ContextualKeyword {
   _require,
   _set,
   _static,
+  _symbol,
   _type,
   _unique,
 }

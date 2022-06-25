@@ -15,6 +15,7 @@ import {
   flowShouldParseExportStar,
   flowStartParseFunctionParams,
   flowStartParseImportSpecifiers,
+  flowTryParseExportDefaultExpression,
   flowTryParseStatement,
 } from "../plugins/flow";
 import {
@@ -915,6 +916,11 @@ export function parseExport(): void {
 function parseExportDefaultExpression(): void {
   if (isTypeScriptEnabled) {
     if (tsTryParseExportDefaultExpression()) {
+      return;
+    }
+  }
+  if (isFlowEnabled) {
+    if (flowTryParseExportDefaultExpression()) {
       return;
     }
   }

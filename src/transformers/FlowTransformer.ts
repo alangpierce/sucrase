@@ -122,7 +122,7 @@ export default class FlowTransformer extends Transformer {
    * "of" declaration (if any) and seeing if the first element has an initializer.
    * Since the other transform details are so similar between the three cases, we
    * use a single implementation and vary the transform within processEnumElement
-   * base on case.
+   * based on case.
    */
   processEnum(): void {
     // enum E -> const E

@@ -1469,4 +1469,48 @@ describe("sucrase", () => {
       {transforms: ["typescript"]},
     );
   });
+
+  it("parses scientific notation number literals followed by dot", () => {
+    assertResult(
+      `
+      console.log(1e5.toString());
+    `,
+      `"use strict";
+      console.log(1e5.toString());
+    `,
+    );
+  });
+
+  it("handles parsing of hex literals", () => {
+    assertResult(
+      `
+      const x = 0x8badf00d;
+    `,
+      `"use strict";
+      const x = 0x8badf00d;
+    `,
+    );
+  });
+
+  it("handles parsing of hex bigint literals", () => {
+    assertResult(
+      `
+      const x = 0xabcden;
+    `,
+      `"use strict";
+      const x = 0xabcden;
+    `,
+    );
+  });
+
+  it("handles parsing of negative exponents", () => {
+    assertResult(
+      `
+      const x = 1e-10;
+    `,
+      `"use strict";
+      const x = 1e-10;
+    `,
+    );
+  });
 });

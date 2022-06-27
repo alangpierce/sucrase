@@ -501,4 +501,191 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("transforms simple enums with assignments", () => {
+    assertFlowResult(
+      `
+      enum E {
+        A = 1,
+        B = 2,
+      }
+    `,
+      `"use strict";
+      const E = require("flow-enums-runtime")({
+        A: 1,
+        B: 2,
+      });
+    `,
+    );
+  });
+
+  it("transforms enums without assignments", () => {
+    assertFlowResult(
+      `
+      enum E {
+        A,
+        B,
+      }
+    `,
+      `"use strict";
+      const E = require("flow-enums-runtime").Mirrored([
+        "A",
+        "B",
+      ]);
+    `,
+    );
+  });
+
+  it("transforms symbol enums", () => {
+    assertFlowResult(
+      `
+      enum E of symbol {
+        A,
+        B
+      }
+    `,
+      `"use strict";
+      const E = require("flow-enums-runtime")({
+        A: Symbol("A"),
+        B: Symbol("B")
+      });
+    `,
+    );
+  });
+
+  it("transforms number enums", () => {
+    assertFlowResult(
+      `
+      enum E of number {
+        A = 1,
+        B = 2
+      }
+    `,
+      `"use strict";
+      const E = require("flow-enums-runtime")({
+        A: 1,
+        B: 2
+      });
+    `,
+    );
+  });
+
+  it("transforms empty enums as mirrored with empty array", () => {
+    assertFlowResult(
+      `
+      enum E {
+      }
+    `,
+      `"use strict";
+      const E = require("flow-enums-runtime").Mirrored([
+      ]);
+    `,
+    );
+  });
+
+  it("transforms mirrored enums with ...", () => {
+    assertFlowResult(
+      `
+      enum E {
+        A,
+        B,
+        ...
+      }
+    `,
+      `"use strict";
+      const E = require("flow-enums-runtime").Mirrored([
+        "A",
+        "B",
+
+      ]);
+    `,
+    );
+  });
+
+  it("transforms non-mirrored enums with ...", () => {
+    assertFlowResult(
+      `
+      enum E {
+        A = 1,
+        B = 2,
+        ...
+      }
+    `,
+      `"use strict";
+      const E = require("flow-enums-runtime")({
+        A: 1,
+        B: 2,
+
+      });
+    `,
+    );
+  });
+
+  it("handles ESM enum named exports", () => {
+    assertFlowESMResult(
+      `
+      export enum E {
+        A,
+        B
+      }
+    `,
+      `
+      export const E = require("flow-enums-runtime").Mirrored([
+        "A",
+        "B"
+      ]);
+    `,
+    );
+  });
+
+  it("handles CJS enum named exports", () => {
+    assertFlowResult(
+      `
+      export enum E {
+        A,
+        B
+      }
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       const E = require("flow-enums-runtime").Mirrored([
+        "A",
+        "B"
+      ]); exports.E = E;
+    `,
+    );
+  });
+
+  it("handles ESM enum default exports", () => {
+    assertFlowESMResult(
+      `
+      export default enum E {
+        A,
+        B
+      }
+    `,
+      `
+       const E = require("flow-enums-runtime").Mirrored([
+        "A",
+        "B"
+      ]); export default E;
+    `,
+    );
+  });
+
+  it("handles CJS enum default exports", () => {
+    assertFlowResult(
+      `
+      export default enum E {
+        A,
+        B
+      }
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       const E = require("flow-enums-runtime").Mirrored([
+        "A",
+        "B"
+      ]); exports.default = E;
+    `,
+    );
+  });
 });

@@ -269,8 +269,13 @@ export default class CJSImportTransformer extends Transformer {
       return false;
     }
     if (this.tokens.matches2(tt._export, tt._default)) {
-      this.processExportDefault();
       this.hadDefaultExport = true;
+      if (this.tokens.matches3(tt._export, tt._default, tt._enum)) {
+        // Flow export default enums need some special handling, so handle them
+        // in that tranform rather than this one.
+        return false;
+      }
+      this.processExportDefault();
       return true;
     }
     this.hadNamedExport = true;

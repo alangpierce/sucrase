@@ -1,3 +1,8 @@
+# 3.22.0 (2022-06-27)
+
+* Add support for Flow enums. ([#708], [#709])
+* Fix some parser bugs when detecting arrow functions. ([#673])
+
 # 3.21.1 (2022-06-21)
 
 * Allow re-export after star export of same name. ([#698]) (Cameron Pitt)
@@ -400,5 +405,8 @@
 [#656]: https://github.com/alangpierce/sucrase/pull/656
 [#657]: https://github.com/alangpierce/sucrase/pull/657
 [#658]: https://github.com/alangpierce/sucrase/pull/658
+[#673]: https://github.com/alangpierce/sucrase/pull/673
 [#684]: https://github.com/alangpierce/sucrase/pull/684
 [#698]: https://github.com/alangpierce/sucrase/pull/698
+[#708]: https://github.com/alangpierce/sucrase/pull/708
+[#709]: https://github.com/alangpierce/sucrase/pull/709

@@ -2961,10 +2961,10 @@ stubs@^3.0.0:
   resolved "https://registry.yarnpkg.com/stubs/-/stubs-3.0.0.tgz#e8d2ba1fa9c90570303c030b6900f7d5f89abe5b"
   integrity sha1-6NK6H6nJBXAwPAMLaQD31fiavls=
 
-sucrase@^3.21.1:
-  version "3.21.1"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.21.1.tgz#7e29ddaca012764cf843280b00e74a843bdf790f"
-  integrity sha512-kxXnC9yZEav5USAu8gooZID9Ph3xqwdJxZoh+WbOWQZHTB7CHj3ANwENVMZ6mAZ9k7UtJtFxvQD9R03q3yU2YQ==
+sucrase@^3.22.0:
+  version "3.22.0"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.22.0.tgz#9fd6d12b93c758a65c3b99cc3e4436274ea79d55"
+  integrity sha512-RZeE0UPxCjf99p4c9Sb27qRbsuZBd7TViR/q1P6TsUPYa/H2LIkaCPpio6F1nQksrynYA78KEBUnpxswZiPYcg==
   dependencies:
     commander "^4.0.0"
     glob "7.1.6"

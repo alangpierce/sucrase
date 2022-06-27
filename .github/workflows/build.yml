@@ -24,6 +24,7 @@ jobs:
     name: "Test on older node versions"
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           # We support down to node 8, but mocha requires node 14.
@@ -43,6 +44,7 @@ jobs:
     name: "Test example projects"
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - projects: "babel"

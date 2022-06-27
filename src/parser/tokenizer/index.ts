@@ -751,9 +751,26 @@ function readRegexp(): void {
   finishToken(tt.regexp);
 }
 
-// Read an integer. We allow any valid digit, including hex digits, plus numeric separators, and
-// stop at any other character.
+/**
+ * Read a decimal integer. Note that this can't be unified with the similar code
+ * in readRadixNumber (which also handles hex digits) because "e" needs to be
+ * the end of the integer so that we can properly handle scientific notation.
+ */
 function readInt(): void {
+  while (true) {
+    const code = input.charCodeAt(state.pos);
+    if ((code >= charCodes.digit0 && code <= charCodes.digit9) || code === charCodes.underscore) {
+      state.pos++;
+    } else {
+      break;
+    }
+  }
+}
+
+function readRadixNumber(): void {
+  state.pos += 2; // 0x
+
+  // Walk to the end of the number, allowing hex digits.
   while (true) {
     const code = input.charCodeAt(state.pos);
     if (
@@ -767,29 +784,14 @@ function readInt(): void {
       break;
     }
   }
-}
-
-function readRadixNumber(): void {
-  let isBigInt = false;
-  const start = state.pos;
-
-  state.pos += 2; // 0x
-  readInt();
 
   const nextChar = input.charCodeAt(state.pos);
   if (nextChar === charCodes.lowercaseN) {
     ++state.pos;
-    isBigInt = true;
-  } else if (nextChar === charCodes.lowercaseM) {
-    unexpected("Invalid decimal", start);
-  }
-
-  if (isBigInt) {
     finishToken(tt.bigint);
-    return;
+  } else {
+    finishToken(tt.num);
   }
-
-  finishToken(tt.num);
 }
 
 // Read an integer, octal integer, or floating-point number.

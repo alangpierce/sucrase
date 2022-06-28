@@ -1596,17 +1596,20 @@ describe("typescript transform", () => {
       `
       type T = number;
       type U = number;
+      const w = 3;
       export {T, U as w};
     `,
       {
         expectedCJSResult: `"use strict";${ESMODULE_PREFIX}
       
 
+      const w = 3;
       
     `,
         expectedESMResult: `
       
 
+      const w = 3;
       export {};
     `,
       },
@@ -2646,6 +2649,136 @@ describe("typescript transform", () => {
     `,
       `
       ;
+    `,
+    );
+  });
+
+  it("handles type-only import specifiers", () => {
+    assertTypeScriptESMResult(
+      `
+      import {type Foo, Bar} from "A";
+      function f(): Foo {}
+      console.log(Bar);
+    `,
+      `
+      import { Bar} from "A";
+      function f() {}
+      console.log(Bar);
+    `,
+    );
+  });
+
+  it("elides TS imports consisting of only named type imports", () => {
+    assertTypeScriptESMResult(
+      `
+      import {type Foo, type Bar} from "A";
+      console.log(Foo);
+    `,
+      `
+
+      console.log(Foo);
+    `,
+    );
+  });
+
+  it("elides TS type exports in ESM mode", () => {
+    assertTypeScriptESMResult(
+      `
+      class A {}
+      class C {}
+      class B {}
+      export {type A, B, type C as D};
+    `,
+      `
+      class A {}
+      class C {}
+      class B {}
+      export { B,};
+    `,
+    );
+  });
+
+  it("elides TS type exports in CJS mode", () => {
+    assertTypeScriptResult(
+      `
+      class A {}
+      class C {}
+      class B {}
+      export {type A, B, type C as D};
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      class A {}
+      class C {}
+      class B {}
+      exports.B = B;
+    `,
+    );
+  });
+
+  it("elides ESM type imports used in a value context", () => {
+    assertTypeScriptESMResult(
+      `
+      import {type Foo, type Bar as Baz} from "A";
+      console.log(Foo);
+      console.log(Bar);
+      console.log(Baz);
+    `,
+      `
+
+      console.log(Foo);
+      console.log(Bar);
+      console.log(Baz);
+    `,
+    );
+  });
+
+  it("preserves CJS value usage of names defined via a type import", () => {
+    assertTypeScriptResult(
+      `
+      import {type Foo, type Bar as Baz} from "A";
+      console.log(Foo);
+      console.log(Bar);
+      console.log(Baz);
+    `,
+      `"use strict";
+      
+      console.log(Foo);
+      console.log(Bar);
+      console.log(Baz);
+    `,
+    );
+  });
+
+  it("removes re-exported types in ESM mode", () => {
+    assertTypeScriptESMResult(
+      `
+      import {type T, type U, V} from './foo';
+      export {T};
+      export {U as foo};
+      export {V};
+    `,
+      `
+      import { V} from './foo';
+      export {};
+      export {};
+      export {V};
+    `,
+    );
+  });
+
+  it("removes re-exported types in CJS mode", () => {
+    assertTypeScriptResult(
+      `
+      import {type T, type U, V} from './foo';
+      export {T};
+      export {U as foo};
+      export {V};
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      var _foo = require('./foo');
+      
+      
+      exports.V = _foo.V;
     `,
     );
   });

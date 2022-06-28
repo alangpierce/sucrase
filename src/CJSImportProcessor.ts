@@ -5,6 +5,7 @@ import {isDeclaration} from "./parser/tokenizer";
 import {ContextualKeyword} from "./parser/tokenizer/keywords";
 import {TokenType as tt} from "./parser/tokenizer/types";
 import type TokenProcessor from "./TokenProcessor";
+import getImportExportSpecifierInfo from "./util/getImportExportSpecifierInfo";
 import {getNonTypeIdentifiers} from "./util/getNonTypeIdentifiers";
 
 interface NamedImport {
@@ -359,31 +360,15 @@ export default class CJSImportProcessor {
         break;
       }
 
-      // Flow type imports should just be ignored.
-      let isTypeImport = false;
-      if (
-        (this.tokens.matchesContextualAtIndex(index, ContextualKeyword._type) ||
-          this.tokens.matches1AtIndex(index, tt._typeof)) &&
-        this.tokens.matches1AtIndex(index + 1, tt.name) &&
-        !this.tokens.matchesContextualAtIndex(index + 1, ContextualKeyword._as)
-      ) {
-        isTypeImport = true;
-        index++;
+      const specifierInfo = getImportExportSpecifierInfo(this.tokens, index);
+      index = specifierInfo.endIndex;
+      if (!specifierInfo.isType) {
+        namedImports.push({
+          importedName: specifierInfo.leftName,
+          localName: specifierInfo.rightName,
+        });
       }
 
-      const importedName = this.tokens.identifierNameAtIndex(index);
-      let localName;
-      index++;
-      if (this.tokens.matchesContextualAtIndex(index, ContextualKeyword._as)) {
-        index++;
-        localName = this.tokens.identifierNameAtIndex(index);
-        index++;
-      } else {
-        localName = importedName;
-      }
-      if (!isTypeImport) {
-        namedImports.push({importedName, localName});
-      }
       if (this.tokens.matches2AtIndex(index, tt.comma, tt.braceR)) {
         index += 2;
         break;

@@ -1,5 +1,6 @@
 import {
   eat,
+  IdentifierRole,
   lookaheadType,
   lookaheadTypeAndKeyword,
   match,
@@ -1254,6 +1255,82 @@ export function tsTryParseExport(): boolean {
     }
     return false;
   }
+}
+
+/**
+ * Parse a TS import specifier, which may be prefixed with "type" and may be of
+ * the form `foo as bar`.
+ *
+ * The number of identifier-like tokens we see happens to be enough to uniquely
+ * identify the form, so simply count the number of identifiers rather than
+ * matching the words `type` or `as`. This is particularly important because
+ * `type` and `as` could each actually be plain identifiers rather than
+ * keywords.
+ */
+export function tsParseImportSpecifier(): void {
+  parseIdentifier();
+  if (match(tt.comma) || match(tt.braceR)) {
+    // import {foo}
+    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ImportDeclaration;
+    return;
+  }
+  parseIdentifier();
+  if (match(tt.comma) || match(tt.braceR)) {
+    // import {type foo}
+    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ImportDeclaration;
+    state.tokens[state.tokens.length - 2].isType = true;
+    state.tokens[state.tokens.length - 1].isType = true;
+    return;
+  }
+  parseIdentifier();
+  if (match(tt.comma) || match(tt.braceR)) {
+    // import {foo as bar}
+    state.tokens[state.tokens.length - 3].identifierRole = IdentifierRole.ImportAccess;
+    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ImportDeclaration;
+    return;
+  }
+  parseIdentifier();
+  // import {type foo as bar}
+  state.tokens[state.tokens.length - 3].identifierRole = IdentifierRole.ImportAccess;
+  state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ImportDeclaration;
+  state.tokens[state.tokens.length - 4].isType = true;
+  state.tokens[state.tokens.length - 3].isType = true;
+  state.tokens[state.tokens.length - 2].isType = true;
+  state.tokens[state.tokens.length - 1].isType = true;
+}
+
+/**
+ * Just like named import specifiers, export specifiers can have from 1 to 4
+ * tokens, inclusive, and the number of tokens determines the role of each token.
+ */
+export function tsParseExportSpecifier(): void {
+  parseIdentifier();
+  if (match(tt.comma) || match(tt.braceR)) {
+    // export {foo}
+    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ExportAccess;
+    return;
+  }
+  parseIdentifier();
+  if (match(tt.comma) || match(tt.braceR)) {
+    // export {type foo}
+    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ExportAccess;
+    state.tokens[state.tokens.length - 2].isType = true;
+    state.tokens[state.tokens.length - 1].isType = true;
+    return;
+  }
+  parseIdentifier();
+  if (match(tt.comma) || match(tt.braceR)) {
+    // export {foo as bar}
+    state.tokens[state.tokens.length - 3].identifierRole = IdentifierRole.ExportAccess;
+    return;
+  }
+  parseIdentifier();
+  // export {type foo as bar}
+  state.tokens[state.tokens.length - 3].identifierRole = IdentifierRole.ExportAccess;
+  state.tokens[state.tokens.length - 4].isType = true;
+  state.tokens[state.tokens.length - 3].isType = true;
+  state.tokens[state.tokens.length - 2].isType = true;
+  state.tokens[state.tokens.length - 1].isType = true;
 }
 
 export function tsTryParseExportDefaultExpression(): boolean {

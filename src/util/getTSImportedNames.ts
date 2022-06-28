@@ -1,6 +1,6 @@
-import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import type TokenProcessor from "../TokenProcessor";
+import getImportExportSpecifierInfo from "./getImportExportSpecifierInfo";
 
 /**
  * Special case code to scan for imported names in ESM TypeScript. We need to do this so we can
@@ -65,16 +65,12 @@ function collectNamesForNamedImport(
       return;
     }
 
-    // We care about the local name, which might be the first token, or if there's an "as", is the
-    // one after that.
-    let name = tokens.identifierNameAtIndex(index);
-    index++;
-    if (tokens.matchesContextualAtIndex(index, ContextualKeyword._as)) {
-      index++;
-      name = tokens.identifierNameAtIndex(index);
-      index++;
+    const specifierInfo = getImportExportSpecifierInfo(tokens, index);
+    index = specifierInfo.endIndex;
+    if (!specifierInfo.isType) {
+      importedNames.add(specifierInfo.rightName);
     }
-    importedNames.add(name);
+
     if (tokens.matches2AtIndex(index, tt.comma, tt.braceR)) {
       return;
     } else if (tokens.matches1AtIndex(index, tt.braceR)) {

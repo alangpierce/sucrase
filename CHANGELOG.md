@@ -1,3 +1,8 @@
+# 3.23.0 (2022-07-01)
+
+* Add support for TS 4.5 import/export type modifiers. ([#713])
+* Fix parsing bug that failed on scientific notation with dot access. ([#711])
+
 # 3.22.0 (2022-06-27)
 
 * Add support for Flow enums. ([#708], [#709])
@@ -410,3 +415,5 @@
 [#698]: https://github.com/alangpierce/sucrase/pull/698
 [#708]: https://github.com/alangpierce/sucrase/pull/708
 [#709]: https://github.com/alangpierce/sucrase/pull/709
+[#711]: https://github.com/alangpierce/sucrase/pull/711
+[#713]: https://github.com/alangpierce/sucrase/pull/713

@@ -3003,4 +3003,32 @@ describe("typescript transform", () => {
       {transforms: ["typescript"]},
     );
   });
+
+  it("allows a line break before an `asserts` clause", () => {
+    assertResult(
+      `
+      function assert(condition: any): 
+      asserts condition {}
+    `,
+      `
+      function assert(condition)
+ {}
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("properly handles ASI for variable followed by exclamation point", () => {
+    assertResult(
+      `
+      let a
+      !function(){}()
+    `,
+      `
+      let a
+      !function(){}()
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
 });

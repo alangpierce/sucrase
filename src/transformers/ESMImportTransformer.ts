@@ -8,6 +8,7 @@ import getDeclarationInfo, {
   DeclarationInfo,
   EMPTY_DECLARATION_INFO,
 } from "../util/getDeclarationInfo";
+import getImportExportSpecifierInfo from "../util/getImportExportSpecifierInfo";
 import {getNonTypeIdentifiers} from "../util/getNonTypeIdentifiers";
 import shouldElideDefaultExport from "../util/shouldElideDefaultExport";
 import type ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
@@ -190,68 +191,22 @@ export default class ESMImportTransformer extends Transformer {
     } else if (this.tokens.matches1(tt.braceL)) {
       this.tokens.copyToken();
       while (!this.tokens.matches1(tt.braceR)) {
-        if (
-          this.tokens.matches3(tt.name, tt.name, tt.comma) ||
-          this.tokens.matches3(tt.name, tt.name, tt.braceR)
-        ) {
-          // type foo
-          this.tokens.removeToken();
-          this.tokens.removeToken();
+        const specifierInfo = getImportExportSpecifierInfo(this.tokens);
+        if (specifierInfo.isType || this.isTypeName(specifierInfo.rightName)) {
+          while (this.tokens.currentIndex() < specifierInfo.endIndex) {
+            this.tokens.removeToken();
+          }
           if (this.tokens.matches1(tt.comma)) {
             this.tokens.removeToken();
-          }
-        } else if (
-          this.tokens.matches5(tt.name, tt.name, tt.name, tt.name, tt.comma) ||
-          this.tokens.matches5(tt.name, tt.name, tt.name, tt.name, tt.braceR)
-        ) {
-          // type foo as bar
-          this.tokens.removeToken();
-          this.tokens.removeToken();
-          this.tokens.removeToken();
-          this.tokens.removeToken();
-          if (this.tokens.matches1(tt.comma)) {
-            this.tokens.removeToken();
-          }
-        } else if (
-          this.tokens.matches2(tt.name, tt.comma) ||
-          this.tokens.matches2(tt.name, tt.braceR)
-        ) {
-          // foo
-          if (this.isTypeName(this.tokens.identifierName())) {
-            this.tokens.removeToken();
-            if (this.tokens.matches1(tt.comma)) {
-              this.tokens.removeToken();
-            }
-          } else {
-            foundNonTypeImport = true;
-            this.tokens.copyToken();
-            if (this.tokens.matches1(tt.comma)) {
-              this.tokens.copyToken();
-            }
-          }
-        } else if (
-          this.tokens.matches4(tt.name, tt.name, tt.name, tt.comma) ||
-          this.tokens.matches4(tt.name, tt.name, tt.name, tt.braceR)
-        ) {
-          // foo as bar
-          if (this.isTypeName(this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 2))) {
-            this.tokens.removeToken();
-            this.tokens.removeToken();
-            this.tokens.removeToken();
-            if (this.tokens.matches1(tt.comma)) {
-              this.tokens.removeToken();
-            }
-          } else {
-            foundNonTypeImport = true;
-            this.tokens.copyToken();
-            this.tokens.copyToken();
-            this.tokens.copyToken();
-            if (this.tokens.matches1(tt.comma)) {
-              this.tokens.copyToken();
-            }
           }
         } else {
-          throw new Error("Unexpected import form.");
+          foundNonTypeImport = true;
+          while (this.tokens.currentIndex() < specifierInfo.endIndex) {
+            this.tokens.copyToken();
+          }
+          if (this.tokens.matches1(tt.comma)) {
+            this.tokens.copyToken();
+          }
         }
       }
       this.tokens.copyExpectedToken(tt.braceR);
@@ -313,26 +268,18 @@ export default class ESMImportTransformer extends Transformer {
     this.tokens.copyExpectedToken(tt.braceL);
 
     while (!this.tokens.matches1(tt.braceR)) {
-      if (!this.tokens.matches1(tt.name)) {
-        throw new Error("Expected identifier at the start of named export.");
-      }
-      if (this.shouldElideExportedName(this.tokens.identifierName())) {
-        while (
-          !this.tokens.matches1(tt.comma) &&
-          !this.tokens.matches1(tt.braceR) &&
-          !this.tokens.isAtEnd()
-        ) {
+      const specifierInfo = getImportExportSpecifierInfo(this.tokens);
+      if (specifierInfo.isType || this.shouldElideExportedName(specifierInfo.leftName)) {
+        // Type export, so remove all tokens, including any comma.
+        while (this.tokens.currentIndex() < specifierInfo.endIndex) {
           this.tokens.removeToken();
         }
         if (this.tokens.matches1(tt.comma)) {
           this.tokens.removeToken();
         }
       } else {
-        while (
-          !this.tokens.matches1(tt.comma) &&
-          !this.tokens.matches1(tt.braceR) &&
-          !this.tokens.isAtEnd()
-        ) {
+        // Non-type export, so copy all tokens, including any comma.
+        while (this.tokens.currentIndex() < specifierInfo.endIndex) {
           this.tokens.copyToken();
         }
         if (this.tokens.matches1(tt.comma)) {
@@ -346,7 +293,7 @@ export default class ESMImportTransformer extends Transformer {
 
   /**
    * ESM elides all imports with the rule that we only elide if we see that it's
-   * a type and never see it as a value. This is in contract to CJS, which
+   * a type and never see it as a value. This is in contrast to CJS, which
    * elides imports that are completely unknown.
    */
   private shouldElideExportedName(name: string): boolean {

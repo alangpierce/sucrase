@@ -23,8 +23,10 @@ import {
   tsAfterParseVarHead,
   tsIsDeclarationStart,
   tsParseExportDeclaration,
+  tsParseExportSpecifier,
   tsParseIdentifierStatement,
   tsParseImportEqualsDeclaration,
+  tsParseImportSpecifier,
   tsParseMaybeDecoratorArguments,
   tsParseModifiers,
   tsStartParseFunctionParams,
@@ -1059,12 +1061,19 @@ export function parseExportSpecifiers(): void {
         break;
       }
     }
+    parseExportSpecifier();
+  }
+}
 
+function parseExportSpecifier(): void {
+  if (isTypeScriptEnabled) {
+    tsParseExportSpecifier();
+    return;
+  }
+  parseIdentifier();
+  state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ExportAccess;
+  if (eatContextual(ContextualKeyword._as)) {
     parseIdentifier();
-    state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ExportAccess;
-    if (eatContextual(ContextualKeyword._as)) {
-      parseIdentifier();
-    }
   }
 }
 
@@ -1164,6 +1173,10 @@ function parseImportSpecifiers(): void {
 }
 
 function parseImportSpecifier(): void {
+  if (isTypeScriptEnabled) {
+    tsParseImportSpecifier();
+    return;
+  }
   if (isFlowEnabled) {
     flowParseImportSpecifier();
     return;

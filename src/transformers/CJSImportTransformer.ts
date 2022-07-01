@@ -9,6 +9,7 @@ import getDeclarationInfo, {
   DeclarationInfo,
   EMPTY_DECLARATION_INFO,
 } from "../util/getDeclarationInfo";
+import getImportExportSpecifierInfo from "../util/getImportExportSpecifierInfo";
 import shouldElideDefaultExport from "../util/shouldElideDefaultExport";
 import type ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
 import type RootTransformer from "./RootTransformer";
@@ -742,17 +743,13 @@ export default class CJSImportTransformer extends Transformer {
         break;
       }
 
-      const localName = this.tokens.identifierName();
-      let exportedName;
-      this.tokens.removeToken();
-      if (this.tokens.matchesContextual(ContextualKeyword._as)) {
+      const specifierInfo = getImportExportSpecifierInfo(this.tokens);
+      while (this.tokens.currentIndex() < specifierInfo.endIndex) {
         this.tokens.removeToken();
-        exportedName = this.tokens.identifierName();
-        this.tokens.removeToken();
-      } else {
-        exportedName = localName;
       }
-      if (!this.shouldElideExportedIdentifier(localName)) {
+      if (!specifierInfo.isType && !this.shouldElideExportedIdentifier(specifierInfo.leftName)) {
+        const localName = specifierInfo.leftName;
+        const exportedName = specifierInfo.rightName;
         const newLocalName = this.importProcessor.getIdentifierReplacement(localName);
         exportStatements.push(`exports.${exportedName} = ${newLocalName || localName};`);
       }

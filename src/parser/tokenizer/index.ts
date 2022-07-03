@@ -482,15 +482,36 @@ function readToken_plus_min(code: number): void {
   }
 }
 
-// '<>'
-function readToken_lt_gt(code: number): void {
+function readToken_lt(): void {
+  const nextChar = input.charCodeAt(state.pos + 1);
+
+  if (nextChar === charCodes.lessThan) {
+    if (input.charCodeAt(state.pos + 2) === charCodes.equalsTo) {
+      finishOp(tt.assign, 3);
+      return;
+    }
+    // This still might be two instances of <, e.g. the TS type argument
+    // expression f<<T>() => void>() , but parse as left shift for now and we'll
+    // retokenize if necessary. We can't use isType for this case because we
+    // don't know yet if we're in a type.
+    finishOp(tt.bitShiftL, 2);
+    return;
+  }
+
+  if (nextChar === charCodes.equalsTo) {
+    // <=
+    finishOp(tt.relationalOrEqual, 2);
+  } else {
+    finishOp(tt.lessThan, 1);
+  }
+}
+
+function readToken_gt(): void {
+  const code = charCodes.greaterThan;
   const nextChar = input.charCodeAt(state.pos + 1);
 
   if (nextChar === code) {
-    const size =
-      code === charCodes.greaterThan && input.charCodeAt(state.pos + 2) === charCodes.greaterThan
-        ? 3
-        : 2;
+    const size = input.charCodeAt(state.pos + 2) === charCodes.greaterThan ? 3 : 2;
     if (input.charCodeAt(state.pos + size) === charCodes.equalsTo) {
       finishOp(tt.assign, size + 1);
       return;
@@ -500,15 +521,13 @@ function readToken_lt_gt(code: number): void {
       finishOp(tt.greaterThan, 1);
       return;
     }
-    finishOp(tt.bitShift, size);
+    finishOp(tt.bitShiftR, size);
     return;
   }
 
   if (nextChar === charCodes.equalsTo) {
-    // <= | >=
+    // >=
     finishOp(tt.relationalOrEqual, 2);
-  } else if (code === charCodes.lessThan) {
-    finishOp(tt.lessThan, 1);
   } else {
     finishOp(tt.greaterThan, 1);
   }
@@ -695,8 +714,11 @@ export function getTokenFromCode(code: number): void {
       return;
 
     case charCodes.lessThan:
+      readToken_lt();
+      return;
+
     case charCodes.greaterThan:
-      readToken_lt_gt(code);
+      readToken_gt();
       return;
 
     case charCodes.equalsTo:

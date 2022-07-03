@@ -1,5 +1,6 @@
 import {
   eat,
+  finishToken,
   IdentifierRole,
   lookaheadType,
   lookaheadTypeAndKeyword,
@@ -1095,6 +1096,18 @@ function tsTryParseGenericAsyncArrowFunction(): boolean {
   return true;
 }
 
+function tsParseTypeArgumentsWithPossibleBitshift(): void {
+  // If necessary, hack the tokenizer state so that this bitshift was actually a
+  // less-than token, then keep parsing. This should only be used in situations
+  // where we restore from snapshot on error (which reverts this change) or
+  // where bitshift would be illegal anyway (e.g. in a class "extends" clause).
+  if (state.type === tt.bitShiftL) {
+    state.pos -= 1;
+    finishToken(tt.lessThan);
+  }
+  tsParseTypeArguments();
+}
+
 function tsParseTypeArguments(): void {
   const oldIsType = pushTypeContext(0);
   expect(tt.lessThan);
@@ -1165,7 +1178,7 @@ export function tsParseSubscript(
     return;
   }
 
-  if (match(tt.lessThan)) {
+  if (match(tt.lessThan) || match(tt.bitShiftL)) {
     // There are number of things we are going to "maybe" parse, like type arguments on
     // tagged template expressions. If any of them fail, walk it back and continue.
     const snapshot = state.snapshot();
@@ -1178,7 +1191,7 @@ export function tsParseSubscript(
         return;
       }
     }
-    tsParseTypeArguments();
+    tsParseTypeArgumentsWithPossibleBitshift();
     if (!noCalls && eat(tt.parenL)) {
       // With f<T>(), the subscriptStartIndex marker is on the ( token.
       state.tokens[state.tokens.length - 1].subscriptStartIndex = startTokenIndex;
@@ -1210,15 +1223,11 @@ export function tsParseSubscript(
 }
 
 export function tsStartParseNewArguments(): void {
-  if (match(tt.lessThan)) {
+  if (match(tt.lessThan) || match(tt.bitShiftL)) {
     // 99% certain this is `new C<T>();`. But may be `new C < T;`, which is also legal.
     const snapshot = state.snapshot();
 
-    state.type = tt.typeParameterStart;
-    tsParseTypeArguments();
-    if (!match(tt.parenL)) {
-      unexpected();
-    }
+    tsParseTypeArgumentsWithPossibleBitshift();
 
     if (state.error) {
       state.restoreFromSnapshot(snapshot);
@@ -1431,8 +1440,8 @@ export function tsParseExportDeclaration(): void {
 }
 
 export function tsAfterParseClassSuper(hasSuper: boolean): void {
-  if (hasSuper && match(tt.lessThan)) {
-    tsParseTypeArguments();
+  if (hasSuper && (match(tt.lessThan) || match(tt.bitShiftL))) {
+    tsParseTypeArgumentsWithPossibleBitshift();
   }
   if (eatContextual(ContextualKeyword._implements)) {
     state.tokens[state.tokens.length - 1].type = tt._implements;
@@ -1553,8 +1562,8 @@ export function tsParseAssignableListItemTypes(): void {
 }
 
 export function tsParseMaybeDecoratorArguments(): void {
-  if (match(tt.lessThan)) {
-    tsParseTypeArguments();
+  if (match(tt.lessThan) || match(tt.bitShiftL)) {
+    tsParseTypeArgumentsWithPossibleBitshift();
   }
   baseParseMaybeDecoratorArguments();
 }

@@ -1545,4 +1545,87 @@ describe("sucrase", () => {
     `,
     );
   });
+
+  it("allows arrow function body with `in`", () => {
+    // Case from https://github.com/babel/babel/issues/14193
+    assertResult(
+      `
+      const x = () => [].includes(true) || "ontouchend" in document
+    `,
+      `"use strict";
+      const x = () => [].includes(true) || "ontouchend" in document
+    `,
+    );
+  });
+
+  it("handles regexp v flag", () => {
+    // Case from https://github.com/babel/babel/issues/14193
+    assertResult(
+      `
+      const r = /foo/v;
+    `,
+      `"use strict";
+      const r = /foo/v;
+    `,
+    );
+  });
+
+  it("passes through decorators with accessor keyword", () => {
+    assertResult(
+      `
+      @defineElement("my-class")
+      class C extends HTMLElement {
+        @reactive accessor clicked = false;
+      }
+    `,
+      `
+      @defineElement("my-class")
+      class C extends HTMLElement {
+        @reactive accessor clicked = false;
+      }
+    `,
+      {disableESTransforms: true, transforms: []},
+    );
+  });
+
+  it("allows destructuring private fields", () => {
+    // Example from https://github.com/tc39/proposal-destructuring-private
+    assertResult(
+      `
+      class Foo {
+        #x = 1;
+      
+        constructor() {
+          console.log(this.#x); // => 1
+          
+          const { #x: x } = this;
+          console.log(x); // => 1
+        }
+      
+        equals({ #x: otherX }) {
+          const { #x: currentX } = this;
+          return currentX === otherX;
+        }
+      }
+    `,
+      `
+      class Foo {
+        #x = 1;
+      
+        constructor() {
+          console.log(this.#x); // => 1
+          
+          const { #x: x } = this;
+          console.log(x); // => 1
+        }
+      
+        equals({ #x: otherX }) {
+          const { #x: currentX } = this;
+          return currentX === otherX;
+        }
+      }
+    `,
+      {disableESTransforms: true, transforms: []},
+    );
+  });
 });

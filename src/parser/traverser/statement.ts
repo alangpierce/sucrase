@@ -789,6 +789,9 @@ function parseClassMemberWithIsStatic(
     // The so-called parsed name would have been "get/set": get the real name.
     parseClassPropertyName(classContextId);
     parseClassMethod(memberStart, /* isConstructor */ false);
+  } else if (token.contextualKeyword === ContextualKeyword._accessor && !isLineTerminator()) {
+    parseClassPropertyName(classContextId);
+    parseClassProperty();
   } else if (isLineTerminator()) {
     // an uninitialized class property (due to ASI, since we don't otherwise recognize the next token)
     parseClassProperty();

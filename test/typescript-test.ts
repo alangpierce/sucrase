@@ -1427,6 +1427,19 @@ describe("typescript transform", () => {
     );
   });
 
+  it("parses type arguments on decorators that look like left shift", () => {
+    assertTypeScriptResult(
+      `
+      @decorator<<T>() => void>()
+      class Test {}
+    `,
+      `"use strict";
+      @decorator()
+      class Test {}
+    `,
+    );
+  });
+
   it("properly parses tuple types with optional values", () => {
     assertTypeScriptResult(
       `
@@ -3027,6 +3040,78 @@ describe("typescript transform", () => {
       `
       let a
       !function(){}()
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("properly parses TS angle brackets that look like left shift", () => {
+    assertResult(
+      `
+      f<<T>(value: T) => void>(g);
+    `,
+      `
+      f(g);
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("properly parses actual left shift", () => {
+    assertResult(
+      `
+      const x = f<<T>2;
+    `,
+      `
+      const x = f<<T>2;
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("properly parses TS angle brackets that look like left shift in JSX", () => {
+    assertResult(
+      `
+      const elem = <Foo<<T>() => void> />;
+    `,
+      `${JSX_PREFIX}
+      const elem = React.createElement(Foo, {${devProps(2)}} );
+    `,
+      {transforms: ["typescript", "jsx"]},
+    );
+  });
+
+  it("properly parses new expression with type arguments that look like left shift", () => {
+    assertResult(
+      `
+      const x = new Foo<<T>() => void>;
+    `,
+      `
+      const x = new Foo;
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("properly parses class with super type argument that looks like left shift", () => {
+    assertResult(
+      `
+      class A extends B<<T>() => void> {}
+    `,
+      `
+      class A extends B {}
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("properly parses class with implements type argument that looks like left shift", () => {
+    assertResult(
+      `
+      class A implements B<<T>() => void> {}
+    `,
+      `
+      class A  {}
     `,
       {transforms: ["typescript"]},
     );

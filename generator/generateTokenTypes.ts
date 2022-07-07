@@ -97,7 +97,8 @@ const types = {
   lessThan: new BinopTokenType("<", 7),
   greaterThan: new BinopTokenType(">", 7),
   relationalOrEqual: new BinopTokenType("<=/>=", 7),
-  bitShift: new BinopTokenType("<</>>", 8),
+  bitShiftL: new BinopTokenType("<<", 8),
+  bitShiftR: new BinopTokenType(">>/>>>", 8),
   plus: new TokenType("+", {binop: 9, prefix}),
   minus: new TokenType("-", {binop: 9, prefix}),
   modulo: new BinopTokenType("%", 10),
@@ -173,6 +174,9 @@ const types = {
 
 export default function generateTokenTypes(): string {
   let code = '// Generated file, do not edit! Run "yarn generate" to re-generate this file.\n';
+  // formatTokenType is trivial and used for debugging purposes, so we shouldn't
+  // need full test coverage.
+  code += "/* istanbul ignore file */\n";
   code += generateTokenTypeEnum();
   code += generateFormatTokenType();
   return code;

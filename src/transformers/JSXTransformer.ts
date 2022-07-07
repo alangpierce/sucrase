@@ -360,7 +360,7 @@ function formatJSXStringValueLiteral(text: string): string {
 }
 
 /**
- * Modified from jsxReadString in Babylon.
+ * Modified from jsxReadString in babel-parser.
  */
 function processEntity(text: string, indexAfterAmpersand: number): {entity: string; newI: number} {
   let str = "";

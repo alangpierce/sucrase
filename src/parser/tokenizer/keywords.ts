@@ -1,6 +1,7 @@
 export enum ContextualKeyword {
   NONE,
   _abstract,
+  _accessor,
   _as,
   _asserts,
   _async,

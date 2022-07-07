@@ -1628,4 +1628,30 @@ describe("sucrase", () => {
       {disableESTransforms: true, transforms: []},
     );
   });
+
+  it("passes through operators starting with < and >", () => {
+    assertResult(
+      `
+      let a = 1 << 2;
+      let b = a >> 1;
+      let c = b >>> a;
+      a <<= 1;
+      b >>= 1;
+      c >>>= 1;
+      let d = a <= 1;
+      let e = b >= 1;
+    `,
+      `
+      let a = 1 << 2;
+      let b = a >> 1;
+      let c = b >>> a;
+      a <<= 1;
+      b >>= 1;
+      c >>>= 1;
+      let d = a <= 1;
+      let e = b >= 1;
+    `,
+      {transforms: ["jsx", "typescript"]},
+    );
+  });
 });

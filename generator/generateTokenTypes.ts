@@ -174,6 +174,9 @@ const types = {
 
 export default function generateTokenTypes(): string {
   let code = '// Generated file, do not edit! Run "yarn generate" to re-generate this file.\n';
+  // formatTokenType is trivial and used for debugging purposes, so we shouldn't
+  // need full test coverage.
+  code += "/* istanbul ignore file */\n";
   code += generateTokenTypeEnum();
   code += generateFormatTokenType();
   return code;

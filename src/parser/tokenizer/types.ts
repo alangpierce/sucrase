@@ -1,4 +1,5 @@
 // Generated file, do not edit! Run "yarn generate" to re-generate this file.
+/* istanbul ignore file */
 /**
  * Enum of all token types, with bit fields to signify meaningful properties.
  */

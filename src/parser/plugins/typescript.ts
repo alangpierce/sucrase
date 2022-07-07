@@ -1096,11 +1096,18 @@ function tsTryParseGenericAsyncArrowFunction(): boolean {
   return true;
 }
 
+/**
+ * If necessary, hack the tokenizer state so that this bitshift was actually a
+ * less-than token, then keep parsing. This should only be used in situations
+ * where we restore from snapshot on error (which reverts this change) or
+ * where bitshift would be illegal anyway (e.g. in a class "extends" clause).
+ *
+ * This hack is useful to handle situations like foo<<T>() => void>() where
+ * there can legitimately be two open-angle-brackets in a row in TS. This
+ * situation is very obscure and (as of this writing) is handled by Babel but
+ * not TypeScript itself, so it may be fine in the future to remove this case.
+ */
 function tsParseTypeArgumentsWithPossibleBitshift(): void {
-  // If necessary, hack the tokenizer state so that this bitshift was actually a
-  // less-than token, then keep parsing. This should only be used in situations
-  // where we restore from snapshot on error (which reverts this change) or
-  // where bitshift would be illegal anyway (e.g. in a class "extends" clause).
   if (state.type === tt.bitShiftL) {
     state.pos -= 1;
     finishToken(tt.lessThan);

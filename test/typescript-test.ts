@@ -3116,4 +3116,18 @@ describe("typescript transform", () => {
       {transforms: ["typescript"]},
     );
   });
+
+  it("handles >= as the end of a type parameter followed by assignment", () => {
+    assertResult(
+      `
+      type T<U>=U;
+      const a: Array<number>=[];
+    `,
+      `
+      
+      const a=[];
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
 });

@@ -507,18 +507,19 @@ function readToken_lt(): void {
 }
 
 function readToken_gt(): void {
-  const code = charCodes.greaterThan;
+  if (state.isType) {
+    // Avoid right-shift for things like `Array<Array<string>>` and
+    // greater-than-or-equal for things like `const a: Array<number>=[];`.
+    finishOp(tt.greaterThan, 1);
+    return;
+  }
+
   const nextChar = input.charCodeAt(state.pos + 1);
 
-  if (nextChar === code) {
+  if (nextChar === charCodes.greaterThan) {
     const size = input.charCodeAt(state.pos + 2) === charCodes.greaterThan ? 3 : 2;
     if (input.charCodeAt(state.pos + size) === charCodes.equalsTo) {
       finishOp(tt.assign, size + 1);
-      return;
-    }
-    // Avoid right-shift for things like Array<Array<string>>.
-    if (code === charCodes.greaterThan && state.isType) {
-      finishOp(tt.greaterThan, 1);
       return;
     }
     finishOp(tt.bitShiftR, size);
@@ -530,6 +531,17 @@ function readToken_gt(): void {
     finishOp(tt.relationalOrEqual, 2);
   } else {
     finishOp(tt.greaterThan, 1);
+  }
+}
+
+/**
+ * Called after `as` expressions in TS; we're switching from a type to a
+ * non-type context, so a > token may actually be >=
+ */
+export function rescan_gt(): void {
+  if (state.type === tt.greaterThan) {
+    state.pos -= 1;
+    readToken_gt();
   }
 }
 

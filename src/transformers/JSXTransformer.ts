@@ -9,9 +9,6 @@ import getJSXPragmaInfo, {JSXPragmaInfo} from "../util/getJSXPragmaInfo";
 import type RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 
-const HEX_NUMBER = /^[\da-fA-F]+$/;
-const DECIMAL_NUMBER = /^\d+$/;
-
 export default class JSXTransformer extends Transformer {
   lastLineNumber: number = 1;
   lastIndex: number = 0;
@@ -360,6 +357,9 @@ function formatJSXStringValueLiteral(text: string): string {
 }
 
 /**
+ * Starting at a &, see if there's an HTML entity (specified by name, decimal
+ * char code, or hex char code) and return it if so.
+ *
  * Modified from jsxReadString in babel-parser.
  */
 function processEntity(text: string, indexAfterAmpersand: number): {entity: string; newI: number} {
@@ -368,31 +368,56 @@ function processEntity(text: string, indexAfterAmpersand: number): {entity: stri
   let entity;
   let i = indexAfterAmpersand;
 
-  while (i < text.length && count++ < 10) {
-    const ch = text[i];
+  if (text[i] === "#") {
+    let radix = 10;
     i++;
-    if (ch === ";") {
-      if (str[0] === "#") {
-        if (str[1] === "x") {
-          str = str.slice(2);
-          if (HEX_NUMBER.test(str)) {
-            entity = String.fromCodePoint(parseInt(str, 16));
-          }
-        } else {
-          str = str.slice(1);
-          if (DECIMAL_NUMBER.test(str)) {
-            entity = String.fromCodePoint(parseInt(str, 10));
-          }
-        }
-      } else {
-        entity = XHTMLEntities[str];
+    let numStart;
+    if (text[i] === "x") {
+      radix = 16;
+      i++;
+      numStart = i;
+      while (i < text.length && isHexDigit(text.charCodeAt(i))) {
+        i++;
       }
-      break;
+    } else {
+      numStart = i;
+      while (i < text.length && isDecimalDigit(text.charCodeAt(i))) {
+        i++;
+      }
     }
-    str += ch;
+    if (text[i] === ";") {
+      const numStr = text.slice(numStart, i);
+      if (numStr) {
+        i++;
+        entity = String.fromCodePoint(parseInt(numStr, radix));
+      }
+    }
+  } else {
+    while (i < text.length && count++ < 10) {
+      const ch = text[i];
+      i++;
+      if (ch === ";") {
+        entity = XHTMLEntities.get(str);
+        break;
+      }
+      str += ch;
+    }
   }
+
   if (!entity) {
     return {entity: "&", newI: indexAfterAmpersand};
   }
   return {entity, newI: i};
+}
+
+function isDecimalDigit(code: number): boolean {
+  return code >= charCodes.digit0 && code <= charCodes.digit9;
+}
+
+function isHexDigit(code: number): boolean {
+  return (
+    (code >= charCodes.digit0 && code <= charCodes.digit9) ||
+    (code >= charCodes.lowercaseA && code <= charCodes.lowercaseF) ||
+    (code >= charCodes.uppercaseA && code <= charCodes.uppercaseF)
+  );
 }

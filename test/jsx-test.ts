@@ -255,6 +255,39 @@ describe("transform JSX", () => {
     );
   });
 
+  it("does not transform empty number HTML entities", () => {
+    assertResult(
+      `
+      <span>a&#;b</span>
+    `,
+      `${JSX_PREFIX}
+      React.createElement('span', {${devProps(2)}}, "a&#;b")
+    `,
+    );
+  });
+
+  it("allows adjacent HTML entities", () => {
+    assertResult(
+      `
+      <span>a&#100;&#100;b</span>
+    `,
+      `${JSX_PREFIX}
+      React.createElement('span', {${devProps(2)}}, "addb")
+    `,
+    );
+  });
+
+  it("allows HTML entity right after near-entity with semicolon missing", () => {
+    assertResult(
+      `
+      <span>a&#100&#100;b</span>
+    `,
+      `${JSX_PREFIX}
+      React.createElement('span', {${devProps(2)}}, "a&#100db")
+    `,
+    );
+  });
+
   it("handles ampersand in HTML", () => {
     assertResult(
       `
@@ -603,5 +636,28 @@ describe("transform JSX", () => {
         {production: true},
       );
     });
+  });
+
+  it("handles long HTML entities with many leading 0s", () => {
+    // https://github.com/babel/babel/issues/14316
+    assertResult(
+      `
+      <div> &#00000000000000000020; </div>
+    `,
+      `${JSX_PREFIX}
+      React.createElement('div', {${devProps(2)}}, " \\u0014 "  )
+    `,
+    );
+  });
+
+  it("does not allow prototype access in JSX entity handling", () => {
+    assertResult(
+      `
+      <a>&valueOf;</a>
+    `,
+      `${JSX_PREFIX}
+      React.createElement('a', {${devProps(2)}}, "&valueOf;")
+    `,
+    );
   });
 });

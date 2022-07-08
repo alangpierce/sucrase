@@ -52,6 +52,7 @@ import {
   nextTemplateToken,
   popTypeContext,
   pushTypeContext,
+  rescan_gt,
   retokenizeSlashAsRegex,
 } from "../tokenizer/index";
 import {ContextualKeyword} from "../tokenizer/keywords";
@@ -206,6 +207,7 @@ function parseExprOp(startTokenIndex: number, minPrec: number, noIn: boolean): v
     const oldIsType = pushTypeContext(1);
     tsParseType();
     popTypeContext(oldIsType);
+    rescan_gt();
     parseExprOp(startTokenIndex, minPrec, noIn);
     return;
   }

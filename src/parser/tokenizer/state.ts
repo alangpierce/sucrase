@@ -18,6 +18,7 @@ export class StateSnapshot {
   constructor(
     readonly potentialArrowAt: number,
     readonly noAnonFunctionType: boolean,
+    readonly inDisallowConditionalTypesContext: boolean,
     readonly tokensLength: number,
     readonly scopesLength: number,
     readonly pos: number,
@@ -37,6 +38,9 @@ export default class State {
 
   // Used by Flow to handle an edge case involving function type parsing.
   noAnonFunctionType: boolean = false;
+
+  // Used by TypeScript to handle ambiguities when parsing conditional types.
+  inDisallowConditionalTypesContext: boolean = false;
 
   // Token store.
   tokens: Array<Token> = [];
@@ -70,6 +74,7 @@ export default class State {
     return new StateSnapshot(
       this.potentialArrowAt,
       this.noAnonFunctionType,
+      this.inDisallowConditionalTypesContext,
       this.tokens.length,
       this.scopes.length,
       this.pos,
@@ -86,6 +91,7 @@ export default class State {
   restoreFromSnapshot(snapshot: StateSnapshot): void {
     this.potentialArrowAt = snapshot.potentialArrowAt;
     this.noAnonFunctionType = snapshot.noAnonFunctionType;
+    this.inDisallowConditionalTypesContext = snapshot.inDisallowConditionalTypesContext;
     this.tokens.length = snapshot.tokensLength;
     this.scopes.length = snapshot.scopesLength;
     this.pos = snapshot.pos;

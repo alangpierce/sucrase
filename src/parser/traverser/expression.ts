@@ -39,7 +39,6 @@ import {
   tsParseType,
   tsParseTypeAssertion,
   tsStartParseAsyncArrowFromCallExpression,
-  tsStartParseNewArguments,
   tsStartParseObjPropValue,
 } from "../plugins/typescript";
 import {
@@ -715,20 +714,18 @@ function parseNew(): void {
     parseIdentifier();
     return;
   }
-  parseNoCallExpr();
-  eat(tt.questionDot);
-  parseNewArguments();
-}
-
-function parseNewArguments(): void {
-  if (isTypeScriptEnabled) {
-    tsStartParseNewArguments();
-  } else if (isFlowEnabled) {
+  parseNewCallee();
+  if (isFlowEnabled) {
     flowStartParseNewArguments();
   }
   if (eat(tt.parenL)) {
     parseExprList(tt.parenR);
   }
+}
+
+function parseNewCallee(): void {
+  parseNoCallExpr();
+  eat(tt.questionDot);
 }
 
 export function parseTemplate(): void {

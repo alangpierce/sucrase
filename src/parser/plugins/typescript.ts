@@ -177,6 +177,9 @@ function tsParseTypeQuery(): void {
   } else {
     tsParseEntityName();
   }
+  if (!hasPrecedingLineBreak() && match(tt.lessThan)) {
+    tsParseTypeArguments();
+  }
 }
 
 function tsParseImportType(): void {
@@ -193,7 +196,16 @@ function tsParseImportType(): void {
 }
 
 function tsParseTypeParameter(): void {
-  parseIdentifier();
+  const hadIn = eat(tt._in);
+  const hadOut = eatContextual(ContextualKeyword._out);
+  if ((hadIn || hadOut) && !match(tt.name)) {
+    // The "in" or "out" keyword must have actually been the type parameter
+    // name, so set it as the name.
+    state.tokens[state.tokens.length - 1].type = tt.name;
+  } else {
+    parseIdentifier();
+  }
+
   if (eat(tt._extends)) {
     tsParseType();
   }
@@ -458,7 +470,10 @@ function tsParseFunctionOrConstructorType(type: FunctionType): void {
   if (type === FunctionType.TSConstructorType || type === FunctionType.TSAbstractConstructorType) {
     expect(tt._new);
   }
+  const oldInDisallowConditionalTypesContext = state.inDisallowConditionalTypesContext;
+  state.inDisallowConditionalTypesContext = false;
   tsFillSignature(tt.arrow);
+  state.inDisallowConditionalTypesContext = oldInDisallowConditionalTypesContext;
 }
 
 function tsParseNonArrayType(): void {
@@ -537,6 +552,19 @@ function tsParseArrayTypeOrHigher(): void {
 function tsParseInferType(): void {
   expectContextual(ContextualKeyword._infer);
   parseIdentifier();
+  if (match(tt._extends)) {
+    // Infer type constraints introduce an ambiguity about whether the "extends"
+    // is a constraint for this infer type or is another conditional type.
+    const snapshot = state.snapshot();
+    expect(tt._extends);
+    const oldInDisallowConditionalTypesContext = state.inDisallowConditionalTypesContext;
+    state.inDisallowConditionalTypesContext = true;
+    tsParseType();
+    state.inDisallowConditionalTypesContext = oldInDisallowConditionalTypesContext;
+    if (state.error || (!state.inDisallowConditionalTypesContext && match(tt.question))) {
+      state.restoreFromSnapshot(snapshot);
+    }
+  }
 }
 
 function tsParseTypeOperatorOrHigher(): void {
@@ -550,7 +578,10 @@ function tsParseTypeOperatorOrHigher(): void {
   } else if (isContextual(ContextualKeyword._infer)) {
     tsParseInferType();
   } else {
+    const oldInDisallowConditionalTypesContext = state.inDisallowConditionalTypesContext;
+    state.inDisallowConditionalTypesContext = false;
     tsParseArrayTypeOrHigher();
+    state.inDisallowConditionalTypesContext = oldInDisallowConditionalTypesContext;
   }
 }
 
@@ -719,11 +750,15 @@ export function tsParseTypeAnnotation(): void {
 
 export function tsParseType(): void {
   tsParseNonConditionalType();
-  if (hasPrecedingLineBreak() || !eat(tt._extends)) {
+  if (state.inDisallowConditionalTypesContext || hasPrecedingLineBreak() || !eat(tt._extends)) {
     return;
   }
   // extends type
+  const oldInDisallowConditionalTypesContext = state.inDisallowConditionalTypesContext;
+  state.inDisallowConditionalTypesContext = true;
   tsParseNonConditionalType();
+  state.inDisallowConditionalTypesContext = oldInDisallowConditionalTypesContext;
+
   expect(tt.question);
   // true type
   tsParseType();
@@ -1206,7 +1241,16 @@ export function tsParseSubscript(
     } else if (match(tt.backQuote)) {
       // Tagged template with a type argument.
       parseTemplate();
-    } else {
+    } else if (
+      // a<b>>c is not (a<b>)>c, but a<(b>>c)
+      state.type === tt.greaterThan ||
+      // a<b>c is (a<b)>c
+      (state.type !== tt.parenL &&
+        Boolean(state.type & TokenType.IS_EXPRESSION_START) &&
+        !hasPrecedingLineBreak())
+    ) {
+      // Bail out. We have something like a<b>c, which is not an expression with
+      // type arguments but an (a < b) > c comparison.
       unexpected();
     }
 
@@ -1227,19 +1271,6 @@ export function tsParseSubscript(
     parseCallExpressionArguments();
   }
   baseParseSubscript(startTokenIndex, noCalls, stopState);
-}
-
-export function tsStartParseNewArguments(): void {
-  if (match(tt.lessThan) || match(tt.bitShiftL)) {
-    // 99% certain this is `new C<T>();`. But may be `new C < T;`, which is also legal.
-    const snapshot = state.snapshot();
-
-    tsParseTypeArgumentsWithPossibleBitshift();
-
-    if (state.error) {
-      state.restoreFromSnapshot(snapshot);
-    }
-  }
 }
 
 export function tsTryParseExport(): boolean {

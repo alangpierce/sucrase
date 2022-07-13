@@ -67,7 +67,6 @@ flow/scope/declare-module
 flow/this-annotation/function-type
 flow/typecasts/yield
 jsx/basic/3
-typescript/cast/as
 typescript/export/as-namespace
 typescript/import/export-import
 typescript/import/export-import-require
@@ -76,7 +75,6 @@ typescript/import/export-import-type-require
 typescript/import/import-default-id-type
 typescript/import/type-asi
 typescript/import/type-equals-require
-typescript/type-arguments/instantiation-expression-binary-operator
 `
   .split("\n")
   .filter((s) => s);

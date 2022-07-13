@@ -41,7 +41,7 @@ module.exports = {
           "**/example-runner/**",
           "**/generator/**",
           "**/test/**",
-          "**/test262/**",
+          "**/spec-compliance-tests/**",
           "**/script/**",
         ],
         optionalDependencies: false,

@@ -20,11 +20,12 @@
     "script",
     "src",
     "test",
-    "test262"
+    "spec-compliance-tests"
   ],
   "exclude": [
     "benchmark/sample",
     "example-runner/example-repos",
-    "test262/test262-checkout"
+    "spec-compliance-tests/test262/test262-checkout",
+    "spec-compliance-tests/babel-tests/babel-tests-checkout"
   ]
 }

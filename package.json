@@ -14,7 +14,7 @@
   "scripts": {
     "build": "sucrase-node script/build.ts",
     "fast-build": "sucrase-node script/build.ts --fast",
-    "clean": "rm -rf ./build ./dist ./dist-self-build ./dist-types ./example-runner/example-repos ./test262/test262-checkout",
+    "clean": "rm -rf ./build ./dist ./dist-self-build ./dist-types ./example-runner/example-repos ./spec-compliance-tests/test262/test262-checkout ./spec-compliance-tests/babel-tests/babel-tests-checkout",
     "generate": "sucrase-node generator/generate.ts",
     "benchmark": "cd benchmark && yarn && sucrase-node ./benchmark.ts",
     "benchmark-compare": "sucrase-node ./benchmark/compare-performance.ts",
@@ -27,7 +27,8 @@
     "run-examples": "sucrase-node example-runner/example-runner.ts",
     "test": "yarn lint && yarn test-only",
     "test-only": "mocha './test/**/*.ts'",
-    "test262": "sucrase-node test262/run-test262.ts",
+    "test262": "sucrase-node spec-compliance-tests/test262/run-test262.ts",
+    "check-babel-tests": "sucrase-node spec-compliance-tests/babel-tests/check-babel-tests.ts",
     "test-with-coverage": "nyc mocha './test/**/*.ts'",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
   },
@@ -45,6 +46,7 @@
     "url": "https://github.com/alangpierce/sucrase/issues"
   },
   "devDependencies": {
+    "@babel/core": "^7.18.6",
     "@types/glob": "^7",
     "@types/mocha": "^9.1.1",
     "@types/mz": "^2.7.4",

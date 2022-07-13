@@ -4,10 +4,10 @@ import chalk from "chalk";
 import {exec} from "mz/child_process";
 import {exists} from "mz/fs";
 
-import run from "../script/run";
+import run from "../../script/run";
 
 const TEST262_HARNESS = "./node_modules/.bin/test262-harness";
-const TEST262_DIR = "./test262/test262-checkout";
+const TEST262_DIR = "./spec-compliance-tests/test262/test262-checkout";
 const TEST262_REPO_URL = "https://github.com/tc39/test262.git";
 const TEST262_REVISION = "157b18d16b5d52501c4d75ac422d3a80bfad1c17";
 
@@ -47,7 +47,7 @@ async function main(): Promise<void> {
   console.log("Running test262...");
   const harnessStdout = (
     await exec(`${TEST262_HARNESS} \
-    --preprocessor "./test262/test262Preprocessor.js" \
+    --preprocessor "./spec-compliance-tests/test262/test262Preprocessor.js" \
     --reporter "json" \
     "${TEST262_DIR}/test/language/expressions/coalesce/**/*.js" \
     "${TEST262_DIR}/test/language/expressions/optional-chaining/**/*.js"`)

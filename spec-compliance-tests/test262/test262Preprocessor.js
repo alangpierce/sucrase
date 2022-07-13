@@ -1,10 +1,10 @@
-const sucrase = require("..");
+const sucrase = require("../..");
 
 /**
  * test262-harness preprocessor documented here:
  https://github.com/bterlson/test262-harness#preprocessor
  */
-module.exports = function(test) {
+module.exports = function (test) {
   // Sucrase doesn't attempt to throw SyntaxError on bad syntax, so skip those tests.
   if (test.attrs.negative) {
     return null;

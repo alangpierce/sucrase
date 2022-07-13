@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint-and-test:
-    name: "Lint and core tests"
+    name: "Lint, core tests, and spec compliance tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,6 +20,7 @@ jobs:
       - run: yarn lint
       - run: yarn test-with-coverage && yarn report-coverage
       - run: yarn test262
+      - run: yarn check-babel-tests
   test-older-node:
     name: "Test on older node versions"
     runs-on: ubuntu-latest

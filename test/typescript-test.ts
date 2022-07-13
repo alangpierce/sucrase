@@ -2796,6 +2796,17 @@ describe("typescript transform", () => {
     );
   });
 
+  it("allows type imports of keyword names", () => {
+    assertTypeScriptESMResult(
+      `
+      import {type default as Foo} from './Foo';
+    `,
+      `
+
+    `,
+    );
+  });
+
   it("allows static index signatures", () => {
     assertTypeScriptESMResult(
       `
@@ -3128,6 +3139,166 @@ describe("typescript transform", () => {
       const a=[];
     `,
       {transforms: ["typescript"]},
+    );
+  });
+
+  it("handles TS instantiation expressions", () => {
+    assertResult(
+      `
+      const NumberSet = Set<number>;
+      const foo = new NumberSet();
+    `,
+      `
+      const NumberSet = Set;
+      const foo = new NumberSet();
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("distinguishes between instantiation expressions and greater-than", () => {
+    assertResult(
+      `
+      let notTypeArg = Array<number>3;
+      let typeArg = (Array<number>);
+      typeArg = ((Array<number>));
+      typeArg = Array<number>();
+      notTypeArg = Array<number>7;
+      typeArg = Array<number>
+      if (true) {}
+      notTypeArg = Array<number>>3;
+      notTypeArg = Array<number>true;
+      notTypeArg = Array<number>!true;
+      notTypeArg = Array<number>function foo() {};
+    `,
+      `
+      let notTypeArg = Array<number>3;
+      let typeArg = (Array);
+      typeArg = ((Array));
+      typeArg = Array();
+      notTypeArg = Array<number>7;
+      typeArg = Array
+      if (true) {}
+      notTypeArg = Array<number>>3;
+      notTypeArg = Array<number>true;
+      notTypeArg = Array<number>!true;
+      notTypeArg = Array<number>function foo() {};
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("allows new instantiation expressions", () => {
+    assertResult(
+      `
+      const a = new A < B > C;
+      const b = new A<B>;
+    `,
+      `
+      const a = new A < B > C;
+      const b = new A;
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("allows typeof expressions with instantiation expression type arguments", () => {
+    assertResult(
+      `
+      const f: typeof foo<number> = foo;
+    `,
+      `
+      const f = foo;
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("allows extends constraints on infer type variables", () => {
+    assertResult(
+      `
+      type FirstString<T> =
+        T extends [infer S extends string, ...unknown[]]
+            ? S
+            : never;
+    `,
+      `
+      
+
+
+
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("handles infer with a nested conditional type", () => {
+    assertResult(
+      `
+      type A = T extends (infer U extends number ? U : T) ? U : T;
+    `,
+      `
+      
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("properly disallows conditional types within extends type", () => {
+    assertResult(
+      `
+      type A = T extends infer U extends number ? 1 : 0;
+    `,
+      `
+      
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("allows nested conditional types within functions", () => {
+    assertResult(
+      `
+      type A = T extends (x: A extends B ? C : D) => void ? 1 : 0;
+    `,
+      `
+      
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("allows variance modifiers", () => {
+    assertResult(
+      `
+      interface A<in T> {}
+      interface B<out T> {}
+      interface C<in out T> {}
+      interface D<in out T extends number> {}
+      interface E<out> {}
+      interface F<out extends number> {}
+    `,
+      `
+      
+
+
+
+
+
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("allows JSX that looks like variance modifiers", () => {
+    assertResult(
+      `
+      <in T>() => {}</in>
+    `,
+      `${JSX_PREFIX}
+      React.createElement('in', { T: true, ${devProps(2)}}, "() => "  )
+    `,
+      {transforms: ["typescript", "jsx"]},
     );
   });
 });

@@ -535,20 +535,13 @@ function readToken_gt(): void {
 }
 
 /**
- * Called when switching from a type to non-type context, e.g. after an `as`
- * expression or after an instantiation expression like `Array<number>`. Since
- * we always tokenize one token ahead of the current state and tokenization is
- * sometimes different in type and non-type contexts, we need to re-tokenize
- * some specific cases to make sure we're picking up the right operator,
- * particularly recognizing > as >= and recognizing ? as ??.
+ * Called after `as` expressions in TS; we're switching from a type to a
+ * non-type context, so a > token may actually be >= .
  */
-export function rescanAfterTypeEnd(): void {
+export function rescan_gt(): void {
   if (state.type === tt.greaterThan) {
     state.pos -= 1;
     readToken_gt();
-  } else if (state.type === tt.question) {
-    state.pos -= 1;
-    readToken_question();
   }
 }
 
@@ -572,7 +565,12 @@ function readToken_question(): void {
   // '?'
   const nextChar = input.charCodeAt(state.pos + 1);
   const nextChar2 = input.charCodeAt(state.pos + 2);
-  if (nextChar === charCodes.questionMark && !state.isType) {
+  if (
+    nextChar === charCodes.questionMark &&
+    // In Flow (but not TypeScript), ??string is a valid type that should be
+    // tokenized as two individual ? tokens.
+    !(isFlowEnabled && state.isType)
+  ) {
     if (nextChar2 === charCodes.equalsTo) {
       // '??='
       finishOp(tt.assign, 3);

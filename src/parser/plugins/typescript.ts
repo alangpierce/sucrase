@@ -9,7 +9,6 @@ import {
   nextTemplateToken,
   popTypeContext,
   pushTypeContext,
-  rescanAfterTypeEnd,
 } from "../tokenizer/index";
 import {ContextualKeyword} from "../tokenizer/keywords";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
@@ -1243,6 +1242,9 @@ export function tsParseSubscript(
       // Tagged template with a type argument.
       parseTemplate();
     } else if (
+      // The remaining possible case is an instantiation expression, e.g.
+      // Array<number> . Check for a few cases that would disqualify it and
+      // cause us to bail out.
       // a<b>>c is not (a<b>)>c, but a<(b>>c)
       state.type === tt.greaterThan ||
       // a<b>c is (a<b)>c
@@ -1253,11 +1255,6 @@ export function tsParseSubscript(
       // Bail out. We have something like a<b>c, which is not an expression with
       // type arguments but an (a < b) > c comparison.
       unexpected();
-    } else {
-      // This is an instantiation expression, e.g. Array<number>, so we are
-      // leaving a type context, and operators like ?? need to be re-scanned to
-      // pick up the second question mark.
-      rescanAfterTypeEnd();
     }
 
     if (state.error) {

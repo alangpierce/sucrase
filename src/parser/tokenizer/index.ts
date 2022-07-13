@@ -535,13 +535,20 @@ function readToken_gt(): void {
 }
 
 /**
- * Called after `as` expressions in TS; we're switching from a type to a
- * non-type context, so a > token may actually be >=
+ * Called when switching from a type to non-type context, e.g. after an `as`
+ * expression or after an instantiation expression like `Array<number>`. Since
+ * we always tokenize one token ahead of the current state and tokenization is
+ * sometimes different in type and non-type contexts, we need to re-tokenize
+ * some specific cases to make sure we're picking up the right operator,
+ * particularly recognizing > as >= and recognizing ? as ??.
  */
-export function rescan_gt(): void {
+export function rescanAfterTypeEnd(): void {
   if (state.type === tt.greaterThan) {
     state.pos -= 1;
     readToken_gt();
+  } else if (state.type === tt.question) {
+    state.pos -= 1;
+    readToken_question();
   }
 }
 

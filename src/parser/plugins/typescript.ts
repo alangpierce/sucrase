@@ -9,6 +9,7 @@ import {
   nextTemplateToken,
   popTypeContext,
   pushTypeContext,
+  rescanAfterTypeEnd,
 } from "../tokenizer/index";
 import {ContextualKeyword} from "../tokenizer/keywords";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
@@ -1252,6 +1253,11 @@ export function tsParseSubscript(
       // Bail out. We have something like a<b>c, which is not an expression with
       // type arguments but an (a < b) > c comparison.
       unexpected();
+    } else {
+      // This is an instantiation expression, e.g. Array<number>, so we are
+      // leaving a type context, and operators like ?? need to be re-scanned to
+      // pick up the second question mark.
+      rescanAfterTypeEnd();
     }
 
     if (state.error) {

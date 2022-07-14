@@ -1088,8 +1088,8 @@ export function parseImport(): void {
     return;
   }
   if (isTypeScriptEnabled && isContextual(ContextualKeyword._type)) {
-    const lookahead = lookaheadType();
-    if (lookahead === tt.name) {
+    const lookahead = lookaheadTypeAndKeyword();
+    if (lookahead.type === tt.name && lookahead.contextualKeyword !== ContextualKeyword._from) {
       // One of these `import type` cases:
       // import type T = require('T');
       // import type A from 'A';
@@ -1100,7 +1100,7 @@ export function parseImport(): void {
       }
       // If this is an `import type...from` statement, then we already ate the
       // type token, so proceed to the regular import parser.
-    } else if (lookahead === tt.star || lookahead === tt.braceL) {
+    } else if (lookahead.type === tt.star || lookahead.type === tt.braceL) {
       // One of these `import type` cases, in which case we can eat the type token
       // and proceed as normal:
       // import type * as A from 'A';

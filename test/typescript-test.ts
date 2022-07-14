@@ -2225,6 +2225,32 @@ describe("typescript transform", () => {
     );
   });
 
+  it("allows a default import named type in ESM mode", () => {
+    assertTypeScriptESMResult(
+      `
+      import type from './type';
+      console.log(type);
+    `,
+      `
+      import type from './type';
+      console.log(type);
+    `,
+    );
+  });
+
+  it("allows a default import named type in CJS mode", () => {
+    assertTypeScriptResult(
+      `
+      import type from './type';
+      console.log(type);
+    `,
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
+      var _type = require('./type'); var _type2 = _interopRequireDefault(_type);
+      console.log(_type2.default);
+    `,
+    );
+  });
+
   it("parses and removes named import type statements in ESM mode", () => {
     assertTypeScriptESMResult(
       `

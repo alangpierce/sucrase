@@ -13,6 +13,18 @@ const FIXTURES_DIR = `${BABEL_TESTS_DIR}/packages/babel-parser/test/fixtures`;
 const BABEL_REPO_URL = "https://github.com/babel/babel.git";
 const BABEL_REVISION = "bcf8b2273b8cba44c9b93c8977f05d508bfc1b91";
 
+/*
+ * TODO: Work through these failures to better understand and characterize them.
+ *
+ * There seem to be a few categories of test failures:
+ * - Real errors that should be fixed when possible.
+ * - Cases that are so obscure and hard to implement that Sucrase intentionally
+ *   skips them. These should ideally have an inline explanation here.
+ * - Cases that are unsupported in Sucrase but are flagged as failures, e.g.
+ *   syntax not part of the spec that is supported by Babel. Many of these may
+ *   be possible to fix automatically by improving the step where we run Babel
+ *   to see if it also fails.
+ */
 const KNOWN_FAILURES = `
 es2015/let/let-declaration-in-escape-id
 es2015/yield/accessor-name-inst-computed-yield-expr
@@ -72,7 +84,6 @@ typescript/import/export-import
 typescript/import/export-import-require
 typescript/import/export-import-type-as-identifier
 typescript/import/export-import-type-require
-typescript/import/import-default-id-type
 typescript/import/type-asi
 typescript/import/type-equals-require
 `

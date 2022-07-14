@@ -161,6 +161,7 @@ export default class ESMImportTransformer extends Transformer {
     }
 
     let foundNonTypeImport = false;
+    let needsComma = false;
 
     if (this.tokens.matches1(tt.name)) {
       if (this.isTypeName(this.tokens.identifierName())) {
@@ -172,23 +173,38 @@ export default class ESMImportTransformer extends Transformer {
         foundNonTypeImport = true;
         this.tokens.copyToken();
         if (this.tokens.matches1(tt.comma)) {
-          this.tokens.copyToken();
+          // We're in a statement like:
+          // import A, * as B from './A';
+          // or
+          // import A, {foo} from './A';
+          // where the `A` is being kept. The comma should be removed if an only
+          // if the next part of the import statement is elided, but that's hard
+          // to determine at this point in the code. Instead, always remove it
+          // and set a flag to add it back if necessary.
+          needsComma = true;
+          this.tokens.removeToken();
         }
       }
     }
 
     if (this.tokens.matches1(tt.star)) {
-      if (this.isTypeName(this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 2))) {
+      if (this.isTypeName(this.tokens.identifierNameAtRelativeIndex(2))) {
         this.tokens.removeToken();
         this.tokens.removeToken();
         this.tokens.removeToken();
       } else {
+        if (needsComma) {
+          this.tokens.appendCode(",");
+        }
         foundNonTypeImport = true;
         this.tokens.copyExpectedToken(tt.star);
         this.tokens.copyExpectedToken(tt.name);
         this.tokens.copyExpectedToken(tt.name);
       }
     } else if (this.tokens.matches1(tt.braceL)) {
+      if (needsComma) {
+        this.tokens.appendCode(",");
+      }
       this.tokens.copyToken();
       while (!this.tokens.matches1(tt.braceR)) {
         const specifierInfo = getImportExportSpecifierInfo(this.tokens);

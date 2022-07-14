@@ -1242,6 +1242,9 @@ export function tsParseSubscript(
       // Tagged template with a type argument.
       parseTemplate();
     } else if (
+      // The remaining possible case is an instantiation expression, e.g.
+      // Array<number> . Check for a few cases that would disqualify it and
+      // cause us to bail out.
       // a<b>>c is not (a<b>)>c, but a<(b>>c)
       state.type === tt.greaterThan ||
       // a<b>c is (a<b)>c

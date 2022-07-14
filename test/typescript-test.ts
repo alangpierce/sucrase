@@ -5,6 +5,7 @@ import {
   IMPORT_DEFAULT_PREFIX,
   IMPORT_WILDCARD_PREFIX,
   JSX_PREFIX,
+  NULLISH_COALESCE_PREFIX,
   OPTIONAL_CHAIN_PREFIX,
 } from "./prefixes";
 import {assertResult, devProps} from "./util";
@@ -2388,15 +2389,17 @@ describe("typescript transform", () => {
     );
   });
 
-  it("properly handles a >= symbol after an `as` cast", () => {
+  it("properly handles >= and ?? after `as`", () => {
     assertTypeScriptResult(
       `
       const x: string | number = 1;
       if (x as number >= 5) {}
+      if (y as unknown ?? false) {}
     `,
-      `"use strict";
+      `"use strict";${NULLISH_COALESCE_PREFIX}
       const x = 1;
       if (x  >= 5) {}
+      if (_nullishCoalesce(y , () => ( false))) {}
     `,
     );
   });
@@ -3209,6 +3212,18 @@ describe("typescript transform", () => {
     `,
       `
       const f = foo;
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("allows instantiation expressions followed by ??", () => {
+    assertResult(
+      `
+      const foo = a<b> ?? c;
+    `,
+      `${NULLISH_COALESCE_PREFIX}
+      const foo = _nullishCoalesce(a, () => ( c));
     `,
       {transforms: ["typescript"]},
     );

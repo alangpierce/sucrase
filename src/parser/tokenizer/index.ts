@@ -536,7 +536,7 @@ function readToken_gt(): void {
 
 /**
  * Called after `as` expressions in TS; we're switching from a type to a
- * non-type context, so a > token may actually be >=
+ * non-type context, so a > token may actually be >= .
  */
 export function rescan_gt(): void {
   if (state.type === tt.greaterThan) {
@@ -565,7 +565,12 @@ function readToken_question(): void {
   // '?'
   const nextChar = input.charCodeAt(state.pos + 1);
   const nextChar2 = input.charCodeAt(state.pos + 2);
-  if (nextChar === charCodes.questionMark && !state.isType) {
+  if (
+    nextChar === charCodes.questionMark &&
+    // In Flow (but not TypeScript), ??string is a valid type that should be
+    // tokenized as two individual ? tokens.
+    !(isFlowEnabled && state.isType)
+  ) {
     if (nextChar2 === charCodes.equalsTo) {
       // '??='
       finishOp(tt.assign, 3);

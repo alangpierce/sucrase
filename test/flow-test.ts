@@ -688,4 +688,15 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("handles two ? operators in a row", () => {
+    assertFlowResult(
+      `
+      type T = ??number;
+    `,
+      `"use strict";
+      
+    `,
+    );
+  });
 });

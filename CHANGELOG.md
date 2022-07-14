@@ -1,3 +1,18 @@
+# 3.24.0 (2022-07-14)
+
+* Add support for all new syntax in TypeScript 4.7: ([#719])
+  * Instantiation expressions: `const NumberSet = Set<number>;`
+  * `extends` on `infer`: `T extends [infer S extends string, ...unknown[]] ? S : never;`
+  * Variance annotations: `type Getter<out T> = () => T;`
+* Add parsing support for the `accessor` keyword in ES decorators. ([#716])
+* Fix invalid ESM output that sometimes happened when eliding TS star imports. ([#723])
+* Fix lots of parser edge case bugs. Examples of code that confused the parser before but now works:
+  * `a as b ?? c` ([#721])
+  * `const a: Array<number>=[];` ([#717])
+  * `f<<T>() => void>()` ([#716])
+  * Some additional cases involving line break handling. ([#714])
+* Fix some edge cases with JSX entity transformation. ([#717])
+
 # 3.23.0 (2022-07-01)
 
 * Add support for TS 4.5 import/export type modifiers. ([#713])
@@ -417,3 +432,9 @@
 [#709]: https://github.com/alangpierce/sucrase/pull/709
 [#711]: https://github.com/alangpierce/sucrase/pull/711
 [#713]: https://github.com/alangpierce/sucrase/pull/713
+[#714]: https://github.com/alangpierce/sucrase/pull/714
+[#716]: https://github.com/alangpierce/sucrase/pull/716
+[#717]: https://github.com/alangpierce/sucrase/pull/717
+[#719]: https://github.com/alangpierce/sucrase/pull/719
+[#721]: https://github.com/alangpierce/sucrase/pull/721
+[#723]: https://github.com/alangpierce/sucrase/pull/723

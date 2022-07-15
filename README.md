@@ -34,14 +34,14 @@ about 360k lines of code total:
 
 ```text
             Time            Speed
-Sucrase     1.64 seconds    220221 lines per second
-swc         2.13 seconds    169502 lines per second
-esbuild     3.02 seconds    119738 lines per second
-TypeScript  24.18 seconds   14937 lines per second
-Babel       27.22 seconds   13270 lines per second
+Sucrase     0.57 seconds    636975 lines per second
+swc         1.19 seconds    304526 lines per second
+esbuild     1.45 seconds    248692 lines per second
+TypeScript  8.98 seconds    40240 lines per second
+Babel       9.18 seconds    39366 lines per second
 ```
 
-Details: Measured on January 2021. Tools run in single-threaded mode without warm-up. See the
+Details: Measured on July 2022. Tools run in single-threaded mode without warm-up. See the
 [benchmark code](https://github.com/alangpierce/sucrase/blob/main/benchmark/benchmark.ts)
 for methodology and caveats.
 

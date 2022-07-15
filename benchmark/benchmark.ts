@@ -222,6 +222,7 @@ async function benchmarkFiles(benchmarkOptions: BenchmarkOptions): Promise<void>
         transforms: path.endsWith(".ts")
           ? ["imports", "typescript"]
           : ["jsx", "imports", "typescript"],
+        disableESTransforms: true,
       }).code,
   );
   if (benchmarkOptions.sucraseOnly) {
@@ -238,10 +239,9 @@ async function benchmarkFiles(benchmarkOptions: BenchmarkOptions): Promise<void>
           parser: {
             syntax: "typescript",
             tsx: !path.endsWith(".ts"),
-            dynamicImport: true,
             decorators: true,
           },
-          target: "es2019",
+          target: "es2022",
         },
         module: {
           type: "commonjs",
@@ -255,22 +255,17 @@ async function benchmarkFiles(benchmarkOptions: BenchmarkOptions): Promise<void>
   // instead make transform calls in parallel and use an env variable to enforce
   // that the Go process only uses a single thread.
   process.env.GOMAXPROCS = "1";
-  const esbuildService = await esbuild.startService();
-  try {
-    await runBenchmark(
-      "esbuild",
-      benchmarkOptions,
-      async (code: string, path: string) =>
-        (
-          await esbuildService.transform(code, {
-            loader: path.endsWith(".ts") ? "ts" : "tsx",
-            format: "cjs",
-          })
-        ).code,
-    );
-  } finally {
-    esbuildService.stop();
-  }
+  await runBenchmark(
+    "esbuild",
+    benchmarkOptions,
+    async (code: string, path: string) =>
+      (
+        await esbuild.transform(code, {
+          loader: path.endsWith(".ts") ? "ts" : "tsx",
+          format: "cjs",
+        })
+      ).code,
+  );
   await runBenchmark(
     "TypeScript",
     benchmarkOptions,

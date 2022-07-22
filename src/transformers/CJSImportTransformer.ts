@@ -32,6 +32,7 @@ export default class CJSImportTransformer extends Transformer {
     readonly reactHotLoaderTransformer: ReactHotLoaderTransformer | null,
     readonly enableLegacyBabel5ModuleInterop: boolean,
     readonly isTypeScriptTransformEnabled: boolean,
+    readonly preserveDynamicImport: boolean,
   ) {
     super();
     this.declarationInfo = isTypeScriptTransformEnabled
@@ -115,6 +116,11 @@ export default class CJSImportTransformer extends Transformer {
    */
   private processImport(): void {
     if (this.tokens.matches2(tt._import, tt.parenL)) {
+      if (this.preserveDynamicImport) {
+        // Bail out, only making progress for this one token.
+        this.tokens.copyToken();
+        return;
+      }
       this.tokens.replaceToken("Promise.resolve().then(() => require");
       const contextId = this.tokens.currentToken().contextId;
       if (contextId == null) {

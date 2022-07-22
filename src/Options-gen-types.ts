@@ -27,6 +27,7 @@ export const Options = t.iface([], {
   filePath: t.opt("string"),
   production: t.opt("boolean"),
   disableESTransforms: t.opt("boolean"),
+  preserveDynamicImport: t.opt("boolean"),
 });
 
 const exportedTypeSuite: t.ITypeSuite = {

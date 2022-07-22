@@ -84,6 +84,7 @@ export default class RootTransformer {
           reactHotLoaderTransformer,
           enableLegacyBabel5ModuleInterop,
           transforms.includes("typescript"),
+          Boolean(options.preserveDynamicImport),
         ),
       );
     } else {

@@ -1025,7 +1025,7 @@ module.exports = exports.default;
     );
   });
 
-  it("handles dynamic imports", () => {
+  it("transforms dynamic imports by default", () => {
     assertResult(
       `
       async function loadThing() {
@@ -1037,6 +1037,26 @@ module.exports = exports.default;
         const foo = await Promise.resolve().then(() => require('foo'));
       }
     `,
+    );
+  });
+
+  it("preserves dynamic import when configured to do so", () => {
+    assertResult(
+      `
+      import Bar from './Bar.js';
+      async function loadThing() {
+        const foo = await import('foo');
+        console.log(Bar);
+      }
+    `,
+      `"use strict";${IMPORT_DEFAULT_PREFIX}
+      var _Barjs = require('./Bar.js'); var _Barjs2 = _interopRequireDefault(_Barjs);
+      async function loadThing() {
+        const foo = await import('foo');
+        console.log(_Barjs2.default);
+      }
+    `,
+      {transforms: ["imports"], preserveDynamicImport: true},
     );
   });
 

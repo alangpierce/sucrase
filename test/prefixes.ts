@@ -1,4 +1,6 @@
 export const JSX_PREFIX = 'const _jsxFileName = "";';
+export const CREATE_REQUIRE_PREFIX = ` import {createRequire as _createRequire} from "module"; \
+const _require = _createRequire(import.meta.url);`;
 export const IMPORT_DEFAULT_PREFIX = ` function _interopRequireDefault(obj) { \
 return obj && obj.__esModule ? obj : { default: obj }; }`;
 export const IMPORT_WILDCARD_PREFIX = ` function _interopRequireWildcard(obj) { \

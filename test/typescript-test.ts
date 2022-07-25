@@ -1,5 +1,6 @@
 import type {Options} from "../src/Options";
 import {
+  CREATE_REQUIRE_PREFIX,
   CREATE_STAR_EXPORT_PREFIX,
   ESMODULE_PREFIX,
   IMPORT_DEFAULT_PREFIX,
@@ -890,6 +891,47 @@ describe("typescript transform", () => {
       console.log(a);
       module.exports = 3;
     `,
+    );
+  });
+
+  it("ignores injectCreateRequireForImportRequire when targeting CJS", () => {
+    assertTypeScriptResult(
+      `
+      import a = require('a');
+      console.log(a);
+    `,
+      `"use strict";
+      const a = require('a');
+      console.log(a);
+    `,
+      {injectCreateRequireForImportRequire: true},
+    );
+  });
+
+  it("preserves import = require by default when targeting ESM", () => {
+    assertTypeScriptESMResult(
+      `
+      import a = require('a');
+      console.log(a);
+    `,
+      `
+      const a = require('a');
+      console.log(a);
+    `,
+    );
+  });
+
+  it("transforms import = require when targeting ESM and injectCreateRequireForImportRequire is enabled", () => {
+    assertTypeScriptESMResult(
+      `
+      import a = require('a');
+      console.log(a);
+    `,
+      `${CREATE_REQUIRE_PREFIX}
+      const a = _require('a');
+      console.log(a);
+    `,
+      {injectCreateRequireForImportRequire: true},
     );
   });
 

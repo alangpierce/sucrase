@@ -75,6 +75,12 @@ transforms are available:
   the same way as [babel-plugin-jest-hoist](https://github.com/facebook/jest/tree/master/packages/babel-plugin-jest-hoist).
   Does not validate the arguments passed to `jest.mock`, but the same rules still apply.
 
+When the `imports` transform is *not* specified (i.e. when targeting ESM), the
+`injectCreateRequireForImportRequire` option can be specified to transform TS
+`import foo = require("foo");` in a way that matches the
+[TypeScript 4.7 behavior](https://devblogs.microsoft.com/typescript/announcing-typescript-4-7/#commonjs-interoperability)
+with `module: nodenext`.
+
 These newer JS features are transformed by default:
 
 * [Optional chaining](https://github.com/tc39/proposal-optional-chaining): `a?.b`

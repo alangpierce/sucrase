@@ -1,3 +1,4 @@
+import type {HelperManager} from "../HelperManager";
 import type {Options} from "../index";
 import type NameManager from "../NameManager";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
@@ -21,10 +22,12 @@ import Transformer from "./Transformer";
 export default class ESMImportTransformer extends Transformer {
   private nonTypeIdentifiers: Set<string>;
   private declarationInfo: DeclarationInfo;
+  private injectCreateRequireForImportRequire: boolean;
 
   constructor(
     readonly tokens: TokenProcessor,
     readonly nameManager: NameManager,
+    readonly helperManager: HelperManager,
     readonly reactHotLoaderTransformer: ReactHotLoaderTransformer | null,
     readonly isTypeScriptTransformEnabled: boolean,
     options: Options,
@@ -36,6 +39,7 @@ export default class ESMImportTransformer extends Transformer {
     this.declarationInfo = isTypeScriptTransformEnabled
       ? getDeclarationInfo(tokens)
       : EMPTY_DECLARATION_INFO;
+    this.injectCreateRequireForImportRequire = Boolean(options.injectCreateRequireForImportRequire);
   }
 
   process(): boolean {
@@ -109,8 +113,19 @@ export default class ESMImportTransformer extends Transformer {
     if (this.isTypeName(importName)) {
       // If this name is only used as a type, elide the whole import.
       elideImportEquals(this.tokens);
+    } else if (this.injectCreateRequireForImportRequire) {
+      // We're using require in an environment (Node ESM) that doesn't provide
+      // it as a global, so generate a helper to import it.
+      // import -> const
+      this.tokens.replaceToken("const");
+      // Foo
+      this.tokens.copyToken();
+      // =
+      this.tokens.copyToken();
+      // require
+      this.tokens.replaceToken(this.helperManager.getHelperName("require"));
     } else {
-      // Otherwise, switch `import` to `const`.
+      // Otherwise, just switch `import` to `const`.
       this.tokens.replaceToken("const");
     }
     return true;

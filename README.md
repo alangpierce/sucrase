@@ -62,7 +62,11 @@ transforms are available:
 * **flow**:  Removes Flow type annotations. Does not check types.
 * **imports**: Transforms ES Modules (`import`/`export`) to CommonJS
   (`require`/`module.exports`) using the same approach as Babel and TypeScript
-  with `--esModuleInterop`. Also includes dynamic `import`.
+  with `--esModuleInterop`. If `preserveDynamicImport` is specified in the Sucrase
+  options, then dynamic `import` expressions are left alone, which is particularly
+  useful in Node to load ESM-only libraries. If `preserveDynamicImport` is not
+  specified, `import` expressions are transformed into a promise-wrapped call to
+  `require`.
 * **react-hot-loader**: Performs the equivalent of the `react-hot-loader/babel`
   transform in the [react-hot-loader](https://github.com/gaearon/react-hot-loader)
   project. This enables advanced hot reloading use cases such as editing of

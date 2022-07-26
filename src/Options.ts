@@ -56,6 +56,17 @@ export interface Options {
    * expressions into require() calls.
    */
   preserveDynamicImport?: boolean;
+  /**
+   * Only relevant when targeting ESM (i.e. when the imports transform is *not*
+   * specified). This flag changes the behavior of TS require imports:
+   *
+   * import Foo = require("foo");
+   *
+   * to import createRequire, create a require function, and use that function.
+   * This is the TS behavior with module: nodenext and makes it easier for the
+   * same code to target ESM and CJS.
+   */
+  injectCreateRequireForImportRequire?: boolean;
 }
 
 export function validateOptions(options: Options): void {

@@ -92,6 +92,7 @@ export default class RootTransformer {
         new ESMImportTransformer(
           tokenProcessor,
           this.nameManager,
+          this.helperManager,
           reactHotLoaderTransformer,
           transforms.includes("typescript"),
           options,

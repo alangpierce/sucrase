@@ -1,6 +1,10 @@
 import type NameManager from "./NameManager";
 
 const HELPERS: {[name: string]: string} = {
+  require: `
+    import {createRequire as CREATE_REQUIRE_NAME} from "module";
+    const require = CREATE_REQUIRE_NAME(import.meta.url);
+  `,
   interopRequireWildcard: `
     function interopRequireWildcard(obj) {
       if (obj && obj.__esModule) {
@@ -125,6 +129,7 @@ const HELPERS: {[name: string]: string} = {
 
 export class HelperManager {
   helperNames: {[baseName in keyof typeof HELPERS]?: string} = {};
+  createRequireName: string | null = null;
   constructor(readonly nameManager: NameManager) {}
 
   getHelperName(baseName: keyof typeof HELPERS): string {
@@ -155,6 +160,11 @@ export class HelperManager {
           "ASYNC_OPTIONAL_CHAIN_NAME",
           this.helperNames.asyncOptionalChain!,
         );
+      } else if (baseName === "require") {
+        if (this.createRequireName === null) {
+          this.createRequireName = this.nameManager.claimFreeName("_createRequire");
+        }
+        helperCode = helperCode.replace(/CREATE_REQUIRE_NAME/g, this.createRequireName);
       }
       if (helperName) {
         resultCode += " ";

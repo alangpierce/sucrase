@@ -7,11 +7,23 @@ const ModuleKindCommonJS = 1;
  */
 function create(createOptions) {
   const {nodeModuleEmitKind} = createOptions;
-  const {module} = createOptions.service.config.options;
+  const {module, jsx, jsxFactory, jsxFragmentFactory, esModuleInterop} =
+    createOptions.service.config.options;
+
   return {
     transpile(input, transpileOptions) {
       const {fileName} = transpileOptions;
-      const transforms = ["typescript"];
+      const transforms = [];
+      const isJS =
+        fileName.endsWith(".js") ||
+        fileName.endsWith(".jsx") ||
+        fileName.endsWith(".mjs") ||
+        fileName.endsWith(".cjs");
+      // Detect JS rather than TS so we bias toward including the typescript
+      // transform, since almost always it doesn't hurt to include.
+      if (!isJS) {
+        transforms.push("typescript");
+      }
       if (module === ModuleKindCommonJS || nodeModuleEmitKind === "nodecjs") {
         transforms.push("imports");
       }
@@ -21,11 +33,14 @@ function create(createOptions) {
 
       const {code, sourceMap} = transform(input, {
         transforms,
-        sourceMapOptions: {compiledFilename: fileName},
-        filePath: fileName,
+        disableESTransforms: true,
+        jsxPragma: jsxFactory,
+        jsxFragmentPragma: jsxFragmentFactory,
         preserveDynamicImport: nodeModuleEmitKind === "nodecjs",
         injectCreateRequireForImportRequire: nodeModuleEmitKind === "nodeesm",
-        disableESTransforms: true,
+        enableLegacyTypeScriptModuleInterop: !esModuleInterop,
+        sourceMapOptions: {compiledFilename: fileName},
+        filePath: fileName,
       });
       return {
         outputText: code,

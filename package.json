@@ -77,6 +77,14 @@
     "pirates": "^4.0.1",
     "ts-interface-checker": "^0.1.9"
   },
+  "peerDependencies": {
+    "ts-node": ">=10.9.1"
+  },
+  "peerDependenciesMeta": {
+    "ts-node": {
+      "optional": true
+    }
+  },
   "engines": {
     "node": ">=8"
   },

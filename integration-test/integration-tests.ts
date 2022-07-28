@@ -19,7 +19,9 @@ describe("ts-node tests", async () => {
   for await (const testPath of discoverTests("test-cases")) {
     it(testPath, async () => {
       await execPromise(`npx ts-node --esm --transpile-only ${testPath}`);
-      await execPromise(`npx ts-node --esm --transpiler ../../../ts-node-plugin ${testPath}`);
+      await execPromise(
+        `npx ts-node --esm --transpiler ${__dirname}/../ts-node-plugin ${testPath}`,
+      );
     });
   }
 

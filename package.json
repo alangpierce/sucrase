@@ -27,7 +27,7 @@
     "run-examples": "sucrase-node example-runner/example-runner.ts",
     "test": "yarn lint && yarn test-only",
     "test-only": "mocha './test/**/*.ts'",
-    "integration-test": "cd integration-test && yarn && mocha --delay ./integration-tests.ts",
+    "integration-test": "cd integration-test && yarn && mocha --delay --timeout 10000 ./integration-tests.ts",
     "test262": "sucrase-node spec-compliance-tests/test262/run-test262.ts",
     "check-babel-tests": "sucrase-node spec-compliance-tests/babel-tests/check-babel-tests.ts",
     "test-with-coverage": "nyc mocha './test/**/*.ts'",

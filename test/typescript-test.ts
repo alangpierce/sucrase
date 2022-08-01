@@ -3078,18 +3078,24 @@ describe("typescript transform", () => {
     assertTypeScriptESMResult(
       `
       class A {
-        abstract readonly a: number = 3;
+        abstract readonly a: number;
         declare b: string;
         declare static c: string;
         static declare d: string;
+        readonly e: string;
+        private f: number;
+        public g: string = 'hello';
       }
     `,
       `
       class A {
-          a = 3;
         ;
         ;
         ;
+        ;
+         e;
+         f;
+         g = 'hello';
       }
     `,
       {disableESTransforms: true},

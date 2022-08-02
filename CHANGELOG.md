@@ -1,3 +1,17 @@
+# 3.25.0 (2022-08-01)
+
+* Add two new options to more closely match the `module: nodenext` option from
+  [TypeScript 4.7](https://devblogs.microsoft.com/typescript/announcing-typescript-4-7/#commonjs-interoperability):
+  * When using the `imports` transform, the new flag `preserveDynamicImport`
+    will leave dynamic `import()` calls alone rather than compiling them to
+    promise-wrapped `require`. This makes it possible to load ESM modules from
+    CommonJS. ([#727])
+  * When *not* using the `imports` transform, the new flag `injectCreateRequireForImportRequire`
+    will compile `import foo = require("foo");` to use `createRequire` so that
+    can work in a Node ES module. ([#728])
+* When `disableESTransforms` is enabled, remove `abstract` fields in the same
+  way that `declare` fields are removed. This matches TypeScript's behavior. ([#732])
+
 # 3.24.0 (2022-07-14)
 
 * Add support for all new syntax in TypeScript 4.7: ([#719])
@@ -438,3 +452,6 @@
 [#719]: https://github.com/alangpierce/sucrase/pull/719
 [#721]: https://github.com/alangpierce/sucrase/pull/721
 [#723]: https://github.com/alangpierce/sucrase/pull/723
+[#727]: https://github.com/alangpierce/sucrase/pull/727
+[#728]: https://github.com/alangpierce/sucrase/pull/728
+[#732]: https://github.com/alangpierce/sucrase/pull/732

@@ -5,6 +5,7 @@ import type {Transform} from "sucrase";
 import CheckBox from "./CheckBox";
 import {HydratedOptions, TRANSFORMS} from "./Constants";
 import OptionsBox from "./OptionsBox";
+import SimpleSelect from "./SimpleSelect";
 import TextInput from "./TextInput";
 
 interface SucraseOptionsBoxProps {
@@ -51,7 +52,7 @@ function BooleanOption({optionName, options, onUpdateOptions}: BooleanOptionProp
 }
 
 interface StringOptionProps {
-  optionName: "jsxPragma" | "jsxFragmentPragma";
+  optionName: "jsxPragma" | "jsxFragmentPragma" | "jsxImportSource";
   options: HydratedOptions;
   onUpdateOptions: (options: HydratedOptions) => void;
   inputWidth: number;
@@ -64,7 +65,7 @@ function StringOption({
   inputWidth,
 }: StringOptionProps): JSX.Element {
   return (
-    <div className={css(styles.stringOption)}>
+    <div className={css(styles.option)}>
       {/* Include a hidden checkbox so the option name is vertically aligned
           with the boolean options. */}
       <input type="checkbox" className={css(styles.hiddenCheckbox)} />
@@ -76,6 +77,31 @@ function StringOption({
             onUpdateOptions({...options, [optionName]: value});
           }}
           width={inputWidth}
+        />
+      </span>
+    </div>
+  );
+}
+
+interface JSXRuntimeOptionProps {
+  options: HydratedOptions;
+  onUpdateOptions: (options: HydratedOptions) => void;
+}
+
+function JSXRuntimeOption({options, onUpdateOptions}: JSXRuntimeOptionProps): JSX.Element {
+  return (
+    <div className={css(styles.option)}>
+      {/* Include a hidden checkbox so the option name is vertically aligned
+          with the boolean options. */}
+      <input type="checkbox" className={css(styles.hiddenCheckbox)} />
+      <span className={css(styles.optionName)}>
+        jsxRuntime:{" "}
+        <SimpleSelect
+          options={["classic", "automatic"]}
+          value={options.jsxRuntime}
+          onChange={(value) => {
+            onUpdateOptions({...options, jsxRuntime: value});
+          }}
         />
       </span>
     </div>
@@ -134,45 +160,70 @@ export default function SucraseOptionsBox({
                 options={options}
                 onUpdateOptions={onUpdateOptions}
               />
-              <BooleanOption
-                optionName="production"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-              />
-              <StringOption
-                optionName="jsxPragma"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-                inputWidth={182}
-              />
-              <StringOption
-                optionName="jsxFragmentPragma"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-                inputWidth={120}
-              />
+              {options.transforms.includes("jsx") && (
+                <>
+                  <JSXRuntimeOption options={options} onUpdateOptions={onUpdateOptions} />
+                  <BooleanOption
+                    optionName="production"
+                    options={options}
+                    onUpdateOptions={onUpdateOptions}
+                  />
+                  {options.jsxRuntime === "classic" && (
+                    <>
+                      <StringOption
+                        optionName="jsxPragma"
+                        options={options}
+                        onUpdateOptions={onUpdateOptions}
+                        inputWidth={182}
+                      />
+                      <StringOption
+                        optionName="jsxFragmentPragma"
+                        options={options}
+                        onUpdateOptions={onUpdateOptions}
+                        inputWidth={120}
+                      />
+                    </>
+                  )}
+
+                  {options.jsxRuntime === "automatic" && (
+                    <StringOption
+                      optionName="jsxImportSource"
+                      options={options}
+                      onUpdateOptions={onUpdateOptions}
+                      inputWidth={116}
+                    />
+                  )}
+                </>
+              )}
             </div>
             <div className={css(styles.secondaryOptionColumn)}>
-              <BooleanOption
-                optionName="preserveDynamicImport"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-              />
-              <BooleanOption
-                optionName="injectCreateRequireForImportRequire"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-              />
-              <BooleanOption
-                optionName="enableLegacyTypeScriptModuleInterop"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-              />
-              <BooleanOption
-                optionName="enableLegacyBabel5ModuleInterop"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-              />
+              {options.transforms.includes("imports") && (
+                <>
+                  <BooleanOption
+                    optionName="preserveDynamicImport"
+                    options={options}
+                    onUpdateOptions={onUpdateOptions}
+                  />
+                  <BooleanOption
+                    optionName="enableLegacyTypeScriptModuleInterop"
+                    options={options}
+                    onUpdateOptions={onUpdateOptions}
+                  />
+                  <BooleanOption
+                    optionName="enableLegacyBabel5ModuleInterop"
+                    options={options}
+                    onUpdateOptions={onUpdateOptions}
+                  />
+                </>
+              )}
+              {!options.transforms.includes("imports") &&
+                options.transforms.includes("typescript") && (
+                  <BooleanOption
+                    optionName="injectCreateRequireForImportRequire"
+                    options={options}
+                    onUpdateOptions={onUpdateOptions}
+                  />
+                )}
             </div>
           </div>
         )}
@@ -208,7 +259,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "column",
   },
-  stringOption: {
+  option: {
     marginLeft: 6,
     marginRight: 6,
     display: "flex",

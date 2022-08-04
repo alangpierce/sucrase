@@ -19,16 +19,18 @@ export const SourceMapOptions = t.iface([], {
 
 export const Options = t.iface([], {
   transforms: t.array("Transform"),
+  disableESTransforms: t.opt("boolean"),
+  jsxRuntime: t.opt(t.union(t.lit("classic"), t.lit("automatic"))),
+  production: t.opt("boolean"),
+  jsxImportSource: t.opt("string"),
   jsxPragma: t.opt("string"),
   jsxFragmentPragma: t.opt("string"),
   enableLegacyTypeScriptModuleInterop: t.opt("boolean"),
   enableLegacyBabel5ModuleInterop: t.opt("boolean"),
-  sourceMapOptions: t.opt("SourceMapOptions"),
-  filePath: t.opt("string"),
-  production: t.opt("boolean"),
-  disableESTransforms: t.opt("boolean"),
   preserveDynamicImport: t.opt("boolean"),
   injectCreateRequireForImportRequire: t.opt("boolean"),
+  sourceMapOptions: t.opt("SourceMapOptions"),
+  filePath: t.opt("string"),
 });
 
 const exportedTypeSuite: t.ITypeSuite = {

@@ -53,8 +53,10 @@ export type HydratedOptions = Omit<Required<Options>, "filePath" | "sourceMapOpt
  */
 export const DEFAULT_OPTIONS: HydratedOptions = {
   transforms: ["jsx", "typescript", "imports"],
+  jsxRuntime: "classic",
   jsxPragma: "React.createElement",
   jsxFragmentPragma: "React.Fragment",
+  jsxImportSource: "react",
   enableLegacyTypeScriptModuleInterop: false,
   enableLegacyBabel5ModuleInterop: false,
   production: false,

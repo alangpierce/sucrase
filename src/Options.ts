@@ -15,13 +15,44 @@ export interface SourceMapOptions {
 }
 
 export interface Options {
+  /**
+   * Unordered array of transform names, describing both the allowed syntax
+   * (where applicable) and the transformation behavior.
+   */
   transforms: Array<Transform>;
   /**
-   * If specified, function name to use in place of React.createClass when compiling JSX.
+   * Opts out ES syntax transformations, like optional chaining, nullish
+   * coalescing, numeric separators, etc.
+   */
+  disableESTransforms?: boolean;
+  /**
+   * Transformation mode for the JSX transform. The automatic transform refers
+   * to the transform behavior released with React 17, where the `jsx` function
+   * (or a variation) is automatically imported. The classic transform refers to
+   * the previous behavior using `React.createElement`.
+   *
+   * Default value: "classic"
+   */
+  jsxRuntime?: "classic" | "automatic";
+  /**
+   * Compile code for production use. Currently only applies to the JSX
+   * transform.
+   * If specified, omit any development-specific code in the output.
+   */
+  production?: boolean;
+  /**
+   * If specified, import path prefix to use in place of "react" when compiling
+   * JSX with the automatic runtime.
+   */
+  jsxImportSource?: string;
+  /**
+   * If specified, function name to use in place of React.createClass when
+   * compiling JSX with the classic runtime.
    */
   jsxPragma?: string;
   /**
-   * If specified, function name to use in place of React.Fragment when compiling JSX.
+   * If specified, function name to use in place of React.Fragment when
+   * compiling JSX with the classic runtime.
    */
   jsxFragmentPragma?: string;
   /**
@@ -33,27 +64,8 @@ export interface Options {
    */
   enableLegacyBabel5ModuleInterop?: boolean;
   /**
-   * If specified, we also return a RawSourceMap object alongside the code. Currently, source maps
-   * simply map each line to the original line without any mappings within lines, since Sucrase
-   * preserves line numbers. filePath must be specified if this option is enabled.
-   */
-  sourceMapOptions?: SourceMapOptions;
-  /**
-   * File path to use in error messages, React display names, and source maps.
-   */
-  filePath?: string;
-  /**
-   * If specified, omit any development-specific code in the output.
-   */
-  production?: boolean;
-  /**
-   * Opts out ES syntax transformations, like optional chaining, nullish coalescing, numeric
-   * separators, etc.
-   */
-  disableESTransforms?: boolean;
-  /**
-   * If specified, the imports transform does not attempt to change dynamic import()
-   * expressions into require() calls.
+   * If specified, the imports transform does not attempt to change dynamic
+   * import() expressions into require() calls.
    */
   preserveDynamicImport?: boolean;
   /**
@@ -67,6 +79,17 @@ export interface Options {
    * same code to target ESM and CJS.
    */
   injectCreateRequireForImportRequire?: boolean;
+  /**
+   * If specified, we also return a RawSourceMap object alongside the code.
+   * Currently, source maps simply map each line to the original line without
+   * any mappings within lines, since Sucrase preserves line numbers. filePath
+   * must be specified if this option is enabled.
+   */
+  sourceMapOptions?: SourceMapOptions;
+  /**
+   * File path to use in error messages, React display names, and source maps.
+   */
+  filePath?: string;
 }
 
 export function validateOptions(options: Options): void {

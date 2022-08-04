@@ -47,8 +47,19 @@ export function assertOutput(
   assertExpectations(code, {expectedOutput}, options);
 }
 
+/**
+ * Dev-specific props when using the createElement function, either in the
+ * classic runtime or in the fallback case for the automatic runtime.
+ */
 export function devProps(lineNumber: number): string {
   return `__self: this, __source: {fileName: _jsxFileName, lineNumber: ${lineNumber}}`;
+}
+
+/**
+ * Dev-specific args to the jsxDEV function in the automatic runtime.
+ */
+export function jsxDevArgs(lineNumber: number): string {
+  return `{fileName: _jsxFileName, lineNumber: ${lineNumber}}, this`;
 }
 
 /**

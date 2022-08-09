@@ -157,7 +157,7 @@ class App extends Component<unknown, State> {
             title="Transforms"
             options={TRANSFORMS.map((name) => ({
               text: name,
-              checked: Boolean(this.state.sucraseOptions.transforms.includes(name)),
+              checked: this.state.sucraseOptions.transforms.includes(name),
               onToggle: () => {
                 let newTransforms = [...this.state.sucraseOptions.transforms];
                 if (newTransforms.includes(name)) {

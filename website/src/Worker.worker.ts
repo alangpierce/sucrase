@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-globals */
 import * as Sucrase from "sucrase";
+import type {ModuleKind} from "typescript";
 
 import getTokens from "./getTokens";
 import {compressCode} from "./URLHashState";
@@ -113,7 +114,14 @@ function runBabel(): {code: string; time: number | null} {
   const presets: Array<string | [string, unknown]> = [];
 
   if (sucraseOptions.transforms.includes("jsx")) {
-    presets.push(["react", {development: !sucraseOptions.production}]);
+    presets.push([
+      "react",
+      {
+        development: !sucraseOptions.production,
+        pragma: sucraseOptions.jsxPragma,
+        pragmaFrag: sucraseOptions.jsxFragmentPragma,
+      },
+    ]);
   }
   if (sucraseOptions.transforms.includes("typescript")) {
     presets.push(["typescript", {allowDeclareFields: true}]);
@@ -132,14 +140,20 @@ function runBabel(): {code: string; time: number | null} {
     plugins.push("jest-hoist");
   }
 
-  plugins.push(
-    "proposal-export-namespace-from",
-    "proposal-numeric-separator",
-    "proposal-optional-catch-binding",
-    "proposal-nullish-coalescing-operator",
-    "proposal-optional-chaining",
-    "dynamic-import-node",
-  );
+  plugins.push("proposal-export-namespace-from");
+
+  if (!sucraseOptions.disableESTransforms) {
+    plugins.push(
+      "proposal-numeric-separator",
+      "proposal-optional-catch-binding",
+      "proposal-nullish-coalescing-operator",
+      "proposal-optional-chaining",
+    );
+  }
+
+  if (!sucraseOptions.preserveDynamicImport) {
+    plugins.push("dynamic-import-node");
+  }
 
   return runAndProfile(
     () =>
@@ -173,15 +187,23 @@ function runTypeScript(): {code: string; time: number | null} {
   if (invalidTransforms.length > 0) {
     return {code: `Transform "${invalidTransforms[0]}" is not valid in TypeScript.`, time: null};
   }
+  let module: ModuleKind;
+  if (sucraseOptions.transforms.includes("imports")) {
+    module = sucraseOptions.preserveDynamicImport ? ModuleKind.NodeNext : ModuleKind.CommonJS;
+  } else {
+    module = ModuleKind.ESNext;
+  }
+
   return runAndProfile(
     () =>
       transpileModule(config.code, {
         compilerOptions: {
-          module: sucraseOptions.transforms.includes("imports")
-            ? ModuleKind.CommonJS
-            : ModuleKind.ESNext,
+          module,
           jsx: sucraseOptions.transforms.includes("jsx") ? JsxEmit.React : JsxEmit.Preserve,
-          target: ScriptTarget.ES2020,
+          target: sucraseOptions.disableESTransforms ? ScriptTarget.ESNext : ScriptTarget.ES2019,
+          esModuleInterop: !sucraseOptions.enableLegacyTypeScriptModuleInterop,
+          jsxFactory: sucraseOptions.jsxPragma,
+          jsxFragmentFactory: sucraseOptions.jsxFragmentPragma,
         },
       }).outputText,
   );

@@ -1,6 +1,6 @@
-import {editor} from "monaco-editor";
+import type {editor} from "monaco-editor";
 import React, {Component} from "react";
-import {EditorDidMount} from "react-monaco-editor";
+import type {EditorDidMount} from "react-monaco-editor";
 
 interface EditorProps {
   MonacoEditor: typeof import("react-monaco-editor").default;

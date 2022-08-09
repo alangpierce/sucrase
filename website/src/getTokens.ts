@@ -1,8 +1,8 @@
-import {getFormattedTokens, Transform} from "sucrase";
+import {getFormattedTokens, Options} from "sucrase";
 
-export default function getTokens(code: string, transforms: Array<Transform>): string {
+export default function getTokens(code: string, options: Options): string {
   try {
-    return getFormattedTokens(code, {transforms});
+    return getFormattedTokens(code, options);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error(e);

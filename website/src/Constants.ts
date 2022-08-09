@@ -1,4 +1,4 @@
-import {Transform} from "sucrase";
+import type {Options, Transform} from "sucrase";
 
 export const INITIAL_CODE = `\
 // Try typing or pasting some code into the left editor!
@@ -30,22 +30,18 @@ export default App;
 
 `;
 
-interface TransformInfo {
-  name: Transform;
-  presetName?: unknown;
-  babelName?: string;
-}
-
-export const TRANSFORMS: Array<TransformInfo> = [
-  {name: "jsx", presetName: ["react", {development: true}]},
-  {name: "typescript", presetName: ["typescript", {allowDeclareFields: true}]},
-  {name: "flow", presetName: "flow", babelName: "transform-flow-enums"},
-  {name: "imports", babelName: "transform-modules-commonjs"},
-  {name: "react-hot-loader", babelName: "react-hot-loader"},
-  {name: "jest", babelName: "jest-hoist"},
+export const TRANSFORMS: Array<Transform> = [
+  "jsx",
+  "typescript",
+  "flow",
+  "imports",
+  "react-hot-loader",
+  "jest",
 ];
 
-export const DEFAULT_TRANSFORMS = ["jsx", "typescript", "imports"];
+export const DEFAULT_OPTIONS: Options = {
+  transforms: ["jsx", "typescript", "imports"],
+};
 export const DEFAULT_COMPARE_WITH_BABEL = true;
 export const DEFAULT_COMPARE_WITH_TYPESCRIPT = false;
 export const DEFAULT_SHOW_TOKENS = false;

@@ -1,12 +1,13 @@
 import {css, StyleSheet} from "aphrodite";
 import React, {Component} from "react";
 import {hot} from "react-hot-loader/root";
+import type {Options} from "sucrase";
 
 import {
   DEFAULT_COMPARE_WITH_BABEL,
   DEFAULT_COMPARE_WITH_TYPESCRIPT,
+  DEFAULT_OPTIONS,
   DEFAULT_SHOW_TOKENS,
-  DEFAULT_TRANSFORMS,
   INITIAL_CODE,
   TRANSFORMS,
 } from "./Constants";
@@ -20,7 +21,7 @@ interface State {
   compareWithBabel: boolean;
   compareWithTypeScript: boolean;
   showTokens: boolean;
-  selectedTransforms: {[transformName: string]: boolean};
+  sucraseOptions: Options;
   sucraseCode: string;
   sucraseTimeMs: number | null | "LOADING";
   babelCode: string;
@@ -41,8 +42,7 @@ class App extends Component<unknown, State> {
       compareWithBabel: DEFAULT_COMPARE_WITH_BABEL,
       compareWithTypeScript: DEFAULT_COMPARE_WITH_TYPESCRIPT,
       showTokens: DEFAULT_SHOW_TOKENS,
-      // Object with a true value for any selected transform keys.
-      selectedTransforms: DEFAULT_TRANSFORMS.reduce((o, name) => ({...o, [name]: true}), {}),
+      sucraseOptions: DEFAULT_OPTIONS,
       sucraseCode: "",
       sucraseTimeMs: null,
       babelCode: "",
@@ -79,7 +79,7 @@ class App extends Component<unknown, State> {
         saveHashState({
           code: this.state.code,
           compressedCode,
-          selectedTransforms: this.state.selectedTransforms,
+          sucraseOptions: this.state.sucraseOptions,
           compareWithBabel: this.state.compareWithBabel,
           compareWithTypeScript: this.state.compareWithTypeScript,
           showTokens: this.state.showTokens,
@@ -92,7 +92,7 @@ class App extends Component<unknown, State> {
   componentDidUpdate(prevProps: unknown, prevState: State): void {
     if (
       this.state.code !== prevState.code ||
-      this.state.selectedTransforms !== prevState.selectedTransforms ||
+      this.state.sucraseOptions !== prevState.sucraseOptions ||
       this.state.compareWithBabel !== prevState.compareWithBabel ||
       this.state.compareWithTypeScript !== prevState.compareWithTypeScript ||
       this.state.showTokens !== prevState.showTokens ||
@@ -109,7 +109,7 @@ class App extends Component<unknown, State> {
       compareWithBabel: this.state.compareWithBabel,
       compareWithTypeScript: this.state.compareWithTypeScript,
       code: this.state.code,
-      selectedTransforms: this.state.selectedTransforms,
+      sucraseOptions: this.state.sucraseOptions,
       showTokens: this.state.showTokens,
     });
   }
@@ -155,21 +155,27 @@ class App extends Component<unknown, State> {
         <div className={css(styles.options)}>
           <OptionBox
             title="Transforms"
-            options={TRANSFORMS.map(({name}) => ({
+            options={TRANSFORMS.map((name) => ({
               text: name,
-              checked: Boolean(this.state.selectedTransforms[name]),
+              checked: this.state.sucraseOptions.transforms.includes(name),
               onToggle: () => {
-                let newTransforms = this.state.selectedTransforms;
-                newTransforms = {...newTransforms, [name]: !newTransforms[name]};
-                // Don't allow typescript and flow at the same time.
-                if (newTransforms.typescript && newTransforms.flow) {
+                let newTransforms = [...this.state.sucraseOptions.transforms];
+                if (newTransforms.includes(name)) {
+                  newTransforms = newTransforms.filter((t) => t !== name);
+                } else {
+                  newTransforms.push(name);
+                  // TypeScript and Flow are mutually exclusive, so enabling one disables the other.
                   if (name === "typescript") {
-                    newTransforms = {...newTransforms, flow: false};
+                    newTransforms = newTransforms.filter((t) => t !== "flow");
                   } else if (name === "flow") {
-                    newTransforms = {...newTransforms, typescript: false};
+                    newTransforms = newTransforms.filter((t) => t !== "typescript");
                   }
                 }
-                this.setState({selectedTransforms: newTransforms});
+                // Keep the order canonical for easy comparison.
+                newTransforms.sort((t1, t2) => TRANSFORMS.indexOf(t1) - TRANSFORMS.indexOf(t2));
+                this.setState({
+                  sucraseOptions: {...this.state.sucraseOptions, transforms: newTransforms},
+                });
               },
             }))}
           />

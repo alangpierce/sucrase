@@ -1,18 +1,18 @@
 import * as Base64 from "base64-js";
 import GZip from "gzip-js";
+import type {Options, Transform} from "sucrase";
 
 import {
   DEFAULT_COMPARE_WITH_BABEL,
   DEFAULT_COMPARE_WITH_TYPESCRIPT,
+  DEFAULT_OPTIONS,
   DEFAULT_SHOW_TOKENS,
-  DEFAULT_TRANSFORMS,
   INITIAL_CODE,
-  TRANSFORMS,
 } from "./Constants";
 
 interface BaseHashState {
   code: string;
-  selectedTransforms: {[transformName: string]: boolean};
+  sucraseOptions: Options;
   compareWithBabel: boolean;
   compareWithTypeScript: boolean;
   showTokens: boolean;
@@ -23,19 +23,16 @@ type HashState = BaseHashState & {compressedCode: string};
 export function saveHashState({
   code,
   compressedCode,
-  selectedTransforms,
+  sucraseOptions,
   compareWithBabel,
   compareWithTypeScript,
   showTokens,
 }: HashState): void {
   const components = [];
 
-  const transformsValue = TRANSFORMS.filter(({name}) => selectedTransforms[name])
-    .map(({name}) => name)
-    .join(",");
-
-  if (transformsValue !== DEFAULT_TRANSFORMS.join(",")) {
-    components.push(`selectedTransforms=${transformsValue}`);
+  const serializedSucraseOptions = JSON.stringify(sucraseOptions);
+  if (serializedSucraseOptions !== JSON.stringify(DEFAULT_OPTIONS)) {
+    components.push(`sucraseOptions=${encodeURIComponent(serializedSucraseOptions)}`);
   }
   if (compareWithBabel !== DEFAULT_COMPARE_WITH_BABEL) {
     components.push(`compareWithBabel=${compareWithBabel}`);
@@ -76,11 +73,12 @@ export function loadHashState(): Partial<BaseHashState> | null {
     const result: Partial<HashState> = {};
     for (const component of components) {
       const [key, value] = component.split("=");
-      if (key === "selectedTransforms") {
-        result.selectedTransforms = {};
-        for (const transformName of value.split(",")) {
-          result.selectedTransforms[transformName] = true;
-        }
+      if (key === "sucraseOptions") {
+        result.sucraseOptions = JSON.parse(decodeURIComponent(value));
+      } else if (key === "selectedTransforms") {
+        // Old URLs may have selectedTransforms from before the format switched
+        // to sucraseOptions.
+        result.sucraseOptions = {transforms: value.split(",") as Array<Transform>};
       } else if (key === "code") {
         result.code = decodeURIComponent(value);
       } else if (key === "compressedCode") {

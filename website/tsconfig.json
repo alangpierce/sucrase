@@ -13,7 +13,8 @@
     "suppressImplicitAnyIndexErrors": true,
     "downlevelIteration": true,
     "noEmitHelpers": true,
-    "importHelpers": true
+    "importHelpers": true,
+    "importsNotUsedAsValues": "error"
   },
   "exclude": [
     "build",

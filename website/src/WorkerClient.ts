@@ -1,4 +1,4 @@
-import {Message, WorkerConfig, WorkerMessage} from "./WorkerProtocol";
+import type {Message, WorkerConfig, WorkerMessage} from "./WorkerProtocol";
 
 const CANCELLED_MESSAGE = "SUCRASE JOB CANCELLED";
 const TIMEOUT_MESSAGE = "SUCRASE JOB TIMED OUT";

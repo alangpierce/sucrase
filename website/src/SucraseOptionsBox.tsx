@@ -1,6 +1,6 @@
 import {css, StyleSheet} from "aphrodite";
 import React, {useState} from "react";
-import type {Options, Transform} from "sucrase";
+import type {Transform} from "sucrase";
 
 import CheckBox from "./CheckBox";
 import {HydratedOptions, TRANSFORMS} from "./Constants";
@@ -9,7 +9,7 @@ import TextInput from "./TextInput";
 
 interface SucraseOptionsBoxProps {
   options: HydratedOptions;
-  onUpdateOptions: (options: Options) => void;
+  onUpdateOptions: (options: HydratedOptions) => void;
 }
 
 function addTransform(transforms: Array<Transform>, transform: Transform): Array<Transform> {

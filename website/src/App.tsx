@@ -122,7 +122,7 @@ class App extends Component<unknown, State> {
         <div className={css(styles.options)}>
           <SucraseOptionsBox
             options={this.state.sucraseOptions}
-            onUpdateOptions={(sucraseOptions: HydratedOptions) => {
+            onUpdateOptions={(sucraseOptions) => {
               this.setState({sucraseOptions});
             }}
           />

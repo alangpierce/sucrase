@@ -181,7 +181,7 @@ export default class JSXTransformer extends Transformer {
         // Child JSX element
         this.tokens.appendCode(", ");
         this.processJSXTag();
-      } else if (this.tokens.matches1(tt.jsxText)) {
+      } else if (this.tokens.matches1(tt.jsxText) || this.tokens.matches1(tt.jsxEmptyText)) {
         this.processChildTextElement();
       } else {
         throw new Error("Unexpected token when processing JSX children.");

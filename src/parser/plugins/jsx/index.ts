@@ -3,6 +3,7 @@ import {
   finishToken,
   getTokenFromCode,
   IdentifierRole,
+  JSXRole,
   match,
   next,
   skipSpace,
@@ -16,34 +17,58 @@ import {charCodes} from "../../util/charcodes";
 import {IS_IDENTIFIER_CHAR, IS_IDENTIFIER_START} from "../../util/identifier";
 import {tsTryParseJSXTypeArgument} from "../typescript";
 
-// Reads inline JSX contents token.
+/**
+ * Read token with JSX contents.
+ *
+ * In addition to detecting jsxTagStart and also regular tokens that might be
+ * part of an expression, this code detects the start and end of text ranges
+ * within JSX children. In order to properly count the number of children, we
+ * distinguish jsxText from jsxEmptyText, which is a text range that simplifies
+ * to the empty string after JSX whitespace trimming.
+ *
+ * It turns out that a JSX text range will simplify to the empty string if and
+ * only if both of these conditions hold:
+ * - The range consists entirely of whitespace characters (only counting space,
+ *   tab, \r, and \n).
+ * - The range has at least one newline.
+ * This can be proven by analyzing any implementation of whitespace trimming,
+ * e.g. formatJSXTextLiteral in Sucrase or cleanJSXElementLiteralChild in Babel.
+ */
 function jsxReadToken(): void {
-  for (;;) {
+  let sawNewline = false;
+  let sawNonWhitespace = false;
+  while (true) {
     if (state.pos >= input.length) {
       unexpected("Unterminated JSX contents");
       return;
     }
 
     const ch = input.charCodeAt(state.pos);
-
-    switch (ch) {
-      case charCodes.lessThan:
-      case charCodes.leftCurlyBrace:
-        if (state.pos === state.start) {
-          if (ch === charCodes.lessThan) {
-            state.pos++;
-            finishToken(tt.jsxTagStart);
-            return;
-          }
-          getTokenFromCode(ch);
+    if (ch === charCodes.lessThan || ch === charCodes.leftCurlyBrace) {
+      if (state.pos === state.start) {
+        if (ch === charCodes.lessThan) {
+          state.pos++;
+          finishToken(tt.jsxTagStart);
           return;
         }
-        finishToken(tt.jsxText);
+        getTokenFromCode(ch);
         return;
-
-      default:
-        state.pos++;
+      }
+      if (sawNewline && !sawNonWhitespace) {
+        finishToken(tt.jsxEmptyText);
+      } else {
+        finishToken(tt.jsxText);
+      }
+      return;
     }
+
+    // This is part of JSX text.
+    if (ch === charCodes.lineFeed) {
+      sawNewline = true;
+    } else if (ch !== charCodes.space && ch !== charCodes.carriageReturn && ch !== charCodes.tab) {
+      sawNonWhitespace = true;
+    }
+    state.pos++;
   }
 }
 
@@ -116,7 +141,7 @@ function jsxParseAttributeValue(): void {
   switch (state.type) {
     case tt.braceL:
       next();
-      jsxParseExpressionContainer();
+      parseExpression();
       nextJSXTagToken();
       return;
 
@@ -134,10 +159,6 @@ function jsxParseAttributeValue(): void {
   }
 }
 
-function jsxParseEmptyExpression(): void {
-  // Do nothing.
-}
-
 // Parse JSX spread child, after already processing the {
 // Does not parse the closing }
 function jsxParseSpreadChild(): void {
@@ -145,36 +166,10 @@ function jsxParseSpreadChild(): void {
   parseExpression();
 }
 
-// Parses JSX expression enclosed into curly brackets, after already processing the {
-// Does not parse the closing }
-function jsxParseExpressionContainer(): void {
-  if (match(tt.braceR)) {
-    jsxParseEmptyExpression();
-  } else {
-    parseExpression();
-  }
-}
-
-// Parses following JSX attribute name-value pair.
-function jsxParseAttribute(): void {
-  if (eat(tt.braceL)) {
-    expect(tt.ellipsis);
-    parseMaybeAssign();
-    // }
-    nextJSXTagToken();
-    return;
-  }
-  jsxParseNamespacedName(IdentifierRole.ObjectKey);
-  if (match(tt.eq)) {
-    nextJSXTagToken();
-    jsxParseAttributeValue();
-  }
-}
-
 // Parses JSX opening tag starting after "<".
 // Returns true if the tag was self-closing.
 // Does not parse the last token.
-function jsxParseOpeningElement(): boolean {
+function jsxParseOpeningElement(initialTokenIndex: number): boolean {
   if (match(tt.jsxTagEnd)) {
     // This is an open-fragment.
     return false;
@@ -183,8 +178,30 @@ function jsxParseOpeningElement(): boolean {
   if (isTypeScriptEnabled) {
     tsTryParseJSXTypeArgument();
   }
+  let hasSeenPropSpread = false;
   while (!match(tt.slash) && !match(tt.jsxTagEnd) && !state.error) {
-    jsxParseAttribute();
+    if (eat(tt.braceL)) {
+      hasSeenPropSpread = true;
+      expect(tt.ellipsis);
+      parseMaybeAssign();
+      // }
+      nextJSXTagToken();
+      continue;
+    }
+    if (
+      hasSeenPropSpread &&
+      state.end - state.start === 3 &&
+      input.charCodeAt(state.start) === charCodes.lowercaseK &&
+      input.charCodeAt(state.start + 1) === charCodes.lowercaseE &&
+      input.charCodeAt(state.start + 2) === charCodes.lowercaseY
+    ) {
+      state.tokens[initialTokenIndex].jsxRole = JSXRole.KeyAfterPropSpread;
+    }
+    jsxParseNamespacedName(IdentifierRole.ObjectKey);
+    if (match(tt.eq)) {
+      nextJSXTagToken();
+      jsxParseAttributeValue();
+    }
   }
   const isSelfClosing = match(tt.slash);
   if (isSelfClosing) {
@@ -208,7 +225,10 @@ function jsxParseClosingElement(): void {
 // (starting after "<"), attributes, contents and closing tag.
 // Does not parse the last token.
 function jsxParseElementAt(): void {
-  const isSelfClosing = jsxParseOpeningElement();
+  const initialTokenIndex = state.tokens.length - 1;
+  state.tokens[initialTokenIndex].jsxRole = JSXRole.Normal;
+  let numExplicitChildren = 0;
+  const isSelfClosing = jsxParseOpeningElement(initialTokenIndex);
   if (!isSelfClosing) {
     nextJSXExprToken();
     while (true) {
@@ -218,13 +238,26 @@ function jsxParseElementAt(): void {
           if (match(tt.slash)) {
             nextJSXTagToken();
             jsxParseClosingElement();
+            if (
+              numExplicitChildren > 1 &&
+              // Key after prop spread takes precedence precedence over static children.
+              state.tokens[initialTokenIndex].jsxRole !== JSXRole.KeyAfterPropSpread
+            ) {
+              state.tokens[initialTokenIndex].jsxRole = JSXRole.StaticChildren;
+            }
             return;
           }
+          numExplicitChildren++;
           jsxParseElementAt();
           nextJSXExprToken();
           break;
 
         case tt.jsxText:
+          numExplicitChildren++;
+          nextJSXExprToken();
+          break;
+
+        case tt.jsxEmptyText:
           nextJSXExprToken();
           break;
 
@@ -233,8 +266,17 @@ function jsxParseElementAt(): void {
           if (match(tt.ellipsis)) {
             jsxParseSpreadChild();
             nextJSXExprToken();
+            // Spread children are a mechanism to explicitly mark children as
+            // static, so count it as 2 children to satisfy the "more than one
+            // child" condition.
+            numExplicitChildren += 2;
           } else {
-            jsxParseExpressionContainer();
+            // If we see {}, this is an empty pseudo-expression that doesn't
+            // count as a child.
+            if (!match(tt.braceR)) {
+              numExplicitChildren++;
+              parseExpression();
+            }
             nextJSXExprToken();
           }
 

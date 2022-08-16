@@ -1,9 +1,9 @@
 import * as assert from "assert";
 
 import {parse} from "../src/parser";
-import {IdentifierRole, Token} from "../src/parser/tokenizer";
+import {IdentifierRole, JSXRole, Token} from "../src/parser/tokenizer";
 import {ContextualKeyword} from "../src/parser/tokenizer/keywords";
-import {TokenType as tt} from "../src/parser/tokenizer/types";
+import {TokenType, TokenType as tt} from "../src/parser/tokenizer/types";
 
 type SimpleToken = Token & {label?: string};
 type TokenExpectation = {[K in keyof SimpleToken]?: SimpleToken[K]};
@@ -27,6 +27,13 @@ function assertTokens(
     return result;
   });
   assert.deepStrictEqual(projectedTokens, expectedTokens, helpMessage);
+}
+
+function assertFirstJSXRole(code: string, expectedJSXRole: JSXRole): void {
+  const tokens = parse(code, true, true, false).tokens;
+  const jsxTagStartTokens = tokens.filter((t) => t.type === TokenType.jsxTagStart);
+  assert.ok(jsxTagStartTokens.length > 0);
+  assert.strictEqual(jsxTagStartTokens[0].jsxRole, expectedJSXRole);
 }
 
 describe("tokens", () => {
@@ -224,7 +231,7 @@ describe("tokens", () => {
         {type: tt.braceR},
         {type: tt.slash},
         {type: tt.jsxTagEnd},
-        {type: tt.jsxText},
+        {type: tt.jsxEmptyText},
         {type: tt.jsxTagStart},
         {type: tt.slash},
         {type: tt.jsxName},
@@ -496,6 +503,117 @@ describe("tokens", () => {
         {type: tt.eof},
       ],
       {isFlow: true},
+    );
+  });
+
+  it("treats single-child JSX as non-static", () => {
+    assertFirstJSXRole("const elem = <div>Hello</div>;", JSXRole.Normal);
+  });
+
+  it("treats self-closing JSX as non-static", () => {
+    assertFirstJSXRole("const elem = <div />;", JSXRole.Normal);
+  });
+
+  it("treats JSX with two element children as static", () => {
+    assertFirstJSXRole("const elem = <div><span /><span /></div>;", JSXRole.StaticChildren);
+  });
+
+  it("treats JSX with two expression children as static", () => {
+    assertFirstJSXRole("const elem = <div>{a}{b}</div>;", JSXRole.StaticChildren);
+  });
+
+  it("treats JSX with two whitespace-only children as static", () => {
+    assertFirstJSXRole("const elem = <div> {} </div>;", JSXRole.StaticChildren);
+  });
+
+  it("treats JSX with non-spread children as non-static", () => {
+    assertFirstJSXRole("const elem = <div>{elements}</div>;", JSXRole.Normal);
+  });
+
+  it("treats JSX with spread children as static", () => {
+    assertFirstJSXRole("const elem = <div>{...elements}</div>;", JSXRole.StaticChildren);
+  });
+
+  it("treats JSX with one empty and one space-only text as non-static", () => {
+    assertFirstJSXRole(
+      `
+      const elem = <div> {} 
+      </div>;
+    `,
+      JSXRole.Normal,
+    );
+  });
+
+  it("treats JSX with two empty text tokens as non-static", () => {
+    assertFirstJSXRole(
+      `
+      const elem = (
+        <div>
+          {} 
+        </div>
+      );
+    `,
+      JSXRole.Normal,
+    );
+  });
+
+  it("treats JSX with one space-only text and one text with contents as static", () => {
+    assertFirstJSXRole(
+      `
+      const elem = (
+        <div>    {}
+          
+          a
+          
+        </div>
+      );
+    `,
+      JSXRole.StaticChildren,
+    );
+  });
+
+  it("detects key after prop spread", () => {
+    assertFirstJSXRole("const elem = <div {...props} key={1} />;", JSXRole.KeyAfterPropSpread);
+  });
+
+  it("does not mark as key-after-prop-spread if there is just a key", () => {
+    assertFirstJSXRole("const elem = <div key={1} />;", JSXRole.Normal);
+  });
+
+  it("does not mark as key-after-prop-spread the key is after regular props", () => {
+    assertFirstJSXRole("const elem = <div foo='a' bar='b' key={1} />;", JSXRole.Normal);
+  });
+
+  it("does not mark as key-after-prop-spread if the prop spread is afterward", () => {
+    assertFirstJSXRole("const elem = <div key={1} {...props} />;", JSXRole.Normal);
+  });
+
+  it("marks as key-after-prop-spread if there is a prop spread before and after", () => {
+    assertFirstJSXRole(
+      "const elem = <div {...props} key={1} {...props2} />;",
+      JSXRole.KeyAfterPropSpread,
+    );
+  });
+
+  it("marks as key-after-prop-spread if there are two keys", () => {
+    assertFirstJSXRole(
+      "const elem = <div key={1} {...props} key={2} />;",
+      JSXRole.KeyAfterPropSpread,
+    );
+  });
+
+  it("does not mark as key-after-prop-spread for camelCase props starting with key", () => {
+    assertFirstJSXRole("const elem = <div {...props} keyLimePie={1} />;", JSXRole.Normal);
+  });
+
+  it("does not mark as key-after-prop-spread for hyphenated props starting with key", () => {
+    assertFirstJSXRole("const elem = <div {...props} key-lime-pie={1} />;", JSXRole.Normal);
+  });
+
+  it("marks key-after-prop-spread with higher precedence than static children", () => {
+    assertFirstJSXRole(
+      "const elem = <div {...props} key={1}>{a}{b}</div>;",
+      JSXRole.KeyAfterPropSpread,
     );
   });
 });

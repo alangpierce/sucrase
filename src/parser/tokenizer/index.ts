@@ -27,6 +27,19 @@ export enum IdentifierRole {
   ImportAccess,
 }
 
+/**
+ * Extra information on jsxTagStart tokens, used to determine which of the three
+ * jsx functions are called in the automatic transform.
+ */
+export enum JSXRole {
+  Normal,
+  // The element has at least two explicitly-specified children or has spread
+  // children.
+  StaticChildren,
+  // The element has a prop named "key" after a prop spread.
+  KeyAfterPropSpread,
+}
+
 export function isDeclaration(token: Token): boolean {
   const role = token.identifierRole;
   return (
@@ -97,6 +110,7 @@ export class Token {
     this.scopeDepth = state.scopeDepth;
     this.isType = state.isType;
     this.identifierRole = null;
+    this.jsxRole = null;
     this.shadowsGlobal = false;
     this.isAsyncOperation = false;
     this.contextId = null;
@@ -117,6 +131,7 @@ export class Token {
   scopeDepth: number;
   isType: boolean;
   identifierRole: IdentifierRole | null;
+  jsxRole: JSXRole | null;
   // Initially false for all tokens, then may be computed in a follow-up step that does scope
   // analysis.
   shadowsGlobal: boolean;

@@ -448,7 +448,7 @@ export function parseExprAtom(): boolean {
     return false;
   }
 
-  if (match(tt.jsxText)) {
+  if (match(tt.jsxText) || match(tt.jsxEmptyText)) {
     parseLiteral();
     return false;
   } else if (match(tt.lessThan) && isJSXEnabled) {

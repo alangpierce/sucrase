@@ -143,13 +143,13 @@ export default function SucraseOptionsBox({
                 optionName="jsxPragma"
                 options={options}
                 onUpdateOptions={onUpdateOptions}
-                inputWidth={162}
+                inputWidth={182}
               />
               <StringOption
                 optionName="jsxFragmentPragma"
                 options={options}
                 onUpdateOptions={onUpdateOptions}
-                inputWidth={100}
+                inputWidth={120}
               />
             </div>
             <div className={css(styles.secondaryOptionColumn)}>

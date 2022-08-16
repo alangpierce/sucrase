@@ -1,167 +1,231 @@
 import {throws} from "assert";
 
-import {transform, Transform} from "../src";
+import {transform, Options} from "../src";
 import {IMPORT_DEFAULT_PREFIX, JSX_PREFIX} from "./prefixes";
 import * as util from "./util";
 
 const {devProps} = util;
 
-function assertResult(
+interface JSXExpectations {
+  expectedClassicDevESMResult?: string;
+  expectedClassicProdESMResult?: string;
+  expectedClassicDevCJSResult?: string;
+  expectedClassicProdCJSResult?: string;
+}
+
+const optionsForMode: {[k in keyof JSXExpectations]-?: Options} = {
+  expectedClassicDevESMResult: {transforms: ["jsx"], production: false},
+  expectedClassicProdESMResult: {transforms: ["jsx"], production: true},
+  expectedClassicDevCJSResult: {transforms: ["jsx", "imports"], production: false},
+  expectedClassicProdCJSResult: {transforms: ["jsx", "imports"], production: true},
+};
+
+function assertJSXResult(
   code: string,
-  expectedResult: string,
-  {
-    extraTransforms,
-    jsxPragma,
-    jsxFragmentPragma,
-    production,
-  }: {
-    extraTransforms?: Array<Transform>;
-    jsxPragma?: string;
-    jsxFragmentPragma?: string;
-    production?: boolean;
-  } = {},
+  jsxExpectations: JSXExpectations,
+  options: Partial<Options> = {},
 ): void {
-  const transforms: Array<Transform> = ["jsx", ...(extraTransforms || [])];
-  util.assertResult(code, expectedResult, {transforms, jsxPragma, jsxFragmentPragma, production});
+  for (const [expectationName, expectedResult] of Object.entries(jsxExpectations)) {
+    util.assertResult(
+      code,
+      expectedResult,
+      {...optionsForMode[expectationName as keyof JSXExpectations], ...options},
+      `${expectationName} did not match`,
+    );
+  }
 }
 
 describe("transform JSX", () => {
   it("transforms a self-closing JSX element", () => {
-    assertResult(
+    assertJSXResult(
       `
       <Foo />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement(Foo, {${devProps(2)}} )
     `,
+        expectedClassicProdESMResult: `
+      React.createElement(Foo, null )
+    `,
+      },
+    );
+  });
+
+  it("handles a JSX element with a key, multiple props, and multiple children", () => {
+    assertJSXResult(
+      `
+      <div a="foo" key="some-key" c="test">
+        Hello world
+        <span className="some-class">!</span>
+      </div>
+    `,
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
+      React.createElement('div', { a: "foo", key: "some-key", c: "test", ${devProps(
+        2,
+      )}}, "Hello world"
+
+        , React.createElement('span', { className: "some-class", ${devProps(4)}}, "!")
+      )
+    `,
+        expectedClassicProdESMResult: `
+      React.createElement('div', { a: "foo", key: "some-key", c: "test",}, "Hello world"
+
+        , React.createElement('span', { className: "some-class",}, "!")
+      )
+    `,
+      },
     );
   });
 
   it("handles more esoteric component names", () => {
-    assertResult(
+    assertJSXResult(
       `
       <_Foo />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement(_Foo, {${devProps(2)}} )
     `,
+      },
     );
-    assertResult(
+    assertJSXResult(
       `
       <$ />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement($, {${devProps(2)}} )
     `,
+      },
     );
-    assertResult(
+    assertJSXResult(
       `
       <é />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement(é, {${devProps(2)}} )
     `,
+      },
     );
   });
 
   it("transforms nested JSX elements", () => {
-    assertResult(
+    assertJSXResult(
       `
       <div><span></span></div>
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('div', {${devProps(2)}}, React.createElement('span', {${devProps(2)}}))
     `,
+      },
     );
   });
 
   it("transforms interpolated children", () => {
-    assertResult(
+    assertJSXResult(
       `
       <div>{x}</div>
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('div', {${devProps(2)}}, x)
     `,
+      },
     );
   });
 
   it("handles string property values", () => {
-    assertResult(
+    assertJSXResult(
       `
       <A foo='bar' />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement(A, { foo: "bar", ${devProps(2)}} )
     `,
+      },
     );
   });
 
   it("handles element property values", () => {
-    assertResult(
+    assertJSXResult(
       `
       <A foo=<B /> />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement(A, { foo: React.createElement(B, {${devProps(2)}} ), ${devProps(2)}} )
     `,
+      },
     );
   });
 
   it("handles fragment property values", () => {
-    assertResult(
+    assertJSXResult(
       `
       <A foo=<>Hi</> />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement(A, { foo: React.createElement(React.Fragment, null, "Hi"), ${devProps(
         2,
       )}} )
     `,
+      },
     );
   });
 
   it("handles property keys that require quoting", () => {
-    assertResult(
+    assertJSXResult(
       `
       <A foo-bar={true} />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement(A, { 'foo-bar': true, ${devProps(2)}} )
     `,
+      },
     );
   });
 
   it("handles shorthand property keys that require quoting", () => {
-    assertResult(
+    assertJSXResult(
       `
       <A foo-bar />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement(A, { 'foo-bar': true, ${devProps(2)}} )
     `,
+      },
     );
   });
 
   it("handles inline comments", () => {
-    assertResult(
+    assertJSXResult(
       `
       <A
         b='c' // A comment
         d='e' /* Another comment */
       />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement(A, {
         b: "c", // A comment
         d: "e", ${devProps(2)}} /* Another comment */
       )
     `,
+      },
     );
   });
 
   it("handles multiline strings", () => {
-    assertResult(
+    assertJSXResult(
       `
       const x = (
         <div>
@@ -170,7 +234,8 @@ describe("transform JSX", () => {
         </div>
       );
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       const x = (
         React.createElement('div', {${devProps(3)}}, "foo  bar baz"
 
@@ -178,11 +243,12 @@ describe("transform JSX", () => {
         )
       );
     `,
+      },
     );
   });
 
   it("handles nested JSX tags", () => {
-    assertResult(
+    assertJSXResult(
       `
       const x = (
         <div>
@@ -190,134 +256,159 @@ describe("transform JSX", () => {
         </div>
       );
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       const x = (
         React.createElement('div', {${devProps(3)}}
           , React.createElement(Span, {${devProps(4)}} )
         )
       );
     `,
+      },
     );
   });
 
   it("handles complex lower-case tag values", () => {
-    assertResult(
+    assertJSXResult(
       `
       <a.b c='d' />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement(a.b, { c: "d", ${devProps(2)}} )
     `,
+      },
     );
   });
 
   it("handles prop spread operators", () => {
-    assertResult(
+    assertJSXResult(
       `
       <a {...b} c='d' />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('a', { ...b, c: "d", ${devProps(2)}} )
     `,
+        expectedClassicProdESMResult: `
+      React.createElement('a', { ...b, c: "d",} )
+    `,
+      },
     );
   });
 
   it("handles HTML entities", () => {
-    assertResult(
+    assertJSXResult(
       `
       <span>a&gt;b</span>
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('span', {${devProps(2)}}, "a>b")
     `,
+      },
     );
   });
 
   it("handles hex unicode HTML entities", () => {
-    assertResult(
+    assertJSXResult(
       `
       <span>a&#x3E;b</span>
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('span', {${devProps(2)}}, "a>b")
     `,
+      },
     );
   });
 
   it("handles decimal unicode HTML entities", () => {
-    assertResult(
+    assertJSXResult(
       `
       <span>a&#62;b</span>
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('span', {${devProps(2)}}, "a>b")
     `,
+      },
     );
   });
 
   it("does not transform empty number HTML entities", () => {
-    assertResult(
+    assertJSXResult(
       `
       <span>a&#;b</span>
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('span', {${devProps(2)}}, "a&#;b")
     `,
+      },
     );
   });
 
   it("allows adjacent HTML entities", () => {
-    assertResult(
+    assertJSXResult(
       `
       <span>a&#100;&#100;b</span>
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('span', {${devProps(2)}}, "addb")
     `,
+      },
     );
   });
 
   it("allows HTML entity right after near-entity with semicolon missing", () => {
-    assertResult(
+    assertJSXResult(
       `
       <span>a&#100&#100;b</span>
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('span', {${devProps(2)}}, "a&#100db")
     `,
+      },
     );
   });
 
   it("handles ampersand in HTML", () => {
-    assertResult(
+    assertJSXResult(
       `
       <span>Rock & Roll</span>
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('span', {${devProps(2)}}, "Rock & Roll"  )
     `,
+      },
     );
   });
 
   it("handles non-breaking spaces in JSX text", () => {
     /* eslint-disable no-irregular-whitespace */
-    assertResult(
+    assertJSXResult(
       `
       <span>
         a&nbsp;
       </span>
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('span', {${devProps(2)}}, "a "
 
       )
     `,
+      },
     );
     /* eslint-enable no-irregular-whitespace */
   });
 
   it("handles comment-only JSX interpolations", () => {
-    assertResult(
+    assertJSXResult(
       `
       <div>
         <span />
@@ -325,69 +416,77 @@ describe("transform JSX", () => {
         <span />
       </div>;
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('div', {${devProps(2)}}
         , React.createElement('span', {${devProps(3)}} )
          /* foo */ 
         , React.createElement('span', {${devProps(5)}} )
       );
     `,
+      },
     );
   });
 
   it("handles parsing object rest/spread", () => {
-    assertResult(
+    assertJSXResult(
       `
       const foo = {
         ...bar,
         baz: <Baz />,
       };
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       const foo = {
         ...bar,
         baz: React.createElement(Baz, {${devProps(4)}} ),
       };
     `,
+      },
     );
   });
 
   it("handles non-identifier prop names", () => {
-    assertResult(
+    assertJSXResult(
       `
       <div
         a={1}
         data-id={2}
       />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('div', {
         a: 1,
         'data-id': 2, ${devProps(2)}}
       )
     `,
+      },
     );
   });
 
   it("handles multi-line prop strings", () => {
-    assertResult(
+    assertJSXResult(
       `
       <div
         value='This is a
                multi-line string.'
       />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('div', {
         value: "This is a multi-line string."
                 , ${devProps(2)}}
       )
     `,
+      },
     );
   });
 
   it("handles leading and trailing spaces in multi-line prop strings", () => {
-    assertResult(
+    assertJSXResult(
       `
       <div
         value='   
@@ -396,7 +495,8 @@ describe("transform JSX", () => {
                   '
       />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('div', {
         value: "    This is a longer multi-line string. "
 
@@ -404,50 +504,60 @@ describe("transform JSX", () => {
                   , ${devProps(2)}}
       )
     `,
+      },
     );
   });
 
   it("handles prop string values with entities", () => {
-    assertResult(
+    assertJSXResult(
       `
       <div
         value='a&gt;b'
       />
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('div', {
         value: "a>b", ${devProps(2)}}
       )
     `,
+      },
     );
   });
 
   it("handles handles boolean prop values", () => {
-    assertResult(
+    assertJSXResult(
       `
       const e = <div a />;
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       const e = React.createElement('div', { a: true, ${devProps(2)}} );
     `,
+        expectedClassicProdESMResult: `
+      const e = React.createElement('div', { a: true,} );
+    `,
+      },
     );
   });
 
   it("preserves/allows windows newlines in string literals but not tag bodies", () => {
-    assertResult(
+    assertJSXResult(
       `
       const e = <div a="foo\r\nbar">a\r\nb</div>;
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       const e = React.createElement('div', { a: "foo\\r\\nbar"
 , __self: this, __source: {fileName: _jsxFileName, lineNumber: 2}}, "a b"
 );
     `,
+      },
     );
   });
 
   it("allows JSX fragment syntax", () => {
-    assertResult(
+    assertJSXResult(
       `
       const f = (
         <>
@@ -456,7 +566,8 @@ describe("transform JSX", () => {
         </>
       );
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       const f = (
         React.createElement(React.Fragment, null
           , React.createElement('div', {${devProps(4)}} )
@@ -464,11 +575,20 @@ describe("transform JSX", () => {
         )
       );
     `,
+        expectedClassicProdESMResult: `
+      const f = (
+        React.createElement(React.Fragment, null
+          , React.createElement('div', null )
+          , React.createElement('span', null )
+        )
+      );
+    `,
+      },
     );
   });
 
   it("handles transformed react name in createElement and Fragment", () => {
-    assertResult(
+    assertJSXResult(
       `
       import React from 'react';
       const f = (
@@ -478,7 +598,8 @@ describe("transform JSX", () => {
         </>
       );
     `,
-      `"use strict";${JSX_PREFIX}${IMPORT_DEFAULT_PREFIX}
+      {
+        expectedClassicDevCJSResult: `"use strict";${JSX_PREFIX}${IMPORT_DEFAULT_PREFIX}
       var _react = require('react'); var _react2 = _interopRequireDefault(_react);
       const f = (
         _react2.default.createElement(_react2.default.Fragment, null
@@ -487,12 +608,12 @@ describe("transform JSX", () => {
         )
       );
     `,
-      {extraTransforms: ["imports"]},
+      },
     );
   });
 
-  it("allows custom JSX pragmas", () => {
-    assertResult(
+  it("allows custom JSX pragmas for classic transform", () => {
+    assertJSXResult(
       `
       const f = (
         <>
@@ -501,7 +622,8 @@ describe("transform JSX", () => {
         </>
       );
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       const f = (
         h(Fragment, null
           , h('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 4}} )
@@ -509,12 +631,13 @@ describe("transform JSX", () => {
         )
       );
     `,
+      },
       {jsxPragma: "h", jsxFragmentPragma: "Fragment"},
     );
   });
 
-  it("properly transforms imports for JSX pragmas", () => {
-    assertResult(
+  it("properly transforms imports for JSX pragmas in the classic transform", () => {
+    assertJSXResult(
       `
       import {h, Fragment} from 'preact';
       const f = (
@@ -524,7 +647,8 @@ describe("transform JSX", () => {
         </>
       );
     `,
-      `"use strict";${JSX_PREFIX}
+      {
+        expectedClassicDevCJSResult: `"use strict";${JSX_PREFIX}
       var _preact = require('preact');
       const f = (
         _preact.h(_preact.Fragment, null
@@ -533,31 +657,36 @@ describe("transform JSX", () => {
         )
       );
     `,
-      {extraTransforms: ["imports"], jsxPragma: "h", jsxFragmentPragma: "Fragment"},
+      },
+      {jsxPragma: "h", jsxFragmentPragma: "Fragment"},
     );
   });
 
   it("allows empty fragments", () => {
-    assertResult(
+    assertJSXResult(
       `
       const c = <></>;
     `,
-      `
+      {
+        expectedClassicDevESMResult: `
       const c = React.createElement(React.Fragment, null);
     `,
+      },
     );
   });
 
   it("allows fragments without whitespace", () => {
-    assertResult(
+    assertJSXResult(
       `
       const c = <><a/></>;
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       const c = React.createElement(React.Fragment, null, React.createElement('a', {${devProps(
         2,
       )}}));
     `,
+      },
     );
   });
 
@@ -566,98 +695,42 @@ describe("transform JSX", () => {
   });
 
   it("handles spread children", () => {
-    assertResult(
+    assertJSXResult(
       `
       const e = <A>{...b}</A>;
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       const e = React.createElement(A, {${devProps(2)}}, ...b);
     `,
+      },
     );
-  });
-
-  describe("with production true", () => {
-    it("handles no props", () => {
-      assertResult(
-        `
-      <A />
-    `,
-        `
-      React.createElement(A, null )
-    `,
-        {production: true},
-      );
-    });
-
-    it("handles props", () => {
-      assertResult(
-        `
-      <A a="b" />
-    `,
-        `
-      React.createElement(A, { a: "b",} )
-    `,
-        {production: true},
-      );
-    });
-
-    it("handles bool props", () => {
-      assertResult(
-        `
-      <A a />
-    `,
-        `
-      React.createElement(A, { a: true,} )
-    `,
-        {production: true},
-      );
-    });
-
-    it("handles spread props", () => {
-      assertResult(
-        `
-        <A {...obj} />
-    `,
-        `
-        React.createElement(A, { ...obj,} )
-    `,
-        {production: true},
-      );
-    });
-
-    it("handles fragment", () => {
-      assertResult(
-        `
-      <>Hi</>
-    `,
-        `
-      React.createElement(React.Fragment, null, "Hi")
-    `,
-        {production: true},
-      );
-    });
   });
 
   it("handles long HTML entities with many leading 0s", () => {
     // https://github.com/babel/babel/issues/14316
-    assertResult(
+    assertJSXResult(
       `
       <div> &#00000000000000000020; </div>
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('div', {${devProps(2)}}, " \\u0014 "  )
     `,
+      },
     );
   });
 
   it("does not allow prototype access in JSX entity handling", () => {
-    assertResult(
+    assertJSXResult(
       `
       <a>&valueOf;</a>
     `,
-      `${JSX_PREFIX}
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
       React.createElement('a', {${devProps(2)}}, "&valueOf;")
     `,
+      },
     );
   });
 });

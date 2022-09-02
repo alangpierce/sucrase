@@ -25,10 +25,10 @@ export const Options = t.iface([], {
   jsxImportSource: t.opt("string"),
   jsxPragma: t.opt("string"),
   jsxFragmentPragma: t.opt("string"),
-  enableLegacyTypeScriptModuleInterop: t.opt("boolean"),
-  enableLegacyBabel5ModuleInterop: t.opt("boolean"),
   preserveDynamicImport: t.opt("boolean"),
   injectCreateRequireForImportRequire: t.opt("boolean"),
+  enableLegacyTypeScriptModuleInterop: t.opt("boolean"),
+  enableLegacyBabel5ModuleInterop: t.opt("boolean"),
   sourceMapOptions: t.opt("SourceMapOptions"),
   filePath: t.opt("string"),
 });

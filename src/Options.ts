@@ -16,13 +16,13 @@ export interface SourceMapOptions {
 
 export interface Options {
   /**
-   * Unordered array of transform names, describing both the allowed syntax
+   * Unordered array of transform names describing both the allowed syntax
    * (where applicable) and the transformation behavior.
    */
   transforms: Array<Transform>;
   /**
-   * Opts out ES syntax transformations, like optional chaining, nullish
-   * coalescing, numeric separators, etc.
+   * Opts out of all ES syntax transformations: optional chaining, nullish
+   * coalescing, class fields, numeric separators, optional catch binding.
    */
   disableESTransforms?: boolean;
   /**
@@ -37,7 +37,6 @@ export interface Options {
   /**
    * Compile code for production use. Currently only applies to the JSX
    * transform.
-   * If specified, omit any development-specific code in the output.
    */
   production?: boolean;
   /**
@@ -56,14 +55,6 @@ export interface Options {
    */
   jsxFragmentPragma?: string;
   /**
-   * If true, replicate the import behavior of TypeScript's esModuleInterop: false.
-   */
-  enableLegacyTypeScriptModuleInterop?: boolean;
-  /**
-   * If true, replicate the import behavior Babel 5 and babel-plugin-add-module-exports.
-   */
-  enableLegacyBabel5ModuleInterop?: boolean;
-  /**
    * If specified, the imports transform does not attempt to change dynamic
    * import() expressions into require() calls.
    */
@@ -79,6 +70,14 @@ export interface Options {
    * same code to target ESM and CJS.
    */
   injectCreateRequireForImportRequire?: boolean;
+  /**
+   * If true, replicate the import behavior of TypeScript's esModuleInterop: false.
+   */
+  enableLegacyTypeScriptModuleInterop?: boolean;
+  /**
+   * If true, replicate the import behavior Babel 5 and babel-plugin-add-module-exports.
+   */
+  enableLegacyBabel5ModuleInterop?: boolean;
   /**
    * If specified, we also return a RawSourceMap object alongside the code.
    * Currently, source maps simply map each line to the original line without

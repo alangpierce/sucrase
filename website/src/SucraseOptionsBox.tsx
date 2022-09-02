@@ -134,45 +134,56 @@ export default function SucraseOptionsBox({
                 options={options}
                 onUpdateOptions={onUpdateOptions}
               />
-              <BooleanOption
-                optionName="production"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-              />
-              <StringOption
-                optionName="jsxPragma"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-                inputWidth={182}
-              />
-              <StringOption
-                optionName="jsxFragmentPragma"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-                inputWidth={120}
-              />
+              {options.transforms.includes("jsx") && (
+                <>
+                  <BooleanOption
+                    optionName="production"
+                    options={options}
+                    onUpdateOptions={onUpdateOptions}
+                  />
+                  <StringOption
+                    optionName="jsxPragma"
+                    options={options}
+                    onUpdateOptions={onUpdateOptions}
+                    inputWidth={182}
+                  />
+                  <StringOption
+                    optionName="jsxFragmentPragma"
+                    options={options}
+                    onUpdateOptions={onUpdateOptions}
+                    inputWidth={120}
+                  />
+                </>
+              )}
             </div>
             <div className={css(styles.secondaryOptionColumn)}>
-              <BooleanOption
-                optionName="preserveDynamicImport"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-              />
-              <BooleanOption
-                optionName="injectCreateRequireForImportRequire"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-              />
-              <BooleanOption
-                optionName="enableLegacyTypeScriptModuleInterop"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-              />
-              <BooleanOption
-                optionName="enableLegacyBabel5ModuleInterop"
-                options={options}
-                onUpdateOptions={onUpdateOptions}
-              />
+              {options.transforms.includes("imports") && (
+                <>
+                  <BooleanOption
+                    optionName="preserveDynamicImport"
+                    options={options}
+                    onUpdateOptions={onUpdateOptions}
+                  />
+                  <BooleanOption
+                    optionName="enableLegacyTypeScriptModuleInterop"
+                    options={options}
+                    onUpdateOptions={onUpdateOptions}
+                  />
+                  <BooleanOption
+                    optionName="enableLegacyBabel5ModuleInterop"
+                    options={options}
+                    onUpdateOptions={onUpdateOptions}
+                  />
+                </>
+              )}
+              {!options.transforms.includes("imports") &&
+                options.transforms.includes("typescript") && (
+                  <BooleanOption
+                    optionName="injectCreateRequireForImportRequire"
+                    options={options}
+                    onUpdateOptions={onUpdateOptions}
+                  />
+                )}
             </div>
           </div>
         )}

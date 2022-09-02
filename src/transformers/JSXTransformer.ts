@@ -80,6 +80,23 @@ export default class JSXTransformer extends Transformer {
     return prefix;
   }
 
+  processJSXTag(): void {
+    const {jsxRole, start} = this.tokens.currentToken();
+    // Calculate line number information at the very start (if in development
+    // mode) so that the information is guaranteed to be queried in token order.
+    const elementLocationCode = this.options.production ? null : this.getElementLocationCode(start);
+    if (this.isAutomaticRuntime && jsxRole !== JSXRole.KeyAfterPropSpread) {
+      this.transformTagToJSXFunc(elementLocationCode, jsxRole!);
+    } else {
+      this.transformTagToCreateElement(elementLocationCode);
+    }
+  }
+
+  getElementLocationCode(firstTokenStart: number): string {
+    const lineNumber = this.getLineNumberForIndex(firstTokenStart);
+    return `lineNumber: ${lineNumber}`;
+  }
+
   /**
    * Get the line number for this source position. This is calculated lazily and
    * must be called in increasing order by index.
@@ -95,11 +112,240 @@ export default class JSXTransformer extends Transformer {
     return this.lastLineNumber;
   }
 
-  getFilenameVarName(): string {
-    if (!this.filenameVarName) {
-      this.filenameVarName = this.nameManager.claimFreeName("_jsxFileName");
+  /**
+   * Convert the current JSX element to a call to jsx, jsxs, or jsxDEV. This is
+   * the primary transformation for the automatic transform.
+   *
+   * Example:
+   * <div a={1} key={2}>Hello{x}</div>
+   * becomes
+   * jsxs('div', {a: 1, children: ["Hello", x]}, 2)
+   */
+  transformTagToJSXFunc(elementLocationCode: string | null, jsxRole: JSXRole): void {
+    const isStatic = jsxRole === JSXRole.StaticChildren;
+    // First tag is always jsxTagStart.
+    this.tokens.replaceToken(this.getJSXFuncInvocationCode(isStatic));
+
+    let keyCode = null;
+    if (this.tokens.matches1(tt.jsxTagEnd)) {
+      // Fragment syntax.
+      this.tokens.replaceToken(`${this.getFragmentCode()}, {`);
+      this.processAutomaticChildrenAndEndProps(isStatic);
+    } else {
+      // Normal open tag or self-closing tag.
+      this.processTagIntro();
+      this.tokens.appendCode(", {");
+      keyCode = this.processPropsBody(true);
+
+      if (this.tokens.matches2(tt.slash, tt.jsxTagEnd)) {
+        // Self-closing tag, no children to add, so close the props.
+        this.tokens.appendCode("}");
+      } else if (this.tokens.matches1(tt.jsxTagEnd)) {
+        // Tag with children.
+        this.tokens.removeToken();
+        this.processAutomaticChildrenAndEndProps(isStatic);
+      } else {
+        throw new Error("Expected either /> or > at the end of the tag.");
+      }
+      // If a key was present, move it to its own arg. Note that moving code
+      // like this will cause line numbers to get out of sync within the JSX
+      // element if the key expression has a newline in it. This is unfortunate,
+      // but hopefully should be rare.
+      if (keyCode) {
+        this.tokens.appendCode(`, ${keyCode}`);
+      }
     }
-    return this.filenameVarName;
+    if (!this.options.production) {
+      // If the key wasn't already added, add it now so we can correctly set
+      // positional args for jsxDEV.
+      if (keyCode === null) {
+        this.tokens.appendCode(", void 0");
+      }
+      this.tokens.appendCode(`, ${isStatic}, ${this.getDevSource(elementLocationCode!)}, this`);
+    }
+    // We're at the close-tag or the end of a self-closing tag, so remove
+    // everything else and close the function call.
+    this.tokens.removeInitialToken();
+    while (!this.tokens.matches1(tt.jsxTagEnd)) {
+      this.tokens.removeToken();
+    }
+    this.tokens.replaceToken(")");
+  }
+
+  /**
+   * Convert the current JSX element to a createElement call. In the classic
+   * runtime, this is the only case. In the automatic runtime, this is called
+   * as a fallback in some situations.
+   *
+   * Example:
+   * <div a={1} key={2}>Hello{x}</div>
+   * becomes
+   * React.createElement('div', {a: 1, key: 2}, Hello, x)
+   */
+  transformTagToCreateElement(elementLocationCode: string | null): void {
+    // First tag is always jsxTagStart.
+    this.tokens.replaceToken(this.getCreateElementInvocationCode());
+
+    if (this.tokens.matches1(tt.jsxTagEnd)) {
+      // Fragment syntax.
+      this.tokens.replaceToken(`${this.getFragmentCode()}, null`);
+      this.processChildren(true);
+    } else {
+      // Normal open tag or self-closing tag.
+      this.processTagIntro();
+      this.processPropsObjectWithDevInfo(elementLocationCode);
+
+      if (this.tokens.matches2(tt.slash, tt.jsxTagEnd)) {
+        // Self-closing tag; no children to process.
+      } else if (this.tokens.matches1(tt.jsxTagEnd)) {
+        // Tag with children and a close-tag; process the children as args.
+        this.tokens.removeToken();
+        this.processChildren(true);
+      } else {
+        throw new Error("Expected either /> or > at the end of the tag.");
+      }
+    }
+    // We're at the close-tag or the end of a self-closing tag, so remove
+    // everything else and close the function call.
+    this.tokens.removeInitialToken();
+    while (!this.tokens.matches1(tt.jsxTagEnd)) {
+      this.tokens.removeToken();
+    }
+    this.tokens.replaceToken(")");
+  }
+
+  /**
+   * Get the code for the relevant function for this context: jsx, jsxs,
+   * or jsxDEV. The following open-paren is included as well.
+   *
+   * These functions are only used for the automatic runtime, so they are always
+   * auto-imported, but the auto-import will be either CJS or ESM based on the
+   * target module format.
+   */
+  getJSXFuncInvocationCode(isStatic: boolean): string {
+    if (this.isAutomaticRuntime) {
+      if (this.options.production) {
+        if (isStatic) {
+          return this.claimAutoImportedFuncInvocation("jsxs", "/jsx-runtime");
+        } else {
+          return this.claimAutoImportedFuncInvocation("jsx", "/jsx-runtime");
+        }
+      } else {
+        return this.claimAutoImportedFuncInvocation("jsxDEV", "/jsx-dev-runtime");
+      }
+    } else {
+      const {jsxPragmaInfo} = this;
+      const resolvedPragmaBaseName = this.importProcessor
+        ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.base) || jsxPragmaInfo.base
+        : jsxPragmaInfo.base;
+      return resolvedPragmaBaseName + jsxPragmaInfo.suffix;
+    }
+  }
+
+  /**
+   * Return the code to use for the createElement function, e.g.
+   * `React.createElement`, including the following open-paren.
+   *
+   * This is the main function to use for the classic runtime. For the
+   * automatic runtime, this function is used as a fallback function to
+   * preserve behavior when there is a prop spread followed by an explicit
+   * key. In that automatic runtime case, the function should be automatically
+   * imported.
+   */
+  getCreateElementInvocationCode(): string {
+    if (this.isAutomaticRuntime) {
+      return this.claimAutoImportedFuncInvocation("createElement", "");
+    } else {
+      const {jsxPragmaInfo} = this;
+      const resolvedPragmaBaseName = this.importProcessor
+        ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.base) || jsxPragmaInfo.base
+        : jsxPragmaInfo.base;
+      return `${resolvedPragmaBaseName}${jsxPragmaInfo.suffix}(`;
+    }
+  }
+
+  /**
+   * Return the code to use as the component when compiling a shorthand
+   * fragment, e.g. `React.Fragment`.
+   *
+   * This may be called from either the classic or automatic runtime, and
+   * the value should be auto-imported for the automatic runtime.
+   */
+  getFragmentCode(): string {
+    if (this.isAutomaticRuntime) {
+      return this.claimAutoImportedName(
+        "Fragment",
+        this.options.production ? "/jsx-runtime" : "/jsx-dev-runtime",
+      );
+    } else {
+      const {jsxPragmaInfo} = this;
+      const resolvedFragmentPragmaBaseName = this.importProcessor
+        ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.fragmentBase) ||
+          jsxPragmaInfo.fragmentBase
+        : jsxPragmaInfo.fragmentBase;
+      return resolvedFragmentPragmaBaseName + jsxPragmaInfo.fragmentSuffix;
+    }
+  }
+
+  claimAutoImportedFuncInvocation(funcName: string, importPathSuffix: string): string {
+    const funcCode = this.claimAutoImportedName(funcName, importPathSuffix);
+    if (this.importProcessor) {
+      return `${funcCode}.call(void 0, `;
+    } else {
+      return `${funcCode}(`;
+    }
+  }
+
+  claimAutoImportedName(funcName: string, importPathSuffix: string): string {
+    if (this.importProcessor) {
+      // CJS mode: claim a name for the module
+      const path = this.jsxImportSource + importPathSuffix;
+      if (!this.cjsAutomaticModuleNameResolutions[path]) {
+        this.cjsAutomaticModuleNameResolutions[path] =
+          this.importProcessor.getFreeIdentifierForPath(path);
+      }
+      return `${this.cjsAutomaticModuleNameResolutions[path]}.${funcName}`;
+    } else {
+      // ESM mode: claim a name for this function
+      if (!this.esmAutomaticImportNameResolutions[funcName]) {
+        this.esmAutomaticImportNameResolutions[funcName] = this.nameManager.claimFreeName(
+          `_${funcName}`,
+        );
+      }
+      return this.esmAutomaticImportNameResolutions[funcName];
+    }
+  }
+
+  /**
+   * Process the first part of a tag, before any props.
+   */
+  processTagIntro(): void {
+    // Walk forward until we see one of these patterns:
+    // jsxName to start the first prop, preceded by another jsxName to end the tag name.
+    // jsxName to start the first prop, preceded by greaterThan to end the type argument.
+    // [open brace] to start the first prop.
+    // [jsxTagEnd] to end the open-tag.
+    // [slash, jsxTagEnd] to end the self-closing tag.
+    let introEnd = this.tokens.currentIndex() + 1;
+    while (
+      this.tokens.tokens[introEnd].isType ||
+      (!this.tokens.matches2AtIndex(introEnd - 1, tt.jsxName, tt.jsxName) &&
+        !this.tokens.matches2AtIndex(introEnd - 1, tt.greaterThan, tt.jsxName) &&
+        !this.tokens.matches1AtIndex(introEnd, tt.braceL) &&
+        !this.tokens.matches1AtIndex(introEnd, tt.jsxTagEnd) &&
+        !this.tokens.matches2AtIndex(introEnd, tt.slash, tt.jsxTagEnd))
+    ) {
+      introEnd++;
+    }
+    if (introEnd === this.tokens.currentIndex() + 1) {
+      const tagName = this.tokens.identifierName();
+      if (startsWithLowerCase(tagName)) {
+        this.tokens.replaceToken(`'${tagName}'`);
+      }
+    }
+    while (this.tokens.currentIndex() < introEnd) {
+      this.rootTransformer.processToken();
+    }
   }
 
   /**
@@ -179,6 +425,13 @@ export default class JSXTransformer extends Transformer {
     return keyCode;
   }
 
+  processPropName(propName: string): void {
+    if (propName.includes("-")) {
+      this.tokens.replaceToken(`'${propName}'`);
+    } else {
+      this.tokens.copyToken();
+    }
+  }
   processPropValue(): void {
     if (this.tokens.matches1(tt.braceL)) {
       this.tokens.replaceToken("");
@@ -191,23 +444,6 @@ export default class JSXTransformer extends Transformer {
     }
   }
 
-  getElementLocationCode(firstTokenStart: number): string {
-    const lineNumber = this.getLineNumberForIndex(firstTokenStart);
-    return `lineNumber: ${lineNumber}`;
-  }
-
-  getDevSource(elementLocationCode: string): string {
-    return `{fileName: ${this.getFilenameVarName()}, ${elementLocationCode}}`;
-  }
-
-  processPropName(propName: string): void {
-    if (propName.includes("-")) {
-      this.tokens.replaceToken(`'${propName}'`);
-    } else {
-      this.tokens.copyToken();
-    }
-  }
-
   processStringPropValue(): void {
     const token = this.tokens.currentToken();
     const valueCode = this.tokens.code.slice(token.start + 1, token.end - 1);
@@ -217,34 +453,21 @@ export default class JSXTransformer extends Transformer {
   }
 
   /**
-   * Process the first part of a tag, before any props.
+   * Starting in the middle of the props object literal, produce an additional
+   * prop for the children and close the object literal.
    */
-  processTagIntro(): void {
-    // Walk forward until we see one of these patterns:
-    // jsxName to start the first prop, preceded by another jsxName to end the tag name.
-    // jsxName to start the first prop, preceded by greaterThan to end the type argument.
-    // [open brace] to start the first prop.
-    // [jsxTagEnd] to end the open-tag.
-    // [slash, jsxTagEnd] to end the self-closing tag.
-    let introEnd = this.tokens.currentIndex() + 1;
-    while (
-      this.tokens.tokens[introEnd].isType ||
-      (!this.tokens.matches2AtIndex(introEnd - 1, tt.jsxName, tt.jsxName) &&
-        !this.tokens.matches2AtIndex(introEnd - 1, tt.greaterThan, tt.jsxName) &&
-        !this.tokens.matches1AtIndex(introEnd, tt.braceL) &&
-        !this.tokens.matches1AtIndex(introEnd, tt.jsxTagEnd) &&
-        !this.tokens.matches2AtIndex(introEnd, tt.slash, tt.jsxTagEnd))
-    ) {
-      introEnd++;
-    }
-    if (introEnd === this.tokens.currentIndex() + 1) {
-      const tagName = this.tokens.identifierName();
-      if (startsWithLowerCase(tagName)) {
-        this.tokens.replaceToken(`'${tagName}'`);
-      }
-    }
-    while (this.tokens.currentIndex() < introEnd) {
-      this.rootTransformer.processToken();
+  processAutomaticChildrenAndEndProps(isStatic: boolean): void {
+    if (this.tokens.matches2(tt.jsxTagStart, tt.slash)) {
+      // We immediately have a closing tag, so don't emit children at all.
+      this.tokens.appendCode("}");
+    } else if (isStatic) {
+      this.tokens.appendCode(" children: [");
+      this.processChildren(false);
+      this.tokens.appendCode("]}");
+    } else {
+      this.tokens.appendCode(" children: ");
+      this.processChildren(false);
+      this.tokens.appendCode("}");
     }
   }
 
@@ -296,239 +519,15 @@ export default class JSXTransformer extends Transformer {
     }
   }
 
-  processJSXTag(): void {
-    const {jsxRole, start} = this.tokens.currentToken();
-    // Calculate line number information at the very start (if in development
-    // mode) so that the information is guaranteed to be queried in token order.
-    const elementLocationCode = this.options.production ? null : this.getElementLocationCode(start);
-    if (this.isAutomaticRuntime && jsxRole !== JSXRole.KeyAfterPropSpread) {
-      this.transformTagToJSXFunc(elementLocationCode, jsxRole!);
-    } else {
-      this.transformTagToCreateElement(elementLocationCode);
-    }
+  getDevSource(elementLocationCode: string): string {
+    return `{fileName: ${this.getFilenameVarName()}, ${elementLocationCode}}`;
   }
 
-  /**
-   * Convert the current JSX element to a createElement call. In the classic
-   * runtime, this is the only case. In the automatic runtime, this is called
-   * as a fallback in some situations.
-   *
-   * Example:
-   * <div a={1} key={2}>Hello{x}</div>
-   * becomes
-   * React.createElement('div', {a: 1, key: 2}, Hello, x)
-   */
-  transformTagToCreateElement(elementLocationCode: string | null): void {
-    // First tag is always jsxTagStart.
-    this.tokens.replaceToken(this.getCreateElementInvocationCode());
-
-    if (this.tokens.matches1(tt.jsxTagEnd)) {
-      // Fragment syntax.
-      this.tokens.replaceToken(`${this.getFragmentCode()}, null`);
-      this.processChildren(true);
-    } else {
-      // Normal open tag or self-closing tag.
-      this.processTagIntro();
-      this.processPropsObjectWithDevInfo(elementLocationCode);
-
-      if (this.tokens.matches2(tt.slash, tt.jsxTagEnd)) {
-        // Self-closing tag; no children to process.
-      } else if (this.tokens.matches1(tt.jsxTagEnd)) {
-        // Tag with children and a close-tag; process the children as args.
-        this.tokens.removeToken();
-        this.processChildren(true);
-      } else {
-        throw new Error("Expected either /> or > at the end of the tag.");
-      }
+  getFilenameVarName(): string {
+    if (!this.filenameVarName) {
+      this.filenameVarName = this.nameManager.claimFreeName("_jsxFileName");
     }
-    // We're at the close-tag or the end of a self-closing tag, so remove
-    // everything else and close the function call.
-    this.tokens.removeInitialToken();
-    while (!this.tokens.matches1(tt.jsxTagEnd)) {
-      this.tokens.removeToken();
-    }
-    this.tokens.replaceToken(")");
-  }
-
-  /**
-   * Convert the current JSX element to a call to jsx, jsxs, or jsxDEV. This is
-   * the primary transformation for the automatic transform.
-   *
-   * Example:
-   * <div a={1} key={2}>Hello{x}</div>
-   * becomes
-   * jsxs('div', {a: 1, children: ["Hello", x]}, 2)
-   */
-  transformTagToJSXFunc(elementLocationCode: string | null, jsxRole: JSXRole): void {
-    const isStatic = jsxRole === JSXRole.StaticChildren;
-    // First tag is always jsxTagStart.
-    this.tokens.replaceToken(this.getJSXFuncInvocationCode(isStatic));
-
-    let keyCode = null;
-    if (this.tokens.matches1(tt.jsxTagEnd)) {
-      // Fragment syntax.
-      this.tokens.replaceToken(`${this.getFragmentCode()}, {`);
-      this.processAutomaticChildrenAndEndProps(isStatic);
-    } else {
-      // Normal open tag or self-closing tag.
-      this.processTagIntro();
-      this.tokens.appendCode(", {");
-      keyCode = this.processPropsBody(true)!;
-
-      if (this.tokens.matches2(tt.slash, tt.jsxTagEnd)) {
-        // Self-closing tag, no children to add, so close the props.
-        this.tokens.appendCode("}");
-      } else if (this.tokens.matches1(tt.jsxTagEnd)) {
-        // Tag with children.
-        this.tokens.removeToken();
-        this.processAutomaticChildrenAndEndProps(isStatic);
-      } else {
-        throw new Error("Expected either /> or > at the end of the tag.");
-      }
-      // If a key was present, move it to its own arg. Note that moving code
-      // like this will cause line numbers to get out of sync within the JSX
-      // element if the key expression has a newline in it. This is unfortunate,
-      // but hopefully should be rare.
-      if (keyCode) {
-        this.tokens.appendCode(`, ${keyCode}`);
-      }
-    }
-    if (!this.options.production) {
-      // If the key wasn't already added, add it now so we can correctly set
-      // positional args for jsxDEV.
-      if (keyCode === null) {
-        this.tokens.appendCode(", void 0");
-      }
-      this.tokens.appendCode(`, ${isStatic}, ${this.getDevSource(elementLocationCode!)}, this`);
-    }
-    // We're at the close-tag or the end of a self-closing tag, so remove
-    // everything else and close the function call.
-    this.tokens.removeInitialToken();
-    while (!this.tokens.matches1(tt.jsxTagEnd)) {
-      this.tokens.removeToken();
-    }
-    this.tokens.replaceToken(")");
-  }
-
-  /**
-   * Starting in the middle of the props object literal, produce an additional
-   * prop for the children and close the object literal.
-   */
-  processAutomaticChildrenAndEndProps(isStatic: boolean): void {
-    if (this.tokens.matches2(tt.jsxTagStart, tt.slash)) {
-      // We immediately have a closing tag, so don't emit children at all.
-      this.tokens.appendCode("}");
-    } else if (isStatic) {
-      this.tokens.appendCode(" children: [");
-      this.processChildren(false);
-      this.tokens.appendCode("]}");
-    } else {
-      this.tokens.appendCode(" children: ");
-      this.processChildren(false);
-      this.tokens.appendCode("}");
-    }
-  }
-
-  /**
-   * Return the code to use for the createElement function, e.g.
-   * `React.createElement`, including the following open-paren.
-   *
-   * This is the main function to use for the classic runtime. For the
-   * automatic runtime, this function is used as a fallback function to
-   * preserve behavior when there is a prop spread followed by an explicit
-   * key. In that automatic runtime case, the function should be automatically
-   * imported.
-   */
-  getCreateElementInvocationCode(): string {
-    if (this.isAutomaticRuntime) {
-      return this.claimAutoImportedFuncInvocation("createElement", "");
-    } else {
-      const {jsxPragmaInfo} = this;
-      const resolvedPragmaBaseName = this.importProcessor
-        ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.base) || jsxPragmaInfo.base
-        : jsxPragmaInfo.base;
-      return `${resolvedPragmaBaseName}${jsxPragmaInfo.suffix}(`;
-    }
-  }
-
-  /**
-   * Get the code for the relevant function for this context: jsx, jsxs,
-   * or jsxDEV. The following open-paren is included as well.
-   *
-   * These functions are only used for the automatic runtime, so they are always
-   * auto-imported, but the auto-import will be either CJS or ESM based on the
-   * target module format.
-   */
-  getJSXFuncInvocationCode(isStatic: boolean): string {
-    if (this.isAutomaticRuntime) {
-      if (this.options.production) {
-        if (isStatic) {
-          return this.claimAutoImportedFuncInvocation("jsxs", "/jsx-runtime");
-        } else {
-          return this.claimAutoImportedFuncInvocation("jsx", "/jsx-runtime");
-        }
-      } else {
-        return this.claimAutoImportedFuncInvocation("jsxDEV", "/jsx-dev-runtime");
-      }
-    } else {
-      const {jsxPragmaInfo} = this;
-      const resolvedPragmaBaseName = this.importProcessor
-        ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.base) || jsxPragmaInfo.base
-        : jsxPragmaInfo.base;
-      return resolvedPragmaBaseName + jsxPragmaInfo.suffix;
-    }
-  }
-
-  /**
-   * Return the code to use as the component when compiling a shorthand
-   * fragment, e.g. `React.Fragment`.
-   *
-   * This may be called from either the classic or automatic runtime, and
-   * the value should be auto-imported for the automatic runtime.
-   */
-  getFragmentCode(): string {
-    if (this.isAutomaticRuntime) {
-      return this.claimAutoImportedName(
-        "Fragment",
-        this.options.production ? "/jsx-runtime" : "/jsx-dev-runtime",
-      );
-    } else {
-      const {jsxPragmaInfo} = this;
-      const resolvedFragmentPragmaBaseName = this.importProcessor
-        ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.fragmentBase) ||
-          jsxPragmaInfo.fragmentBase
-        : jsxPragmaInfo.fragmentBase;
-      return resolvedFragmentPragmaBaseName + jsxPragmaInfo.fragmentSuffix;
-    }
-  }
-
-  claimAutoImportedFuncInvocation(funcName: string, importPathSuffix: string): string {
-    const funcCode = this.claimAutoImportedName(funcName, importPathSuffix);
-    if (this.importProcessor) {
-      return `${funcCode}.call(void 0, `;
-    } else {
-      return `${funcCode}(`;
-    }
-  }
-
-  claimAutoImportedName(funcName: string, importPathSuffix: string): string {
-    if (this.importProcessor) {
-      // CJS mode: claim a name for the module
-      const path = this.jsxImportSource + importPathSuffix;
-      if (!this.cjsAutomaticModuleNameResolutions[path]) {
-        this.cjsAutomaticModuleNameResolutions[path] =
-          this.importProcessor.getFreeIdentifierForPath(path);
-      }
-      return `${this.cjsAutomaticModuleNameResolutions[path]}.${funcName}`;
-    } else {
-      // ESM mode: claim a name for this function
-      if (!this.esmAutomaticImportNameResolutions[funcName]) {
-        this.esmAutomaticImportNameResolutions[funcName] = this.nameManager.claimFreeName(
-          `_${funcName}`,
-        );
-      }
-      return this.esmAutomaticImportNameResolutions[funcName];
-    }
+    return this.filenameVarName;
   }
 }
 

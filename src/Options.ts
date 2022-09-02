@@ -15,7 +15,20 @@ export interface SourceMapOptions {
 }
 
 export interface Options {
+  /**
+   * Unordered array of transform names describing both the allowed syntax
+   * (where applicable) and the transformation behavior.
+   */
   transforms: Array<Transform>;
+  /**
+   * Opts out of all ES syntax transformations: optional chaining, nullish
+   * coalescing, class fields, numeric separators, optional catch binding.
+   */
+  disableESTransforms?: boolean;
+  /**
+   * Compile code for production use. Currently only applies to the JSX transform.
+   */
+  production?: boolean;
   /**
    * If specified, function name to use in place of React.createClass when compiling JSX.
    */
@@ -25,35 +38,8 @@ export interface Options {
    */
   jsxFragmentPragma?: string;
   /**
-   * If true, replicate the import behavior of TypeScript's esModuleInterop: false.
-   */
-  enableLegacyTypeScriptModuleInterop?: boolean;
-  /**
-   * If true, replicate the import behavior Babel 5 and babel-plugin-add-module-exports.
-   */
-  enableLegacyBabel5ModuleInterop?: boolean;
-  /**
-   * If specified, we also return a RawSourceMap object alongside the code. Currently, source maps
-   * simply map each line to the original line without any mappings within lines, since Sucrase
-   * preserves line numbers. filePath must be specified if this option is enabled.
-   */
-  sourceMapOptions?: SourceMapOptions;
-  /**
-   * File path to use in error messages, React display names, and source maps.
-   */
-  filePath?: string;
-  /**
-   * If specified, omit any development-specific code in the output.
-   */
-  production?: boolean;
-  /**
-   * Opts out ES syntax transformations, like optional chaining, nullish coalescing, numeric
-   * separators, etc.
-   */
-  disableESTransforms?: boolean;
-  /**
-   * If specified, the imports transform does not attempt to change dynamic import()
-   * expressions into require() calls.
+   * If specified, the imports transform does not attempt to change dynamic
+   * import() expressions into require() calls.
    */
   preserveDynamicImport?: boolean;
   /**
@@ -67,6 +53,25 @@ export interface Options {
    * same code to target ESM and CJS.
    */
   injectCreateRequireForImportRequire?: boolean;
+  /**
+   * If true, replicate the import behavior of TypeScript's esModuleInterop: false.
+   */
+  enableLegacyTypeScriptModuleInterop?: boolean;
+  /**
+   * If true, replicate the import behavior Babel 5 and babel-plugin-add-module-exports.
+   */
+  enableLegacyBabel5ModuleInterop?: boolean;
+  /**
+   * If specified, we also return a RawSourceMap object alongside the code.
+   * Currently, source maps simply map each line to the original line without
+   * any mappings within lines, since Sucrase preserves line numbers. filePath
+   * must be specified if this option is enabled.
+   */
+  sourceMapOptions?: SourceMapOptions;
+  /**
+   * File path to use in error messages, React display names, and source maps.
+   */
+  filePath?: string;
 }
 
 export function validateOptions(options: Options): void {

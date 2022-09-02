@@ -42,26 +42,83 @@ export default class JSXTransformer extends Transformer {
     }
   }
 
-  /**
-   * Lazily calculate line numbers to avoid unneeded work. We assume this is always called in
-   * increasing order by index.
-   */
-  getLineNumberForIndex(index: number): number {
-    const code = this.tokens.code;
-    while (this.lastIndex < index && this.lastIndex < code.length) {
-      if (code[this.lastIndex] === "\n") {
-        this.lastLineNumber++;
+  processJSXTag(): void {
+    const {jsxPragmaInfo} = this;
+    const resolvedPragmaBaseName = this.importProcessor
+      ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.base) || jsxPragmaInfo.base
+      : jsxPragmaInfo.base;
+    const firstTokenStart = this.tokens.currentToken().start;
+    // First tag is always jsxTagStart.
+    this.tokens.replaceToken(`${resolvedPragmaBaseName}${jsxPragmaInfo.suffix}(`);
+
+    if (this.tokens.matches1(tt.jsxTagEnd)) {
+      // Fragment syntax.
+      const resolvedFragmentPragmaBaseName = this.importProcessor
+        ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.fragmentBase) ||
+          jsxPragmaInfo.fragmentBase
+        : jsxPragmaInfo.fragmentBase;
+      this.tokens.replaceToken(
+        `${resolvedFragmentPragmaBaseName}${jsxPragmaInfo.fragmentSuffix}, null`,
+      );
+      // Tag with children.
+      this.processChildren();
+      while (!this.tokens.matches1(tt.jsxTagEnd)) {
+        this.tokens.replaceToken("");
       }
-      this.lastIndex++;
+      this.tokens.replaceToken(")");
+    } else {
+      // Normal open tag or self-closing tag.
+      this.processTagIntro();
+      this.processProps(firstTokenStart);
+
+      if (this.tokens.matches2(tt.slash, tt.jsxTagEnd)) {
+        // Self-closing tag.
+        this.tokens.replaceToken("");
+        this.tokens.replaceToken(")");
+      } else if (this.tokens.matches1(tt.jsxTagEnd)) {
+        this.tokens.replaceToken("");
+        // Tag with children.
+        this.processChildren();
+        while (!this.tokens.matches1(tt.jsxTagEnd)) {
+          this.tokens.replaceToken("");
+        }
+        this.tokens.replaceToken(")");
+      } else {
+        throw new Error("Expected either /> or > at the end of the tag.");
+      }
     }
-    return this.lastLineNumber;
   }
 
-  getFilenameVarName(): string {
-    if (!this.filenameVarName) {
-      this.filenameVarName = this.nameManager.claimFreeName("_jsxFileName");
+  /**
+   * Process the first part of a tag, before any props.
+   */
+  processTagIntro(): void {
+    // Walk forward until we see one of these patterns:
+    // jsxName to start the first prop, preceded by another jsxName to end the tag name.
+    // jsxName to start the first prop, preceded by greaterThan to end the type argument.
+    // [open brace] to start the first prop.
+    // [jsxTagEnd] to end the open-tag.
+    // [slash, jsxTagEnd] to end the self-closing tag.
+    let introEnd = this.tokens.currentIndex() + 1;
+    while (
+      this.tokens.tokens[introEnd].isType ||
+      (!this.tokens.matches2AtIndex(introEnd - 1, tt.jsxName, tt.jsxName) &&
+        !this.tokens.matches2AtIndex(introEnd - 1, tt.greaterThan, tt.jsxName) &&
+        !this.tokens.matches1AtIndex(introEnd, tt.braceL) &&
+        !this.tokens.matches1AtIndex(introEnd, tt.jsxTagEnd) &&
+        !this.tokens.matches2AtIndex(introEnd, tt.slash, tt.jsxTagEnd))
+    ) {
+      introEnd++;
     }
-    return this.filenameVarName;
+    if (introEnd === this.tokens.currentIndex() + 1) {
+      const tagName = this.tokens.identifierName();
+      if (startsWithLowerCase(tagName)) {
+        this.tokens.replaceToken(`'${tagName}'`);
+      }
+    }
+    while (this.tokens.currentIndex() < introEnd) {
+      this.rootTransformer.processToken();
+    }
   }
 
   processProps(firstTokenStart: number): void {
@@ -128,35 +185,25 @@ export default class JSXTransformer extends Transformer {
   }
 
   /**
-   * Process the first part of a tag, before any props.
+   * Lazily calculate line numbers to avoid unneeded work. We assume this is always called in
+   * increasing order by index.
    */
-  processTagIntro(): void {
-    // Walk forward until we see one of these patterns:
-    // jsxName to start the first prop, preceded by another jsxName to end the tag name.
-    // jsxName to start the first prop, preceded by greaterThan to end the type argument.
-    // [open brace] to start the first prop.
-    // [jsxTagEnd] to end the open-tag.
-    // [slash, jsxTagEnd] to end the self-closing tag.
-    let introEnd = this.tokens.currentIndex() + 1;
-    while (
-      this.tokens.tokens[introEnd].isType ||
-      (!this.tokens.matches2AtIndex(introEnd - 1, tt.jsxName, tt.jsxName) &&
-        !this.tokens.matches2AtIndex(introEnd - 1, tt.greaterThan, tt.jsxName) &&
-        !this.tokens.matches1AtIndex(introEnd, tt.braceL) &&
-        !this.tokens.matches1AtIndex(introEnd, tt.jsxTagEnd) &&
-        !this.tokens.matches2AtIndex(introEnd, tt.slash, tt.jsxTagEnd))
-    ) {
-      introEnd++;
-    }
-    if (introEnd === this.tokens.currentIndex() + 1) {
-      const tagName = this.tokens.identifierName();
-      if (startsWithLowerCase(tagName)) {
-        this.tokens.replaceToken(`'${tagName}'`);
+  getLineNumberForIndex(index: number): number {
+    const code = this.tokens.code;
+    while (this.lastIndex < index && this.lastIndex < code.length) {
+      if (code[this.lastIndex] === "\n") {
+        this.lastLineNumber++;
       }
+      this.lastIndex++;
     }
-    while (this.tokens.currentIndex() < introEnd) {
-      this.rootTransformer.processToken();
+    return this.lastLineNumber;
+  }
+
+  getFilenameVarName(): string {
+    if (!this.filenameVarName) {
+      this.filenameVarName = this.nameManager.claimFreeName("_jsxFileName");
     }
+    return this.filenameVarName;
   }
 
   processChildren(): void {
@@ -198,53 +245,6 @@ export default class JSXTransformer extends Transformer {
       this.tokens.replaceToken(replacementCode);
     } else {
       this.tokens.replaceToken(`, ${literalCode}${replacementCode}`);
-    }
-  }
-
-  processJSXTag(): void {
-    const {jsxPragmaInfo} = this;
-    const resolvedPragmaBaseName = this.importProcessor
-      ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.base) || jsxPragmaInfo.base
-      : jsxPragmaInfo.base;
-    const firstTokenStart = this.tokens.currentToken().start;
-    // First tag is always jsxTagStart.
-    this.tokens.replaceToken(`${resolvedPragmaBaseName}${jsxPragmaInfo.suffix}(`);
-
-    if (this.tokens.matches1(tt.jsxTagEnd)) {
-      // Fragment syntax.
-      const resolvedFragmentPragmaBaseName = this.importProcessor
-        ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.fragmentBase) ||
-          jsxPragmaInfo.fragmentBase
-        : jsxPragmaInfo.fragmentBase;
-      this.tokens.replaceToken(
-        `${resolvedFragmentPragmaBaseName}${jsxPragmaInfo.fragmentSuffix}, null`,
-      );
-      // Tag with children.
-      this.processChildren();
-      while (!this.tokens.matches1(tt.jsxTagEnd)) {
-        this.tokens.replaceToken("");
-      }
-      this.tokens.replaceToken(")");
-    } else {
-      // Normal open tag or self-closing tag.
-      this.processTagIntro();
-      this.processProps(firstTokenStart);
-
-      if (this.tokens.matches2(tt.slash, tt.jsxTagEnd)) {
-        // Self-closing tag.
-        this.tokens.replaceToken("");
-        this.tokens.replaceToken(")");
-      } else if (this.tokens.matches1(tt.jsxTagEnd)) {
-        this.tokens.replaceToken("");
-        // Tag with children.
-        this.processChildren();
-        while (!this.tokens.matches1(tt.jsxTagEnd)) {
-          this.tokens.replaceToken("");
-        }
-        this.tokens.replaceToken(")");
-      } else {
-        throw new Error("Expected either /> or > at the end of the tag.");
-      }
     }
   }
 }

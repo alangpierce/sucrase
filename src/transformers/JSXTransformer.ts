@@ -135,7 +135,7 @@ export default class JSXTransformer extends Transformer {
       // Normal open tag or self-closing tag.
       this.processTagIntro();
       this.tokens.appendCode(", {");
-      keyCode = this.processPropsBody(true);
+      keyCode = this.processProps(true);
 
       if (this.tokens.matches2(tt.slash, tt.jsxTagEnd)) {
         // Self-closing tag, no children to add, so close the props.
@@ -357,7 +357,7 @@ export default class JSXTransformer extends Transformer {
       return;
     }
     this.tokens.appendCode(`, {`);
-    this.processPropsBody(false);
+    this.processProps(false);
     if (devProps) {
       this.tokens.appendCode(` ${devProps}}`);
     } else {
@@ -366,10 +366,16 @@ export default class JSXTransformer extends Transformer {
   }
 
   /**
-   * Transforms the core part of the props body, assuming that a { has already
-   * been inserted before us and that a } will be inserted after us.
+   * Transforms the core part of the props, assuming that a { has already been
+   * inserted before us and that a } will be inserted after us.
+   *
+   * If extractKeyCode is true (i.e. when using any jsx... function), any prop
+   * named "key" has its code captured and returned rather than being emitted to
+   * the output code. This shifts line numbers, and emitting the code later will
+   * correct line numbers again. If no key is found or if extractKeyCode is
+   * false, this function returns null.
    */
-  processPropsBody(extractKeyCode: boolean): string | null {
+  processProps(extractKeyCode: boolean): string | null {
     let keyCode = null;
     while (true) {
       if (this.tokens.matches2(tt.jsxName, tt.eq)) {
@@ -377,11 +383,16 @@ export default class JSXTransformer extends Transformer {
         const propName = this.tokens.identifierName();
         if (extractKeyCode && propName === "key") {
           if (keyCode !== null) {
-            // The props list has multiple keys. In the automatic transform,
-            // every key but the last is completely removed from the output code
-            // and never evaluated. In the case of multiline keys, we need to
-            // emit all newlines that we are dropping so the total number of
-            // lines matches up.
+            // The props list has multiple keys. Different implementations are
+            // inconsistent about what to do here: as of this writing, Babel and
+            // swc keep the *last* key and completely remove the rest, while
+            // TypeScript uses the *first* key and leaves the others as regular
+            // props. The React team collaborated with Babel on the
+            // implementation of this behavior, so presumably the Babel behavior
+            // is the one to use.
+            // Since we won't ever be emitting the previous key code, we need to
+            // at least emit its newlines here so that the line numbers match up
+            // in the long run.
             this.tokens.appendCode(keyCode.replace(/[^\n]/g, ""));
           }
           // key

@@ -223,22 +223,14 @@ export default class JSXTransformer extends Transformer {
    * target module format.
    */
   getJSXFuncInvocationCode(isStatic: boolean): string {
-    if (this.isAutomaticRuntime) {
-      if (this.options.production) {
-        if (isStatic) {
-          return this.claimAutoImportedFuncInvocation("jsxs", "/jsx-runtime");
-        } else {
-          return this.claimAutoImportedFuncInvocation("jsx", "/jsx-runtime");
-        }
+    if (this.options.production) {
+      if (isStatic) {
+        return this.claimAutoImportedFuncInvocation("jsxs", "/jsx-runtime");
       } else {
-        return this.claimAutoImportedFuncInvocation("jsxDEV", "/jsx-dev-runtime");
+        return this.claimAutoImportedFuncInvocation("jsx", "/jsx-runtime");
       }
     } else {
-      const {jsxPragmaInfo} = this;
-      const resolvedPragmaBaseName = this.importProcessor
-        ? this.importProcessor.getIdentifierReplacement(jsxPragmaInfo.base) || jsxPragmaInfo.base
-        : jsxPragmaInfo.base;
-      return resolvedPragmaBaseName + jsxPragmaInfo.suffix;
+      return this.claimAutoImportedFuncInvocation("jsxDEV", "/jsx-dev-runtime");
     }
   }
 

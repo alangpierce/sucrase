@@ -485,6 +485,7 @@ export default class JSXTransformer extends Transformer {
         // Closing tag, so no more children.
         return;
       }
+      let didEmitElement = false;
       if (this.tokens.matches1(tt.braceL)) {
         if (this.tokens.matches2(tt.braceL, tt.braceR)) {
           // Empty interpolations and comment-only interpolations are allowed
@@ -496,29 +497,41 @@ export default class JSXTransformer extends Transformer {
           this.tokens.replaceToken(needsComma ? ", " : "");
           this.rootTransformer.processBalancedCode();
           this.tokens.replaceToken("");
+          didEmitElement = true;
         }
       } else if (this.tokens.matches1(tt.jsxTagStart)) {
         // Child JSX element
         this.tokens.appendCode(needsComma ? ", " : "");
         this.processJSXTag();
+        didEmitElement = true;
       } else if (this.tokens.matches1(tt.jsxText) || this.tokens.matches1(tt.jsxEmptyText)) {
-        this.processChildTextElement(needsComma);
+        didEmitElement = this.processChildTextElement(needsComma);
       } else {
         throw new Error("Unexpected token when processing JSX children.");
       }
-      needsComma = true;
+      if (didEmitElement) {
+        needsComma = true;
+      }
     }
   }
 
-  processChildTextElement(needsComma: boolean): void {
+  /**
+   * Turn a JSX text element into a string literal, or nothing at all if the JSX
+   * text resolves to the empty string.
+   *
+   * Returns true if a string literal is emitted, false otherwise.
+   */
+  processChildTextElement(needsComma: boolean): boolean {
     const token = this.tokens.currentToken();
     const valueCode = this.tokens.code.slice(token.start, token.end);
     const replacementCode = formatJSXTextReplacement(valueCode);
     const literalCode = formatJSXTextLiteral(valueCode);
     if (literalCode === '""') {
       this.tokens.replaceToken(replacementCode);
+      return false;
     } else {
       this.tokens.replaceToken(`${needsComma ? ", " : ""}${literalCode}${replacementCode}`);
+      return true;
     }
   }
 

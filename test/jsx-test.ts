@@ -167,7 +167,7 @@ describe("transform JSX", () => {
       _jsxDEV('div', { children: "Some text" }, void 0, false, {fileName: _jsxFileName, lineNumber: 4}, this);
       _jsxDEV('div', { children: [...spreadChildrenIntentionallyMarkedStatic]}, void 0, true, {fileName: _jsxFileName, lineNumber: 5}, this);
       _jsxDEV('div', { children: expressionChild}, void 0, false, {fileName: _jsxFileName, lineNumber: 6}, this);
-      _jsxDEV('div', { children: , "Still just one child"   }, void 0, false, {fileName: _jsxFileName, lineNumber: 7}, this);
+      _jsxDEV('div', { children: "Still just one child"   }, void 0, false, {fileName: _jsxFileName, lineNumber: 7}, this);
       _jsxDEV('div', { children: ["Two", "children"]}, void 0, true, {fileName: _jsxFileName, lineNumber: 8}, this);
       _jsxDEV('div', { children: [_jsxDEV(Child1, {}, void 0, false, {fileName: _jsxFileName, lineNumber: 9}, this ), _jsxDEV(Child2, {}, void 0, false, {fileName: _jsxFileName, lineNumber: 9}, this )]}, void 0, true, {fileName: _jsxFileName, lineNumber: 9}, this);
       _jsxDEV('div', { children: ["Child 1" , _jsxDEV(Child2, {}, void 0, false, {fileName: _jsxFileName, lineNumber: 10}, this ), child3]}, void 0, true, {fileName: _jsxFileName, lineNumber: 10}, this);
@@ -181,7 +181,7 @@ describe("transform JSX", () => {
       _jsx('div', { children: "Some text" });
       _jsxs('div', { children: [...spreadChildrenIntentionallyMarkedStatic]});
       _jsx('div', { children: expressionChild});
-      _jsx('div', { children: , "Still just one child"   });
+      _jsx('div', { children: "Still just one child"   });
       _jsxs('div', { children: ["Two", "children"]});
       _jsxs('div', { children: [_jsx(Child1, {} ), _jsx(Child2, {} )]});
       _jsxs('div', { children: ["Child 1" , _jsx(Child2, {} ), child3]});
@@ -255,7 +255,7 @@ describe("transform JSX", () => {
 
         someOtherProp: foo,
  children: 
-        , _jsxDEV('span', { className: "bar",}, computeOtherKey(), false, {fileName: _jsxFileName, lineNumber: 10}, this )
+        _jsxDEV('span', { className: "bar",}, computeOtherKey(), false, {fileName: _jsxFileName, lineNumber: 10}, this )
       }, 
           // We need to call computeKey here.
           computeKey()
@@ -268,7 +268,7 @@ describe("transform JSX", () => {
 
         someOtherProp: foo,
  children: 
-        , _jsx('span', { className: "bar",}, computeOtherKey() )
+        _jsx('span', { className: "bar",}, computeOtherKey() )
       }, 
           // We need to call computeKey here.
           computeKey()
@@ -321,28 +321,28 @@ describe("transform JSX", () => {
         expectedAutomaticDevESMResult: `const _jsxFileName2 = "";import {createElement as _createElement2} from "react";import {jsxDEV as _jsxDEV2, Fragment as _Fragment2} from "react/jsx-dev-runtime";
       let _jsx, _jsxs, _jsxDEV, _Fragment, _createElement, _jsxFileName, _jsxruntime, _jsxdevruntime, _react;
       _jsxDEV2(_Fragment2, { children: [
-        , _jsxDEV2('span', {}, void 0, false, {fileName: _jsxFileName2, lineNumber: 4}, this )
+        _jsxDEV2('span', {}, void 0, false, {fileName: _jsxFileName2, lineNumber: 4}, this )
         , _createElement2('span', { ...props, key: "a", __self: this, __source: {fileName: _jsxFileName2, lineNumber: 5}} )
       ]}, void 0, true, {fileName: _jsxFileName2, lineNumber: 3}, this);
     `,
         expectedAutomaticProdESMResult: `import {createElement as _createElement2} from "react";import {jsxs as _jsxs2, Fragment as _Fragment2, jsx as _jsx2} from "react/jsx-runtime";
       let _jsx, _jsxs, _jsxDEV, _Fragment, _createElement, _jsxFileName, _jsxruntime, _jsxdevruntime, _react;
       _jsxs2(_Fragment2, { children: [
-        , _jsx2('span', {} )
+        _jsx2('span', {} )
         , _createElement2('span', { ...props, key: "a",} )
       ]});
     `,
         expectedAutomaticDevCJSResult: `"use strict";const _jsxFileName2 = "";var _jsxdevruntime2 = require("react/jsx-dev-runtime");var _react2 = require("react");
       let _jsx, _jsxs, _jsxDEV, _Fragment, _createElement, _jsxFileName, _jsxruntime, _jsxdevruntime, _react;
       _jsxdevruntime2.jsxDEV.call(void 0, _jsxdevruntime2.Fragment, { children: [
-        , _jsxdevruntime2.jsxDEV.call(void 0, 'span', {}, void 0, false, {fileName: _jsxFileName2, lineNumber: 4}, this )
+        _jsxdevruntime2.jsxDEV.call(void 0, 'span', {}, void 0, false, {fileName: _jsxFileName2, lineNumber: 4}, this )
         , _react2.createElement.call(void 0, 'span', { ...props, key: "a", __self: this, __source: {fileName: _jsxFileName2, lineNumber: 5}} )
       ]}, void 0, true, {fileName: _jsxFileName2, lineNumber: 3}, this);
     `,
         expectedAutomaticProdCJSResult: `"use strict";var _jsxruntime2 = require("react/jsx-runtime");var _react2 = require("react");
       let _jsx, _jsxs, _jsxDEV, _Fragment, _createElement, _jsxFileName, _jsxruntime, _jsxdevruntime, _react;
       _jsxruntime2.jsxs.call(void 0, _jsxruntime2.Fragment, { children: [
-        , _jsxruntime2.jsx.call(void 0, 'span', {} )
+        _jsxruntime2.jsx.call(void 0, 'span', {} )
         , _react2.createElement.call(void 0, 'span', { ...props, key: "a",} )
       ]});
     `,
@@ -887,7 +887,7 @@ describe("transform JSX", () => {
         expectedAutomaticDevESMResult: `${JSX_PREFIX}import {jsxDEV as _jsxDEV, Fragment as _Fragment} from "react/jsx-dev-runtime";
       const f = (
         _jsxDEV(_Fragment, { children: [
-          , _jsxDEV('div', {}, void 0, false, {fileName: _jsxFileName, lineNumber: 4}, this )
+          _jsxDEV('div', {}, void 0, false, {fileName: _jsxFileName, lineNumber: 4}, this )
           , _jsxDEV('span', {}, void 0, false, {fileName: _jsxFileName, lineNumber: 5}, this )
         ]}, void 0, true, {fileName: _jsxFileName, lineNumber: 3}, this)
       );
@@ -895,7 +895,7 @@ describe("transform JSX", () => {
         expectedAutomaticDevCJSResult: `"use strict";${JSX_PREFIX}var _jsxdevruntime = require("react/jsx-dev-runtime");
       const f = (
         _jsxdevruntime.jsxDEV.call(void 0, _jsxdevruntime.Fragment, { children: [
-          , _jsxdevruntime.jsxDEV.call(void 0, 'div', {}, void 0, false, {fileName: _jsxFileName, lineNumber: 4}, this )
+          _jsxdevruntime.jsxDEV.call(void 0, 'div', {}, void 0, false, {fileName: _jsxFileName, lineNumber: 4}, this )
           , _jsxdevruntime.jsxDEV.call(void 0, 'span', {}, void 0, false, {fileName: _jsxFileName, lineNumber: 5}, this )
         ]}, void 0, true, {fileName: _jsxFileName, lineNumber: 3}, this)
       );
@@ -903,7 +903,7 @@ describe("transform JSX", () => {
         expectedAutomaticProdESMResult: `import {jsxs as _jsxs, Fragment as _Fragment, jsx as _jsx} from "react/jsx-runtime";
       const f = (
         _jsxs(_Fragment, { children: [
-          , _jsx('div', {} )
+          _jsx('div', {} )
           , _jsx('span', {} )
         ]})
       );
@@ -911,7 +911,7 @@ describe("transform JSX", () => {
         expectedAutomaticProdCJSResult: `"use strict";var _jsxruntime = require("react/jsx-runtime");
       const f = (
         _jsxruntime.jsxs.call(void 0, _jsxruntime.Fragment, { children: [
-          , _jsxruntime.jsx.call(void 0, 'div', {} )
+          _jsxruntime.jsx.call(void 0, 'div', {} )
           , _jsxruntime.jsx.call(void 0, 'span', {} )
         ]})
       );
@@ -959,7 +959,7 @@ describe("transform JSX", () => {
         expectedAutomaticDevESMResult: `${JSX_PREFIX}import {createElement as _createElement} from "my-lib";import {jsxDEV as _jsxDEV, Fragment as _Fragment} from "my-lib/jsx-dev-runtime";
       const f = (
         _jsxDEV(_Fragment, { children: [
-          , _jsxDEV('div', {}, void 0, false, {fileName: _jsxFileName, lineNumber: 4}, this )
+          _jsxDEV('div', {}, void 0, false, {fileName: _jsxFileName, lineNumber: 4}, this )
           , _createElement('span', { ...props, key: "a", __self: this, __source: {fileName: _jsxFileName, lineNumber: 5}} )
         ]}, void 0, true, {fileName: _jsxFileName, lineNumber: 3}, this)
       );
@@ -967,7 +967,7 @@ describe("transform JSX", () => {
         expectedAutomaticDevCJSResult: `"use strict";${JSX_PREFIX}var _jsxdevruntime = require("my-lib/jsx-dev-runtime");var _mylib = require("my-lib");
       const f = (
         _jsxdevruntime.jsxDEV.call(void 0, _jsxdevruntime.Fragment, { children: [
-          , _jsxdevruntime.jsxDEV.call(void 0, 'div', {}, void 0, false, {fileName: _jsxFileName, lineNumber: 4}, this )
+          _jsxdevruntime.jsxDEV.call(void 0, 'div', {}, void 0, false, {fileName: _jsxFileName, lineNumber: 4}, this )
           , _mylib.createElement.call(void 0, 'span', { ...props, key: "a", __self: this, __source: {fileName: _jsxFileName, lineNumber: 5}} )
         ]}, void 0, true, {fileName: _jsxFileName, lineNumber: 3}, this)
       );
@@ -975,7 +975,7 @@ describe("transform JSX", () => {
         expectedAutomaticProdESMResult: `import {createElement as _createElement} from "my-lib";import {jsxs as _jsxs, Fragment as _Fragment, jsx as _jsx} from "my-lib/jsx-runtime";
       const f = (
         _jsxs(_Fragment, { children: [
-          , _jsx('div', {} )
+          _jsx('div', {} )
           , _createElement('span', { ...props, key: "a",} )
         ]})
       );
@@ -983,7 +983,7 @@ describe("transform JSX", () => {
         expectedAutomaticProdCJSResult: `"use strict";var _jsxruntime = require("my-lib/jsx-runtime");var _mylib = require("my-lib");
       const f = (
         _jsxruntime.jsxs.call(void 0, _jsxruntime.Fragment, { children: [
-          , _jsxruntime.jsx.call(void 0, 'div', {} )
+          _jsxruntime.jsx.call(void 0, 'div', {} )
           , _mylib.createElement.call(void 0, 'span', { ...props, key: "a",} )
         ]})
       );

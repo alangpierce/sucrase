@@ -127,8 +127,9 @@ configured with a few options:
       introduced with React 17, which calls `jsx` functions and auto-adds import statements.
     To configure for non-React use cases, specify:
     * **jsxImportSource**: Package name for auto-generated import statements, defaults to `react`.
-* **production**: If `true`, don't include extra debugging information. When using
-  React in production mode with the automatic transform, this *must* be set to true.
+* **production**: If `true`, use production version of functions and don't include debugging
+  information. When using React in production mode with the automatic transform, this *must* be
+  set to true to avoid an error about `jsxDEV` being missing.
 
 ### Legacy CommonJS interop
 

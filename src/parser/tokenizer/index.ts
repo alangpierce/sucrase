@@ -32,11 +32,18 @@ export enum IdentifierRole {
  * jsx functions are called in the automatic transform.
  */
 export enum JSXRole {
-  Normal,
+  // The element is self-closing or has a body that resolves to empty. We
+  // shouldn't emit children at all in this case.
+  NoChildren,
+  // The element has a single explicit child, which might still be an arbitrary
+  // expression like an array. We should emit that expression as the children.
+  OneChild,
   // The element has at least two explicitly-specified children or has spread
-  // children.
+  // children, so child positions are assumed to be "static". We should wrap
+  // these children in an array.
   StaticChildren,
-  // The element has a prop named "key" after a prop spread.
+  // The element has a prop named "key" after a prop spread, so we should fall
+  // back to the createElement function.
   KeyAfterPropSpread,
 }
 

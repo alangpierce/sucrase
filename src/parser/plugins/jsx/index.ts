@@ -226,7 +226,7 @@ function jsxParseClosingElement(): void {
 // Does not parse the last token.
 function jsxParseElementAt(): void {
   const initialTokenIndex = state.tokens.length - 1;
-  state.tokens[initialTokenIndex].jsxRole = JSXRole.Normal;
+  state.tokens[initialTokenIndex].jsxRole = JSXRole.NoChildren;
   let numExplicitChildren = 0;
   const isSelfClosing = jsxParseOpeningElement(initialTokenIndex);
   if (!isSelfClosing) {
@@ -238,12 +238,15 @@ function jsxParseElementAt(): void {
           if (match(tt.slash)) {
             nextJSXTagToken();
             jsxParseClosingElement();
-            if (
-              numExplicitChildren > 1 &&
-              // Key after prop spread takes precedence precedence over static children.
-              state.tokens[initialTokenIndex].jsxRole !== JSXRole.KeyAfterPropSpread
-            ) {
-              state.tokens[initialTokenIndex].jsxRole = JSXRole.StaticChildren;
+            // Key after prop spread takes precedence over number of children,
+            // since it means we switch to createElement, which doesn't care
+            // about number of children.
+            if (state.tokens[initialTokenIndex].jsxRole !== JSXRole.KeyAfterPropSpread) {
+              if (numExplicitChildren === 1) {
+                state.tokens[initialTokenIndex].jsxRole = JSXRole.OneChild;
+              } else if (numExplicitChildren > 1) {
+                state.tokens[initialTokenIndex].jsxRole = JSXRole.StaticChildren;
+              }
             }
             return;
           }

@@ -130,7 +130,7 @@ export default class JSXTransformer extends Transformer {
     if (this.tokens.matches1(tt.jsxTagEnd)) {
       // Fragment syntax.
       this.tokens.replaceToken(`${this.getFragmentCode()}, {`);
-      this.processAutomaticChildrenAndEndProps(isStatic);
+      this.processAutomaticChildrenAndEndProps(jsxRole);
     } else {
       // Normal open tag or self-closing tag.
       this.processTagIntro();
@@ -143,7 +143,7 @@ export default class JSXTransformer extends Transformer {
       } else if (this.tokens.matches1(tt.jsxTagEnd)) {
         // Tag with children.
         this.tokens.removeToken();
-        this.processAutomaticChildrenAndEndProps(isStatic);
+        this.processAutomaticChildrenAndEndProps(jsxRole);
       } else {
         throw new Error("Expected either /> or > at the end of the tag.");
       }
@@ -459,16 +459,19 @@ export default class JSXTransformer extends Transformer {
    * Starting in the middle of the props object literal, produce an additional
    * prop for the children and close the object literal.
    */
-  processAutomaticChildrenAndEndProps(isStatic: boolean): void {
-    if (this.tokens.matches2(tt.jsxTagStart, tt.slash)) {
-      // We immediately have a closing tag, so don't emit children at all.
-      this.tokens.appendCode("}");
-    } else if (isStatic) {
+  processAutomaticChildrenAndEndProps(jsxRole: JSXRole): void {
+    if (jsxRole === JSXRole.StaticChildren) {
       this.tokens.appendCode(" children: [");
       this.processChildren(false);
       this.tokens.appendCode("]}");
     } else {
-      this.tokens.appendCode(" children: ");
+      // The parser information tells us whether we will see a real child or if
+      // all remaining children (if any) will resolve to empty. If there are no
+      // non-empty children, don't emit a children prop at all, but still
+      // process children so that we properly transform the code into nothing.
+      if (jsxRole === JSXRole.OneChild) {
+        this.tokens.appendCode(" children: ");
+      }
       this.processChildren(false);
       this.tokens.appendCode("}");
     }

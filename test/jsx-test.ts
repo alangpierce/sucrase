@@ -193,6 +193,58 @@ describe("transform JSX", () => {
     );
   });
 
+  it("properly handles elements with no children", () => {
+    assertJSXResult(
+      `
+      <div />;
+      <div></div>;
+      <div>{/* This is a comment */}</div>;
+      <div>
+        
+        {}
+        
+      </div>;
+      <div>
+        
+        {}   {}
+        
+      </div>;
+    `,
+      {
+        expectedAutomaticDevESMResult: `${JSX_PREFIX}import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";
+      _jsxDEV('div', {}, void 0, false, {fileName: _jsxFileName, lineNumber: 2}, this );
+      _jsxDEV('div', {}, void 0, false, {fileName: _jsxFileName, lineNumber: 3}, this);
+      _jsxDEV('div', {/* This is a comment */}, void 0, false, {fileName: _jsxFileName, lineNumber: 4}, this);
+      _jsxDEV('div', {
+
+        
+
+      }, void 0, false, {fileName: _jsxFileName, lineNumber: 5}, this);
+      _jsxDEV('div', { children: 
+
+        "   "   
+
+      }, void 0, false, {fileName: _jsxFileName, lineNumber: 10}, this);
+    `,
+        expectedAutomaticProdESMResult: `import {jsx as _jsx} from "react/jsx-runtime";
+      _jsx('div', {} );
+      _jsx('div', {});
+      _jsx('div', {/* This is a comment */});
+      _jsx('div', {
+
+        
+
+      });
+      _jsx('div', { children: 
+
+        "   "   
+
+      });
+    `,
+      },
+    );
+  });
+
   it("falls back to createElement in the automatic transform when a key is after a prop spread", () => {
     assertJSXResult(
       `

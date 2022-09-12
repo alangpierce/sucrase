@@ -55,6 +55,8 @@ export const DEFAULT_OPTIONS: HydratedOptions = {
   transforms: ["jsx", "typescript", "imports"],
   disableESTransforms: false,
   production: false,
+  jsxRuntime: "classic",
+  jsxImportSource: "react",
   jsxPragma: "React.createElement",
   jsxFragmentPragma: "React.Fragment",
   preserveDynamicImport: false,

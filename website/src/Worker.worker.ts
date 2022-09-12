@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 import * as Sucrase from "sucrase";
-import type {ModuleKind} from "typescript";
+import type {ModuleKind, JsxEmit} from "typescript";
 
 import getTokens from "./getTokens";
 import {compressCode} from "./URLHashState";
@@ -118,8 +118,14 @@ function runBabel(): {code: string; time: number | null} {
       "react",
       {
         development: !sucraseOptions.production,
-        pragma: sucraseOptions.jsxPragma,
-        pragmaFrag: sucraseOptions.jsxFragmentPragma,
+        runtime: sucraseOptions.jsxRuntime,
+        ...(sucraseOptions.jsxRuntime === "automatic" && {
+          importSource: sucraseOptions.jsxImportSource,
+        }),
+        ...(sucraseOptions.jsxRuntime === "classic" && {
+          pragma: sucraseOptions.jsxPragma,
+          pragmaFrag: sucraseOptions.jsxFragmentPragma,
+        }),
       },
     ]);
   }
@@ -194,12 +200,25 @@ function runTypeScript(): {code: string; time: number | null} {
     module = ModuleKind.ESNext;
   }
 
+  let jsxEmit: JsxEmit;
+  if (sucraseOptions.transforms.includes("jsx")) {
+    if (sucraseOptions.jsxRuntime === "classic") {
+      jsxEmit = JsxEmit.React;
+    } else if (sucraseOptions.production) {
+      jsxEmit = JsxEmit.ReactJSX;
+    } else {
+      jsxEmit = JsxEmit.ReactJSXDev;
+    }
+  } else {
+    jsxEmit = JsxEmit.None;
+  }
+
   return runAndProfile(
     () =>
       transpileModule(config.code, {
         compilerOptions: {
           module,
-          jsx: sucraseOptions.transforms.includes("jsx") ? JsxEmit.React : JsxEmit.Preserve,
+          jsx: jsxEmit,
           target: sucraseOptions.disableESTransforms ? ScriptTarget.ESNext : ScriptTarget.ES2019,
           esModuleInterop: !sucraseOptions.enableLegacyTypeScriptModuleInterop,
           jsxFactory: sucraseOptions.jsxPragma,

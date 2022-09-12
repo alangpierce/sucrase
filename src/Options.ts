@@ -26,15 +26,32 @@ export interface Options {
    */
   disableESTransforms?: boolean;
   /**
-   * Compile code for production use. Currently only applies to the JSX transform.
+   * Transformation mode for the JSX transform. The automatic transform refers
+   * to the transform behavior released with React 17, where the `jsx` function
+   * (or a variation) is automatically imported. The classic transform refers to
+   * the previous behavior using `React.createElement`.
+   *
+   * Default value: "classic"
+   */
+  jsxRuntime?: "classic" | "automatic";
+  /**
+   * Compile code for production use. Currently only applies to the JSX
+   * transform.
    */
   production?: boolean;
   /**
-   * If specified, function name to use in place of React.createClass when compiling JSX.
+   * If specified, import path prefix to use in place of "react" when compiling
+   * JSX with the automatic runtime.
+   */
+  jsxImportSource?: string;
+  /**
+   * If specified, function name to use in place of React.createClass when
+   * compiling JSX with the classic runtime.
    */
   jsxPragma?: string;
   /**
-   * If specified, function name to use in place of React.Fragment when compiling JSX.
+   * If specified, function name to use in place of React.Fragment when
+   * compiling JSX with the classic runtime.
    */
   jsxFragmentPragma?: string;
   /**

@@ -33,8 +33,17 @@ export default class TokenProcessor {
     this.tokenIndex = snapshot.tokenIndex;
   }
 
-  getResultCodeIndex(): number {
-    return this.resultCode.length;
+  /**
+   * Remove and return the code generated since the snapshot, leaving the
+   * current token position in-place. Unlike most TokenProcessor operations,
+   * this operation can result in input/output line number mismatches because
+   * the removed code may contain newlines, so this operation should be used
+   * sparingly.
+   */
+  dangerouslyGetAndRemoveCodeSinceSnapshot(snapshot: TokenProcessorSnapshot): string {
+    const result = this.resultCode.slice(snapshot.resultCode.length);
+    this.resultCode = snapshot.resultCode;
+    return result;
   }
 
   reset(): void {

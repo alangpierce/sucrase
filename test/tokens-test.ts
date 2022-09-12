@@ -507,11 +507,11 @@ describe("tokens", () => {
   });
 
   it("treats single-child JSX as non-static", () => {
-    assertFirstJSXRole("const elem = <div>Hello</div>;", JSXRole.Normal);
+    assertFirstJSXRole("const elem = <div>Hello</div>;", JSXRole.OneChild);
   });
 
   it("treats self-closing JSX as non-static", () => {
-    assertFirstJSXRole("const elem = <div />;", JSXRole.Normal);
+    assertFirstJSXRole("const elem = <div />;", JSXRole.NoChildren);
   });
 
   it("treats JSX with two element children as static", () => {
@@ -527,7 +527,7 @@ describe("tokens", () => {
   });
 
   it("treats JSX with non-spread children as non-static", () => {
-    assertFirstJSXRole("const elem = <div>{elements}</div>;", JSXRole.Normal);
+    assertFirstJSXRole("const elem = <div>{elements}</div>;", JSXRole.OneChild);
   });
 
   it("treats JSX with spread children as static", () => {
@@ -540,7 +540,7 @@ describe("tokens", () => {
       const elem = <div> {} 
       </div>;
     `,
-      JSXRole.Normal,
+      JSXRole.OneChild,
     );
   });
 
@@ -553,7 +553,7 @@ describe("tokens", () => {
         </div>
       );
     `,
-      JSXRole.Normal,
+      JSXRole.NoChildren,
     );
   });
 
@@ -577,15 +577,15 @@ describe("tokens", () => {
   });
 
   it("does not mark as key-after-prop-spread if there is just a key", () => {
-    assertFirstJSXRole("const elem = <div key={1} />;", JSXRole.Normal);
+    assertFirstJSXRole("const elem = <div key={1} />;", JSXRole.NoChildren);
   });
 
   it("does not mark as key-after-prop-spread the key is after regular props", () => {
-    assertFirstJSXRole("const elem = <div foo='a' bar='b' key={1} />;", JSXRole.Normal);
+    assertFirstJSXRole("const elem = <div foo='a' bar='b' key={1} />;", JSXRole.NoChildren);
   });
 
   it("does not mark as key-after-prop-spread if the prop spread is afterward", () => {
-    assertFirstJSXRole("const elem = <div key={1} {...props} />;", JSXRole.Normal);
+    assertFirstJSXRole("const elem = <div key={1} {...props} />;", JSXRole.NoChildren);
   });
 
   it("marks as key-after-prop-spread if there is a prop spread before and after", () => {
@@ -603,11 +603,11 @@ describe("tokens", () => {
   });
 
   it("does not mark as key-after-prop-spread for camelCase props starting with key", () => {
-    assertFirstJSXRole("const elem = <div {...props} keyLimePie={1} />;", JSXRole.Normal);
+    assertFirstJSXRole("const elem = <div {...props} keyLimePie={1} />;", JSXRole.NoChildren);
   });
 
   it("does not mark as key-after-prop-spread for hyphenated props starting with key", () => {
-    assertFirstJSXRole("const elem = <div {...props} key-lime-pie={1} />;", JSXRole.Normal);
+    assertFirstJSXRole("const elem = <div {...props} key-lime-pie={1} />;", JSXRole.NoChildren);
   });
 
   it("marks key-after-prop-spread with higher precedence than static children", () => {

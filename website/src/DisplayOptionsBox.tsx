@@ -1,5 +1,4 @@
 import {css, StyleSheet} from "aphrodite";
-import React from "react";
 
 import CheckBox from "./CheckBox";
 import type {DisplayOptions} from "./Constants";

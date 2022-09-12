@@ -94,6 +94,7 @@ module.exports = {
             loader: require.resolve("@sucrase/webpack-loader"),
             options: {
               transforms: ["jsx", "typescript"],
+              jsxRuntime: "automatic",
               production: true,
             },
           },

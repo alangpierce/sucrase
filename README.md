@@ -118,7 +118,7 @@ by your JS runtime. For example:
 By default, JSX is compiled to React functions in development mode. This can be
 configured with a few options:
 
-* **jsxRuntime**: a string specifying the transform mode, which can be one of two values:
+* **jsxRuntime**: A string specifying the transform mode, which can be one of two values:
   * `"classic"` (default): The original JSX transform that calls `React.createElement` by default.
     To configure for non-React use cases, specify:
     * **jsxPragma**: Element creation function, defaults to `React.createElement`.

@@ -180,7 +180,7 @@ export default class JSXTransformer extends Transformer {
    * Example:
    * <div a={1} key={2}>Hello{x}</div>
    * becomes
-   * React.createElement('div', {a: 1, key: 2}, Hello, x)
+   * React.createElement('div', {a: 1, key: 2}, "Hello", x)
    */
   transformTagToCreateElement(elementLocationCode: string | null): void {
     // First tag is always jsxTagStart.
@@ -279,6 +279,13 @@ export default class JSXTransformer extends Transformer {
     }
   }
 
+  /**
+   * Return code that invokes the given function.
+   *
+   * When the imports transform is enabled, use the CJSImportTransformer
+   * strategy of using `.call(void 0, ...` to avoid passing a `this` value in a
+   * situation that would otherwise look like a method call.
+   */
   claimAutoImportedFuncInvocation(funcName: string, importPathSuffix: string): string {
     const funcCode = this.claimAutoImportedName(funcName, importPathSuffix);
     if (this.importProcessor) {
@@ -290,7 +297,7 @@ export default class JSXTransformer extends Transformer {
 
   claimAutoImportedName(funcName: string, importPathSuffix: string): string {
     if (this.importProcessor) {
-      // CJS mode: claim a name for the module
+      // CJS mode: claim a name for the module and mark it for import.
       const path = this.jsxImportSource + importPathSuffix;
       if (!this.cjsAutomaticModuleNameResolutions[path]) {
         this.cjsAutomaticModuleNameResolutions[path] =
@@ -298,7 +305,8 @@ export default class JSXTransformer extends Transformer {
       }
       return `${this.cjsAutomaticModuleNameResolutions[path]}.${funcName}`;
     } else {
-      // ESM mode: claim a name for this function
+      // ESM mode: claim a name for this function and add it to the names that
+      // should be auto-imported when the prefix is generated.
       if (!this.esmAutomaticImportNameResolutions[funcName]) {
         this.esmAutomaticImportNameResolutions[funcName] = this.nameManager.claimFreeName(
           `_${funcName}`,
@@ -366,7 +374,7 @@ export default class JSXTransformer extends Transformer {
   }
 
   /**
-   * Transforms the core part of the props, assuming that a { has already been
+   * Transform the core part of the props, assuming that a { has already been
    * inserted before us and that a } will be inserted after us.
    *
    * If extractKeyCode is true (i.e. when using any jsx... function), any prop
@@ -435,6 +443,7 @@ export default class JSXTransformer extends Transformer {
       this.tokens.copyToken();
     }
   }
+
   processPropValue(): void {
     if (this.tokens.matches1(tt.braceL)) {
       this.tokens.replaceToken("");

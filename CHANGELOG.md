@@ -1,3 +1,10 @@
+# 3.26.0 (2022-09-12)
+
+* Add support for the JSX automatic runtime, also known as the
+  [React 17 transform](https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html).
+  It can be enabled using `jsxRuntime: true` and configured using the `production` and `jsxImportSource`
+  configs. ([#738], [#739], [#742], [#740])
+
 # 3.25.0 (2022-08-01)
 
 * Add two new options to more closely match the `module: nodenext` option from
@@ -455,3 +462,7 @@
 [#727]: https://github.com/alangpierce/sucrase/pull/727
 [#728]: https://github.com/alangpierce/sucrase/pull/728
 [#732]: https://github.com/alangpierce/sucrase/pull/732
+[#738]: https://github.com/alangpierce/sucrase/pull/738
+[#739]: https://github.com/alangpierce/sucrase/pull/739
+[#740]: https://github.com/alangpierce/sucrase/pull/740
+[#742]: https://github.com/alangpierce/sucrase/pull/742

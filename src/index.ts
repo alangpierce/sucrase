@@ -30,7 +30,7 @@ export type SourceMapOptions = import("./Options").SourceMapOptions;
 export type Transform = import("./Options").Transform;
 
 export function getVersion(): string {
-  return "3.25.0";
+  return "3.26.0";
 }
 
 export function transform(code: string, options: Options): TransformResult {

@@ -1,5 +1,5 @@
 import {css, StyleSheet} from "aphrodite";
-import React, {Component} from "react";
+import {Component} from "react";
 import {hot} from "react-hot-loader/root";
 
 import {

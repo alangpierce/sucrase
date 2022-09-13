@@ -1,5 +1,5 @@
 import {css, StyleSheet} from "aphrodite";
-import React, {useState} from "react";
+import {useState} from "react";
 import type {Transform} from "sucrase";
 
 import CheckBox from "./CheckBox";
@@ -122,6 +122,7 @@ export default function SucraseOptionsBox({
             (t) => showSecondaryOptions || ["jsx", "typescript", "flow", "imports"].includes(t),
           ).map((transformName) => (
             <CheckBox
+              key={transformName}
               label={transformName}
               checked={options.transforms.includes(transformName)}
               onChange={(checked) => {

@@ -1,5 +1,4 @@
 import {css, StyleSheet} from "aphrodite";
-import React from "react";
 
 interface SelectProps<T extends string> {
   options: Array<T>;
@@ -24,7 +23,9 @@ export default function SimpleSelect<T extends string>({
       }}
     >
       {options.map((option) => (
-        <option value={option}>{option}</option>
+        <option key={option} value={option}>
+          {option}
+        </option>
       ))}
     </select>
   );

@@ -1,5 +1,5 @@
 import {css, StyleSheet} from "aphrodite";
-import React, {ReactNode} from "react";
+import type {ReactNode} from "react";
 
 interface OptionsBoxProps {
   children: ReactNode;

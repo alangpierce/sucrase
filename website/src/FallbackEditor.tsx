@@ -1,5 +1,4 @@
 import {css, StyleSheet} from "aphrodite";
-import React from "react";
 
 interface FallbackEditorProps {
   width: number;

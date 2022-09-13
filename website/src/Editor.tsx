@@ -1,5 +1,5 @@
 import type {editor} from "monaco-editor";
-import React, {Component} from "react";
+import {Component} from "react";
 import type {EditorDidMount} from "react-monaco-editor";
 
 interface EditorProps {

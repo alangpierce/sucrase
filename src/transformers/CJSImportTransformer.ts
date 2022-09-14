@@ -10,6 +10,7 @@ import getDeclarationInfo, {
   EMPTY_DECLARATION_INFO,
 } from "../util/getDeclarationInfo";
 import getImportExportSpecifierInfo from "../util/getImportExportSpecifierInfo";
+import {removeMaybeImportAssertion} from "../util/removeMaybeImportAssertion";
 import shouldElideDefaultExport from "../util/shouldElideDefaultExport";
 import type ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
 import type RootTransformer from "./RootTransformer";
@@ -143,6 +144,7 @@ export default class CJSImportTransformer extends Transformer {
       this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
       this.tokens.appendCode(this.importProcessor.claimImportCode(path));
     }
+    removeMaybeImportAssertion(this.tokens);
     if (this.tokens.matches1(tt.semi)) {
       this.tokens.removeToken();
     }
@@ -330,6 +332,7 @@ export default class CJSImportTransformer extends Transformer {
       ) {
         this.tokens.removeToken();
         this.tokens.removeToken();
+        removeMaybeImportAssertion(this.tokens);
       }
       return true;
     } else {
@@ -781,6 +784,7 @@ export default class CJSImportTransformer extends Transformer {
       this.tokens.removeToken();
       const path = this.tokens.stringValue();
       this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
+      removeMaybeImportAssertion(this.tokens);
     } else {
       // This is a normal named export, so use that.
       this.tokens.appendCode(exportStatements.join(" "));
@@ -798,6 +802,7 @@ export default class CJSImportTransformer extends Transformer {
     }
     const path = this.tokens.stringValue();
     this.tokens.replaceTokenTrimmingLeftWhitespace(this.importProcessor.claimImportCode(path));
+    removeMaybeImportAssertion(this.tokens);
     if (this.tokens.matches1(tt.semi)) {
       this.tokens.removeToken();
     }

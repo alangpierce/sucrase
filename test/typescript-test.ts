@@ -1,5 +1,6 @@
 import type {Options} from "../src/Options";
 import {
+  CREATE_NAMED_EXPORT_FROM_PREFIX,
   CREATE_REQUIRE_PREFIX,
   CREATE_STAR_EXPORT_PREFIX,
   ESMODULE_PREFIX,
@@ -3411,6 +3412,54 @@ describe("typescript transform", () => {
       React.createElement('in', { T: true, ${devProps(2)}}, "() => "  )
     `,
       {transforms: ["typescript", "jsx"]},
+    );
+  });
+
+  it("allows and preserves import assertions when targeting ESM", () => {
+    assertResult(
+      `
+      import jsonValue from "./file1.json" assert {type: "json"};
+      import implicitlyElidedImport from "./file2.json" assert {type: "json"};
+      import type explicitlyElidedImport from "./file3.json" assert {type: "json"};
+      import "./file4.json" assert {type: "json"};
+      export {val} from './file5.json' assert {type: "json"};
+      export type {val} from './file6.json' assert {type: "json"};
+      console.log(jsonValue);
+    `,
+      `
+      import jsonValue from "./file1.json" assert {type: "json"};
+
+
+      import "./file4.json" assert {type: "json"};
+      export {val} from './file5.json' assert {type: "json"};
+      ;
+      console.log(jsonValue);
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("removes import assertions when targeting CJS", () => {
+    assertResult(
+      `
+      import jsonValue from "./file1.json" assert {type: "json"};
+      import implicitlyElidedImport from "./file2.json" assert {type: "json"};
+      import type explicitlyElidedImport from "./file3.json" assert {type: "json"};
+      import "./file4.json" assert {type: "json"};
+      export {val} from './file5.json' assert {type: "json"};
+      export type {val} from './file6.json' assert {type: "json"};
+      console.log(jsonValue);
+    `,
+      `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}${CREATE_NAMED_EXPORT_FROM_PREFIX}
+      var _file1json = require('./file1.json'); var _file1json2 = _interopRequireDefault(_file1json);
+      
+      
+      require('./file4.json');
+      var _file5json = require('./file5.json'); _createNamedExportFrom(_file5json, 'val', 'val');
+      ;
+      console.log(_file1json2.default);
+    `,
+      {transforms: ["typescript", "imports"]},
     );
   });
 });

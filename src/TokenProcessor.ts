@@ -189,6 +189,24 @@ export default class TokenProcessor {
     this.replaceTokenTrimmingLeftWhitespace("");
   }
 
+  /**
+   * Remove all code until the next }, accounting for balanced braces.
+   */
+  removeBalancedCode(): void {
+    let braceDepth = 0;
+    while (!this.isAtEnd()) {
+      if (this.matches1(tt.braceL)) {
+        braceDepth++;
+      } else if (this.matches1(tt.braceR)) {
+        if (braceDepth === 0) {
+          return;
+        }
+        braceDepth--;
+      }
+      this.removeToken();
+    }
+  }
+
   copyExpectedToken(tokenType: TokenType): void {
     if (this.tokens[this.tokenIndex].type !== tokenType) {
       throw new Error(`Expected token ${tokenType}`);

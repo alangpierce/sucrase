@@ -15,7 +15,17 @@ function assertTokens(
 ): void {
   const tokens: Array<SimpleToken> = parse(code, true, !isFlow, isFlow).tokens;
   const helpMessage = `Tokens did not match. Starting point with just token types: [${tokens
-    .map((t) => `{type: tt.${tt[t.type]}}`)
+    .map((t) => {
+      let tokenCode = "{";
+      tokenCode += `type: tt.${tt[t.type]}`;
+      if (t.contextualKeyword) {
+        tokenCode += `, contextualKeyword: ContextualKeyword.${
+          ContextualKeyword[t.contextualKeyword]
+        }`;
+      }
+      tokenCode += "}";
+      return tokenCode;
+    })
     .join(", ")}]`;
   assert.strictEqual(tokens.length, expectedTokens.length, helpMessage);
   const projectedTokens = tokens.map((token, i) => {
@@ -503,6 +513,42 @@ describe("tokens", () => {
         {type: tt.eof},
       ],
       {isFlow: true},
+    );
+  });
+
+  it("parses import assertions", () => {
+    assertTokens(
+      `
+      import foo from "./foo.json" assert {type: "json"};
+      export {val} from './foo.js' assert {type: "javascript"};
+    `,
+      [
+        {type: tt._import},
+        {type: tt.name},
+        {type: tt.name, contextualKeyword: ContextualKeyword._from},
+        {type: tt.string},
+        {type: tt.name, contextualKeyword: ContextualKeyword._assert},
+        {type: tt.braceL},
+        {type: tt.name, contextualKeyword: ContextualKeyword._type},
+        {type: tt.colon},
+        {type: tt.string},
+        {type: tt.braceR},
+        {type: tt.semi},
+        {type: tt._export},
+        {type: tt.braceL},
+        {type: tt.name},
+        {type: tt.braceR},
+        {type: tt.name, contextualKeyword: ContextualKeyword._from},
+        {type: tt.string},
+        {type: tt.name, contextualKeyword: ContextualKeyword._assert},
+        {type: tt.braceL},
+        {type: tt.name, contextualKeyword: ContextualKeyword._type},
+        {type: tt.colon},
+        {type: tt.string},
+        {type: tt.braceR},
+        {type: tt.semi},
+        {type: tt.eof},
+      ],
     );
   });
 

@@ -3,6 +3,7 @@ export enum ContextualKeyword {
   _abstract,
   _accessor,
   _as,
+  _assert,
   _asserts,
   _async,
   _await,

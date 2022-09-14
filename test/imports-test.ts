@@ -327,6 +327,23 @@ return obj && obj.__esModule ? obj : { default: obj }; }
     );
   });
 
+  it("removes import assertions", () => {
+    assertResult(
+      `
+      import DefaultName from 'module1' assert {type: "json"};
+      import {namedName} from 'module2' assert {type: "json"};
+      import "module3" assert {type: "json"};
+      export * from "module4" assert {type: "json"};
+    `,
+      `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}${CREATE_STAR_EXPORT_PREFIX}
+      var _module1 = require('module1'); var _module12 = _interopRequireDefault(_module1);
+      var _module2 = require('module2');
+      require('module3');
+      var _module4 = require('module4'); _createStarExport(_module4);
+    `,
+    );
+  });
+
   it("allows an import statement with no import bindings", () => {
     assertResult(
       `

@@ -27,18 +27,8 @@ const JsxEmitReactJSXDev = 5;
  */
 function create(createOptions) {
   const {nodeModuleEmitKind} = createOptions;
-  const {module, jsx, jsxFactory, jsxFragmentFactory, esModuleInterop} =
+  const {module, jsx, jsxFactory, jsxFragmentFactory, jsxImportSource, esModuleInterop} =
     createOptions.service.config.options;
-
-  // A project with the new JSX transform configured likely has at least one
-  // file with JSX where React is not imported, so fail fast and suggest the
-  // old JSX transform as a workaround.
-  if (jsx === JsxEmitReactJSX || jsx === JsxEmitReactJSXDev) {
-    throw new Error(
-      'The JSX modes "react-jsx" and "react-jsxdev" are not yet ' +
-        'supported by Sucrase. Consider using "react" as a workaround.',
-    );
-  }
 
   return {
     transpile(input, transpileOptions) {
@@ -64,6 +54,9 @@ function create(createOptions) {
       const {code, sourceMap} = transform(input, {
         transforms,
         disableESTransforms: true,
+        jsxRuntime: jsx === JsxEmitReactJSX || jsx === JsxEmitReactJSXDev ? "automatic" : "classic",
+        production: jsx === JsxEmitReactJSX,
+        jsxImportSource,
         jsxPragma: jsxFactory,
         jsxFragmentPragma: jsxFragmentFactory,
         preserveDynamicImport: nodeModuleEmitKind === "nodecjs",

@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "target": "ESNext",
+    "esModuleInterop": true,
+    "jsx": "react-jsxdev",
+  },
+}

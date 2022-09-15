@@ -1,3 +1,7 @@
+# 3.27.0 (2022-09-15)
+
+* Add support for `assert {type: 'json'}` in import statements. ([#746])
+
 # 3.26.0 (2022-09-12)
 
 * Add support for the JSX automatic runtime, also known as the
@@ -466,3 +470,4 @@
 [#739]: https://github.com/alangpierce/sucrase/pull/739
 [#740]: https://github.com/alangpierce/sucrase/pull/740
 [#742]: https://github.com/alangpierce/sucrase/pull/742
+[#746]: https://github.com/alangpierce/sucrase/pull/746

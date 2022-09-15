@@ -334,12 +334,18 @@ return obj && obj.__esModule ? obj : { default: obj }; }
       import {namedName} from 'module2' assert {type: "json"};
       import "module3" assert {type: "json"};
       export * from "module4" assert {type: "json"};
+      // Arbitrary expressions like these aren't actually allowed right now, but
+      // exercise the ability to detect matching braces.
+      import test from "module5" assert {type: {foo: "test"}};
     `,
       `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}${CREATE_STAR_EXPORT_PREFIX}
       var _module1 = require('module1'); var _module12 = _interopRequireDefault(_module1);
       var _module2 = require('module2');
       require('module3');
       var _module4 = require('module4'); _createStarExport(_module4);
+      // Arbitrary expressions like these aren't actually allowed right now, but
+      // exercise the ability to detect matching braces.
+      var _module5 = require('module5'); var _module52 = _interopRequireDefault(_module5);
     `,
     );
   });

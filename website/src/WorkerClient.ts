@@ -1,4 +1,4 @@
-import {Message, WorkerConfig, WorkerMessage} from "./WorkerProtocol";
+import type {Message, WorkerConfig, WorkerMessage} from "./WorkerProtocol";
 
 const CANCELLED_MESSAGE = "SUCRASE JOB CANCELLED";
 const TIMEOUT_MESSAGE = "SUCRASE JOB TIMED OUT";
@@ -184,17 +184,21 @@ async function workerLoop(): Promise<void> {
     try {
       await setConfig(config);
       const sucraseCode = await runSucrase();
-      const babelCode = config.compareWithBabel ? await runBabel() : "";
-      const typeScriptCode = config.compareWithTypeScript ? await runTypeScript() : "";
-      const tokensStr = config.showTokens ? await getTokens() : "";
+      const babelCode = config.displayOptions.compareWithBabel ? await runBabel() : "";
+      const typeScriptCode = config.displayOptions.compareWithTypeScript
+        ? await runTypeScript()
+        : "";
+      const tokensStr = config.displayOptions.showTokens ? await getTokens() : "";
       updateStateFn({sucraseCode, babelCode, typeScriptCode, tokensStr});
 
       const compressedCode = await compressCode();
       handleCompressedCodeFn(compressedCode);
 
       const sucraseTimeMs = await profile(profileSucrase);
-      const babelTimeMs = config.compareWithBabel ? await profile(profileBabel) : null;
-      const typeScriptTimeMs = config.compareWithTypeScript
+      const babelTimeMs = config.displayOptions.compareWithBabel
+        ? await profile(profileBabel)
+        : null;
+      const typeScriptTimeMs = config.displayOptions.compareWithTypeScript
         ? await profile(profileTypeScript)
         : null;
       updateStateFn({sucraseTimeMs, babelTimeMs, typeScriptTimeMs});

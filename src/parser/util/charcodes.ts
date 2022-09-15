@@ -1,6 +1,7 @@
 export enum charCodes {
   backSpace = 8,
   lineFeed = 10, //  '\n'
+  tab = 9, //  '\t'
   carriageReturn = 13, //  '\r'
   shiftOut = 14,
   space = 32,

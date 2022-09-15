@@ -1,6 +1,6 @@
 import {css, StyleSheet} from "aphrodite";
-import {editor} from "monaco-editor";
-import React, {Component} from "react";
+import type {editor} from "monaco-editor";
+import {Component} from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 
 import Editor from "./Editor";

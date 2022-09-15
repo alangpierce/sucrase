@@ -1,21 +1,20 @@
 import * as Base64 from "base64-js";
 import GZip from "gzip-js";
+import {produce} from "immer";
+import type {Transform} from "sucrase";
 
 import {
-  DEFAULT_COMPARE_WITH_BABEL,
-  DEFAULT_COMPARE_WITH_TYPESCRIPT,
-  DEFAULT_SHOW_TOKENS,
-  DEFAULT_TRANSFORMS,
+  DEFAULT_DISPLAY_OPTIONS,
+  DEFAULT_OPTIONS,
+  DisplayOptions,
+  HydratedOptions,
   INITIAL_CODE,
-  TRANSFORMS,
 } from "./Constants";
 
 interface BaseHashState {
   code: string;
-  selectedTransforms: {[transformName: string]: boolean};
-  compareWithBabel: boolean;
-  compareWithTypeScript: boolean;
-  showTokens: boolean;
+  sucraseOptions: HydratedOptions;
+  displayOptions: DisplayOptions;
 }
 
 type HashState = BaseHashState & {compressedCode: string};
@@ -23,28 +22,25 @@ type HashState = BaseHashState & {compressedCode: string};
 export function saveHashState({
   code,
   compressedCode,
-  selectedTransforms,
-  compareWithBabel,
-  compareWithTypeScript,
-  showTokens,
+  sucraseOptions,
+  displayOptions,
 }: HashState): void {
   const components = [];
 
-  const transformsValue = TRANSFORMS.filter(({name}) => selectedTransforms[name])
-    .map(({name}) => name)
-    .join(",");
-
-  if (transformsValue !== DEFAULT_TRANSFORMS.join(",")) {
-    components.push(`selectedTransforms=${transformsValue}`);
+  for (const [key, defaultValue] of Object.entries(DEFAULT_OPTIONS)) {
+    const value = sucraseOptions[key];
+    if (JSON.stringify(value) !== JSON.stringify(defaultValue)) {
+      // Booleans, strings, and string arrays can all be formatted in a
+      // URL-friendly way by simply converting to string.
+      const formattedValue = String(value);
+      components.push(`${key}=${encodeURIComponent(formattedValue)}`);
+    }
   }
-  if (compareWithBabel !== DEFAULT_COMPARE_WITH_BABEL) {
-    components.push(`compareWithBabel=${compareWithBabel}`);
-  }
-  if (compareWithTypeScript !== DEFAULT_COMPARE_WITH_TYPESCRIPT) {
-    components.push(`compareWithTypeScript=${compareWithTypeScript}`);
-  }
-  if (showTokens !== DEFAULT_SHOW_TOKENS) {
-    components.push(`showTokens=${showTokens}`);
+  for (const [key, defaultValue] of Object.entries(DEFAULT_DISPLAY_OPTIONS)) {
+    const value = displayOptions[key];
+    if (value !== defaultValue) {
+      components.push(`${key}=${value}`);
+    }
   }
 
   if (code !== INITIAL_CODE) {
@@ -66,27 +62,41 @@ export function saveHashState({
   }
 }
 
-export function loadHashState(): Partial<BaseHashState> | null {
+export function loadHashState(): BaseHashState | null {
   try {
     const hashContents = window.location.hash;
     if (!hashContents.startsWith("#")) {
       return null;
     }
     const components = hashContents.slice(1).split("&");
-    const result: Partial<HashState> = {};
+    let result: BaseHashState = {
+      code: INITIAL_CODE,
+      sucraseOptions: DEFAULT_OPTIONS,
+      displayOptions: DEFAULT_DISPLAY_OPTIONS,
+    };
     for (const component of components) {
       const [key, value] = component.split("=");
       if (key === "selectedTransforms") {
-        result.selectedTransforms = {};
-        for (const transformName of value.split(",")) {
-          result.selectedTransforms[transformName] = true;
-        }
+        // Old URLs may have the old name selectedTransforms rather than transforms.
+        result = produce(result, (draft) => {
+          draft.sucraseOptions.transforms = value.split(",") as Array<Transform>;
+        });
+      } else if (Object.prototype.hasOwnProperty.call(DEFAULT_OPTIONS, key)) {
+        result = produce(result, (draft) => {
+          draft.sucraseOptions[key] = parseOptionValue(key, decodeURIComponent(value));
+        });
       } else if (key === "code") {
-        result.code = decodeURIComponent(value);
+        result = produce(result, (draft) => {
+          draft.code = decodeURIComponent(value);
+        });
       } else if (key === "compressedCode") {
-        result.code = decompressCode(decodeURIComponent(value));
-      } else if (["compareWithBabel", "compareWithTypeScript", "showTokens"].includes(key)) {
-        result[key] = value === "true";
+        result = produce(result, (draft) => {
+          draft.code = decompressCode(decodeURIComponent(value));
+        });
+      } else if (Object.prototype.hasOwnProperty.call(DEFAULT_DISPLAY_OPTIONS, key)) {
+        result = produce(result, (draft) => {
+          draft.displayOptions[key] = value === "true";
+        });
       }
     }
     // Deleting code and refreshing should give the default state again.
@@ -100,6 +110,22 @@ export function loadHashState(): Partial<BaseHashState> | null {
     // eslint-disable-next-line no-console
     console.error(e);
     return null;
+  }
+}
+
+/**
+ * Parse a raw value from URL by looking at the type of the default value.
+ */
+function parseOptionValue(key: string, rawValue: string): string | boolean | Array<string> {
+  const defaultValue = DEFAULT_OPTIONS[key];
+  if (typeof defaultValue === "boolean") {
+    return rawValue === "true";
+  } else if (typeof defaultValue === "string") {
+    return rawValue;
+  } else if (Array.isArray(defaultValue)) {
+    return rawValue.split(",");
+  } else {
+    throw new Error(`Unexpected type when reading option ${key}`);
   }
 }
 

@@ -1,3 +1,7 @@
+import type {Options} from "sucrase";
+
+import type {DisplayOptions} from "./Constants";
+
 export type Message =
   | {type: "SET_CONFIG"; config: WorkerConfig}
   | {type: "RUN_SUCRASE"}
@@ -15,9 +19,7 @@ export type WorkerMessage =
   | {type: "TYPESCRIPT_LOADED"};
 
 export interface WorkerConfig {
-  compareWithBabel: boolean;
-  compareWithTypeScript: boolean;
   code: string;
-  selectedTransforms: {[transformName: string]: boolean};
-  showTokens: boolean;
+  sucraseOptions: Options;
+  displayOptions: DisplayOptions;
 }

@@ -1,4 +1,4 @@
-import {Transform} from "sucrase";
+import type {Options, Transform} from "sucrase";
 
 export const INITIAL_CODE = `\
 // Try typing or pasting some code into the left editor!
@@ -30,22 +30,49 @@ export default App;
 
 `;
 
-interface TransformInfo {
-  name: Transform;
-  presetName?: unknown;
-  babelName?: string;
-}
-
-export const TRANSFORMS: Array<TransformInfo> = [
-  {name: "jsx", presetName: ["react", {development: true}]},
-  {name: "typescript", presetName: ["typescript", {allowDeclareFields: true}]},
-  {name: "flow", presetName: "flow", babelName: "transform-flow-enums"},
-  {name: "imports", babelName: "transform-modules-commonjs"},
-  {name: "react-hot-loader", babelName: "react-hot-loader"},
-  {name: "jest", babelName: "jest-hoist"},
+export const TRANSFORMS: Array<Transform> = [
+  "jsx",
+  "typescript",
+  "flow",
+  "imports",
+  "react-hot-loader",
+  "jest",
 ];
 
-export const DEFAULT_TRANSFORMS = ["jsx", "typescript", "imports"];
-export const DEFAULT_COMPARE_WITH_BABEL = true;
-export const DEFAULT_COMPARE_WITH_TYPESCRIPT = false;
-export const DEFAULT_SHOW_TOKENS = false;
+export type HydratedOptions = Omit<Required<Options>, "filePath" | "sourceMapOptions">;
+
+/**
+ * Default value for each option to show for the website.
+ *
+ * This is not required to match the default values from Sucrase itself (e.g.
+ * it's useful to have a few transforms enabled for the demo), but it's most
+ * clear to match Sucrase defaults as much as possible.
+ *
+ * This object also doubles as a way of list of options and their types for the
+ * purpose of URL parsing and formatting.
+ */
+export const DEFAULT_OPTIONS: HydratedOptions = {
+  transforms: ["jsx", "typescript", "imports"],
+  disableESTransforms: false,
+  production: false,
+  jsxRuntime: "classic",
+  jsxImportSource: "react",
+  jsxPragma: "React.createElement",
+  jsxFragmentPragma: "React.Fragment",
+  preserveDynamicImport: false,
+  injectCreateRequireForImportRequire: false,
+  enableLegacyTypeScriptModuleInterop: false,
+  enableLegacyBabel5ModuleInterop: false,
+};
+
+export interface DisplayOptions {
+  compareWithBabel: boolean;
+  compareWithTypeScript: boolean;
+  showTokens: boolean;
+}
+
+export const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
+  compareWithBabel: true,
+  compareWithTypeScript: false,
+  showTokens: false,
+};

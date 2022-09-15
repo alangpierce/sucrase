@@ -169,7 +169,7 @@ export default class CJSImportProcessor {
     }
   }
 
-  private getFreeIdentifierForPath(path: string): string {
+  getFreeIdentifierForPath(path: string): string {
     const components = path.split("/");
     const lastComponent = components[components.length - 1];
     const baseName = lastComponent.replace(/\W/g, "");

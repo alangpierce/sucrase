@@ -64,6 +64,7 @@ import {
   parseIdentifier,
   parseMaybeAssign,
   parseMethod,
+  parseObj,
   parseParenExpression,
   parsePropertyName,
 } from "./expression";
@@ -78,6 +79,7 @@ import {
   eatContextual,
   expect,
   expectContextual,
+  hasPrecedingLineBreak,
   isContextual,
   isLineTerminator,
   semicolon,
@@ -996,6 +998,7 @@ function parseExportSpecifiersMaybe(): void {
 export function parseExportFrom(): void {
   if (eatContextual(ContextualKeyword._from)) {
     parseExprAtom();
+    maybeParseImportAssertions();
   }
   semicolon();
 }
@@ -1118,6 +1121,7 @@ export function parseImport(): void {
     expectContextual(ContextualKeyword._from);
     parseExprAtom();
   }
+  maybeParseImportAssertions();
   semicolon();
 }
 
@@ -1189,5 +1193,18 @@ function parseImportSpecifier(): void {
     state.tokens[state.tokens.length - 1].identifierRole = IdentifierRole.ImportAccess;
     next();
     parseImportedIdentifier();
+  }
+}
+
+/**
+ * Parse import assertions like `assert {type: "json"}`.
+ *
+ * Import assertions technically have their own syntax, but are always parseable
+ * as a plain JS object, so just do that for simplicity.
+ */
+function maybeParseImportAssertions(): void {
+  if (isContextual(ContextualKeyword._assert) && !hasPrecedingLineBreak()) {
+    next();
+    parseObj(false, false);
   }
 }

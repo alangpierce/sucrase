@@ -83,7 +83,7 @@ export default function getClassInfo(
       const statementStartIndex = tokens.currentIndex();
       let isStatic = false;
       let isESPrivate = false;
-      let isDeclare = false;
+      let isDeclareOrAbstract = false;
       while (isAccessModifier(tokens.currentToken())) {
         if (tokens.matches1(tt._static)) {
           isStatic = true;
@@ -91,8 +91,8 @@ export default function getClassInfo(
         if (tokens.matches1(tt.hash)) {
           isESPrivate = true;
         }
-        if (tokens.matches1(tt._declare)) {
-          isDeclare = true;
+        if (tokens.matches1(tt._declare) || tokens.matches1(tt._abstract)) {
+          isDeclareOrAbstract = true;
         }
         tokens.nextToken();
       }
@@ -151,12 +151,12 @@ export default function getClassInfo(
           start: nameStartIndex,
           end: tokens.currentIndex(),
         });
-      } else if (!disableESTransforms || isDeclare) {
+      } else if (!disableESTransforms || isDeclareOrAbstract) {
         // This is a regular field declaration, like `x;`. With the class transform enabled, we just
         // remove the line so that no output is produced. With the class transform disabled, we
         // usually want to preserve the declaration (but still strip types), but if the `declare`
-        // keyword is specified, we should remove the line to avoid initializing the value to
-        // undefined.
+        // or `abstract` keyword is specified, we should remove the line to avoid initializing the
+        // value to undefined.
         rangesToRemove.push({start: statementStartIndex, end: tokens.currentIndex()});
       }
     }

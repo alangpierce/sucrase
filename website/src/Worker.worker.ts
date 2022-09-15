@@ -1,12 +1,10 @@
 /* eslint-disable no-restricted-globals */
 import * as Sucrase from "sucrase";
+import type {ModuleKind, JsxEmit} from "typescript";
 
-import {TRANSFORMS} from "./Constants";
 import getTokens from "./getTokens";
 import {compressCode} from "./URLHashState";
-import {Message, WorkerConfig, WorkerMessage} from "./WorkerProtocol";
-
-type Transform = Sucrase.Transform;
+import type {Message, WorkerConfig, WorkerMessage} from "./WorkerProtocol";
 
 declare const self: Worker;
 
@@ -76,7 +74,7 @@ function processEvent(data: Message): unknown {
   } else if (data.type === "COMPRESS_CODE") {
     return compressCode(config.code);
   } else if (data.type === "GET_TOKENS") {
-    return getTokens(config.code, getSelectedTransforms());
+    return getTokens(config.code, config.sucraseOptions);
   } else if (data.type === "PROFILE_SUCRASE") {
     return runSucrase().time;
   } else if (data.type === "PROFILE_BABEL") {
@@ -87,13 +85,9 @@ function processEvent(data: Message): unknown {
   return null;
 }
 
-function getSelectedTransforms(): Array<Transform> {
-  return TRANSFORMS.map(({name}) => name).filter((name) => config.selectedTransforms[name]);
-}
-
 function getFilePath(): string {
-  if (config.selectedTransforms.typescript) {
-    if (config.selectedTransforms.jsx) {
+  if (config.sucraseOptions.transforms.includes("typescript")) {
+    if (config.sucraseOptions.transforms.includes("jsx")) {
       return "sample.tsx";
     } else {
       return "sample.ts";
@@ -105,9 +99,7 @@ function getFilePath(): string {
 
 function runSucrase(): {code: string; time: number | null} {
   return runAndProfile(
-    () =>
-      Sucrase.transform(config.code, {transforms: getSelectedTransforms(), filePath: getFilePath()})
-        .code,
+    () => Sucrase.transform(config.code, {filePath: getFilePath(), ...config.sucraseOptions}).code,
   );
 }
 
@@ -116,26 +108,66 @@ function runBabel(): {code: string; time: number | null} {
     return {code: "Loading Babel...", time: null};
   }
   const {transform} = Babel;
-  const babelPlugins = TRANSFORMS.filter(({name}) => config.selectedTransforms[name])
-    .map(({babelName}) => babelName)
-    .filter((name) => name);
-  const babelPresets = TRANSFORMS.filter(({name}) => config.selectedTransforms[name])
-    .map(({presetName}) => presetName)
-    .filter((name) => name);
+  const {sucraseOptions} = config;
+
+  const plugins: Array<string> = [];
+  const presets: Array<string | [string, unknown]> = [];
+
+  if (sucraseOptions.transforms.includes("jsx")) {
+    presets.push([
+      "react",
+      {
+        development: !sucraseOptions.production,
+        runtime: sucraseOptions.jsxRuntime,
+        ...(sucraseOptions.jsxRuntime === "automatic" && {
+          importSource: sucraseOptions.jsxImportSource,
+        }),
+        ...(sucraseOptions.jsxRuntime === "classic" && {
+          pragma: sucraseOptions.jsxPragma,
+          pragmaFrag: sucraseOptions.jsxFragmentPragma,
+        }),
+      },
+    ]);
+  }
+  if (sucraseOptions.transforms.includes("typescript")) {
+    presets.push(["typescript", {allowDeclareFields: true}]);
+  }
+  if (sucraseOptions.transforms.includes("flow")) {
+    presets.push("flow");
+    plugins.push("transform-flow-enums");
+  }
+  if (sucraseOptions.transforms.includes("imports")) {
+    plugins.push("transform-modules-commonjs");
+  }
+  if (sucraseOptions.transforms.includes("react-hot-loader")) {
+    plugins.push("react-hot-loader");
+  }
+  if (sucraseOptions.transforms.includes("jest")) {
+    plugins.push("jest-hoist");
+  }
+
+  plugins.push("proposal-export-namespace-from");
+
+  if (!sucraseOptions.disableESTransforms) {
+    plugins.push(
+      "proposal-numeric-separator",
+      "proposal-optional-catch-binding",
+      "proposal-nullish-coalescing-operator",
+      "proposal-optional-chaining",
+      "syntax-import-assertions",
+    );
+  }
+
+  if (!sucraseOptions.preserveDynamicImport) {
+    plugins.push("dynamic-import-node");
+  }
+
   return runAndProfile(
     () =>
       transform(config.code, {
-        filename: getFilePath(),
-        presets: babelPresets,
-        plugins: [
-          ...babelPlugins,
-          "proposal-export-namespace-from",
-          "proposal-numeric-separator",
-          "proposal-optional-catch-binding",
-          "proposal-nullish-coalescing-operator",
-          "proposal-optional-chaining",
-          "dynamic-import-node",
-        ],
+        filename: sucraseOptions.filePath || getFilePath(),
+        presets,
+        plugins,
         parserOpts: {
           plugins: [
             "classProperties",
@@ -155,21 +187,43 @@ function runTypeScript(): {code: string; time: number | null} {
     return {code: "Loading TypeScript...", time: null};
   }
   const {transpileModule, ModuleKind, JsxEmit, ScriptTarget} = TypeScript;
-  for (const {name} of TRANSFORMS) {
-    if (["typescript", "imports", "jsx"].includes(name)) {
-      continue;
-    }
-    if (config.selectedTransforms[name]) {
-      return {code: `Transform "${name}" is not valid in TypeScript.`, time: null};
-    }
+  const {sucraseOptions} = config;
+  const invalidTransforms = sucraseOptions.transforms.filter(
+    (t) => !["typescript", "imports", "jsx"].includes(t),
+  );
+  if (invalidTransforms.length > 0) {
+    return {code: `Transform "${invalidTransforms[0]}" is not valid in TypeScript.`, time: null};
   }
+  let module: ModuleKind;
+  if (sucraseOptions.transforms.includes("imports")) {
+    module = sucraseOptions.preserveDynamicImport ? ModuleKind.NodeNext : ModuleKind.CommonJS;
+  } else {
+    module = ModuleKind.ESNext;
+  }
+
+  let jsxEmit: JsxEmit;
+  if (sucraseOptions.transforms.includes("jsx")) {
+    if (sucraseOptions.jsxRuntime === "classic") {
+      jsxEmit = JsxEmit.React;
+    } else if (sucraseOptions.production) {
+      jsxEmit = JsxEmit.ReactJSX;
+    } else {
+      jsxEmit = JsxEmit.ReactJSXDev;
+    }
+  } else {
+    jsxEmit = JsxEmit.None;
+  }
+
   return runAndProfile(
     () =>
       transpileModule(config.code, {
         compilerOptions: {
-          module: config.selectedTransforms.imports ? ModuleKind.CommonJS : ModuleKind.ESNext,
-          jsx: config.selectedTransforms.jsx ? JsxEmit.React : JsxEmit.Preserve,
-          target: ScriptTarget.ES2020,
+          module,
+          jsx: jsxEmit,
+          target: sucraseOptions.disableESTransforms ? ScriptTarget.ESNext : ScriptTarget.ES2019,
+          esModuleInterop: !sucraseOptions.enableLegacyTypeScriptModuleInterop,
+          jsxFactory: sucraseOptions.jsxPragma,
+          jsxFragmentFactory: sucraseOptions.jsxFragmentPragma,
         },
       }).outputText,
   );

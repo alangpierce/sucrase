@@ -131,11 +131,21 @@ by your JS runtime. For example:
 
 ### JSX Options
 
-Like Babel, Sucrase compiles JSX to React functions by default, but can be
-configured for any JSX use case.
+By default, JSX is compiled to React functions in development mode. This can be
+configured with a few options:
 
-* **jsxPragma**: Element creation function, defaults to `React.createElement`.
-* **jsxFragmentPragma**: Fragment component, defaults to `React.Fragment`.
+* **jsxRuntime**: A string specifying the transform mode, which can be one of two values:
+  * `"classic"` (default): The original JSX transform that calls `React.createElement` by default.
+    To configure for non-React use cases, specify:
+    * **jsxPragma**: Element creation function, defaults to `React.createElement`.
+    * **jsxFragmentPragma**: Fragment component, defaults to `React.Fragment`.
+  * `"automatic"`: The [new JSX transform](https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html)
+      introduced with React 17, which calls `jsx` functions and auto-adds import statements.
+    To configure for non-React use cases, specify:
+    * **jsxImportSource**: Package name for auto-generated import statements, defaults to `react`.
+* **production**: If `true`, use production version of functions and don't include debugging
+  information. When using React in production mode with the automatic transform, this *must* be
+  set to true to avoid an error about `jsxDEV` being missing.
 
 ### Legacy CommonJS interop
 

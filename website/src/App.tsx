@@ -1,26 +1,24 @@
 import {css, StyleSheet} from "aphrodite";
-import React, {Component} from "react";
+import {Component} from "react";
 import {hot} from "react-hot-loader/root";
 
 import {
-  DEFAULT_COMPARE_WITH_BABEL,
-  DEFAULT_COMPARE_WITH_TYPESCRIPT,
-  DEFAULT_SHOW_TOKENS,
-  DEFAULT_TRANSFORMS,
+  DEFAULT_DISPLAY_OPTIONS,
+  DEFAULT_OPTIONS,
+  DisplayOptions,
+  HydratedOptions,
   INITIAL_CODE,
-  TRANSFORMS,
 } from "./Constants";
+import DisplayOptionsBox from "./DisplayOptionsBox";
 import EditorWrapper from "./EditorWrapper";
-import OptionBox from "./OptionBox";
+import SucraseOptionsBox from "./SucraseOptionsBox";
 import {loadHashState, saveHashState} from "./URLHashState";
 import * as WorkerClient from "./WorkerClient";
 
 interface State {
   code: string;
-  compareWithBabel: boolean;
-  compareWithTypeScript: boolean;
-  showTokens: boolean;
-  selectedTransforms: {[transformName: string]: boolean};
+  displayOptions: DisplayOptions;
+  sucraseOptions: HydratedOptions;
   sucraseCode: string;
   sucraseTimeMs: number | null | "LOADING";
   babelCode: string;
@@ -38,11 +36,8 @@ class App extends Component<unknown, State> {
     super(props);
     this.state = {
       code: INITIAL_CODE,
-      compareWithBabel: DEFAULT_COMPARE_WITH_BABEL,
-      compareWithTypeScript: DEFAULT_COMPARE_WITH_TYPESCRIPT,
-      showTokens: DEFAULT_SHOW_TOKENS,
-      // Object with a true value for any selected transform keys.
-      selectedTransforms: DEFAULT_TRANSFORMS.reduce((o, name) => ({...o, [name]: true}), {}),
+      displayOptions: DEFAULT_DISPLAY_OPTIONS,
+      sucraseOptions: DEFAULT_OPTIONS,
       sucraseCode: "",
       sucraseTimeMs: null,
       babelCode: "",
@@ -58,16 +53,6 @@ class App extends Component<unknown, State> {
     if (hashState) {
       this.state = {...this.state, ...hashState};
     }
-    // Auto-expand if any of the hidden-by-default options are explicitly
-    // specified.
-    if (
-      hashState &&
-      (hashState.compareWithBabel != null ||
-        hashState.compareWithTypeScript ||
-        hashState.showTokens != null)
-    ) {
-      this.state = {...this.state, showMore: true};
-    }
   }
 
   componentDidMount(): void {
@@ -79,10 +64,8 @@ class App extends Component<unknown, State> {
         saveHashState({
           code: this.state.code,
           compressedCode,
-          selectedTransforms: this.state.selectedTransforms,
-          compareWithBabel: this.state.compareWithBabel,
-          compareWithTypeScript: this.state.compareWithTypeScript,
-          showTokens: this.state.showTokens,
+          sucraseOptions: this.state.sucraseOptions,
+          displayOptions: this.state.displayOptions,
         });
       },
     });
@@ -92,10 +75,8 @@ class App extends Component<unknown, State> {
   componentDidUpdate(prevProps: unknown, prevState: State): void {
     if (
       this.state.code !== prevState.code ||
-      this.state.selectedTransforms !== prevState.selectedTransforms ||
-      this.state.compareWithBabel !== prevState.compareWithBabel ||
-      this.state.compareWithTypeScript !== prevState.compareWithTypeScript ||
-      this.state.showTokens !== prevState.showTokens ||
+      this.state.sucraseOptions !== prevState.sucraseOptions ||
+      this.state.displayOptions !== prevState.displayOptions ||
       this.state.babelLoaded !== prevState.babelLoaded ||
       this.state.typeScriptLoaded !== prevState.typeScriptLoaded
     ) {
@@ -106,11 +87,9 @@ class App extends Component<unknown, State> {
   postConfigToWorker(): void {
     this.setState({sucraseTimeMs: "LOADING", babelTimeMs: "LOADING", typeScriptTimeMs: "LOADING"});
     WorkerClient.updateConfig({
-      compareWithBabel: this.state.compareWithBabel,
-      compareWithTypeScript: this.state.compareWithTypeScript,
       code: this.state.code,
-      selectedTransforms: this.state.selectedTransforms,
-      showTokens: this.state.showTokens,
+      sucraseOptions: this.state.sucraseOptions,
+      displayOptions: this.state.displayOptions,
     });
   }
 
@@ -118,18 +97,6 @@ class App extends Component<unknown, State> {
     this.setState({
       code: newCode,
     });
-  };
-
-  _toggleCompareWithBabel = (): void => {
-    this.setState({compareWithBabel: !this.state.compareWithBabel});
-  };
-
-  _toggleCompareWithTypeScript = (): void => {
-    this.setState({compareWithTypeScript: !this.state.compareWithTypeScript});
-  };
-
-  _toggleShowTokens = (): void => {
-    this.setState({showTokens: !this.state.showTokens});
   };
 
   render(): JSX.Element {
@@ -153,60 +120,18 @@ class App extends Component<unknown, State> {
           </a>
         </span>
         <div className={css(styles.options)}>
-          <OptionBox
-            title="Transforms"
-            options={TRANSFORMS.map(({name}) => ({
-              text: name,
-              checked: Boolean(this.state.selectedTransforms[name]),
-              onToggle: () => {
-                let newTransforms = this.state.selectedTransforms;
-                newTransforms = {...newTransforms, [name]: !newTransforms[name]};
-                // Don't allow typescript and flow at the same time.
-                if (newTransforms.typescript && newTransforms.flow) {
-                  if (name === "typescript") {
-                    newTransforms = {...newTransforms, flow: false};
-                  } else if (name === "flow") {
-                    newTransforms = {...newTransforms, typescript: false};
-                  }
-                }
-                this.setState({selectedTransforms: newTransforms});
-              },
-            }))}
+          <SucraseOptionsBox
+            options={this.state.sucraseOptions}
+            onUpdateOptions={(sucraseOptions) => {
+              this.setState({sucraseOptions});
+            }}
           />
-          {this.state.showMore && (
-            <OptionBox
-              title="Settings"
-              options={[
-                {
-                  text: "Compare with Babel",
-                  checked: this.state.compareWithBabel,
-                  onToggle: this._toggleCompareWithBabel,
-                },
-                {
-                  text: "Compare with TypeScript",
-                  checked: this.state.compareWithTypeScript,
-                  onToggle: this._toggleCompareWithTypeScript,
-                },
-                {
-                  text: "Show tokens",
-                  checked: this.state.showTokens,
-                  onToggle: this._toggleShowTokens,
-                },
-              ]}
-            />
-          )}
-          {!this.state.showMore && (
-            <a
-              className={css(styles.link)}
-              onClick={(e) => {
-                this.setState({showMore: true});
-                e.preventDefault();
-              }}
-              href="#more"
-            >
-              More...
-            </a>
-          )}
+          <DisplayOptionsBox
+            displayOptions={this.state.displayOptions}
+            onUpdateDisplayOptions={(displayOptions: DisplayOptions) => {
+              this.setState({displayOptions});
+            }}
+          />
         </div>
 
         <div className={css(styles.editors)}>
@@ -223,7 +148,7 @@ class App extends Component<unknown, State> {
             isReadOnly={true}
             babelLoaded={this.state.babelLoaded}
           />
-          {this.state.compareWithBabel && (
+          {this.state.displayOptions.compareWithBabel && (
             <EditorWrapper
               label="Transformed with Babel"
               code={babelCode}
@@ -232,7 +157,7 @@ class App extends Component<unknown, State> {
               babelLoaded={this.state.babelLoaded}
             />
           )}
-          {this.state.compareWithTypeScript && (
+          {this.state.displayOptions.compareWithTypeScript && (
             <EditorWrapper
               label="Transformed with TypeScript"
               code={typeScriptCode}
@@ -241,7 +166,7 @@ class App extends Component<unknown, State> {
               babelLoaded={this.state.babelLoaded}
             />
           )}
-          {this.state.showTokens && (
+          {this.state.displayOptions.showTokens && (
             <EditorWrapper
               label="Tokens"
               code={tokensStr}

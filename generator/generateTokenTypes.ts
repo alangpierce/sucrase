@@ -112,6 +112,7 @@ const types = {
 
   jsxName: new TokenType("jsxName"),
   jsxText: new TokenType("jsxText"),
+  jsxEmptyText: new TokenType("jsxEmptyText"),
   jsxTagStart: new TokenType("jsxTagStart", {startsExpr}),
   jsxTagEnd: new TokenType("jsxTagEnd"),
   typeParameterStart: new TokenType("typeParameterStart", {startsExpr}),

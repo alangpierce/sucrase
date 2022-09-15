@@ -69,62 +69,63 @@ export enum TokenType {
   exponent = 54348, // ** prec:12 rightAssociative
   jsxName = 55296, // jsxName
   jsxText = 56320, // jsxText
-  jsxTagStart = 57856, // jsxTagStart startsExpr
-  jsxTagEnd = 58368, // jsxTagEnd
-  typeParameterStart = 59904, // typeParameterStart startsExpr
-  nonNullAssertion = 60416, // nonNullAssertion
-  _break = 61456, // break keyword
-  _case = 62480, // case keyword
-  _catch = 63504, // catch keyword
-  _continue = 64528, // continue keyword
-  _debugger = 65552, // debugger keyword
-  _default = 66576, // default keyword
-  _do = 67600, // do keyword
-  _else = 68624, // else keyword
-  _finally = 69648, // finally keyword
-  _for = 70672, // for keyword
-  _function = 72208, // function keyword startsExpr
-  _if = 72720, // if keyword
-  _return = 73744, // return keyword
-  _switch = 74768, // switch keyword
-  _throw = 76432, // throw keyword prefix startsExpr
-  _try = 76816, // try keyword
-  _var = 77840, // var keyword
-  _let = 78864, // let keyword
-  _const = 79888, // const keyword
-  _while = 80912, // while keyword
-  _with = 81936, // with keyword
-  _new = 83472, // new keyword startsExpr
-  _this = 84496, // this keyword startsExpr
-  _super = 85520, // super keyword startsExpr
-  _class = 86544, // class keyword startsExpr
-  _extends = 87056, // extends keyword
-  _export = 88080, // export keyword
-  _import = 89616, // import keyword startsExpr
-  _yield = 90640, // yield keyword startsExpr
-  _null = 91664, // null keyword startsExpr
-  _true = 92688, // true keyword startsExpr
-  _false = 93712, // false keyword startsExpr
-  _in = 94232, // in prec:8 keyword
-  _instanceof = 95256, // instanceof prec:8 keyword
-  _typeof = 96912, // typeof keyword prefix startsExpr
-  _void = 97936, // void keyword prefix startsExpr
-  _delete = 98960, // delete keyword prefix startsExpr
-  _async = 99856, // async keyword startsExpr
-  _get = 100880, // get keyword startsExpr
-  _set = 101904, // set keyword startsExpr
-  _declare = 102928, // declare keyword startsExpr
-  _readonly = 103952, // readonly keyword startsExpr
-  _abstract = 104976, // abstract keyword startsExpr
-  _static = 106000, // static keyword startsExpr
-  _public = 106512, // public keyword
-  _private = 107536, // private keyword
-  _protected = 108560, // protected keyword
-  _override = 109584, // override keyword
-  _as = 111120, // as keyword startsExpr
-  _enum = 112144, // enum keyword startsExpr
-  _type = 113168, // type keyword startsExpr
-  _implements = 114192, // implements keyword startsExpr
+  jsxEmptyText = 57344, // jsxEmptyText
+  jsxTagStart = 58880, // jsxTagStart startsExpr
+  jsxTagEnd = 59392, // jsxTagEnd
+  typeParameterStart = 60928, // typeParameterStart startsExpr
+  nonNullAssertion = 61440, // nonNullAssertion
+  _break = 62480, // break keyword
+  _case = 63504, // case keyword
+  _catch = 64528, // catch keyword
+  _continue = 65552, // continue keyword
+  _debugger = 66576, // debugger keyword
+  _default = 67600, // default keyword
+  _do = 68624, // do keyword
+  _else = 69648, // else keyword
+  _finally = 70672, // finally keyword
+  _for = 71696, // for keyword
+  _function = 73232, // function keyword startsExpr
+  _if = 73744, // if keyword
+  _return = 74768, // return keyword
+  _switch = 75792, // switch keyword
+  _throw = 77456, // throw keyword prefix startsExpr
+  _try = 77840, // try keyword
+  _var = 78864, // var keyword
+  _let = 79888, // let keyword
+  _const = 80912, // const keyword
+  _while = 81936, // while keyword
+  _with = 82960, // with keyword
+  _new = 84496, // new keyword startsExpr
+  _this = 85520, // this keyword startsExpr
+  _super = 86544, // super keyword startsExpr
+  _class = 87568, // class keyword startsExpr
+  _extends = 88080, // extends keyword
+  _export = 89104, // export keyword
+  _import = 90640, // import keyword startsExpr
+  _yield = 91664, // yield keyword startsExpr
+  _null = 92688, // null keyword startsExpr
+  _true = 93712, // true keyword startsExpr
+  _false = 94736, // false keyword startsExpr
+  _in = 95256, // in prec:8 keyword
+  _instanceof = 96280, // instanceof prec:8 keyword
+  _typeof = 97936, // typeof keyword prefix startsExpr
+  _void = 98960, // void keyword prefix startsExpr
+  _delete = 99984, // delete keyword prefix startsExpr
+  _async = 100880, // async keyword startsExpr
+  _get = 101904, // get keyword startsExpr
+  _set = 102928, // set keyword startsExpr
+  _declare = 103952, // declare keyword startsExpr
+  _readonly = 104976, // readonly keyword startsExpr
+  _abstract = 106000, // abstract keyword startsExpr
+  _static = 107024, // static keyword startsExpr
+  _public = 107536, // public keyword
+  _private = 108560, // private keyword
+  _protected = 109584, // protected keyword
+  _override = 110608, // override keyword
+  _as = 112144, // as keyword startsExpr
+  _enum = 113168, // enum keyword startsExpr
+  _type = 114192, // type keyword startsExpr
+  _implements = 115216, // implements keyword startsExpr
 }
 export function formatTokenType(tokenType: TokenType): string {
   switch (tokenType) {
@@ -240,6 +241,8 @@ export function formatTokenType(tokenType: TokenType): string {
       return "jsxName";
     case TokenType.jsxText:
       return "jsxText";
+    case TokenType.jsxEmptyText:
+      return "jsxEmptyText";
     case TokenType.jsxTagStart:
       return "jsxTagStart";
     case TokenType.jsxTagEnd:

@@ -154,6 +154,7 @@ function runBabel(): {code: string; time: number | null} {
       "proposal-optional-catch-binding",
       "proposal-nullish-coalescing-operator",
       "proposal-optional-chaining",
+      "syntax-import-assertions",
     );
   }
 

@@ -10,6 +10,7 @@
     "sucrase": "^3.18.0"
   },
   "devDependencies": {
+    "@jest/transform": "^29.1.2",
     "@types/node": "^16.11.4"
   }
 }

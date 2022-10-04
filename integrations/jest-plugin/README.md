@@ -14,9 +14,17 @@ yarn add --dev @sucrase/jest-plugin
 ```
 
 Then change the default transform in jest.config.js file:
-```
+```ts
   ...
   transform: { "\\.(js|jsx|ts|tsx)$": "@sucrase/jest-plugin" },
+  ...
+```
+
+You can specify additional transformation options to sucrase by passing an object. For example, to enable automatic react transforms:
+
+```ts
+  ...
+  transform: { "\\.(js|jsx|ts|tsx)$": ["@sucrase/jest-plugin", { jsxRuntime: 'automatic' }] },
   ...
 ```
 

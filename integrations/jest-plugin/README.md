@@ -14,12 +14,22 @@ yarn add --dev @sucrase/jest-plugin
 ```
 
 Then change the default transform in jest.config.js file:
-```
+```ts
   ...
   transform: { "\\.(js|jsx|ts|tsx)$": "@sucrase/jest-plugin" },
   ...
 ```
 
-Currently, the transforms are not configurable; it uses always runs the import
+You can specify additional transformation options to sucrase by passing an object. For example, to enable automatic react transforms:
+
+```ts
+  ...
+  transform: { "\\.(js|jsx|ts|tsx)$": ["@sucrase/jest-plugin", { jsxRuntime: 'automatic' }] },
+  ...
+```
+
+You may also pass a `transforms` array in the options, but this will override sucrase's own transform detection based on file extension. This means that the transforms you specify will be applied to all files, regardless of extension.
+
+If you don't specify `transforms`, the plugin will always runs the import
 and jest transforms and uses the file extension to decide whether to run the
 JSX, Flow, and/or TypeScript transforms.

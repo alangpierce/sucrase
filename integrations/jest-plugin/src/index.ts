@@ -1,4 +1,7 @@
+import type {TransformOptions} from "@jest/transform";
 import {Transform, transform} from "sucrase";
+
+import type {Options} from "../../../src/Options";
 
 function getTransforms(filename: string): Array<Transform> | null {
   if (filename.endsWith(".js") || filename.endsWith(".jsx")) {
@@ -18,11 +21,13 @@ type RawSourceMap = ReturnType<typeof transform>["sourceMap"];
 export function process(
   src: string,
   filename: string,
+  options: TransformOptions<Partial<Options>>,
 ): {code: string; map?: RawSourceMap | string | null} {
   const transforms = getTransforms(filename);
   if (transforms !== null) {
     const {code, sourceMap} = transform(src, {
       transforms,
+      ...options.transformerConfig,
       sourceMapOptions: {compiledFilename: filename},
       filePath: filename,
     });

@@ -1,3 +1,9 @@
+# 3.28.0 (2022-10-05)
+
+* Add [ts-node](https://github.com/TypeStrong/ts-node) transpiler plugin, available as `sucrase/ts-node-plugin`.
+  This makes it possible to use Sucrase with all ts-node features such as an ESM loader, a REPL, and configuration
+  via tsconfig.json. ([#729])
+
 # 3.27.0 (2022-09-15)
 
 * Add support for `assert {type: 'json'}` in import statements. ([#746])
@@ -465,6 +471,7 @@
 [#723]: https://github.com/alangpierce/sucrase/pull/723
 [#727]: https://github.com/alangpierce/sucrase/pull/727
 [#728]: https://github.com/alangpierce/sucrase/pull/728
+[#729]: https://github.com/alangpierce/sucrase/pull/729
 [#732]: https://github.com/alangpierce/sucrase/pull/732
 [#738]: https://github.com/alangpierce/sucrase/pull/738
 [#739]: https://github.com/alangpierce/sucrase/pull/739

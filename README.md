@@ -19,7 +19,7 @@ Using the [ts-node](https://github.com/TypeStrong/ts-node) integration:
 
 ```bash
 yarn add --dev sucrase ts-node typescript
-npx ts-node --transpiler sucrase/ts-node-plugin main.ts
+./node_modules/.bin/ts-node --transpiler sucrase/ts-node-plugin main.ts
 ```
 
 ## Project overview

@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "target": "ESNext",
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "my-library"
+  }
+}

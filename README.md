@@ -6,7 +6,23 @@
 [![MIT License](https://img.shields.io/npm/l/express.svg?maxAge=2592000)](LICENSE)
 [![Join the chat at https://gitter.im/sucrasejs](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sucrasejs/Lobby)
 
-### [Try it out](https://sucrase.io)
+## [Try it out](https://sucrase.io)
+
+## Quick usage
+
+```bash
+yarn add --dev sucrase  # Or npm install --save-dev sucrase
+node -r sucrase/register main.ts
+```
+
+Using the [ts-node](https://github.com/TypeStrong/ts-node) integration:
+
+```bash
+yarn add --dev sucrase ts-node typescript
+./node_modules/.bin/ts-node --transpiler sucrase/ts-node-plugin main.ts
+```
+
+## Project overview
 
 Sucrase is an alternative to Babel that allows super-fast development builds.
 Instead of compiling a large range of JS features to be able to work in Internet
@@ -150,41 +166,40 @@ Two legacy modes can be used with the `imports` transform:
 
 ## Usage
 
-Installation:
+### Tool integrations
 
+* [Webpack](https://github.com/alangpierce/sucrase/tree/main/integrations/webpack-loader)
+* [Gulp](https://github.com/alangpierce/sucrase/tree/main/integrations/gulp-plugin)
+* [Jest](https://github.com/alangpierce/sucrase/tree/main/integrations/jest-plugin)
+* [Rollup](https://github.com/rollup/plugins/tree/master/packages/sucrase)
+* [Broccoli](https://github.com/stefanpenner/broccoli-sucrase)
+
+### Usage in Node
+
+The most robust way is to use the Sucrase plugin for [ts-node](https://github.com/TypeStrong/ts-node),
+which has various Node integrations and configures Sucrase via `tsconfig.json`:
 ```bash
-yarn add --dev sucrase  # Or npm install --save-dev sucrase
+ts-node --transpiler sucrase/ts-node-plugin
 ```
 
-Often, you'll want to use one of the build tool integrations:
-[Webpack](https://github.com/alangpierce/sucrase/tree/main/integrations/webpack-loader),
-[Gulp](https://github.com/alangpierce/sucrase/tree/main/integrations/gulp-plugin),
-[Jest](https://github.com/alangpierce/sucrase/tree/main/integrations/jest-plugin),
-[Rollup](https://github.com/rollup/plugins/tree/master/packages/sucrase),
-[Broccoli](https://github.com/stefanpenner/broccoli-sucrase).
+For projects that don't target ESM, Sucrase also has a require hook with some
+reasonable defaults that can be accessed in a few ways:
 
-Compile on-the-fly via a require hook with some [reasonable defaults](src/register.ts):
+* From code: `require("sucrase/register");`
+* When invoking Node: `node -r sucrase/register main.ts`
+* As a separate binary: `sucrase-node main.ts`
 
-```js
-// Register just one extension.
-require("sucrase/register/ts");
-// Or register all at once.
-require("sucrase/register");
-```
+### Compiling a project to JS
 
-Compile on-the-fly via a drop-in replacement for node:
-
-```bash
-sucrase-node index.ts
-```
-
-Run on a directory:
-
+For simple use cases, Sucrase comes with a `sucrase` CLI that mirrors your
+directory structure to an output directory:
 ```bash
 sucrase ./srcDir -d ./outDir --transforms typescript,imports
 ```
 
-Call from JS directly:
+### Usage from code
+
+For any advanced use cases, Sucrase can be called from JS directly:
 
 ```js
 import {transform} from "sucrase";

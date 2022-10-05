@@ -19,6 +19,7 @@ jobs:
       - run: yarn build
       - run: yarn lint
       - run: yarn test-with-coverage && yarn report-coverage
+      - run: yarn integration-test
       - run: yarn test262
       - run: yarn check-babel-tests
   test-older-node:

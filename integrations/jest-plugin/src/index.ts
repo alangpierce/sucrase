@@ -21,13 +21,13 @@ type RawSourceMap = ReturnType<typeof transform>["sourceMap"];
 export function process(
   src: string,
   filename: string,
-  options: TransformOptions<Options>,
+  options: TransformOptions<Partial<Options>>,
 ): {code: string; map?: RawSourceMap | string | null} {
   const transforms = getTransforms(filename);
   if (transforms !== null) {
     const {code, sourceMap} = transform(src, {
-      ...options.transformerConfig,
       transforms,
+      ...options.transformerConfig,
       sourceMapOptions: {compiledFilename: filename},
       filePath: filename,
     });

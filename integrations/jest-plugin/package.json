@@ -12,5 +12,8 @@
   "devDependencies": {
     "@jest/transform": "^29.1.2",
     "@types/node": "^16.11.4"
+  },
+  "peerDependencies": {
+    "jest": ">=27"
   }
 }

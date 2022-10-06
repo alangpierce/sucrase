@@ -84,6 +84,8 @@ async function buildIntegration(path: string): Promise<void> {
     await run(
       `${TSC} --emitDeclarationOnly --declaration --isolatedModules false --project ${path} --outDir ${path}/dist`,
     );
+    // Make all integrations available to be linked to integration tests.
+    await run("yarn link");
   }
 }
 

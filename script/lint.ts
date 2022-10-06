@@ -31,6 +31,7 @@ async function checkSucrase(): Promise<void> {
         "benchmark",
         "example-runner",
         "generator",
+        "integration-test",
         "script",
         "spec-compliance-tests",
         "src",

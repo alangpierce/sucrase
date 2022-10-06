@@ -32,7 +32,11 @@ export function process(
       filePath: filename,
     });
     const mapBase64 = Buffer.from(JSON.stringify(sourceMap)).toString("base64");
-    const suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+    // Split the source map comment across two strings so that tools like
+    // source-map-support don't accidentally interpret it as a source map
+    // comment for this file.
+    let suffix = "//# sourceMapping";
+    suffix += `URL=data:application/json;charset=utf-8;base64,${mapBase64}`;
     // sourceMappingURL is necessary for breakpoints to work in WebStorm, so
     // include it in addition to specifying the source map normally.
     return {code: `${code}\n${suffix}`, map: sourceMap};

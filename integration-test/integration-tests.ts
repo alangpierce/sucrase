@@ -1,11 +1,12 @@
-import {join} from "path";
-import {exec} from "child_process";
-import {promisify} from "util";
-import {readdirSync, statSync} from "fs";
-const execPromise = promisify(exec);
-import {dirname} from "path";
-import {readJSONFileContentsIfExists} from "../script/util/readFileContents";
 import assert from "assert";
+import {exec} from "child_process";
+import {readdirSync, statSync} from "fs";
+import {join, dirname} from "path";
+import {promisify} from "util";
+
+import {readJSONFileContentsIfExists} from "../script/util/readFileContents";
+
+const execPromise = promisify(exec);
 
 describe("integration tests", () => {
   const originalCwd = process.cwd();

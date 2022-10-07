@@ -3,13 +3,14 @@ import {Transform, transform} from "sucrase";
 
 import type {Options} from "../../../src/Options";
 
-function getTransforms(filename: string): Array<Transform> | null {
+function getTransforms(filename: string, supportsStaticESM: boolean): Array<Transform> | null {
+  const maybeImports: Array<Transform> = supportsStaticESM ? [] : ["imports"];
   if (filename.endsWith(".js") || filename.endsWith(".jsx")) {
-    return ["flow", "jsx", "imports", "jest"];
+    return [...maybeImports, "flow", "jsx", "jest"];
   } else if (filename.endsWith(".ts")) {
-    return ["typescript", "imports", "jest"];
+    return [...maybeImports, "typescript", "jest"];
   } else if (filename.endsWith(".tsx")) {
-    return ["typescript", "jsx", "imports", "jest"];
+    return [...maybeImports, "typescript", "jsx", "jest"];
   }
   return null;
 }
@@ -23,10 +24,11 @@ export function process(
   filename: string,
   options: TransformOptions<Partial<Options>>,
 ): {code: string; map?: RawSourceMap | string | null} {
-  const transforms = getTransforms(filename);
+  const transforms = getTransforms(filename, options.supportsStaticESM);
   if (transforms !== null) {
     const {code, sourceMap} = transform(src, {
       transforms,
+      preserveDynamicImport: options.supportsDynamicImport,
       ...options.transformerConfig,
       sourceMapOptions: {compiledFilename: filename},
       filePath: filename,

@@ -1,15 +1,17 @@
 import type {TransformOptions} from "@jest/transform";
+import {extname} from "path";
 import {Transform, transform} from "sucrase";
 
 import type {Options} from "../../../src/Options";
 
 function getTransforms(filename: string, supportsStaticESM: boolean): Array<Transform> | null {
+  const extension = extname(filename);
   const maybeImports: Array<Transform> = supportsStaticESM ? [] : ["imports"];
-  if (filename.endsWith(".js") || filename.endsWith(".jsx")) {
+  if ([".js", ".jsx", ".mjs", ".cjs"].includes(extension)) {
     return [...maybeImports, "flow", "jsx", "jest"];
-  } else if (filename.endsWith(".ts")) {
+  } else if (extension === ".ts") {
     return [...maybeImports, "typescript", "jest"];
-  } else if (filename.endsWith(".tsx")) {
+  } else if ([".tsx", ".mts", ".cts"].includes(extension)) {
     return [...maybeImports, "typescript", "jsx", "jest"];
   }
   return null;

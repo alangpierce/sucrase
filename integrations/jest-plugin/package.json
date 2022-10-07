@@ -6,15 +6,12 @@
   "repository": "https://github.com/alangpierce/sucrase/tree/main/integrations/jest-plugin",
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
-  "dependencies": {
-    "sucrase": "^3.18.0"
-  },
   "devDependencies": {
     "@jest/transform": "^29.1.2",
     "@types/node": "^16.11.4"
   },
   "peerDependencies": {
     "jest": ">=27",
-    "sucrase": ">=3"
+    "sucrase": ">=3.25.0"
   }
 }

@@ -17,10 +17,11 @@
     "benchmark",
     "example-runner",
     "generator",
+    "integration-test",
     "script",
+    "spec-compliance-tests",
     "src",
     "test",
-    "spec-compliance-tests"
   ],
   "exclude": [
     "benchmark/sample",

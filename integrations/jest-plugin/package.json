@@ -14,6 +14,7 @@
     "@types/node": "^16.11.4"
   },
   "peerDependencies": {
-    "jest": ">=27"
+    "jest": ">=27",
+    "sucrase": ">=3"
   }
 }

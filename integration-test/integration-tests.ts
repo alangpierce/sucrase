@@ -43,14 +43,14 @@ describe("integration tests", () => {
       const testConfig = await readJSONFileContentsIfExists("./test.json");
       if (testConfig?.expectedError) {
         try {
-          await execPromise(`npx jest`);
+          await execPromise(`NODE_OPTIONS=--experimental-vm-modules npx jest --no-cache`);
           assert.fail("Expected Jest to fail");
         } catch (e) {
           assert((e as {stderr: string}).stderr.includes(testConfig.expectedError));
         }
       } else {
         // Should not crash.
-        await execPromise(`npx jest`);
+        await execPromise(`NODE_OPTIONS=--experimental-vm-modules npx jest --no-cache`);
       }
     });
   }

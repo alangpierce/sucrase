@@ -8,9 +8,9 @@ This is a simple Jest plugin that makes it easy to use
 
 ## Usage
 
-First install the package as a dev dependency:
+First install the package and `sucrase` as a dev dependency:
 ```
-yarn add --dev @sucrase/jest-plugin
+yarn add --dev @sucrase/jest-plugin sucrase
 ```
 
 Then change the default transform in jest.config.js file:
@@ -20,7 +20,7 @@ Then change the default transform in jest.config.js file:
   ...
 ```
 
-You can specify additional transformation options to sucrase by passing an object. For example, to enable automatic react transforms:
+You can specify additional transformation options to Sucrase by passing an object. For example, to enable automatic react transforms:
 
 ```ts
   ...
@@ -28,8 +28,5 @@ You can specify additional transformation options to sucrase by passing an objec
   ...
 ```
 
-You may also pass a `transforms` array in the options, but this will override sucrase's own transform detection based on file extension. This means that the transforms you specify will be applied to all files, regardless of extension.
-
-If you don't specify `transforms`, the plugin will always runs the import
-and jest transforms and uses the file extension to decide whether to run the
-JSX, Flow, and/or TypeScript transforms.
+By default, the `transforms` option is automatically detected based on file type and Jest mode.
+If you pass a `transforms` array in the options, it will apply to all files, regardless of extension.

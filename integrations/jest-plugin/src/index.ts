@@ -30,6 +30,7 @@ export function process(
   if (transforms !== null) {
     const {code, sourceMap} = transform(src, {
       transforms,
+      disableESTransforms: true,
       preserveDynamicImport: options.supportsDynamicImport,
       ...options.transformerConfig,
       sourceMapOptions: {compiledFilename: filename},

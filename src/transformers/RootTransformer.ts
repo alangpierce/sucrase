@@ -18,6 +18,11 @@ import ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
 import type Transformer from "./Transformer";
 import TypeScriptTransformer from "./TypeScriptTransformer";
 
+export interface RootTransformerResult {
+  code: string;
+  mappings: Array<number | undefined>;
+}
+
 export default class RootTransformer {
   private transformers: Array<Transformer> = [];
   private nameManager: NameManager;
@@ -117,7 +122,7 @@ export default class RootTransformer {
     }
   }
 
-  transform(): string {
+  transform(): RootTransformerResult {
     this.tokens.reset();
     this.processBalancedCode();
     const shouldAddUseStrict = this.isImportsTransformEnabled;
@@ -135,16 +140,23 @@ export default class RootTransformer {
     for (const transformer of this.transformers) {
       suffix += transformer.getSuffixCode();
     }
-    let code = this.tokens.finish();
+    const result = this.tokens.finish();
+    let {code} = result;
     if (code.startsWith("#!")) {
       let newlineIndex = code.indexOf("\n");
       if (newlineIndex === -1) {
         newlineIndex = code.length;
         code += "\n";
       }
-      return code.slice(0, newlineIndex + 1) + prefix + code.slice(newlineIndex + 1) + suffix;
+      return {
+        code: code.slice(0, newlineIndex + 1) + prefix + code.slice(newlineIndex + 1) + suffix,
+        mappings: this.shiftMappings(result.mappings, prefix.length, newlineIndex),
+      };
     } else {
-      return prefix + this.tokens.finish() + suffix;
+      return {
+        code: prefix + code + suffix,
+        mappings: this.shiftMappings(result.mappings, prefix.length),
+      };
     }
   }
 
@@ -421,5 +433,28 @@ export default class RootTransformer {
       return true;
     }
     return false;
+  }
+
+  shiftMappings(
+    mappings: Array<number | undefined>,
+    prefixLength: number,
+    newlineIndex = -1,
+  ): Array<number | undefined> {
+    let i = 0;
+    if (newlineIndex >= 0) {
+      for (; i < mappings.length; i++) {
+        const mapping = mappings[i];
+        if (mapping !== undefined && mapping > newlineIndex) {
+          break;
+        }
+      }
+    }
+    for (; i < mappings.length; i++) {
+      const mapping = mappings[i];
+      if (mapping !== undefined) {
+        mappings[i] = mapping + prefixLength;
+      }
+    }
+    return mappings;
   }
 }

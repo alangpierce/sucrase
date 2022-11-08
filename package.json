@@ -70,6 +70,7 @@
     "typescript": "^4.7.3"
   },
   "dependencies": {
+    "@jridgewell/gen-mapping": "^0.3.2",
     "commander": "^4.0.0",
     "glob": "7.1.6",
     "lines-and-columns": "^1.1.6",

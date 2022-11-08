@@ -6,11 +6,18 @@ import isAsyncOperation from "./util/isAsyncOperation";
 
 export interface TokenProcessorSnapshot {
   resultCode: string;
+  resultMappings: Array<number | undefined>;
   tokenIndex: number;
+}
+
+export interface TokenProcessorResult {
+  code: string;
+  mappings: Array<number | undefined>;
 }
 
 export default class TokenProcessor {
   private resultCode: string = "";
+  private resultMappings: Array<number | undefined> = new Array(this.tokens.length);
   private tokenIndex = 0;
 
   constructor(
@@ -25,11 +32,16 @@ export default class TokenProcessor {
    * Make a new TokenProcessor for things like lookahead.
    */
   snapshot(): TokenProcessorSnapshot {
-    return {resultCode: this.resultCode, tokenIndex: this.tokenIndex};
+    return {
+      resultCode: this.resultCode,
+      resultMappings: this.resultMappings.slice(),
+      tokenIndex: this.tokenIndex,
+    };
   }
 
   restoreToSnapshot(snapshot: TokenProcessorSnapshot): void {
     this.resultCode = snapshot.resultCode;
+    this.resultMappings = snapshot.resultMappings;
     this.tokenIndex = snapshot.tokenIndex;
   }
 
@@ -48,6 +60,7 @@ export default class TokenProcessor {
 
   reset(): void {
     this.resultCode = "";
+    this.resultMappings = [];
     this.tokenIndex = 0;
   }
 
@@ -168,6 +181,7 @@ export default class TokenProcessor {
   replaceToken(newCode: string): void {
     this.resultCode += this.previousWhitespaceAndComments();
     this.appendTokenPrefix();
+    this.resultMappings[this.tokenIndex] = this.resultCode.length;
     this.resultCode += newCode;
     this.appendTokenSuffix();
     this.tokenIndex++;
@@ -176,6 +190,7 @@ export default class TokenProcessor {
   replaceTokenTrimmingLeftWhitespace(newCode: string): void {
     this.resultCode += this.previousWhitespaceAndComments().replace(/[^\r\n]/g, "");
     this.appendTokenPrefix();
+    this.resultMappings[this.tokenIndex] = this.resultCode.length;
     this.resultCode += newCode;
     this.appendTokenSuffix();
     this.tokenIndex++;
@@ -217,6 +232,7 @@ export default class TokenProcessor {
   copyToken(): void {
     this.resultCode += this.previousWhitespaceAndComments();
     this.appendTokenPrefix();
+    this.resultMappings[this.tokenIndex] = this.resultCode.length;
     this.resultCode += this.code.slice(
       this.tokens[this.tokenIndex].start,
       this.tokens[this.tokenIndex].end,
@@ -229,6 +245,7 @@ export default class TokenProcessor {
     this.resultCode += this.previousWhitespaceAndComments();
     this.appendTokenPrefix();
     this.resultCode += prefix;
+    this.resultMappings[this.tokenIndex] = this.resultCode.length;
     this.resultCode += this.code.slice(
       this.tokens[this.tokenIndex].start,
       this.tokens[this.tokenIndex].end,
@@ -323,12 +340,12 @@ export default class TokenProcessor {
     this.tokenIndex--;
   }
 
-  finish(): string {
+  finish(): TokenProcessorResult {
     if (this.tokenIndex !== this.tokens.length) {
       throw new Error("Tried to finish processing tokens before reaching the end.");
     }
     this.resultCode += this.previousWhitespaceAndComments();
-    return this.resultCode;
+    return {code: this.resultCode, mappings: this.resultMappings};
   }
 
   isAtEnd(): boolean {

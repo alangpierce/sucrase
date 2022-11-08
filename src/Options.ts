@@ -12,6 +12,7 @@ export interface SourceMapOptions {
    * file.
    */
   compiledFilename: string;
+  simple?: boolean;
 }
 
 export interface Options {

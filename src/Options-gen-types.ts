@@ -15,6 +15,7 @@ export const Transform = t.union(
 
 export const SourceMapOptions = t.iface([], {
   compiledFilename: "string",
+  simple: t.opt("boolean"),
 });
 
 export const Options = t.iface([], {

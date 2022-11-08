@@ -4,3 +4,4 @@ example-runner/example-repos
 integration-test/test-cases
 spec-compliance-tests/babel-tests/babel-tests-checkout
 spec-compliance-tests/test262/test262-checkout
+test/output/*

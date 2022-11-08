@@ -11,3 +11,4 @@ integrations/gulp-plugin/dist
 coverage.lcov
 benchmark/sample/jest
 .perf-comparison
+test/output

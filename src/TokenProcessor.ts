@@ -6,7 +6,6 @@ import isAsyncOperation from "./util/isAsyncOperation";
 
 export interface TokenProcessorSnapshot {
   resultCode: string;
-  resultMappings: Array<number | undefined>;
   tokenIndex: number;
 }
 
@@ -34,14 +33,12 @@ export default class TokenProcessor {
   snapshot(): TokenProcessorSnapshot {
     return {
       resultCode: this.resultCode,
-      resultMappings: this.resultMappings.slice(),
       tokenIndex: this.tokenIndex,
     };
   }
 
   restoreToSnapshot(snapshot: TokenProcessorSnapshot): void {
     this.resultCode = snapshot.resultCode;
-    this.resultMappings = snapshot.resultMappings;
     this.tokenIndex = snapshot.tokenIndex;
   }
 

@@ -60,7 +60,7 @@ export default class TokenProcessor {
 
   reset(): void {
     this.resultCode = "";
-    this.resultMappings = [];
+    this.resultMappings = new Array(this.tokens.length);
     this.tokenIndex = 0;
   }
 

@@ -1,3 +1,7 @@
+# 3.29.0 (2022-11-16)
+
+* Add support for the TypeScript 4.9 `satisfies` operator. ([#766])
+
 # 3.28.0 (2022-10-05)
 
 * Add [ts-node](https://github.com/TypeStrong/ts-node) transpiler plugin, available as `sucrase/ts-node-plugin`.
@@ -478,3 +482,4 @@
 [#740]: https://github.com/alangpierce/sucrase/pull/740
 [#742]: https://github.com/alangpierce/sucrase/pull/742
 [#746]: https://github.com/alangpierce/sucrase/pull/746
+[#766]: https://github.com/alangpierce/sucrase/pull/766

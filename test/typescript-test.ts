@@ -2481,15 +2481,19 @@ describe("typescript transform", () => {
     );
   });
 
-  it("properly handles >= and ?? after `as`", () => {
+  it("properly handles >= and ?? after `as` and `satisfies`", () => {
     assertTypeScriptResult(
       `
       const x: string | number = 1;
       if (x as number >= 5) {}
       if (y as unknown ?? false) {}
+      if (x satisfies number >= 5) {}
+      if (y satisfies unknown ?? false) {}
     `,
       `"use strict";${NULLISH_COALESCE_PREFIX}
       const x = 1;
+      if (x  >= 5) {}
+      if (_nullishCoalesce(y , () => ( false))) {}
       if (x  >= 5) {}
       if (_nullishCoalesce(y , () => ( false))) {}
     `,
@@ -3460,6 +3464,26 @@ describe("typescript transform", () => {
       console.log(_file1json2.default);
     `,
       {transforms: ["typescript", "imports"]},
+    );
+  });
+
+  it("parses and removes the satisfies operator", () => {
+    assertResult(
+      `
+      const palette = {
+          red: [255, 0, 0],
+          green: "#00ff00",
+          bleu: [0, 0, 255]
+      } satisfies Record<Colors, string | RGB>;
+    `,
+      `
+      const palette = {
+          red: [255, 0, 0],
+          green: "#00ff00",
+          bleu: [0, 0, 255]
+      } ;
+    `,
+      {transforms: ["typescript"]},
     );
   });
 });

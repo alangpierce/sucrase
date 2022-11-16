@@ -200,9 +200,8 @@ function parseExprOp(startTokenIndex: number, minPrec: number, noIn: boolean): v
     isTypeScriptEnabled &&
     (tt._in & TokenType.PRECEDENCE_MASK) > minPrec &&
     !hasPrecedingLineBreak() &&
-    eatContextual(ContextualKeyword._as)
+    (eatContextual(ContextualKeyword._as) || eatContextual(ContextualKeyword._satisfies))
   ) {
-    state.tokens[state.tokens.length - 1].type = tt._as;
     const oldIsType = pushTypeContext(1);
     tsParseType();
     popTypeContext(oldIsType);

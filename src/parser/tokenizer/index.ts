@@ -505,6 +505,12 @@ function readToken_plus_min(code: number): void {
 }
 
 function readToken_lt(): void {
+  if (state.isType) {
+    // Avoid left-shift for things like `Array<<T>() => void>`.
+    finishOp(tt.lessThan, 1);
+    return;
+  }
+
   const nextChar = input.charCodeAt(state.pos + 1);
 
   if (nextChar === charCodes.lessThan) {

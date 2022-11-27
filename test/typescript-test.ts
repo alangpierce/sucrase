@@ -3161,13 +3161,25 @@ describe("typescript transform", () => {
     );
   });
 
-  it("properly parses TS angle brackets that look like left shift", () => {
+  it("properly parses TS function type args that look like left shift", () => {
     assertResult(
       `
       f<<T>(value: T) => void>(g);
     `,
       `
       f(g);
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("properly parses TS type args that look like left shift", () => {
+    assertResult(
+      `
+      type A = B<<T>() => void>;
+    `,
+      `
+      
     `,
       {transforms: ["typescript"]},
     );

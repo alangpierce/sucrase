@@ -1138,9 +1138,7 @@ function tsTryParseGenericAsyncArrowFunction(): boolean {
  * where bitshift would be illegal anyway (e.g. in a class "extends" clause).
  *
  * This hack is useful to handle situations like foo<<T>() => void>() where
- * there can legitimately be two open-angle-brackets in a row in TS. This
- * situation is very obscure and (as of this writing) is handled by Babel but
- * not TypeScript itself, so it may be fine in the future to remove this case.
+ * there can legitimately be two open-angle-brackets in a row in TS.
  */
 function tsParseTypeArgumentsWithPossibleBitshift(): void {
   if (state.type === tt.bitShiftL) {

@@ -2500,6 +2500,19 @@ describe("typescript transform", () => {
     );
   });
 
+  it("properly handles <= after `as` and `satisfies`", () => {
+    assertTypeScriptResult(
+      `
+      if (x as number <= 5) {}
+      if (x satisfies number <= 5) {}
+    `,
+      `"use strict";
+      if (x  <= 5) {}
+      if (x  <= 5) {}
+    `,
+    );
+  });
+
   it("handles simple template literal interpolations in types", () => {
     assertTypeScriptResult(
       `
@@ -3161,13 +3174,25 @@ describe("typescript transform", () => {
     );
   });
 
-  it("properly parses TS angle brackets that look like left shift", () => {
+  it("properly parses TS function type args that look like left shift", () => {
     assertResult(
       `
       f<<T>(value: T) => void>(g);
     `,
       `
       f(g);
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("properly parses TS type args that look like left shift", () => {
+    assertResult(
+      `
+      type A = B<<T>() => void>;
+    `,
+      `
+      
     `,
       {transforms: ["typescript"]},
     );

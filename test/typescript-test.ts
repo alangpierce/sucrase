@@ -2500,6 +2500,19 @@ describe("typescript transform", () => {
     );
   });
 
+  it("properly handles <= after `as` and `satisfies`", () => {
+    assertTypeScriptResult(
+      `
+      if (x as number <= 5) {}
+      if (x satisfies number <= 5) {}
+    `,
+      `"use strict";
+      if (x  <= 5) {}
+      if (x  <= 5) {}
+    `,
+    );
+  });
+
   it("handles simple template literal interpolations in types", () => {
     assertTypeScriptResult(
       `

@@ -505,12 +505,6 @@ function readToken_plus_min(code: number): void {
 }
 
 function readToken_lt(): void {
-  if (state.isType) {
-    // Avoid left-shift for things like `Array<<T>() => void>`.
-    finishOp(tt.lessThan, 1);
-    return;
-  }
-
   const nextChar = input.charCodeAt(state.pos + 1);
 
   if (nextChar === charCodes.lessThan) {
@@ -518,11 +512,25 @@ function readToken_lt(): void {
       finishOp(tt.assign, 3);
       return;
     }
-    // This still might be two instances of <, e.g. the TS type argument
-    // expression f<<T>() => void>() , but parse as left shift for now and we'll
-    // retokenize if necessary. We can't use isType for this case because we
-    // don't know yet if we're in a type.
-    finishOp(tt.bitShiftL, 2);
+    // We see <<, but need to be really careful about whether to treat it as a
+    // true left-shift or as two < tokens.
+    if (state.isType) {
+      // Within a type, << might come up in a snippet like `Array<<T>() => void>`,
+      // so treat it as two < tokens. Importantly, this should only override <<
+      // rather than other tokens like <= . If we treated <= as < in a type
+      // context, then the snippet `a as T <= 1` would incorrectly start parsing
+      // a type argument on T. We don't need to worry about `a as T << 1`
+      // because TypeScript disallows that syntax.
+      finishOp(tt.lessThan, 1);
+    } else {
+      // Outside a type, this might be a true left-shift operator, or it might
+      // still be two open-type-arg tokens, such as in `f<<T>() => void>()`. We
+      // look at the token while considering the `f`, so we don't yet know that
+      // we're in a type context. In this case, we initially tokenize as a
+      // left-shift and correct after-the-fact as necessary in
+      // tsParseTypeArgumentsWithPossibleBitshift .
+      finishOp(tt.bitShiftL, 2);
+    }
     return;
   }
 
@@ -564,7 +572,14 @@ function readToken_gt(): void {
 
 /**
  * Called after `as` expressions in TS; we're switching from a type to a
- * non-type context, so a > token may actually be >= .
+ * non-type context, so a > token may actually be >= . This is needed because >=
+ * must be tokenized as a > in a type context because of code like
+ * `const x: Array<T>=[];`, but `a as T >= 1` is a code example where it must be
+ * treated as >=.
+ *
+ * Notably, this only applies to >, not <. In a code snippet like `a as T <= 1`,
+ * we must NOT tokenize as <, or else the type parser will start parsing a type
+ * argument and fail.
  */
 export function rescan_gt(): void {
   if (state.type === tt.greaterThan) {

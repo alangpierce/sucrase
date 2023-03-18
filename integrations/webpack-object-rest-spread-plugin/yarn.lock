@@ -5,15 +5,18 @@
 acorn-dynamic-import@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/acorn-dynamic-import/-/acorn-dynamic-import-3.0.0.tgz#901ceee4c7faaef7e07ad2a47e890675da50a278"
+  integrity sha512-zVWV8Z8lislJoOKKqdNMOB+s6+XV5WERty8MnKBeFgwA+19XJjJHs2RP5dzM57FftIs+jQnRToLiWazKr6sSWg==
   dependencies:
     acorn "^5.0.0"
 
 acorn-object-rest-spread@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/acorn-object-rest-spread/-/acorn-object-rest-spread-1.1.0.tgz#78699aefdd18ec3182caadadf52e2697c048f476"
+  integrity sha512-v/lolbMJxMB2tm66GjxhNSYEz2I+a8S99emxJu2mhqhDE348dJkxyliJ3pMV79tbTQEzGJA8pyRvC5qoSbjJAA==
   dependencies:
     acorn "^5.0.3"
 
 acorn@^5.0.0, acorn@^5.0.3, acorn@^5.3.0:
   version "5.7.4"
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-5.7.4.tgz#3e8d8a9947d0599a1796d10225d7432f4a4acf5e"
+  integrity sha512-1D++VG7BhrtvQpNbBzovKNc1FLGGEE/oGe7b9xJm/RFHMBeUaUGpluV9RLjZa47YFdPcDAenEYuq9pQPcMdLJg==

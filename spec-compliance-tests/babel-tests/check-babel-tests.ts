@@ -32,10 +32,7 @@ es2015/yield/basic-without-argument
 es2015/yield/without-argument
 es2018/async-generators/for-await-async-of
 es2020/bigint/decimal-as-property-name
-es2020/export-ns-from/ns-and-named
-es2022/module-string-names/mixed
 estree/class-private-property/flow
-estree/module-string-names/mixed
 experimental/decorators/export-decorated-class
 experimental/decorators/export-default-decorated-class
 flow/anonymous-function-no-parens-types/good_15
@@ -69,7 +66,6 @@ flow/declare-module/4
 flow/declare-module/5
 flow/declare-module/6
 flow/declare-module/9
-flow/module-string-names/mixed
 flow/multiple-declarations/declare-class
 flow/object-types/getter-key-is-keyword
 flow/opaque-type-alias/opaque_subtype_allow_export

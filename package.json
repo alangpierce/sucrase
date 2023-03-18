@@ -59,7 +59,7 @@
     "eslint": "^8.17.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-import": "~2.26",
     "eslint-plugin-prettier": "^4.0.0",
     "mocha": "^10.0.0",
     "nyc": "^15.1.0",
@@ -67,7 +67,7 @@
     "sucrase": "^3.29.0",
     "test262-harness": "^10.0.0",
     "ts-interface-builder": "^0.3.3",
-    "typescript": "^4.7.3"
+    "typescript": "~4.7"
   },
   "dependencies": {
     "commander": "^4.0.0",

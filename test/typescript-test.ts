@@ -3524,7 +3524,19 @@ describe("typescript transform", () => {
     );
   });
 
-  it("parses and removes the satisfies operator", () => {
+  it("allows satisfies in an assignment LHS", () => {
+    assertResult(
+      `
+      (a satisfies any) = null;
+    `,
+      `
+      (a ) = null;
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("allows declare readonly fields with initializers", () => {
     assertResult(
       `
       class Foo {
@@ -3534,6 +3546,22 @@ describe("typescript transform", () => {
       `
       class Foo {
         declare  a = 0;
+      }
+    `,
+      {transforms: ["typescript"], disableESTransforms: true},
+    );
+  });
+
+  it("allows accessor properties with type annotations", () => {
+    assertResult(
+      `
+      class Foo {
+          accessor prop: string = 1;
+      }
+    `,
+      `
+      class Foo {
+          accessor prop = 1;
       }
     `,
       {transforms: ["typescript"], disableESTransforms: true},

@@ -39,4 +39,5 @@ export enum ContextualKeyword {
   _symbol,
   _type,
   _unique,
+  _using,
 }

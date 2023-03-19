@@ -645,6 +645,28 @@ describe("typescript transform", () => {
     );
   });
 
+  it("handles various declare declarations", () => {
+    assertTypeScriptResult(
+      `
+      declare var a;
+      declare let b;
+      declare const c;
+      declare function f() {}
+      declare class C {}
+      declare const enum E {}
+    `,
+      `
+      
+
+
+
+
+
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
   it("handles and removes `declare module` syntax", () => {
     assertTypeScriptResult(
       `

@@ -3318,6 +3318,18 @@ describe("typescript transform", () => {
     );
   });
 
+  it("distinguishes between instantiation expressions and right-shift", () => {
+    assertResult(
+      `
+      a<b>>>c
+    `,
+      `
+      a<b>>>c
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
   it("allows new instantiation expressions", () => {
     assertResult(
       `
@@ -3509,6 +3521,22 @@ describe("typescript transform", () => {
       } ;
     `,
       {transforms: ["typescript"]},
+    );
+  });
+
+  it("parses and removes the satisfies operator", () => {
+    assertResult(
+      `
+      class Foo {
+        declare readonly a = 0;
+      }
+    `,
+      `
+      class Foo {
+        declare  a = 0;
+      }
+    `,
+      {transforms: ["typescript"], disableESTransforms: true},
     );
   });
 });

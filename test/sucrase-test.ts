@@ -1588,6 +1588,26 @@ describe("sucrase", () => {
     );
   });
 
+  it("handles private field syntax for decorators", () => {
+    assertResult(
+      `
+      class C {
+        static #a;
+        @C.#a
+        foo() {}
+      }
+    `,
+      `
+      class C {
+        static #a;
+        @C.#a
+        foo() {}
+      }
+    `,
+      {disableESTransforms: true, transforms: []},
+    );
+  });
+
   it("allows destructuring private fields", () => {
     // Example from https://github.com/tc39/proposal-destructuring-private
     assertResult(

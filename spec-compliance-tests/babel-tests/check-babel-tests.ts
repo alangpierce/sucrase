@@ -35,6 +35,8 @@ es2020/bigint/decimal-as-property-name
 estree/class-private-property/flow
 experimental/decorators/export-decorated-class
 experimental/decorators/export-default-decorated-class
+experimental/decorators/parenthesized  // Uses obsolete syntax @(a)()
+experimental/decorators/parenthesized-createParenthesizedExpressions  // Uses obsolete syntax @(a)()
 flow/anonymous-function-no-parens-types/good_15
 flow/arrows-in-ternaries/issue-13644
 flow/arrows-in-ternaries/issue-58
@@ -84,7 +86,8 @@ typescript/import/type-asi
 typescript/import/type-equals-require
 `
   .split("\n")
-  .filter((s) => s);
+  .filter((s) => s)
+  .map((s) => s.split(" ")[0]);
 
 interface ResultSummary {
   numPassed: number;

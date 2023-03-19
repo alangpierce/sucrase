@@ -260,8 +260,8 @@ function parseDecorator(): void {
     while (eat(tt.dot)) {
       parseIdentifier();
     }
+    parseMaybeDecoratorArguments();
   }
-  parseMaybeDecoratorArguments();
 }
 
 function parseMaybeDecoratorArguments(): void {

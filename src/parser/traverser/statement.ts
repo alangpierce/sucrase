@@ -320,16 +320,16 @@ function parseForStatement(): void {
 }
 
 /**
- * Determine if this token a `using` declaration (explicit resource management)
- * as part of a loop.
+ * Determine if this token is a `using` declaration (explicit resource
+ * management) as part of a loop.
  * https://github.com/tc39/proposal-explicit-resource-management
  */
 function isUsingInLoop(): boolean {
   if (!isContextual(ContextualKeyword._using)) {
     return false;
   }
-  // `for (using of`..., with `using` as the loop variable rather than a
-  // declaration.
+  // This must be `for (using of`, where `using` is the name of the loop
+  // variable.
   if (isLookaheadContextual(ContextualKeyword._of)) {
     return false;
   }

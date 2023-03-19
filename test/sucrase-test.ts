@@ -1734,6 +1734,7 @@ describe("sucrase", () => {
       using
       let x = 1;
       using[0];
+      using in x;
       for (using of blah()) {
         console.log(using);
       }
@@ -1743,6 +1744,7 @@ describe("sucrase", () => {
       using
       let x = 1;
       using[0];
+      using in x;
       for (using of blah()) {
         console.log(using);
       }

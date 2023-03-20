@@ -33,8 +33,6 @@ es2015/yield/without-argument
 es2018/async-generators/for-await-async-of
 es2020/bigint/decimal-as-property-name
 estree/class-private-property/flow
-experimental/decorators/export-decorated-class
-experimental/decorators/export-default-decorated-class
 experimental/decorators/parenthesized  // Uses obsolete syntax @(a)()
 experimental/decorators/parenthesized-createParenthesizedExpressions  // Uses obsolete syntax @(a)()
 flow/anonymous-function-no-parens-types/good_15

@@ -1409,6 +1409,22 @@ module.exports = exports.default;
     );
   });
 
+  it("allows decorators before or after export in CJS", () => {
+    assertResult(
+      `
+      @dec1 export @dec2 class Foo {}
+      @dec3 export default @dec4 class Bar {}
+      export default @(1 + 1) @(foo.bar()) @a.b.c @d.e() @g.h(1, 2, 3) class Baz {}
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      @dec1  @dec2 class Foo {} exports.Foo = Foo;
+      @dec3  @dec4 class Bar {} exports.default = Bar;
+       @(1 + 1) @(foo.bar()) @a.b.c @d.e() @g.h(1, 2, 3) class Baz {} exports.default = Baz;
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
   it("implements basic live bindings", () => {
     assertMultiFileOutput(
       {

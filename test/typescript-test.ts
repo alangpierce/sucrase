@@ -2410,6 +2410,32 @@ describe("typescript transform", () => {
     );
   });
 
+  it("supports `export type * from` in CJS mode", () => {
+    assertTypeScriptResult(
+      `
+      export type * from './T';
+      export type * as ns from './T';
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      ;
+      ;
+    `,
+    );
+  });
+
+  it("supports `export type * from` in ESM mode", () => {
+    assertTypeScriptESMResult(
+      `
+      export type * from './T';
+      export type * as ns from './T';
+    `,
+      `
+      ;
+      ;
+    `,
+    );
+  });
+
   it("properly handles default args in constructors", () => {
     assertTypeScriptResult(
       `
@@ -3587,6 +3613,44 @@ describe("typescript transform", () => {
       }
     `,
       {transforms: ["typescript"], disableESTransforms: true},
+    );
+  });
+
+  it("allows const modifier on type parameters", () => {
+    assertResult(
+      `
+      function a<const T>() {}
+      function b<const T extends U>() {}
+      class C<const T> {}
+      class D<in const T> {}
+      class E<const in T> {}
+    `,
+      `
+      function a() {}
+      function b() {}
+      class C {}
+      class D {}
+      class E {}
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("allows keywords in tuple labels", () => {
+    assertResult(
+      `
+      type T = [
+        function: () => {},
+        string: string
+      ]
+    `,
+      `
+      
+
+
+
+    `,
+      {transforms: ["typescript"]},
     );
   });
 });

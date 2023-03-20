@@ -1752,4 +1752,18 @@ describe("sucrase", () => {
       {transforms: []},
     );
   });
+
+  it("correctly parses for-of loops with external loop variable", () => {
+    assertResult(
+      `
+      let a;
+      for (a of b) {}
+    `,
+      `
+      let a;
+      for (a of b) {}
+    `,
+      {transforms: []},
+    );
+  });
 });

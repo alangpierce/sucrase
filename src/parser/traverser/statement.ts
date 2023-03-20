@@ -79,9 +79,11 @@ import {
   eatContextual,
   expect,
   expectContextual,
+  hasFollowingLineBreak,
   hasPrecedingLineBreak,
   isContextual,
   isLineTerminator,
+  isLookaheadContextual,
   semicolon,
   unexpected,
 } from "./util";
@@ -173,7 +175,7 @@ function parseStatementContent(declaration: boolean): void {
       if (!declaration) unexpected(); // NOTE: falls through to _var
 
     case tt._var:
-      parseVarStatement(starttype);
+      parseVarStatement(starttype !== tt._var);
       return;
 
     case tt._while:
@@ -212,6 +214,15 @@ function parseStatementContent(declaration: boolean): void {
         } else {
           state.restoreFromSnapshot(snapshot);
         }
+      } else if (
+        state.contextualKeyword === ContextualKeyword._using &&
+        !hasFollowingLineBreak() &&
+        // Statements like `using[0]` and `using in foo` aren't actual using
+        // declarations.
+        lookaheadType() === tt.name
+      ) {
+        parseVarStatement(true);
+        return;
       }
     default:
       // Do nothing.
@@ -308,6 +319,23 @@ function parseForStatement(): void {
   state.scopeDepth--;
 }
 
+/**
+ * Determine if this token is a `using` declaration (explicit resource
+ * management) as part of a loop.
+ * https://github.com/tc39/proposal-explicit-resource-management
+ */
+function isUsingInLoop(): boolean {
+  if (!isContextual(ContextualKeyword._using)) {
+    return false;
+  }
+  // This must be `for (using of`, where `using` is the name of the loop
+  // variable.
+  if (isLookaheadContextual(ContextualKeyword._of)) {
+    return false;
+  }
+  return true;
+}
+
 // Disambiguating between a `for` and a `for`/`in` or `for`/`of`
 // loop is non-trivial. Basically, we have to parse the init `var`
 // statement or expression, disallowing the `in` operator (see
@@ -333,10 +361,9 @@ function parseAmbiguousForStatement(): void {
     return;
   }
 
-  if (match(tt._var) || match(tt._let) || match(tt._const)) {
-    const varKind = state.type;
+  if (match(tt._var) || match(tt._let) || match(tt._const) || isUsingInLoop()) {
     next();
-    parseVar(true, varKind);
+    parseVar(true, state.type !== tt._var);
     if (match(tt._in) || isContextual(ContextualKeyword._of)) {
       parseForIn(forAwait);
       return;
@@ -453,9 +480,9 @@ function parseTryStatement(): void {
   }
 }
 
-export function parseVarStatement(kind: TokenType): void {
+export function parseVarStatement(isBlockScope: boolean): void {
   next();
-  parseVar(false, kind);
+  parseVar(false, isBlockScope);
   semicolon();
 }
 
@@ -543,9 +570,8 @@ function parseForIn(forAwait: boolean): void {
 
 // Parse a list of variable declarations.
 
-function parseVar(isFor: boolean, kind: TokenType): void {
+function parseVar(isFor: boolean, isBlockScope: boolean): void {
   while (true) {
-    const isBlockScope = kind === tt._const || kind === tt._let;
     parseVarHead(isBlockScope);
     if (eat(tt.eq)) {
       const eqIndex = state.tokens.length - 1;
@@ -1083,6 +1109,50 @@ function parseExportSpecifier(): void {
   }
 }
 
+/**
+ * Starting at the `module` token in an import, determine if it was truly an
+ * import reflection token or just looks like one.
+ *
+ * Returns true for:
+ * import module foo from "foo";
+ * import module from from "foo";
+ *
+ * Returns false for:
+ * import module from "foo";
+ * import module, {bar} from "foo";
+ */
+function isImportReflection(): boolean {
+  const snapshot = state.snapshot();
+  expectContextual(ContextualKeyword._module);
+  if (eatContextual(ContextualKeyword._from)) {
+    if (isContextual(ContextualKeyword._from)) {
+      state.restoreFromSnapshot(snapshot);
+      return true;
+    } else {
+      state.restoreFromSnapshot(snapshot);
+      return false;
+    }
+  } else if (match(tt.comma)) {
+    state.restoreFromSnapshot(snapshot);
+    return false;
+  } else {
+    state.restoreFromSnapshot(snapshot);
+    return true;
+  }
+}
+
+/**
+ * Eat the "module" token from the import reflection proposal.
+ * https://github.com/tc39/proposal-import-reflection
+ */
+function parseMaybeImportReflection(): void {
+  // isImportReflection does snapshot/restore, so only run it if we see the word
+  // "module".
+  if (isContextual(ContextualKeyword._module) && isImportReflection()) {
+    next();
+  }
+}
+
 // Parses import declaration.
 
 export function parseImport(): void {
@@ -1117,6 +1187,7 @@ export function parseImport(): void {
   if (match(tt.string)) {
     parseExprAtom();
   } else {
+    parseMaybeImportReflection();
     parseImportSpecifiers();
     expectContextual(ContextualKeyword._from);
     parseExprAtom();

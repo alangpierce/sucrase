@@ -965,7 +965,7 @@ function tsTryParseDeclare(): boolean {
     case tt._var:
     case tt._let: {
       const oldIsType = pushTypeContext(1);
-      parseVarStatement(state.type);
+      parseVarStatement(state.type !== tt._var);
       popTypeContext(oldIsType);
       return true;
     }

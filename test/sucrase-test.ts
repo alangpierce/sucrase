@@ -1674,4 +1674,96 @@ describe("sucrase", () => {
       {transforms: ["jsx", "typescript"]},
     );
   });
+
+  it("passes through import reflection", () => {
+    assertResult(
+      `
+      import module foo from './foo';
+      import module from from './foo';
+      import module from './foo';
+      import module, {a} from './foo';
+    `,
+      `
+      import module foo from './foo';
+      import module from from './foo';
+      import module from './foo';
+      import module, {a} from './foo';
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("does not elide imported names when used in module reflection", () => {
+    assertResult(
+      `
+      import module foo from './foo';
+      import module bar from './bar';
+      console.log(foo);
+    `,
+      `
+      import module foo from './foo';
+
+      console.log(foo);
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("passes through explicit resource management syntax", () => {
+    assertResult(
+      `
+      using lock = acquireLock();
+      for (using x of things()) {
+        console.log(x);
+      }
+    `,
+      `
+      using lock = acquireLock();
+      for (using x of things()) {
+        console.log(x);
+      }
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("is not confused by the token `using` in other contexts", () => {
+    assertResult(
+      `
+      var using = 3;
+      using
+      let x = 1;
+      using[0];
+      using in x;
+      for (using of blah()) {
+        console.log(using);
+      }
+    `,
+      `
+      var using = 3;
+      using
+      let x = 1;
+      using[0];
+      using in x;
+      for (using of blah()) {
+        console.log(using);
+      }
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("correctly parses for-of loops with external loop variable", () => {
+    assertResult(
+      `
+      let a;
+      for (a of b) {}
+    `,
+      `
+      let a;
+      for (a of b) {}
+    `,
+      {transforms: []},
+    );
+  });
 });

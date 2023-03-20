@@ -80,6 +80,7 @@ const CONTEXTUAL_KEYWORDS = [
   "symbol",
   "type",
   "unique",
+  "using",
 ];
 
 const CODE = `\

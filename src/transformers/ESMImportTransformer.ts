@@ -178,6 +178,14 @@ export default class ESMImportTransformer extends Transformer {
       return false;
     }
 
+    // Skip the "module" token in import reflection.
+    if (
+      this.tokens.matchesContextual(ContextualKeyword._module) &&
+      this.tokens.matchesContextualAtIndex(this.tokens.currentIndex() + 2, ContextualKeyword._from)
+    ) {
+      this.tokens.copyToken();
+    }
+
     let foundNonTypeImport = false;
     let needsComma = false;
 

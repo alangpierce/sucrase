@@ -196,8 +196,10 @@ function tsParseImportType(): void {
 }
 
 function tsParseTypeParameter(): void {
+  eat(tt._const);
   const hadIn = eat(tt._in);
   const hadOut = eatContextual(ContextualKeyword._out);
+  eat(tt._const);
   if ((hadIn || hadOut) && !match(tt.name)) {
     // The "in" or "out" keyword must have actually been the type parameter
     // name, so set it as the name.
@@ -1298,8 +1300,14 @@ export function tsTryParseExport(): boolean {
     semicolon();
     return true;
   } else {
-    if (isContextual(ContextualKeyword._type) && lookaheadType() === tt.braceL) {
-      next();
+    if (isContextual(ContextualKeyword._type)) {
+      const nextType = lookaheadType();
+      // export type {foo} from 'a';
+      // export type * from 'a';'
+      // export type * as ns from 'a';'
+      if (nextType === tt.braceL || nextType === tt.star) {
+        next();
+      }
     }
     return false;
   }

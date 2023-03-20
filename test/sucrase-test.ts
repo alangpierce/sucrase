@@ -1608,6 +1608,20 @@ describe("sucrase", () => {
     );
   });
 
+  it("allows decorators before and after export keyword", () => {
+    assertResult(
+      `
+      @dec1 export @dec2 class Foo {}
+      @dec3 export default @dec4 class Bar {}
+    `,
+      `
+      @dec1 export @dec2 class Foo {}
+      @dec3 export default @dec4 class Bar {}
+    `,
+      {disableESTransforms: true, transforms: []},
+    );
+  });
+
   it("allows destructuring private fields", () => {
     // Example from https://github.com/tc39/proposal-destructuring-private
     assertResult(

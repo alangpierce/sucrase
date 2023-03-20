@@ -1,3 +1,14 @@
+# 3.30.0 (2023-03-20)
+
+* Add support for new syntax in TypeScript 5.0:
+  * `export type *`. ([#786])
+  * `const` on type parameters. ([#786])
+* Implement parsing for several ES proposals. These are preserved in the output code, not transformed.
+  * Import reflection: `import module`. ([#785])
+  * Explicit resource management: `using`. ([#785])
+  * Decorator after export keyword: `export @foo class ...`. ([#786])
+* Fix parsing of `<<` within a type. ([#769])
+
 # 3.29.0 (2022-11-16)
 
 * Add support for the TypeScript 4.9 `satisfies` operator. ([#766])
@@ -483,3 +494,6 @@
 [#742]: https://github.com/alangpierce/sucrase/pull/742
 [#746]: https://github.com/alangpierce/sucrase/pull/746
 [#766]: https://github.com/alangpierce/sucrase/pull/766
+[#769]: https://github.com/alangpierce/sucrase/pull/769
+[#785]: https://github.com/alangpierce/sucrase/pull/785
+[#786]: https://github.com/alangpierce/sucrase/pull/786

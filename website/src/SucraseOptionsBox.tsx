@@ -164,11 +164,13 @@ export default function SucraseOptionsBox({
               {options.transforms.includes("jsx") && (
                 <>
                   <JSXRuntimeOption options={options} onUpdateOptions={onUpdateOptions} />
-                  <BooleanOption
-                    optionName="production"
-                    options={options}
-                    onUpdateOptions={onUpdateOptions}
-                  />
+                  {options.jsxRuntime !== "preserve" && (
+                    <BooleanOption
+                      optionName="production"
+                      options={options}
+                      onUpdateOptions={onUpdateOptions}
+                    />
+                  )}
                   {options.jsxRuntime === "classic" && (
                     <>
                       <StringOption

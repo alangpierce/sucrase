@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 import * as Sucrase from "sucrase";
-import type {ModuleKind, JsxEmit} from "typescript";
+import type {JsxEmit, ModuleKind} from "typescript";
 
 import getTokens from "./getTokens";
 import {compressCode} from "./URLHashState";
@@ -114,20 +114,24 @@ function runBabel(): {code: string; time: number | null} {
   const presets: Array<string | [string, unknown]> = [];
 
   if (sucraseOptions.transforms.includes("jsx")) {
-    presets.push([
-      "react",
-      {
-        development: !sucraseOptions.production,
-        runtime: sucraseOptions.jsxRuntime,
-        ...(sucraseOptions.jsxRuntime === "automatic" && {
-          importSource: sucraseOptions.jsxImportSource,
-        }),
-        ...(sucraseOptions.jsxRuntime === "classic" && {
-          pragma: sucraseOptions.jsxPragma,
-          pragmaFrag: sucraseOptions.jsxFragmentPragma,
-        }),
-      },
-    ]);
+    if (sucraseOptions.jsxRuntime === "preserve") {
+      plugins.push("syntax-jsx");
+    } else {
+      presets.push([
+        "react",
+        {
+          development: !sucraseOptions.production,
+          runtime: sucraseOptions.jsxRuntime,
+          ...(sucraseOptions.jsxRuntime === "automatic" && {
+            importSource: sucraseOptions.jsxImportSource,
+          }),
+          ...(sucraseOptions.jsxRuntime === "classic" && {
+            pragma: sucraseOptions.jsxPragma,
+            pragmaFrag: sucraseOptions.jsxFragmentPragma,
+          }),
+        },
+      ]);
+    }
   }
   if (sucraseOptions.transforms.includes("typescript")) {
     presets.push(["typescript", {allowDeclareFields: true}]);
@@ -205,6 +209,8 @@ function runTypeScript(): {code: string; time: number | null} {
   if (sucraseOptions.transforms.includes("jsx")) {
     if (sucraseOptions.jsxRuntime === "classic") {
       jsxEmit = JsxEmit.React;
+    } else if (sucraseOptions.jsxRuntime === "preserve") {
+      jsxEmit = JsxEmit.Preserve;
     } else if (sucraseOptions.production) {
       jsxEmit = JsxEmit.ReactJSX;
     } else {

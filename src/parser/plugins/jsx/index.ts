@@ -129,10 +129,24 @@ function jsxParseNamespacedName(identifierRole: IdentifierRole): void {
 // Parses element name in any form - namespaced, member
 // or single identifier.
 function jsxParseElementName(): void {
+  const firstTokenIndex = state.tokens.length;
   jsxParseNamespacedName(IdentifierRole.Access);
+  let hadDot = false;
   while (match(tt.dot)) {
+    hadDot = true;
     nextJSXTagToken();
     jsxParseIdentifier();
+  }
+  // For tags like <div> with a lowercase letter and no dots, the name is
+  // actually *not* an identifier access it's referring to a built-in tag name.
+  // Remove the identifier role in this case so that it's not accidentally
+  // transformed by the imports transform when preserving JSX.
+  if (!hadDot) {
+    const firstToken = state.tokens[firstTokenIndex];
+    const firstChar = input.charCodeAt(firstToken.start);
+    if (firstChar >= charCodes.lowercaseA && firstChar <= charCodes.lowercaseZ) {
+      firstToken.identifierRole = null;
+    }
   }
 }
 

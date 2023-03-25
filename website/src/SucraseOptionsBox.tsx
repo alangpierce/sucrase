@@ -97,7 +97,7 @@ function JSXRuntimeOption({options, onUpdateOptions}: JSXRuntimeOptionProps): JS
       <span className={css(styles.optionName)}>
         jsxRuntime:{" "}
         <SimpleSelect
-          options={["classic", "automatic"]}
+          options={["classic", "automatic", "preserve"]}
           value={options.jsxRuntime}
           onChange={(value) => {
             onUpdateOptions({...options, jsxRuntime: value});

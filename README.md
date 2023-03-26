@@ -67,7 +67,7 @@ The main configuration option in Sucrase is an array of transform names. These
 transforms are available:
 
 * **jsx**: Enables JSX syntax. By default, JSX is transformed to `React.createClass`,
-  but may be preserved or transformed to `jsx` by setting the `jsxRuntime` option.
+  but may be preserved or transformed to `_jsx()` by setting the `jsxRuntime` option.
   Also adds `createReactClass` display names and JSX context information.
 * **typescript**: Compiles TypeScript code to JavaScript, removing type
   annotations and handling features like enums. Does not check types. Sucrase

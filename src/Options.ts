@@ -26,14 +26,15 @@ export interface Options {
    */
   disableESTransforms?: boolean;
   /**
-   * Transformation mode for the JSX transform. The automatic transform refers
-   * to the transform behavior released with React 17, where the `jsx` function
-   * (or a variation) is automatically imported. The classic transform refers to
-   * the previous behavior using `React.createElement`.
+   * Transformation mode for the JSX transform.
+   * - "classic" refers to the original behavior using `React.createElement`.
+   * - "automatic" refers to the transform behavior released with React 17,
+   *   where the `jsx` function (or a variation) is automatically imported.
+   * - "preserve" leaves the JSX as-is.
    *
-   * Default value: "classic"
+   * Default value: "classic".
    */
-  jsxRuntime?: "classic" | "automatic";
+  jsxRuntime?: "classic" | "automatic" | "preserve";
   /**
    * Compile code for production use. Currently only applies to the JSX
    * transform.

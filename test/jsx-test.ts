@@ -3,7 +3,7 @@ import {throws} from "assert";
 import {transform, Options} from "../src";
 import {IMPORT_DEFAULT_PREFIX, JSX_PREFIX} from "./prefixes";
 import * as util from "./util";
-import {jsxDevArgs} from "./util";
+import {assertResult, jsxDevArgs} from "./util";
 
 const {devProps} = util;
 
@@ -1167,6 +1167,62 @@ describe("transform JSX", () => {
       React.createElement('a', {${devProps(2)}}, "&valueOf;")
     `,
       },
+    );
+  });
+
+  it("allows preserving JSX", () => {
+    assertResult(
+      `
+      <div />
+    `,
+      `
+      <div />
+    `,
+      {transforms: ["jsx"], jsxRuntime: "preserve"},
+    );
+  });
+
+  it("transforms valid JSX names with imports transform when preserving JSX", () => {
+    assertResult(
+      `
+      import {foo, Bar, baz, abc, test, def, ghi} from "./utils";
+      function render() {
+        return (
+          <>
+            <foo />
+            <Bar />
+            <baz.abc />
+            <div test={def}>{ghi}</div>
+          </>
+        );
+      }
+    `,
+      `"use strict";
+      var _utils = require('./utils');
+      function render() {
+        return (
+          <>
+            <foo />
+            <_utils.Bar />
+            <_utils.baz.abc />
+            <div test={_utils.def}>{_utils.ghi}</div>
+          </>
+        );
+      }
+    `,
+      {transforms: ["jsx", "imports"], jsxRuntime: "preserve"},
+    );
+  });
+
+  it("removes JSX TS type arguments when preserving JSX", () => {
+    assertResult(
+      `
+      <Foo<number> />
+    `,
+      `
+      <Foo />
+    `,
+      {transforms: ["jsx", "typescript"], jsxRuntime: "preserve"},
     );
   });
 });

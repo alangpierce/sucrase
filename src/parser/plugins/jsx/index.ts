@@ -138,9 +138,9 @@ function jsxParseElementName(): void {
     jsxParseIdentifier();
   }
   // For tags like <div> with a lowercase letter and no dots, the name is
-  // actually *not* an identifier access it's referring to a built-in tag name.
-  // Remove the identifier role in this case so that it's not accidentally
-  // transformed by the imports transform when preserving JSX.
+  // actually *not* an identifier access, since it's referring to a built-in
+  // tag name. Remove the identifier role in this case so that it's not
+  // accidentally transformed by the imports transform when preserving JSX.
   if (!hadDot) {
     const firstToken = state.tokens[firstTokenIndex];
     const firstChar = input.charCodeAt(firstToken.start);

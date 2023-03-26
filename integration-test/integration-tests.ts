@@ -31,6 +31,19 @@ describe("integration tests", () => {
   }
 
   /**
+   * Find sucrase/register integration tests.
+   *
+   * Each test has a file starting with "main" (e.g. main.ts, main.tsx,
+   * main.mts, etc) that's used as the entry point. The test should be written
+   * in such a way that the execution throws an exception if the test fails.
+   */
+  for (const testFile of discoverTests("test-cases/register-cases", "main")) {
+    it(testFile, async () => {
+      await execPromise(`node -r ${__dirname}/../register ${testFile}`);
+    });
+  }
+
+  /**
    * Find Jest integration tests.
    *
    * Each test directory has a jest.config.js and a test that should pass when

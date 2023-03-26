@@ -1,4 +1,5 @@
 import type CJSImportProcessor from "../CJSImportProcessor";
+import type {HelperManager} from "../HelperManager";
 import type NameManager from "../NameManager";
 import {IdentifierRole, isDeclaration, isObjectShorthandDeclaration} from "../parser/tokenizer";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
@@ -30,6 +31,7 @@ export default class CJSImportTransformer extends Transformer {
     readonly tokens: TokenProcessor,
     readonly importProcessor: CJSImportProcessor,
     readonly nameManager: NameManager,
+    readonly helperManager: HelperManager,
     readonly reactHotLoaderTransformer: ReactHotLoaderTransformer | null,
     readonly enableLegacyBabel5ModuleInterop: boolean,
     readonly isTypeScriptTransformEnabled: boolean,
@@ -122,7 +124,10 @@ export default class CJSImportTransformer extends Transformer {
         this.tokens.copyToken();
         return;
       }
-      this.tokens.replaceToken("Promise.resolve().then(() => require");
+      const interopRequireWildcardName = this.helperManager.getHelperName("interopRequireWildcard");
+      this.tokens.replaceToken(
+        `Promise.resolve().then(() => ${interopRequireWildcardName}(require`,
+      );
       const contextId = this.tokens.currentToken().contextId;
       if (contextId == null) {
         throw new Error("Expected context ID on dynamic import invocation.");
@@ -131,7 +136,7 @@ export default class CJSImportTransformer extends Transformer {
       while (!this.tokens.matchesContextIdAndLabel(tt.parenR, contextId)) {
         this.rootTransformer.processToken();
       }
-      this.tokens.replaceToken("))");
+      this.tokens.replaceToken(")))");
       return;
     }
 

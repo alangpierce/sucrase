@@ -1055,9 +1055,9 @@ module.exports = exports.default;
         const foo = await import('foo');
       }
     `,
-      `"use strict";
+      `"use strict";${IMPORT_WILDCARD_PREFIX}
       async function loadThing() {
-        const foo = await Promise.resolve().then(() => require('foo'));
+        const foo = await Promise.resolve().then(() => _interopRequireWildcard(require('foo')));
       }
     `,
     );

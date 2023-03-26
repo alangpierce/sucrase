@@ -83,6 +83,7 @@ export default class RootTransformer {
           tokenProcessor,
           importProcessor,
           this.nameManager,
+          this.helperManager,
           reactHotLoaderTransformer,
           enableLegacyBabel5ModuleInterop,
           transforms.includes("typescript"),

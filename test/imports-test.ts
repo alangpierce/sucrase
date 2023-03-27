@@ -1063,6 +1063,22 @@ module.exports = exports.default;
     );
   });
 
+  it("uses plain require for dynamic import with enableLegacyTypeScriptModuleInterop", () => {
+    assertResult(
+      `
+      async function loadThing() {
+        const foo = await import('foo');
+      }
+    `,
+      `"use strict";
+      async function loadThing() {
+        const foo = await Promise.resolve().then(() => require('foo'));
+      }
+    `,
+      {transforms: ["imports"], enableLegacyTypeScriptModuleInterop: true},
+    );
+  });
+
   it("preserves dynamic import when configured to do so", () => {
     assertResult(
       `

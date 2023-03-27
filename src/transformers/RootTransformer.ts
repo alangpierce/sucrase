@@ -86,6 +86,7 @@ export default class RootTransformer {
           this.helperManager,
           reactHotLoaderTransformer,
           enableLegacyBabel5ModuleInterop,
+          Boolean(options.enableLegacyTypeScriptModuleInterop),
           transforms.includes("typescript"),
           Boolean(options.preserveDynamicImport),
         ),

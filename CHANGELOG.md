@@ -1,3 +1,13 @@
+# 3.31.0 (2023-03-26)
+
+* Add option to recognize and preserve JSX syntax. ([#788])
+* Fix default export interop behavior when using transpiled dynamic `import()` to import a plain CJS module.
+  For example, if `foo.js` has `module.exports = 1;`, then `await import('foo.js')` will now evaluate to `{default: 1}`
+  rather than just `1`. Named exports behave the same as before.
+  This change matches the behavior of Node.js and other transpilers, so it is considered a bug fix rather than
+  breaking. If you relied on the old behavior, feel free to file an issue and it may be possible to roll back until the
+  next semver-major release. ([#789], [#790])
+
 # 3.30.0 (2023-03-20)
 
 * Add support for new syntax in TypeScript 5.0:
@@ -497,3 +507,6 @@
 [#769]: https://github.com/alangpierce/sucrase/pull/769
 [#785]: https://github.com/alangpierce/sucrase/pull/785
 [#786]: https://github.com/alangpierce/sucrase/pull/786
+[#788]: https://github.com/alangpierce/sucrase/pull/788
+[#789]: https://github.com/alangpierce/sucrase/pull/789
+[#790]: https://github.com/alangpierce/sucrase/pull/790

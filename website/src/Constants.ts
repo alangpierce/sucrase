@@ -65,14 +65,22 @@ export const DEFAULT_OPTIONS: HydratedOptions = {
   enableLegacyBabel5ModuleInterop: false,
 };
 
-export interface DisplayOptions {
+export interface CompareOptions {
   compareWithBabel: boolean;
   compareWithTypeScript: boolean;
-  showTokens: boolean;
 }
 
-export const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
+export interface DebugOptions {
+  showTokens: boolean;
+  showSourceMap: boolean;
+}
+
+export const DEFAULT_COMPARE_OPTIONS: CompareOptions = {
   compareWithBabel: true,
   compareWithTypeScript: false,
+};
+
+export const DEFAULT_DEBUG_OPTIONS: DebugOptions = {
   showTokens: false,
+  showSourceMap: false,
 };

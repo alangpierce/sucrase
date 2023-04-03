@@ -5,6 +5,7 @@
   "homepage": "https://sucrase.io",
   "dependencies": {
     "@babel/standalone": "^7.18.5",
+    "@jridgewell/trace-mapping": "^0.3.17",
     "@sucrase/webpack-loader": "^2.0.0",
     "@types/base64-js": "^1.2.5",
     "@types/gzip-js": "^0.3.1",

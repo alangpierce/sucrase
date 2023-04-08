@@ -23,6 +23,7 @@ type UpdateStateFunc = (values: {
   babelCode?: string;
   typeScriptCode?: string;
   tokensStr?: string;
+  sourceMapStr?: string;
   sucraseTimeMs?: number | null;
   babelTimeMs?: number | null;
   typeScriptTimeMs?: number | null;
@@ -41,7 +42,7 @@ type HandleCompressedCodeFunc = (compressedCode: string) => void;
 let handleCompressedCodeFn: HandleCompressedCodeFunc | null = null;
 
 function initWorker(): void {
-  worker = new Worker(new URL("./Worker.worker", import.meta.url));
+  worker = new Worker(new URL("./worker/Worker.worker", import.meta.url));
   worker.addEventListener("message", ({data}: {data: WorkerMessage}) => {
     if (data.type === "RESPONSE") {
       if (!nextResolve) {
@@ -118,6 +119,10 @@ async function getTokens(): Promise<string> {
   return (await sendMessage({type: "GET_TOKENS"})) as string;
 }
 
+async function getSourceMap(): Promise<string> {
+  return (await sendMessage({type: "GET_SOURCE_MAP"})) as string;
+}
+
 async function profileSucrase(): Promise<number> {
   return (await sendMessage({type: "PROFILE_SUCRASE"})) as number;
 }
@@ -184,21 +189,22 @@ async function workerLoop(): Promise<void> {
     try {
       await setConfig(config);
       const sucraseCode = await runSucrase();
-      const babelCode = config.displayOptions.compareWithBabel ? await runBabel() : "";
-      const typeScriptCode = config.displayOptions.compareWithTypeScript
+      const babelCode = config.compareOptions.compareWithBabel ? await runBabel() : "";
+      const typeScriptCode = config.compareOptions.compareWithTypeScript
         ? await runTypeScript()
         : "";
-      const tokensStr = config.displayOptions.showTokens ? await getTokens() : "";
-      updateStateFn({sucraseCode, babelCode, typeScriptCode, tokensStr});
+      const tokensStr = config.debugOptions.showTokens ? await getTokens() : "";
+      const sourceMapStr = config.debugOptions.showSourceMap ? await getSourceMap() : "";
+      updateStateFn({sucraseCode, babelCode, typeScriptCode, tokensStr, sourceMapStr});
 
       const compressedCode = await compressCode();
       handleCompressedCodeFn(compressedCode);
 
       const sucraseTimeMs = await profile(profileSucrase);
-      const babelTimeMs = config.displayOptions.compareWithBabel
+      const babelTimeMs = config.compareOptions.compareWithBabel
         ? await profile(profileBabel)
         : null;
-      const typeScriptTimeMs = config.displayOptions.compareWithTypeScript
+      const typeScriptTimeMs = config.compareOptions.compareWithTypeScript
         ? await profile(profileTypeScript)
         : null;
       updateStateFn({sucraseTimeMs, babelTimeMs, typeScriptTimeMs});

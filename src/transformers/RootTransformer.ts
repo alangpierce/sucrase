@@ -56,9 +56,11 @@ export default class RootTransformer {
     }
 
     if (transforms.includes("jsx")) {
-      this.transformers.push(
-        new JSXTransformer(this, tokenProcessor, importProcessor, this.nameManager, options),
-      );
+      if (options.jsxRuntime !== "preserve") {
+        this.transformers.push(
+          new JSXTransformer(this, tokenProcessor, importProcessor, this.nameManager, options),
+        );
+      }
       this.transformers.push(
         new ReactDisplayNameTransformer(this, tokenProcessor, importProcessor, options),
       );
@@ -86,8 +88,10 @@ export default class RootTransformer {
           tokenProcessor,
           importProcessor,
           this.nameManager,
+          this.helperManager,
           reactHotLoaderTransformer,
           enableLegacyBabel5ModuleInterop,
+          Boolean(options.enableLegacyTypeScriptModuleInterop),
           transforms.includes("typescript"),
           Boolean(options.preserveDynamicImport),
         ),

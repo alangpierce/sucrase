@@ -1055,11 +1055,27 @@ module.exports = exports.default;
         const foo = await import('foo');
       }
     `,
+      `"use strict";${IMPORT_WILDCARD_PREFIX}
+      async function loadThing() {
+        const foo = await Promise.resolve().then(() => _interopRequireWildcard(require('foo')));
+      }
+    `,
+    );
+  });
+
+  it("uses plain require for dynamic import with enableLegacyTypeScriptModuleInterop", () => {
+    assertResult(
+      `
+      async function loadThing() {
+        const foo = await import('foo');
+      }
+    `,
       `"use strict";
       async function loadThing() {
         const foo = await Promise.resolve().then(() => require('foo'));
       }
     `,
+      {transforms: ["imports"], enableLegacyTypeScriptModuleInterop: true},
     );
   });
 
@@ -1404,6 +1420,22 @@ module.exports = exports.default;
     `,
       `"use strict";
       console.log(import.meta);
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
+  it("allows decorators before or after export in CJS", () => {
+    assertResult(
+      `
+      @dec1 export @dec2 class Foo {}
+      @dec3 export default @dec4 class Bar {}
+      export default @(1 + 1) @(foo.bar()) @a.b.c @d.e() @g.h(1, 2, 3) class Baz {}
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      @dec1  @dec2 class Foo {} exports.Foo = Foo;
+      @dec3  @dec4 class Bar {} exports.default = Bar;
+       @(1 + 1) @(foo.bar()) @a.b.c @d.e() @g.h(1, 2, 3) class Baz {} exports.default = Baz;
     `,
       {transforms: ["imports"]},
     );

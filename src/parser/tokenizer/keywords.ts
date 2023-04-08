@@ -33,9 +33,11 @@ export enum ContextualKeyword {
   _public,
   _readonly,
   _require,
+  _satisfies,
   _set,
   _static,
   _symbol,
   _type,
   _unique,
+  _using,
 }

@@ -563,7 +563,7 @@ export default class JSXTransformer extends Transformer {
  * Spec for identifiers: https://tc39.github.io/ecma262/#prod-IdentifierStart.
  *
  * Really only treat anything starting with a-z as tag names.  `_`, `$`, `é`
- * should be treated as copmonent names
+ * should be treated as component names
  */
 export function startsWithLowerCase(s: string): boolean {
   const firstChar = s.charCodeAt(0);

@@ -74,11 +74,13 @@ const CONTEXTUAL_KEYWORDS = [
   "public",
   "readonly",
   "require",
+  "satisfies",
   "set",
   "static",
   "symbol",
   "type",
   "unique",
+  "using",
 ];
 
 const CODE = `\

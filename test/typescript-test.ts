@@ -645,6 +645,28 @@ describe("typescript transform", () => {
     );
   });
 
+  it("handles various declare declarations", () => {
+    assertTypeScriptResult(
+      `
+      declare var a;
+      declare let b;
+      declare const c;
+      declare function f() {}
+      declare class C {}
+      declare const enum E {}
+    `,
+      `
+      
+
+
+
+
+
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
   it("handles and removes `declare module` syntax", () => {
     assertTypeScriptResult(
       `
@@ -2388,6 +2410,32 @@ describe("typescript transform", () => {
     );
   });
 
+  it("supports `export type * from` in CJS mode", () => {
+    assertTypeScriptResult(
+      `
+      export type * from './T';
+      export type * as ns from './T';
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      ;
+      ;
+    `,
+    );
+  });
+
+  it("supports `export type * from` in ESM mode", () => {
+    assertTypeScriptESMResult(
+      `
+      export type * from './T';
+      export type * as ns from './T';
+    `,
+      `
+      ;
+      ;
+    `,
+    );
+  });
+
   it("properly handles default args in constructors", () => {
     assertTypeScriptResult(
       `
@@ -2481,17 +2529,34 @@ describe("typescript transform", () => {
     );
   });
 
-  it("properly handles >= and ?? after `as`", () => {
+  it("properly handles >= and ?? after `as` and `satisfies`", () => {
     assertTypeScriptResult(
       `
       const x: string | number = 1;
       if (x as number >= 5) {}
       if (y as unknown ?? false) {}
+      if (x satisfies number >= 5) {}
+      if (y satisfies unknown ?? false) {}
     `,
       `"use strict";${NULLISH_COALESCE_PREFIX}
       const x = 1;
       if (x  >= 5) {}
       if (_nullishCoalesce(y , () => ( false))) {}
+      if (x  >= 5) {}
+      if (_nullishCoalesce(y , () => ( false))) {}
+    `,
+    );
+  });
+
+  it("properly handles <= after `as` and `satisfies`", () => {
+    assertTypeScriptResult(
+      `
+      if (x as number <= 5) {}
+      if (x satisfies number <= 5) {}
+    `,
+      `"use strict";
+      if (x  <= 5) {}
+      if (x  <= 5) {}
     `,
     );
   });
@@ -3157,13 +3222,25 @@ describe("typescript transform", () => {
     );
   });
 
-  it("properly parses TS angle brackets that look like left shift", () => {
+  it("properly parses TS function type args that look like left shift", () => {
     assertResult(
       `
       f<<T>(value: T) => void>(g);
     `,
       `
       f(g);
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("properly parses TS type args that look like left shift", () => {
+    assertResult(
+      `
+      type A = B<<T>() => void>;
+    `,
+      `
+      
     `,
       {transforms: ["typescript"]},
     );
@@ -3284,6 +3361,18 @@ describe("typescript transform", () => {
       notTypeArg = Array<number>true;
       notTypeArg = Array<number>!true;
       notTypeArg = Array<number>function foo() {};
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("distinguishes between instantiation expressions and right-shift", () => {
+    assertResult(
+      `
+      a<b>>>c
+    `,
+      `
+      a<b>>>c
     `,
       {transforms: ["typescript"]},
     );
@@ -3460,6 +3549,108 @@ describe("typescript transform", () => {
       console.log(_file1json2.default);
     `,
       {transforms: ["typescript", "imports"]},
+    );
+  });
+
+  it("parses and removes the satisfies operator", () => {
+    assertResult(
+      `
+      const palette = {
+          red: [255, 0, 0],
+          green: "#00ff00",
+          bleu: [0, 0, 255]
+      } satisfies Record<Colors, string | RGB>;
+    `,
+      `
+      const palette = {
+          red: [255, 0, 0],
+          green: "#00ff00",
+          bleu: [0, 0, 255]
+      } ;
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("allows satisfies in an assignment LHS", () => {
+    assertResult(
+      `
+      (a satisfies any) = null;
+    `,
+      `
+      (a ) = null;
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("allows declare readonly fields with initializers", () => {
+    assertResult(
+      `
+      class Foo {
+        declare readonly a = 0;
+      }
+    `,
+      `
+      class Foo {
+        declare  a = 0;
+      }
+    `,
+      {transforms: ["typescript"], disableESTransforms: true},
+    );
+  });
+
+  it("allows accessor properties with type annotations", () => {
+    assertResult(
+      `
+      class Foo {
+          accessor prop: string = 1;
+      }
+    `,
+      `
+      class Foo {
+          accessor prop = 1;
+      }
+    `,
+      {transforms: ["typescript"], disableESTransforms: true},
+    );
+  });
+
+  it("allows const modifier on type parameters", () => {
+    assertResult(
+      `
+      function a<const T>() {}
+      function b<const T extends U>() {}
+      class C<const T> {}
+      class D<in const T> {}
+      class E<const in T> {}
+    `,
+      `
+      function a() {}
+      function b() {}
+      class C {}
+      class D {}
+      class E {}
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("allows keywords in tuple labels", () => {
+    assertResult(
+      `
+      type T = [
+        function: () => {},
+        string: string
+      ]
+    `,
+      `
+      
+
+
+
+    `,
+      {transforms: ["typescript"]},
     );
   });
 });

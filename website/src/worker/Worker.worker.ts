@@ -1,10 +1,12 @@
 /* eslint-disable no-restricted-globals */
+import * as Base64 from "base64-js";
 import * as Sucrase from "sucrase";
-import type {ModuleKind, JsxEmit} from "typescript";
+import type {JsxEmit, ModuleKind} from "typescript";
 
+import {compressCode} from "../URLHashState";
+import type {Message, WorkerConfig, WorkerMessage} from "../WorkerProtocol";
+import getSourceMapInfo from "./getSourceMapInfo";
 import getTokens from "./getTokens";
-import {compressCode} from "./URLHashState";
-import type {Message, WorkerConfig, WorkerMessage} from "./WorkerProtocol";
 
 declare const self: Worker;
 
@@ -61,6 +63,10 @@ self.addEventListener("message", ({data}) => {
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 loadDependencies();
 
+function assertNever(value: never): unknown {
+  return value;
+}
+
 function processEvent(data: Message): unknown {
   if (data.type === "SET_CONFIG") {
     config = data.config;
@@ -75,14 +81,18 @@ function processEvent(data: Message): unknown {
     return compressCode(config.code);
   } else if (data.type === "GET_TOKENS") {
     return getTokens(config.code, config.sucraseOptions);
+  } else if (data.type === "GET_SOURCE_MAP") {
+    return getSourceMapInfo(config.code, config.sucraseOptions, getFilePath());
   } else if (data.type === "PROFILE_SUCRASE") {
     return runSucrase().time;
   } else if (data.type === "PROFILE_BABEL") {
     return runBabel().time;
   } else if (data.type === "PROFILE_TYPESCRIPT") {
     return runTypeScript().time;
+  } else {
+    assertNever(data);
+    return null;
   }
-  return null;
 }
 
 function getFilePath(): string {
@@ -98,9 +108,22 @@ function getFilePath(): string {
 }
 
 function runSucrase(): {code: string; time: number | null} {
-  return runAndProfile(
-    () => Sucrase.transform(config.code, {filePath: getFilePath(), ...config.sucraseOptions}).code,
-  );
+  return runAndProfile(() => {
+    if (config.debugOptions.showSourceMap) {
+      const {code: transformedCode, sourceMap} = Sucrase.transform(config.code, {
+        filePath: getFilePath(),
+        ...config.sucraseOptions,
+        sourceMapOptions: {compiledFilename: "sample.js"},
+      });
+      sourceMap!.sourcesContent = [config.code];
+      const mapBase64 = Base64.fromByteArray(new TextEncoder().encode(JSON.stringify(sourceMap)));
+      const suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+      return `${transformedCode}\n${suffix}`;
+    } else {
+      return Sucrase.transform(config.code, {filePath: getFilePath(), ...config.sucraseOptions})
+        .code;
+    }
+  });
 }
 
 function runBabel(): {code: string; time: number | null} {
@@ -114,20 +137,24 @@ function runBabel(): {code: string; time: number | null} {
   const presets: Array<string | [string, unknown]> = [];
 
   if (sucraseOptions.transforms.includes("jsx")) {
-    presets.push([
-      "react",
-      {
-        development: !sucraseOptions.production,
-        runtime: sucraseOptions.jsxRuntime,
-        ...(sucraseOptions.jsxRuntime === "automatic" && {
-          importSource: sucraseOptions.jsxImportSource,
-        }),
-        ...(sucraseOptions.jsxRuntime === "classic" && {
-          pragma: sucraseOptions.jsxPragma,
-          pragmaFrag: sucraseOptions.jsxFragmentPragma,
-        }),
-      },
-    ]);
+    if (sucraseOptions.jsxRuntime === "preserve") {
+      plugins.push("syntax-jsx");
+    } else {
+      presets.push([
+        "react",
+        {
+          development: !sucraseOptions.production,
+          runtime: sucraseOptions.jsxRuntime,
+          ...(sucraseOptions.jsxRuntime === "automatic" && {
+            importSource: sucraseOptions.jsxImportSource,
+          }),
+          ...(sucraseOptions.jsxRuntime === "classic" && {
+            pragma: sucraseOptions.jsxPragma,
+            pragmaFrag: sucraseOptions.jsxFragmentPragma,
+          }),
+        },
+      ]);
+    }
   }
   if (sucraseOptions.transforms.includes("typescript")) {
     presets.push(["typescript", {allowDeclareFields: true}]);
@@ -205,6 +232,8 @@ function runTypeScript(): {code: string; time: number | null} {
   if (sucraseOptions.transforms.includes("jsx")) {
     if (sucraseOptions.jsxRuntime === "classic") {
       jsxEmit = JsxEmit.React;
+    } else if (sucraseOptions.jsxRuntime === "preserve") {
+      jsxEmit = JsxEmit.Preserve;
     } else if (sucraseOptions.production) {
       jsxEmit = JsxEmit.ReactJSX;
     } else {

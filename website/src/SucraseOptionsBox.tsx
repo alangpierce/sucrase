@@ -97,7 +97,7 @@ function JSXRuntimeOption({options, onUpdateOptions}: JSXRuntimeOptionProps): JS
       <span className={css(styles.optionName)}>
         jsxRuntime:{" "}
         <SimpleSelect
-          options={["classic", "automatic"]}
+          options={["classic", "automatic", "preserve"]}
           value={options.jsxRuntime}
           onChange={(value) => {
             onUpdateOptions({...options, jsxRuntime: value});
@@ -164,11 +164,13 @@ export default function SucraseOptionsBox({
               {options.transforms.includes("jsx") && (
                 <>
                   <JSXRuntimeOption options={options} onUpdateOptions={onUpdateOptions} />
-                  <BooleanOption
-                    optionName="production"
-                    options={options}
-                    onUpdateOptions={onUpdateOptions}
-                  />
+                  {options.jsxRuntime !== "preserve" && (
+                    <BooleanOption
+                      optionName="production"
+                      options={options}
+                      onUpdateOptions={onUpdateOptions}
+                    />
+                  )}
                   {options.jsxRuntime === "classic" && (
                     <>
                       <StringOption

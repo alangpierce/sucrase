@@ -699,4 +699,15 @@ describe("transform flow", () => {
     `,
     );
   });
+
+  it("properly parses flow type args that look like left shift", () => {
+    assertFlowResult(
+      `
+      type A = B<<T>() => void>;
+    `,
+      `"use strict";
+      
+    `,
+    );
+  });
 });

@@ -66,10 +66,9 @@ for methodology and caveats.
 The main configuration option in Sucrase is an array of transform names. These
 transforms are available:
 
-* **jsx**: Transforms JSX syntax to `React.createElement`, e.g. `<div a={b} />`
-  becomes `React.createElement('div', {a: b})`. Behaves like Babel 7's
-  [React preset](https://github.com/babel/babel/tree/main/packages/babel-preset-react),
-  including adding `createReactClass` display names and JSX context information.
+* **jsx**: Enables JSX syntax. By default, JSX is transformed to `React.createClass`,
+  but may be preserved or transformed to `_jsx()` by setting the `jsxRuntime` option.
+  Also adds `createReactClass` display names and JSX context information.
 * **typescript**: Compiles TypeScript code to JavaScript, removing type
   annotations and handling features like enums. Does not check types. Sucrase
   transforms each file independently, so you should enable the `isolatedModules`
@@ -134,7 +133,7 @@ by your JS runtime. For example:
 By default, JSX is compiled to React functions in development mode. This can be
 configured with a few options:
 
-* **jsxRuntime**: A string specifying the transform mode, which can be one of two values:
+* **jsxRuntime**: A string specifying the transform mode, which can be one of three values:
   * `"classic"` (default): The original JSX transform that calls `React.createElement` by default.
     To configure for non-React use cases, specify:
     * **jsxPragma**: Element creation function, defaults to `React.createElement`.
@@ -143,6 +142,7 @@ configured with a few options:
       introduced with React 17, which calls `jsx` functions and auto-adds import statements.
     To configure for non-React use cases, specify:
     * **jsxImportSource**: Package name for auto-generated import statements, defaults to `react`.
+  * `"preserve"`: Don't transform JSX, and instead emit it as-is in the output code.
 * **production**: If `true`, use production version of functions and don't include debugging
   information. When using React in production mode with the automatic transform, this *must* be
   set to true to avoid an error about `jsxDEV` being missing.

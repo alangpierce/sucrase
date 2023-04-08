@@ -196,8 +196,10 @@ function tsParseImportType(): void {
 }
 
 function tsParseTypeParameter(): void {
+  eat(tt._const);
   const hadIn = eat(tt._in);
   const hadOut = eatContextual(ContextualKeyword._out);
+  eat(tt._const);
   if ((hadIn || hadOut) && !match(tt.name)) {
     // The "in" or "out" keyword must have actually been the type parameter
     // name, so set it as the name.
@@ -965,7 +967,7 @@ function tsTryParseDeclare(): boolean {
     case tt._var:
     case tt._let: {
       const oldIsType = pushTypeContext(1);
-      parseVarStatement(state.type);
+      parseVarStatement(state.type !== tt._var);
       popTypeContext(oldIsType);
       return true;
     }
@@ -1138,9 +1140,7 @@ function tsTryParseGenericAsyncArrowFunction(): boolean {
  * where bitshift would be illegal anyway (e.g. in a class "extends" clause).
  *
  * This hack is useful to handle situations like foo<<T>() => void>() where
- * there can legitimately be two open-angle-brackets in a row in TS. This
- * situation is very obscure and (as of this writing) is handled by Babel but
- * not TypeScript itself, so it may be fine in the future to remove this case.
+ * there can legitimately be two open-angle-brackets in a row in TS.
  */
 function tsParseTypeArgumentsWithPossibleBitshift(): void {
   if (state.type === tt.bitShiftL) {
@@ -1300,8 +1300,14 @@ export function tsTryParseExport(): boolean {
     semicolon();
     return true;
   } else {
-    if (isContextual(ContextualKeyword._type) && lookaheadType() === tt.braceL) {
-      next();
+    if (isContextual(ContextualKeyword._type)) {
+      const nextType = lookaheadType();
+      // export type {foo} from 'a';
+      // export type * from 'a';'
+      // export type * as ns from 'a';'
+      if (nextType === tt.braceL || nextType === tt.star) {
+        next();
+      }
     }
     return false;
   }

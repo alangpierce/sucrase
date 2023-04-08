@@ -86,16 +86,31 @@ export default class ESMImportTransformer extends Transformer {
       return this.processNamedExports();
     }
     if (
-      this.tokens.matches3(tt._export, tt.name, tt.braceL) &&
+      this.tokens.matches2(tt._export, tt.name) &&
       this.tokens.matchesContextualAtIndex(this.tokens.currentIndex() + 1, ContextualKeyword._type)
     ) {
-      // TS `export type {` case: just remove the export entirely.
+      // export type {a};
+      // export type {a as b};
+      // export type {a} from './b';
+      // export type * from './b';
+      // export type * as ns from './b';
       this.tokens.removeInitialToken();
-      while (!this.tokens.matches1(tt.braceR)) {
-        this.tokens.removeToken();
-      }
       this.tokens.removeToken();
-
+      if (this.tokens.matches1(tt.braceL)) {
+        while (!this.tokens.matches1(tt.braceR)) {
+          this.tokens.removeToken();
+        }
+        this.tokens.removeToken();
+      } else {
+        // *
+        this.tokens.removeToken();
+        if (this.tokens.matches1(tt._as)) {
+          // as
+          this.tokens.removeToken();
+          // ns
+          this.tokens.removeToken();
+        }
+      }
       // Remove type re-export `... } from './T'`
       if (
         this.tokens.matchesContextual(ContextualKeyword._from) &&
@@ -176,6 +191,14 @@ export default class ESMImportTransformer extends Transformer {
       // This is a bare import, so we should proceed with the import.
       this.tokens.copyToken();
       return false;
+    }
+
+    // Skip the "module" token in import reflection.
+    if (
+      this.tokens.matchesContextual(ContextualKeyword._module) &&
+      this.tokens.matchesContextualAtIndex(this.tokens.currentIndex() + 2, ContextualKeyword._from)
+    ) {
+      this.tokens.copyToken();
     }
 
     let foundNonTypeImport = false;

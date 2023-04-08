@@ -2,14 +2,17 @@ import {css, StyleSheet} from "aphrodite";
 import {Component} from "react";
 import {hot} from "react-hot-loader/root";
 
+import CompareOptionsBox from "./CompareOptionsBox";
 import {
-  DEFAULT_DISPLAY_OPTIONS,
+  DebugOptions,
+  DEFAULT_DEBUG_OPTIONS,
+  DEFAULT_COMPARE_OPTIONS,
   DEFAULT_OPTIONS,
-  DisplayOptions,
+  CompareOptions,
   HydratedOptions,
   INITIAL_CODE,
 } from "./Constants";
-import DisplayOptionsBox from "./DisplayOptionsBox";
+import DebugOptionsBox from "./DebugOptionsBox";
 import EditorWrapper from "./EditorWrapper";
 import SucraseOptionsBox from "./SucraseOptionsBox";
 import {loadHashState, saveHashState} from "./URLHashState";
@@ -17,8 +20,9 @@ import * as WorkerClient from "./WorkerClient";
 
 interface State {
   code: string;
-  displayOptions: DisplayOptions;
   sucraseOptions: HydratedOptions;
+  compareOptions: CompareOptions;
+  debugOptions: DebugOptions;
   sucraseCode: string;
   sucraseTimeMs: number | null | "LOADING";
   babelCode: string;
@@ -26,6 +30,7 @@ interface State {
   typeScriptCode: string;
   typeScriptTimeMs: number | null | "LOADING";
   tokensStr: string;
+  sourceMapStr: string;
   showMore: boolean;
   babelLoaded: boolean;
   typeScriptLoaded: boolean;
@@ -36,8 +41,9 @@ class App extends Component<unknown, State> {
     super(props);
     this.state = {
       code: INITIAL_CODE,
-      displayOptions: DEFAULT_DISPLAY_OPTIONS,
       sucraseOptions: DEFAULT_OPTIONS,
+      compareOptions: DEFAULT_COMPARE_OPTIONS,
+      debugOptions: DEFAULT_DEBUG_OPTIONS,
       sucraseCode: "",
       sucraseTimeMs: null,
       babelCode: "",
@@ -45,6 +51,7 @@ class App extends Component<unknown, State> {
       typeScriptCode: "",
       typeScriptTimeMs: null,
       tokensStr: "",
+      sourceMapStr: "",
       showMore: false,
       babelLoaded: false,
       typeScriptLoaded: false,
@@ -65,7 +72,8 @@ class App extends Component<unknown, State> {
           code: this.state.code,
           compressedCode,
           sucraseOptions: this.state.sucraseOptions,
-          displayOptions: this.state.displayOptions,
+          compareOptions: this.state.compareOptions,
+          debugOptions: this.state.debugOptions,
         });
       },
     });
@@ -76,7 +84,8 @@ class App extends Component<unknown, State> {
     if (
       this.state.code !== prevState.code ||
       this.state.sucraseOptions !== prevState.sucraseOptions ||
-      this.state.displayOptions !== prevState.displayOptions ||
+      this.state.compareOptions !== prevState.compareOptions ||
+      this.state.debugOptions !== prevState.debugOptions ||
       this.state.babelLoaded !== prevState.babelLoaded ||
       this.state.typeScriptLoaded !== prevState.typeScriptLoaded
     ) {
@@ -89,7 +98,8 @@ class App extends Component<unknown, State> {
     WorkerClient.updateConfig({
       code: this.state.code,
       sucraseOptions: this.state.sucraseOptions,
-      displayOptions: this.state.displayOptions,
+      compareOptions: this.state.compareOptions,
+      debugOptions: this.state.debugOptions,
     });
   }
 
@@ -108,6 +118,7 @@ class App extends Component<unknown, State> {
       typeScriptCode,
       typeScriptTimeMs,
       tokensStr,
+      sourceMapStr,
     } = this.state;
     return (
       <div className={css(styles.app)}>
@@ -126,10 +137,16 @@ class App extends Component<unknown, State> {
               this.setState({sucraseOptions});
             }}
           />
-          <DisplayOptionsBox
-            displayOptions={this.state.displayOptions}
-            onUpdateDisplayOptions={(displayOptions: DisplayOptions) => {
-              this.setState({displayOptions});
+          <CompareOptionsBox
+            compareOptions={this.state.compareOptions}
+            onUpdateCompareOptions={(compareOptions: CompareOptions) => {
+              this.setState({compareOptions});
+            }}
+          />
+          <DebugOptionsBox
+            debugOptions={this.state.debugOptions}
+            onUpdateDebugOptions={(debugOptions: DebugOptions) => {
+              this.setState({debugOptions});
             }}
           />
         </div>
@@ -148,7 +165,7 @@ class App extends Component<unknown, State> {
             isReadOnly={true}
             babelLoaded={this.state.babelLoaded}
           />
-          {this.state.displayOptions.compareWithBabel && (
+          {this.state.compareOptions.compareWithBabel && (
             <EditorWrapper
               label="Transformed with Babel"
               code={babelCode}
@@ -157,7 +174,7 @@ class App extends Component<unknown, State> {
               babelLoaded={this.state.babelLoaded}
             />
           )}
-          {this.state.displayOptions.compareWithTypeScript && (
+          {this.state.compareOptions.compareWithTypeScript && (
             <EditorWrapper
               label="Transformed with TypeScript"
               code={typeScriptCode}
@@ -166,7 +183,7 @@ class App extends Component<unknown, State> {
               babelLoaded={this.state.babelLoaded}
             />
           )}
-          {this.state.displayOptions.showTokens && (
+          {this.state.debugOptions.showTokens && (
             <EditorWrapper
               label="Tokens"
               code={tokensStr}
@@ -175,6 +192,15 @@ class App extends Component<unknown, State> {
               options={{
                 lineNumbers: (n) => (n > 1 ? String(n - 2) : ""),
               }}
+              babelLoaded={this.state.babelLoaded}
+            />
+          )}
+          {this.state.debugOptions.showSourceMap && (
+            <EditorWrapper
+              label="Source Map"
+              code={sourceMapStr}
+              isReadOnly={true}
+              isPlaintext={true}
               babelLoaded={this.state.babelLoaded}
             />
           )}

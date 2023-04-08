@@ -4,9 +4,11 @@ import {produce} from "immer";
 import type {Transform} from "sucrase";
 
 import {
-  DEFAULT_DISPLAY_OPTIONS,
+  DebugOptions,
+  DEFAULT_DEBUG_OPTIONS,
+  DEFAULT_COMPARE_OPTIONS,
   DEFAULT_OPTIONS,
-  DisplayOptions,
+  CompareOptions,
   HydratedOptions,
   INITIAL_CODE,
 } from "./Constants";
@@ -14,7 +16,8 @@ import {
 interface BaseHashState {
   code: string;
   sucraseOptions: HydratedOptions;
-  displayOptions: DisplayOptions;
+  compareOptions: CompareOptions;
+  debugOptions: DebugOptions;
 }
 
 type HashState = BaseHashState & {compressedCode: string};
@@ -23,7 +26,8 @@ export function saveHashState({
   code,
   compressedCode,
   sucraseOptions,
-  displayOptions,
+  compareOptions,
+  debugOptions,
 }: HashState): void {
   const components = [];
 
@@ -36,8 +40,14 @@ export function saveHashState({
       components.push(`${key}=${encodeURIComponent(formattedValue)}`);
     }
   }
-  for (const [key, defaultValue] of Object.entries(DEFAULT_DISPLAY_OPTIONS)) {
-    const value = displayOptions[key];
+  for (const [key, defaultValue] of Object.entries(DEFAULT_COMPARE_OPTIONS)) {
+    const value = compareOptions[key];
+    if (value !== defaultValue) {
+      components.push(`${key}=${value}`);
+    }
+  }
+  for (const [key, defaultValue] of Object.entries(DEFAULT_DEBUG_OPTIONS)) {
+    const value = debugOptions[key];
     if (value !== defaultValue) {
       components.push(`${key}=${value}`);
     }
@@ -72,7 +82,8 @@ export function loadHashState(): BaseHashState | null {
     let result: BaseHashState = {
       code: INITIAL_CODE,
       sucraseOptions: DEFAULT_OPTIONS,
-      displayOptions: DEFAULT_DISPLAY_OPTIONS,
+      compareOptions: DEFAULT_COMPARE_OPTIONS,
+      debugOptions: DEFAULT_DEBUG_OPTIONS,
     };
     for (const component of components) {
       const [key, value] = component.split("=");
@@ -93,9 +104,13 @@ export function loadHashState(): BaseHashState | null {
         result = produce(result, (draft) => {
           draft.code = decompressCode(decodeURIComponent(value));
         });
-      } else if (Object.prototype.hasOwnProperty.call(DEFAULT_DISPLAY_OPTIONS, key)) {
+      } else if (Object.prototype.hasOwnProperty.call(DEFAULT_COMPARE_OPTIONS, key)) {
         result = produce(result, (draft) => {
-          draft.displayOptions[key] = value === "true";
+          draft.compareOptions[key] = value === "true";
+        });
+      } else if (Object.prototype.hasOwnProperty.call(DEFAULT_DEBUG_OPTIONS, key)) {
+        result = produce(result, (draft) => {
+          draft.debugOptions[key] = value === "true";
         });
       }
     }

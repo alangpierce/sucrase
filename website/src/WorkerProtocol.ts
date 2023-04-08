@@ -1,6 +1,6 @@
 import type {Options} from "sucrase";
 
-import type {DisplayOptions} from "./Constants";
+import type {CompareOptions, DebugOptions} from "./Constants";
 
 export type Message =
   | {type: "SET_CONFIG"; config: WorkerConfig}
@@ -9,6 +9,7 @@ export type Message =
   | {type: "RUN_TYPESCRIPT"}
   | {type: "COMPRESS_CODE"}
   | {type: "GET_TOKENS"}
+  | {type: "GET_SOURCE_MAP"}
   | {type: "PROFILE_SUCRASE"}
   | {type: "PROFILE_BABEL"}
   | {type: "PROFILE_TYPESCRIPT"};
@@ -21,5 +22,6 @@ export type WorkerMessage =
 export interface WorkerConfig {
   code: string;
   sucraseOptions: Options;
-  displayOptions: DisplayOptions;
+  compareOptions: CompareOptions;
+  debugOptions: DebugOptions;
 }

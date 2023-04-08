@@ -1,10 +1,11 @@
 import assert from "assert";
 import {exec} from "child_process";
 import {readdirSync, statSync} from "fs";
+import {writeFile} from "fs/promises";
 import {join, dirname} from "path";
 import {promisify} from "util";
 
-import {readJSONFileContentsIfExists} from "../script/util/readFileContents";
+import {readFileContents, readJSONFileContentsIfExists} from "../script/util/readFileContents";
 
 const execPromise = promisify(exec);
 
@@ -67,6 +68,20 @@ describe("integration tests", () => {
       }
     });
   }
+
+  it("allows Jest inline snapshots", async () => {
+    process.chdir("./test-cases/other-cases/allows-inline-snapshots");
+    const originalContents = await readFileContents("./main.test.ts");
+    assert(originalContents.includes("toMatchInlineSnapshot()"));
+    try {
+      await execPromise(`npx jest --no-cache`);
+      // Running the test should have worked and updated the inline snapshot.
+      const newContents = await readFileContents("./main.test.ts");
+      assert(newContents.includes("toMatchInlineSnapshot(`3`)"));
+    } finally {
+      await writeFile("./main.test.ts", originalContents);
+    }
+  });
 
   /**
    * Find ts-node integration tests.

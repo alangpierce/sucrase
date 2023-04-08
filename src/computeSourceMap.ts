@@ -16,87 +16,45 @@ export interface RawSourceMap {
 }
 
 /**
- * Generate a source map indicating that each line maps directly to the original line, with the tokens in their new positions.
+ * Generate a source map indicating that each line maps directly to the original line,
+ * with the tokens in their new positions.
  */
 export default function computeSourceMap(
-  {code, mappings: rawMappings}: RootTransformerResult,
+  {code: generatedCode, mappings: rawMappings}: RootTransformerResult,
   filePath: string,
   options: SourceMapOptions,
   source: string,
   tokens: Array<Token>,
 ): RawSourceMap {
-  if (!source || options.simple) {
-    return computeSimpleSourceMap(code, filePath, options);
-  }
   const sourceColumns = computeSourceColumns(source, tokens);
-  return computeDetailedSourceMap(code, filePath, options, rawMappings, sourceColumns);
-}
-
-function computeSimpleSourceMap(
-  code: string,
-  filePath: string,
-  {compiledFilename}: SourceMapOptions,
-): RawSourceMap {
-  let mappings = "AAAA";
-  for (let i = 0; i < code.length; i++) {
-    if (code.charCodeAt(i) === charCodes.lineFeed) {
-      mappings += ";AACA";
-    }
+  const map = new GenMapping({file: options.compiledFilename});
+  let tokenIndex = 0;
+  // currentMapping is the output source index for the current input token being
+  // considered.
+  let currentMapping = rawMappings[0];
+  while (currentMapping === undefined && tokenIndex < rawMappings.length - 1) {
+    tokenIndex++;
+    currentMapping = rawMappings[tokenIndex];
   }
-  return {
-    version: 3,
-    file: compiledFilename || "",
-    sources: [filePath],
-    mappings,
-    names: [],
-  };
-}
-
-function computeSourceColumns(code: string, tokens: Array<Token>): Array<number> {
-  const sourceColumns: Array<number> = new Array(tokens.length);
-  let j = 0;
-  let currentMapping = tokens[j].start;
-  let lineStart = 0;
-  for (let i = 0; i < code.length; i++) {
-    if (i === currentMapping) {
-      sourceColumns[j] = currentMapping - lineStart;
-      currentMapping = tokens[++j].start;
-    }
-    if (code.charCodeAt(i) === charCodes.lineFeed) {
-      lineStart = i + 1;
-    }
-  }
-  return sourceColumns;
-}
-
-function computeDetailedSourceMap(
-  code: string,
-  filePath: string,
-  {compiledFilename}: SourceMapOptions,
-  rawMappings: Array<number | undefined>,
-  sourceColumns: Array<number>,
-): RawSourceMap {
-  const map = new GenMapping({file: compiledFilename});
-  let j = 0;
-  let currentMapping = rawMappings[j];
-  for (; currentMapping === undefined; currentMapping = rawMappings[++j]);
   let line = 0;
   let lineStart = 0;
   if (currentMapping !== lineStart) {
     maybeAddSegment(map, line, 0, filePath, line, 0);
   }
-  for (let i = 0; i < code.length; i++) {
+  for (let i = 0; i < generatedCode.length; i++) {
     if (i === currentMapping) {
       const genColumn = currentMapping - lineStart;
-      const sourceColumn = sourceColumns[j];
+      const sourceColumn = sourceColumns[tokenIndex];
       maybeAddSegment(map, line, genColumn, filePath, line, sourceColumn);
-      for (
-        currentMapping = rawMappings[++j];
-        currentMapping === i || currentMapping === undefined;
-        currentMapping = rawMappings[++j]
-      );
+      while (
+        (currentMapping === i || currentMapping === undefined) &&
+        tokenIndex < rawMappings.length - 1
+      ) {
+        tokenIndex++;
+        currentMapping = rawMappings[tokenIndex];
+      }
     }
-    if (code.charCodeAt(i) === charCodes.lineFeed) {
+    if (generatedCode.charCodeAt(i) === charCodes.lineFeed) {
       line++;
       lineStart = i + 1;
       if (currentMapping !== lineStart) {
@@ -104,7 +62,28 @@ function computeDetailedSourceMap(
       }
     }
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const {sourceRoot, sourcesContent, ...sourceMap} = toEncodedMap(map);
   return sourceMap as RawSourceMap;
+}
+
+/**
+ * Create an array mapping each token index to the 0-based column of the start
+ * position of the token.
+ */
+function computeSourceColumns(code: string, tokens: Array<Token>): Array<number> {
+  const sourceColumns: Array<number> = new Array(tokens.length);
+  let tokenIndex = 0;
+  let currentMapping = tokens[tokenIndex].start;
+  let lineStart = 0;
+  for (let i = 0; i < code.length; i++) {
+    if (i === currentMapping) {
+      sourceColumns[tokenIndex] = currentMapping - lineStart;
+      tokenIndex++;
+      currentMapping = tokens[tokenIndex].start;
+    }
+    if (code.charCodeAt(i) === charCodes.lineFeed) {
+      lineStart = i + 1;
+    }
+  }
+  return sourceColumns;
 }

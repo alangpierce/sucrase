@@ -12,11 +12,6 @@ export interface SourceMapOptions {
    * file.
    */
   compiledFilename: string;
-  /**
-   * Generate source maps which simply map each line to the original line
-   * without any mappings within lines
-   */
-  simple?: boolean;
 }
 
 export interface Options {

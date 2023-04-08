@@ -20,6 +20,8 @@ import TypeScriptTransformer from "./TypeScriptTransformer";
 
 export interface RootTransformerResult {
   code: string;
+  // Array mapping input token index to optional string index position in the
+  // output code.
   mappings: Array<number | undefined>;
 }
 
@@ -154,7 +156,9 @@ export default class RootTransformer {
       }
       return {
         code: code.slice(0, newlineIndex + 1) + prefix + code.slice(newlineIndex + 1) + suffix,
-        mappings: this.shiftMappings(result.mappings, prefix.length, newlineIndex),
+        // The hashbang line has no tokens, so shifting the tokens to account
+        // for prefix can happen normally.
+        mappings: this.shiftMappings(result.mappings, prefix.length),
       };
     } else {
       return {
@@ -442,18 +446,8 @@ export default class RootTransformer {
   shiftMappings(
     mappings: Array<number | undefined>,
     prefixLength: number,
-    newlineIndex = -1,
   ): Array<number | undefined> {
-    let i = 0;
-    if (newlineIndex >= 0) {
-      for (; i < mappings.length; i++) {
-        const mapping = mappings[i];
-        if (mapping !== undefined && mapping > newlineIndex) {
-          break;
-        }
-      }
-    }
-    for (; i < mappings.length; i++) {
+    for (let i = 0; i < mappings.length; i++) {
       const mapping = mappings[i];
       if (mapping !== undefined) {
         mappings[i] = mapping + prefixLength;

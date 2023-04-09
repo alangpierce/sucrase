@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.18.6",
+    "@jridgewell/trace-mapping": "^0.3.18",
     "@types/glob": "^7",
     "@types/mocha": "^9.1.1",
     "@types/mz": "^2.7.4",
@@ -70,6 +71,7 @@
     "typescript": "~4.7"
   },
   "dependencies": {
+    "@jridgewell/gen-mapping": "^0.3.2",
     "commander": "^4.0.0",
     "glob": "7.1.6",
     "lines-and-columns": "^1.1.6",

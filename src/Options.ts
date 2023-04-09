@@ -81,9 +81,7 @@ export interface Options {
   enableLegacyBabel5ModuleInterop?: boolean;
   /**
    * If specified, we also return a RawSourceMap object alongside the code.
-   * Currently, source maps simply map each line to the original line without
-   * any mappings within lines, since Sucrase preserves line numbers. filePath
-   * must be specified if this option is enabled.
+   * filePath must be specified if this option is enabled.
    */
   sourceMapOptions?: SourceMapOptions;
   /**

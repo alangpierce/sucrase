@@ -44,14 +44,21 @@ export function transform(code: string, options: Options): TransformResult {
       Boolean(options.enableLegacyBabel5ModuleInterop),
       options,
     );
-    let result: TransformResult = {code: transformer.transform()};
+    const transformerResult = transformer.transform();
+    let result: TransformResult = {code: transformerResult.code};
     if (options.sourceMapOptions) {
       if (!options.filePath) {
         throw new Error("filePath must be specified when generating a source map.");
       }
       result = {
         ...result,
-        sourceMap: computeSourceMap(result.code, options.filePath, options.sourceMapOptions),
+        sourceMap: computeSourceMap(
+          transformerResult,
+          options.filePath,
+          options.sourceMapOptions,
+          code,
+          sucraseContext.tokenProcessor.tokens,
+        ),
       };
     }
     return result;

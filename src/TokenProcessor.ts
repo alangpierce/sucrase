@@ -16,6 +16,8 @@ export interface TokenProcessorResult {
 
 export default class TokenProcessor {
   private resultCode: string = "";
+  // Array mapping input token index to optional string index position in the
+  // output code.
   private resultMappings: Array<number | undefined> = new Array(this.tokens.length);
   private tokenIndex = 0;
 
@@ -28,7 +30,11 @@ export default class TokenProcessor {
   ) {}
 
   /**
-   * Make a new TokenProcessor for things like lookahead.
+   * Snapshot the token state in a way that can be restored later, useful for
+   * things like lookahead.
+   *
+   * resultMappings do not need to be copied since in all use cases, they will
+   * be overwritten anyway after restore.
    */
   snapshot(): TokenProcessorSnapshot {
     return {

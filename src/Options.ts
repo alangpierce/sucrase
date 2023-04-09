@@ -81,8 +81,7 @@ export interface Options {
   enableLegacyBabel5ModuleInterop?: boolean;
   /**
    * If specified, we also return a RawSourceMap object alongside the code.
-   * Sucrase preserves line numbers, so column mappings can be disabled for
-   * improved performance. filePath must be specified if this option is enabled.
+   * filePath must be specified if this option is enabled.
    */
   sourceMapOptions?: SourceMapOptions;
   /**

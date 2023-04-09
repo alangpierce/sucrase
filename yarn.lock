@@ -2870,11 +2870,12 @@ stubs@^3.0.0:
   resolved "https://registry.yarnpkg.com/stubs/-/stubs-3.0.0.tgz#e8d2ba1fa9c90570303c030b6900f7d5f89abe5b"
   integrity sha512-PdHt7hHUJKxvTCgbKX9C1V/ftOcjJQgz8BZwNfV5c4B6dcGqlpelTbJ999jBGZ2jYiPAwcX5dP6oBwVlBlUbxw==
 
-sucrase@^3.31.0:
-  version "3.31.0"
-  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.31.0.tgz#daae4fd458167c5d4ba1cce6aef57b988b417b33"
-  integrity sha512-6QsHnkqyVEzYcaiHsOKkzOtOgdJcb8i54x6AV2hDwyZcY9ZyykGZVw6L/YN98xC0evwTP6utsWWrKRaa8QlfEQ==
+sucrase@^3.32.0:
+  version "3.32.0"
+  resolved "https://registry.yarnpkg.com/sucrase/-/sucrase-3.32.0.tgz#c4a95e0f1e18b6847127258a75cf360bc568d4a7"
+  integrity sha512-ydQOU34rpSyj2TGyz4D2p8rbktIOZ8QY9s+DGLvFU1i5pWJE8vkpruCjGCMHsdXwnD7JDcS+noSwM/a7zyNFDQ==
   dependencies:
+    "@jridgewell/gen-mapping" "^0.3.2"
     commander "^4.0.0"
     glob "7.1.6"
     lines-and-columns "^1.1.6"

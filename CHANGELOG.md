@@ -1,3 +1,18 @@
+# 3.32.0 (2023-04-08)
+
+* Improve source map quality by adding column information. This fixes several
+  source map use cases, such as Jest inline snapshots, source map composition,
+  and some debugger features. ([#759]) (Emily Marigold Klassen)
+  * Unfortunately, this change comes at some performance cost. Previously, the
+    slowdown from enabling source maps was about 10%, and now it is about 30%.
+    In most cases, the more detailed source maps are probably still preferable,
+    so for configuration simplicity, there is currently no option to switch
+    back to source maps without column information. If you would like to still
+    use the faster but less accurate implementation, feel free to file an issue
+    to request a new config option, or create the source map yourself in
+    wrapper code by copying the
+    [original simple implementation](https://github.com/alangpierce/sucrase/blob/9b20ea57aa95d0926fcb560f1500f984d598aa00/src/computeSourceMap.ts).
+
 # 3.31.0 (2023-03-26)
 
 * Add option to recognize and preserve JSX syntax. ([#788])
@@ -503,6 +518,7 @@
 [#740]: https://github.com/alangpierce/sucrase/pull/740
 [#742]: https://github.com/alangpierce/sucrase/pull/742
 [#746]: https://github.com/alangpierce/sucrase/pull/746
+[#759]: https://github.com/alangpierce/sucrase/pull/759
 [#766]: https://github.com/alangpierce/sucrase/pull/766
 [#769]: https://github.com/alangpierce/sucrase/pull/769
 [#785]: https://github.com/alangpierce/sucrase/pull/785

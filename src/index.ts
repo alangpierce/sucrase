@@ -31,7 +31,7 @@ export type Transform = import("./Options").Transform;
 
 export function getVersion(): string {
   /* istanbul ignore next */
-  return "3.31.0";
+  return "3.32.0";
 }
 
 export function transform(code: string, options: Options): TransformResult {

@@ -74,7 +74,7 @@ describe("integration tests", () => {
     const originalContents = await readFileContents("./main.test.ts");
     assert(originalContents.includes("toMatchInlineSnapshot()"));
     try {
-      await execPromise(`npx jest --no-cache`);
+      await execPromise(`npx jest --no-cache --updateSnapshot`);
       // Running the test should have worked and updated the inline snapshot.
       const newContents = await readFileContents("./main.test.ts");
       assert(newContents.includes("toMatchInlineSnapshot(`3`)"));

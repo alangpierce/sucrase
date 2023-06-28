@@ -1780,4 +1780,54 @@ describe("sucrase", () => {
       {transforms: []},
     );
   });
+
+  it("correctly handles `await using`", () => {
+    assertResult(
+      `
+      async function foo() {
+        await using x = blah();
+      }
+    `,
+      `
+      async function foo() {
+        await using x = blah();
+      }
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("correctly handles `await using` in a loop", () => {
+    assertResult(
+      `
+      async function foo() {
+        for (await using a of b) {}
+      }
+    `,
+      `
+      async function foo() {
+        for (await using a of b) {}
+      }
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("is not confused by `await using` in other contexts", () => {
+    assertResult(
+      `
+      await using
+      await using instanceof Foo
+      await using + 1
+      for (await using;;) {}
+    `,
+      `
+      await using
+      await using instanceof Foo
+      await using + 1
+      for (await using;;) {}
+    `,
+      {transforms: []},
+    );
+  });
 });

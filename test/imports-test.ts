@@ -327,7 +327,7 @@ return obj && obj.__esModule ? obj : { default: obj }; }
     );
   });
 
-  it("removes import assertions", () => {
+  it("removes legacy import assertions", () => {
     assertResult(
       `
       import DefaultName from 'module1' assert {type: "json"};
@@ -337,6 +337,29 @@ return obj && obj.__esModule ? obj : { default: obj }; }
       // Arbitrary expressions like these aren't actually allowed right now, but
       // exercise the ability to detect matching braces.
       import test from "module5" assert {type: {foo: "test"}};
+    `,
+      `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}${CREATE_STAR_EXPORT_PREFIX}
+      var _module1 = require('module1'); var _module12 = _interopRequireDefault(_module1);
+      var _module2 = require('module2');
+      require('module3');
+      var _module4 = require('module4'); _createStarExport(_module4);
+      // Arbitrary expressions like these aren't actually allowed right now, but
+      // exercise the ability to detect matching braces.
+      var _module5 = require('module5'); var _module52 = _interopRequireDefault(_module5);
+    `,
+    );
+  });
+
+  it("removes import attributes", () => {
+    assertResult(
+      `
+      import DefaultName from 'module1' with {type: "json"};
+      import {namedName} from 'module2' with {type: "json"};
+      import "module3" with {type: "json"};
+      export * from "module4" with {type: "json"};
+      // Arbitrary expressions like these aren't actually allowed right now, but
+      // exercise the ability to detect matching braces.
+      import test from "module5" with {type: {foo: "test"}};
     `,
       `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}${CREATE_STAR_EXPORT_PREFIX}
       var _module1 = require('module1'); var _module12 = _interopRequireDefault(_module1);

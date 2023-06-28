@@ -223,6 +223,10 @@ function parseStatementContent(declaration: boolean): void {
       ) {
         parseVarStatement(true);
         return;
+      } else if (startsAwaitUsing()) {
+        expectContextual(ContextualKeyword._await);
+        parseVarStatement(true);
+        return;
       }
     default:
       // Do nothing.
@@ -253,6 +257,48 @@ function parseStatementContent(declaration: boolean): void {
     // This was an identifier, so we might want to handle flow/typescript-specific cases.
     parseIdentifierStatement(simpleName);
   }
+}
+
+/**
+ * Determine if we're positioned at an `await using` declaration.
+ *
+ * Note that this can happen either in place of a regular variable declaration
+ * or in a loop body, and in both places, there are similar-looking cases where
+ * we need to return false.
+ *
+ * Examples returning true:
+ * await using foo = bar();
+ * for (await using a of b) {}
+ *
+ * Examples returning false:
+ * await using
+ * await using + 1
+ * await using instanceof T
+ * for (await using;;) {}
+ *
+ * For now, we early return if we don't see `await`, then do a simple
+ * backtracking-based lookahead for the `using` and identifier tokens. In the
+ * future, this could be optimized with a character-based approach.
+ */
+function startsAwaitUsing(): boolean {
+  if (!isContextual(ContextualKeyword._await)) {
+    return false;
+  }
+  const snapshot = state.snapshot();
+  // await
+  next();
+  if (!isContextual(ContextualKeyword._using) || hasPrecedingLineBreak()) {
+    state.restoreFromSnapshot(snapshot);
+    return false;
+  }
+  // using
+  next();
+  if (!match(tt.name) || hasPrecedingLineBreak()) {
+    state.restoreFromSnapshot(snapshot);
+    return false;
+  }
+  state.restoreFromSnapshot(snapshot);
+  return true;
 }
 
 export function parseDecorators(): void {
@@ -361,7 +407,11 @@ function parseAmbiguousForStatement(): void {
     return;
   }
 
-  if (match(tt._var) || match(tt._let) || match(tt._const) || isUsingInLoop()) {
+  const isAwaitUsing = startsAwaitUsing();
+  if (isAwaitUsing || match(tt._var) || match(tt._let) || match(tt._const) || isUsingInLoop()) {
+    if (isAwaitUsing) {
+      expectContextual(ContextualKeyword._await);
+    }
     next();
     parseVar(true, state.type !== tt._var);
     if (match(tt._in) || isContextual(ContextualKeyword._of)) {
@@ -1024,7 +1074,7 @@ function parseExportSpecifiersMaybe(): void {
 export function parseExportFrom(): void {
   if (eatContextual(ContextualKeyword._from)) {
     parseExprAtom();
-    maybeParseImportAssertions();
+    maybeParseImportAttributes();
   }
   semicolon();
 }
@@ -1192,7 +1242,7 @@ export function parseImport(): void {
     expectContextual(ContextualKeyword._from);
     parseExprAtom();
   }
-  maybeParseImportAssertions();
+  maybeParseImportAttributes();
   semicolon();
 }
 
@@ -1268,13 +1318,14 @@ function parseImportSpecifier(): void {
 }
 
 /**
- * Parse import assertions like `assert {type: "json"}`.
+ * Parse import attributes like `with {type: "json"}`, or the legacy form
+ * `assert {type: "json"}`.
  *
- * Import assertions technically have their own syntax, but are always parseable
+ * Import attributes technically have their own syntax, but are always parseable
  * as a plain JS object, so just do that for simplicity.
  */
-function maybeParseImportAssertions(): void {
-  if (isContextual(ContextualKeyword._assert) && !hasPrecedingLineBreak()) {
+function maybeParseImportAttributes(): void {
+  if (match(tt._with) || (isContextual(ContextualKeyword._assert) && !hasPrecedingLineBreak())) {
     next();
     parseObj(false, false);
   }

@@ -9,6 +9,7 @@ import {
   nextTemplateToken,
   popTypeContext,
   pushTypeContext,
+  rescan_gt,
 } from "../tokenizer/index";
 import {ContextualKeyword} from "../tokenizer/keywords";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
@@ -1153,11 +1154,26 @@ function tsParseTypeArgumentsWithPossibleBitshift(): void {
 function tsParseTypeArguments(): void {
   const oldIsType = pushTypeContext(0);
   expect(tt.lessThan);
-  while (!eat(tt.greaterThan) && !state.error) {
+  while (!match(tt.greaterThan) && !state.error) {
     tsParseType();
     eat(tt.comma);
   }
-  popTypeContext(oldIsType);
+  if (!oldIsType) {
+    // If the type arguments are present in an expression context, e.g.
+    // f<number>(), then the > sign should be tokenized as a non-type token.
+    // In particular, f(a < b, c >= d) should parse the >= as a single token,
+    // resulting in a syntax error and fallback to the non-type-args
+    // interpretation. In the success case, even though the > is tokenized as a
+    // non-type token, it still must be marked as a type token so that it is
+    // erased.
+    popTypeContext(oldIsType);
+    rescan_gt();
+    expect(tt.greaterThan);
+    state.tokens[state.tokens.length - 1].isType = true;
+  } else {
+    expect(tt.greaterThan);
+    popTypeContext(oldIsType);
+  }
 }
 
 export function tsIsDeclarationStart(): boolean {

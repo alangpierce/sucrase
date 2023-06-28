@@ -3504,7 +3504,7 @@ describe("typescript transform", () => {
     );
   });
 
-  it("allows and preserves import assertions when targeting ESM", () => {
+  it("allows and preserves legacy import assertions when targeting ESM", () => {
     assertResult(
       `
       import jsonValue from "./file1.json" assert {type: "json"};
@@ -3528,7 +3528,31 @@ describe("typescript transform", () => {
     );
   });
 
-  it("removes import assertions when targeting CJS", () => {
+  it("allows and preserves import attributes when targeting ESM", () => {
+    assertResult(
+      `
+      import jsonValue from "./file1.json" with {type: "json"};
+      import implicitlyElidedImport from "./file2.json" with {type: "json"};
+      import type explicitlyElidedImport from "./file3.json" with {type: "json"};
+      import "./file4.json" with {type: "json"};
+      export {val} from './file5.json' with {type: "json"};
+      export type {val} from './file6.json' with {type: "json"};
+      console.log(jsonValue);
+    `,
+      `
+      import jsonValue from "./file1.json" with {type: "json"};
+
+
+      import "./file4.json" with {type: "json"};
+      export {val} from './file5.json' with {type: "json"};
+      ;
+      console.log(jsonValue);
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("removes legacy import assertions when targeting CJS", () => {
     assertResult(
       `
       import jsonValue from "./file1.json" assert {type: "json"};
@@ -3537,6 +3561,30 @@ describe("typescript transform", () => {
       import "./file4.json" assert {type: "json"};
       export {val} from './file5.json' assert {type: "json"};
       export type {val} from './file6.json' assert {type: "json"};
+      console.log(jsonValue);
+    `,
+      `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}${CREATE_NAMED_EXPORT_FROM_PREFIX}
+      var _file1json = require('./file1.json'); var _file1json2 = _interopRequireDefault(_file1json);
+      
+      
+      require('./file4.json');
+      var _file5json = require('./file5.json'); _createNamedExportFrom(_file5json, 'val', 'val');
+      ;
+      console.log(_file1json2.default);
+    `,
+      {transforms: ["typescript", "imports"]},
+    );
+  });
+
+  it("removes import attributes when targeting CJS", () => {
+    assertResult(
+      `
+      import jsonValue from "./file1.json" with {type: "json"};
+      import implicitlyElidedImport from "./file2.json" with {type: "json"};
+      import type explicitlyElidedImport from "./file3.json" with {type: "json"};
+      import "./file4.json" with {type: "json"};
+      export {val} from './file5.json' with {type: "json"};
+      export type {val} from './file6.json' with {type: "json"};
       console.log(jsonValue);
     `,
       `"use strict";${ESMODULE_PREFIX}${IMPORT_DEFAULT_PREFIX}${CREATE_NAMED_EXPORT_FROM_PREFIX}
@@ -3649,6 +3697,19 @@ describe("typescript transform", () => {
 
 
 
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
+
+  it("avoids incorrectly recognizing >= as end of type arguments", () => {
+    // https://github.com/alangpierce/sucrase/issues/797
+    assertResult(
+      `
+      f(a < b, c >= d);
+    `,
+      `
+      f(a < b, c >= d);
     `,
       {transforms: ["typescript"]},
     );

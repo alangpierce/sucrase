@@ -571,15 +571,18 @@ function readToken_gt(): void {
 }
 
 /**
- * Called after `as` expressions in TS; we're switching from a type to a
- * non-type context, so a > token may actually be >= . This is needed because >=
- * must be tokenized as a > in a type context because of code like
- * `const x: Array<T>=[];`, but `a as T >= 1` is a code example where it must be
- * treated as >=.
+ * Reinterpret a possible > token when transitioning from a type to a non-type
+ * context.
  *
- * Notably, this only applies to >, not <. In a code snippet like `a as T <= 1`,
- * we must NOT tokenize as <, or else the type parser will start parsing a type
- * argument and fail.
+ * This comes up in two situations where >= needs to be treated as one token:
+ * - After an `as` expression, like in the code `a as T >= 1`.
+ * - In a type argument in an expression context, e.g. `f(a < b, c >= d)`, we
+ *   need to see the token as >= so that we get an error and backtrack to
+ *   normal expression parsing.
+ *
+ * Other situations require >= to be seen as two tokens, e.g.
+ * `const x: Array<T>=[];`, so it's important to treat > as its own token in
+ * typical type parsing situations.
  */
 export function rescan_gt(): void {
   if (state.type === tt.greaterThan) {

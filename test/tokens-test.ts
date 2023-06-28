@@ -516,18 +516,18 @@ describe("tokens", () => {
     );
   });
 
-  it("parses import assertions", () => {
+  it("parses import attributes", () => {
     assertTokens(
       `
-      import foo from "./foo.json" assert {type: "json"};
-      export {val} from './foo.js' assert {type: "javascript"};
+      import foo from "./foo.json" with {type: "json"};
+      export {val} from './foo.js' with {type: "javascript"};
     `,
       [
         {type: tt._import},
         {type: tt.name},
         {type: tt.name, contextualKeyword: ContextualKeyword._from},
         {type: tt.string},
-        {type: tt.name, contextualKeyword: ContextualKeyword._assert},
+        {type: tt._with},
         {type: tt.braceL},
         {type: tt.name, contextualKeyword: ContextualKeyword._type},
         {type: tt.colon},
@@ -540,7 +540,7 @@ describe("tokens", () => {
         {type: tt.braceR},
         {type: tt.name, contextualKeyword: ContextualKeyword._from},
         {type: tt.string},
-        {type: tt.name, contextualKeyword: ContextualKeyword._assert},
+        {type: tt._with},
         {type: tt.braceL},
         {type: tt.name, contextualKeyword: ContextualKeyword._type},
         {type: tt.colon},

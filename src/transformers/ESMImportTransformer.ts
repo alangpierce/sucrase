@@ -11,7 +11,7 @@ import getDeclarationInfo, {
 } from "../util/getDeclarationInfo";
 import getImportExportSpecifierInfo from "../util/getImportExportSpecifierInfo";
 import {getNonTypeIdentifiers} from "../util/getNonTypeIdentifiers";
-import {removeMaybeImportAssertion} from "../util/removeMaybeImportAssertion";
+import {removeMaybeImportAttributes} from "../util/removeMaybeImportAttributes";
 import shouldElideDefaultExport from "../util/shouldElideDefaultExport";
 import type ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
 import Transformer from "./Transformer";
@@ -118,7 +118,7 @@ export default class ESMImportTransformer extends Transformer {
       ) {
         this.tokens.removeToken();
         this.tokens.removeToken();
-        removeMaybeImportAssertion(this.tokens);
+        removeMaybeImportAttributes(this.tokens);
       }
       return true;
     }
@@ -162,7 +162,7 @@ export default class ESMImportTransformer extends Transformer {
         this.tokens.removeToken();
       }
       this.tokens.removeToken();
-      removeMaybeImportAssertion(this.tokens);
+      removeMaybeImportAttributes(this.tokens);
       if (this.tokens.matches1(tt.semi)) {
         this.tokens.removeToken();
       }

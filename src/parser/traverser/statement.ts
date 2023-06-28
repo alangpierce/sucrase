@@ -263,7 +263,8 @@ function parseStatementContent(declaration: boolean): void {
  * Determine if we're positioned at an `await using` declaration.
  *
  * Note that this can happen either in place of a regular variable declaration
- * or in a loop body, and in both places, there are
+ * or in a loop body, and in both places, there are similar-looking cases where
+ * we need to return false.
  *
  * Examples returning true:
  * await using foo = bar();
@@ -275,9 +276,9 @@ function parseStatementContent(declaration: boolean): void {
  * await using instanceof T
  * for (await using;;) {}
  *
- * For now, we do a simple backtracking-based lookahead for the `using` and
- * identifier tokens. In the future, this could be optimized with a
- * character-based approach.
+ * For now, we early return if we don't see `await`, then do a simple
+ * backtracking-based lookahead for the `using` and identifier tokens. In the
+ * future, this could be optimized with a character-based approach.
  */
 function startsAwaitUsing(): boolean {
   if (!isContextual(ContextualKeyword._await)) {

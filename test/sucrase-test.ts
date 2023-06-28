@@ -1796,6 +1796,7 @@ describe("sucrase", () => {
       {transforms: []},
     );
   });
+
   it("correctly handles `await using` in a loop", () => {
     assertResult(
       `
@@ -1812,7 +1813,7 @@ describe("sucrase", () => {
     );
   });
 
-  it("is not confused `await using` in other contexts", () => {
+  it("is not confused by `await using` in other contexts", () => {
     assertResult(
       `
       await using

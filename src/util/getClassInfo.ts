@@ -278,6 +278,11 @@ function processConstructor(tokens: TokenProcessor): {
   }
   // )
   tokens.nextToken();
+  // Constructor type annotations are invalid, but skip them anyway since
+  // they're easy to skip.
+  while (tokens.currentToken().isType) {
+    tokens.nextToken();
+  }
   let constructorInsertPos = tokens.currentIndex();
 
   // Advance through body looking for a super call.

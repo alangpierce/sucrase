@@ -4,7 +4,7 @@ import type NameManager from "../NameManager";
 import {ContextualKeyword} from "../parser/tokenizer/keywords";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import type TokenProcessor from "../TokenProcessor";
-import getClassInfo, {ClassInfo} from "../util/getClassInfo";
+import getClassInfo, {type ClassInfo} from "../util/getClassInfo";
 import CJSImportTransformer from "./CJSImportTransformer";
 import ESMImportTransformer from "./ESMImportTransformer";
 import FlowTransformer from "./FlowTransformer";

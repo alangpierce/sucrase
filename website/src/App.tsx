@@ -4,12 +4,12 @@ import {hot} from "react-hot-loader/root";
 
 import CompareOptionsBox from "./CompareOptionsBox";
 import {
-  DebugOptions,
+  type DebugOptions,
   DEFAULT_DEBUG_OPTIONS,
   DEFAULT_COMPARE_OPTIONS,
   DEFAULT_OPTIONS,
-  CompareOptions,
-  HydratedOptions,
+  type CompareOptions,
+  type HydratedOptions,
   INITIAL_CODE,
 } from "./Constants";
 import DebugOptionsBox from "./DebugOptionsBox";

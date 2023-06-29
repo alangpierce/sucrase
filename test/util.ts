@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import vm from "vm";
 
-import {Options, transform} from "../src";
+import {type Options, transform} from "../src";
 
 export interface Expectations {
   expectedResult?: string;

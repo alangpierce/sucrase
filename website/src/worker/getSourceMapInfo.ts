@@ -1,5 +1,5 @@
-import {eachMapping, TraceMap, EncodedSourceMap} from "@jridgewell/trace-mapping";
-import {transform, Options} from "sucrase";
+import {eachMapping, TraceMap, type EncodedSourceMap} from "@jridgewell/trace-mapping";
+import {transform, type Options} from "sucrase";
 
 /**
  * Create a helpful string for debugging source map info.

@@ -28,7 +28,7 @@ import {
   parseMaybeUnary,
   parsePropertyName,
   parseTemplate,
-  StopState,
+  type StopState,
 } from "../traverser/expression";
 import {parseBindingIdentifier, parseBindingList, parseImportedIdentifier} from "../traverser/lval";
 import {

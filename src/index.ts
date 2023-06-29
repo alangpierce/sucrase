@@ -1,9 +1,10 @@
 import CJSImportProcessor from "./CJSImportProcessor";
-import computeSourceMap, {RawSourceMap} from "./computeSourceMap";
+import computeSourceMap, {type RawSourceMap} from "./computeSourceMap";
 import {HelperManager} from "./HelperManager";
 import identifyShadowedGlobals from "./identifyShadowedGlobals";
 import NameManager from "./NameManager";
 import {validateOptions} from "./Options";
+import type {Options, SourceMapOptions, Transform} from "./Options";
 import {parse} from "./parser";
 import type {Scope} from "./parser/tokenizer/state";
 import TokenProcessor from "./TokenProcessor";
@@ -24,10 +25,7 @@ export interface SucraseContext {
   helperManager: HelperManager;
 }
 
-// Re-export options types in an isolatedModules-friendly way so they can be used externally.
-export type Options = import("./Options").Options;
-export type SourceMapOptions = import("./Options").SourceMapOptions;
-export type Transform = import("./Options").Transform;
+export type {Options, SourceMapOptions, Transform};
 
 export function getVersion(): string {
   /* istanbul ignore next */

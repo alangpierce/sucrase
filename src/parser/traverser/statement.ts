@@ -52,7 +52,7 @@ import {
 } from "../tokenizer";
 import {ContextualKeyword} from "../tokenizer/keywords";
 import {Scope} from "../tokenizer/state";
-import {TokenType, TokenType as tt} from "../tokenizer/types";
+import {type TokenType, TokenType as tt} from "../tokenizer/types";
 import {charCodes} from "../util/charcodes";
 import {getNextContextId, input, isFlowEnabled, isTypeScriptEnabled, state} from "./base";
 import {

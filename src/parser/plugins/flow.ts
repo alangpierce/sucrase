@@ -8,7 +8,7 @@ import {
   next,
   popTypeContext,
   pushTypeContext,
-  TypeAndKeyword,
+  type TypeAndKeyword,
 } from "../tokenizer/index";
 import {ContextualKeyword} from "../tokenizer/keywords";
 import {TokenType, TokenType as tt} from "../tokenizer/types";
@@ -25,7 +25,7 @@ import {
   parseFunctionBody,
   parseIdentifier,
   parseLiteral,
-  StopState,
+  type StopState,
 } from "../traverser/expression";
 import {
   baseParseExportStar,

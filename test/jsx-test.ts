@@ -1,6 +1,6 @@
 import {throws} from "assert";
 
-import {transform, Options} from "../src";
+import {transform, type Options} from "../src";
 import {IMPORT_DEFAULT_PREFIX, JSX_PREFIX} from "./prefixes";
 import * as util from "./util";
 import {assertResult, jsxDevArgs} from "./util";

@@ -8,7 +8,6 @@
     "isolatedModules": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
-    "suppressImplicitAnyIndexErrors": true,
     "downlevelIteration": true,
     "noEmitHelpers": true,
     "importHelpers": true,

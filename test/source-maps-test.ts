@@ -1,4 +1,9 @@
-import {eachMapping, TraceMap, SourceMapInput, EachMapping} from "@jridgewell/trace-mapping";
+import {
+  eachMapping,
+  TraceMap,
+  type SourceMapInput,
+  type EachMapping,
+} from "@jridgewell/trace-mapping";
 import * as assert from "assert";
 
 import {transform} from "../src";

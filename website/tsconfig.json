@@ -11,11 +11,9 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
-    "suppressImplicitAnyIndexErrors": true,
     "downlevelIteration": true,
     "noEmitHelpers": true,
     "importHelpers": true,
-    "importsNotUsedAsValues": "error"
   },
   "exclude": [
     "build",

@@ -7,6 +7,10 @@ import run from "./run";
 const TSC = "./node_modules/.bin/tsc";
 const ESLINT = "./node_modules/.bin/eslint";
 
+function isFix(): boolean {
+  return process.argv.includes("--fix");
+}
+
 async function main(): Promise<void> {
   // Linting sub-projects requires the latest Sucrase types, so require a build first.
   if (!(await exists("./dist"))) {
@@ -27,7 +31,7 @@ async function checkSucrase(): Promise<void> {
   await Promise.all([
     run(`${TSC} --project . --noEmit`),
     run(
-      `${ESLINT} ${[
+      `${ESLINT} ${isFix() ? "--fix" : ""} ${[
         "benchmark",
         "example-runner",
         "generator",
@@ -46,7 +50,7 @@ async function checkSucrase(): Promise<void> {
 async function checkProject(path: string): Promise<void> {
   await Promise.all([
     run(`${TSC} --project ${path} --noEmit`),
-    run(`${ESLINT} '${path}/src/**/*.{ts,tsx}'`),
+    run(`${ESLINT} ${isFix() ? "--fix" : ""} '${path}/src/**/*.{ts,tsx}'`),
   ]);
 }
 

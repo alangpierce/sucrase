@@ -1,5 +1,5 @@
 import {ESMODULE_PREFIX} from "./prefixes";
-import {assertExpectations, assertResult, Expectations} from "./util";
+import {assertExpectations, assertResult, type Expectations} from "./util";
 
 function assertTypeScriptAndFlowExpectations(code: string, expectations: Expectations): void {
   assertExpectations(code, expectations, {transforms: ["jsx", "imports", "typescript"]});

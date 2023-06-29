@@ -1,6 +1,7 @@
 import {css, StyleSheet} from "aphrodite";
 import type {editor} from "monaco-editor";
 import {Component} from "react";
+import type MonacoEditor from "react-monaco-editor";
 import AutoSizer from "react-virtualized-auto-sizer";
 
 import Editor from "./Editor";
@@ -18,7 +19,7 @@ interface EditorWrapperProps {
 }
 
 interface State {
-  MonacoEditor: typeof import("react-monaco-editor").default | null;
+  MonacoEditor: typeof MonacoEditor | null;
 }
 
 export default class EditorWrapper extends Component<EditorWrapperProps, State> {
@@ -62,30 +63,33 @@ export default class EditorWrapper extends Component<EditorWrapperProps, State> 
         </span>
         <span className={css(styles.container)}>
           <AutoSizer onResize={this.invalidate} defaultWidth={300} defaultHeight={300}>
-            {({width, height}) =>
-              MonacoEditor ? (
-                <Editor
-                  ref={(e) => {
-                    this.editor = e;
-                  }}
-                  MonacoEditor={MonacoEditor}
-                  width={width}
-                  height={height - 30}
-                  code={code}
-                  onChange={onChange}
-                  isPlaintext={isPlaintext}
-                  isReadOnly={isReadOnly}
-                  options={options}
-                />
-              ) : (
-                <FallbackEditor
-                  width={width}
-                  height={height - 30}
-                  code={code}
-                  onChange={onChange}
-                  isReadOnly={isReadOnly}
-                />
-              )
+            {
+              // TODO: The explicit type params can be removed once we're on TS 5.1
+              //  https://github.com/bvaughn/react-virtualized-auto-sizer/issues/63
+              ({width, height}: {width: number; height: number}) =>
+                MonacoEditor ? (
+                  <Editor
+                    ref={(e) => {
+                      this.editor = e;
+                    }}
+                    MonacoEditor={MonacoEditor}
+                    width={width}
+                    height={height - 30}
+                    code={code}
+                    onChange={onChange}
+                    isPlaintext={isPlaintext}
+                    isReadOnly={isReadOnly}
+                    options={options}
+                  />
+                ) : (
+                  <FallbackEditor
+                    width={width}
+                    height={height - 30}
+                    code={code}
+                    onChange={onChange}
+                    isReadOnly={isReadOnly}
+                  />
+                )
             }
           </AutoSizer>
         </span>

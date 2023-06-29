@@ -18,6 +18,7 @@ module.exports = {
     // This rule has TypeScript false positives, so just disable for now.
     "import/named": "off",
     "import/no-cycle": "off",
+    "import/no-duplicates": "off",
     // Currently we need to do relative imports for cross-project references.
     // This could be resolved by switching to lerna or yarn workspaces.
     "import/no-relative-packages": "off",
@@ -77,6 +78,7 @@ module.exports = {
     "@typescript-eslint/array-type": ["error", {default: "generic"}],
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+    "@typescript-eslint/consistent-type-imports": ["error", {fixStyle: "inline-type-imports"}],
     "@typescript-eslint/explicit-function-return-type": ["error", {allowExpressions: true}],
     // Disable in favor of explicit-function-return-type.
     "@typescript-eslint/explicit-module-boundary-types": "off",

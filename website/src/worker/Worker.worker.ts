@@ -2,16 +2,18 @@
 import * as Base64 from "base64-js";
 import * as Sucrase from "sucrase";
 import type {JsxEmit, ModuleKind} from "typescript";
+import type * as TypeScriptModule from "typescript";
 
 import {compressCode} from "../URLHashState";
 import type {Message, WorkerConfig, WorkerMessage} from "../WorkerProtocol";
+import type * as BabelModule from "./Babel";
 import getSourceMapInfo from "./getSourceMapInfo";
 import getTokens from "./getTokens";
 
 declare const self: Worker;
 
-let Babel: typeof import("./Babel") | null = null;
-let TypeScript: typeof import("typescript") | null = null;
+let Babel: typeof BabelModule | null = null;
+let TypeScript: typeof TypeScriptModule | null = null;
 
 function postMessage(message: WorkerMessage): void {
   self.postMessage(message);

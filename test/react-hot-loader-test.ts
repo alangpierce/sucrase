@@ -1,6 +1,6 @@
 import * as assert from "assert";
 
-import {Transform, transform} from "../src";
+import {type Transform, transform} from "../src";
 import {ESMODULE_PREFIX, IMPORT_DEFAULT_PREFIX, RHL_PREFIX} from "./prefixes";
 import {assertResult} from "./util";
 

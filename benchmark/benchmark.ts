@@ -10,7 +10,7 @@ import * as TypeScript from "typescript";
 
 import run from "../script/run";
 import * as sucrase from "../src/index";
-import {FileInfo, loadProjectFiles} from "./loadProjectFiles";
+import {type FileInfo, loadProjectFiles} from "./loadProjectFiles";
 
 async function main(): Promise<void> {
   process.chdir(__dirname);

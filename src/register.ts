@@ -1,6 +1,6 @@
 import * as pirates from "pirates";
 
-import {Options, transform} from "./index";
+import {type Options, transform} from "./index";
 
 export interface HookOptions {
   matcher?: (code: string) => boolean;

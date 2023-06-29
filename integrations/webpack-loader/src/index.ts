@@ -1,5 +1,5 @@
 import {getOptions, getRemainingRequest} from "loader-utils";
-import {Options, transform} from "sucrase";
+import {type Options, transform} from "sucrase";
 
 function loader(code: string): string {
   const webpackRemainingChain = getRemainingRequest(this).split("!");

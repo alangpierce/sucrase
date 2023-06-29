@@ -3714,4 +3714,26 @@ describe("typescript transform", () => {
       {transforms: ["typescript"]},
     );
   });
+
+  it("removes return type annotations from constructors", () => {
+    // Constructor return types aren't valid, but we return them anyway since
+    // it's easy and improves the DX when people make the mistake.
+    assertResult(
+      `
+      class A {
+        constructor(): A {
+          return this;
+        }
+      }
+    `,
+      `
+      class A {
+        constructor() {
+          return this;
+        }
+      }
+    `,
+      {transforms: ["typescript"]},
+    );
+  });
 });

@@ -7,7 +7,7 @@ import {IS_IDENTIFIER_CHAR, IS_IDENTIFIER_START} from "../util/identifier";
 import {IS_WHITESPACE, skipWhiteSpace} from "../util/whitespace";
 import {ContextualKeyword} from "./keywords";
 import readWord from "./readWord";
-import {TokenType, TokenType as tt} from "./types";
+import {type TokenType, TokenType as tt} from "./types";
 
 export enum IdentifierRole {
   Access,

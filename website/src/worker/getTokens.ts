@@ -1,4 +1,4 @@
-import {getFormattedTokens, Options} from "sucrase";
+import {getFormattedTokens, type Options} from "sucrase";
 
 export default function getTokens(code: string, options: Options): string {
   try {

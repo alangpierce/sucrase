@@ -1,7 +1,7 @@
 import * as assert from "assert";
 
 import {parse} from "../src/parser";
-import {IdentifierRole, JSXRole, Token} from "../src/parser/tokenizer";
+import {IdentifierRole, JSXRole, type Token} from "../src/parser/tokenizer";
 import {ContextualKeyword} from "../src/parser/tokenizer/keywords";
 import {TokenType, TokenType as tt} from "../src/parser/tokenizer/types";
 

@@ -7,7 +7,6 @@
     "module": "commonjs",
     "isolatedModules": true,
     "esModuleInterop": true,
-    "importsNotUsedAsValues": "error",
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
     "useDefineForClassFields": true,

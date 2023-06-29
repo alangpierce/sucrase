@@ -6,7 +6,7 @@ import {JSXRole} from "../parser/tokenizer";
 import {TokenType as tt} from "../parser/tokenizer/types";
 import {charCodes} from "../parser/util/charcodes";
 import type TokenProcessor from "../TokenProcessor";
-import getJSXPragmaInfo, {JSXPragmaInfo} from "../util/getJSXPragmaInfo";
+import getJSXPragmaInfo, {type JSXPragmaInfo} from "../util/getJSXPragmaInfo";
 import type RootTransformer from "./RootTransformer";
 import Transformer from "./Transformer";
 

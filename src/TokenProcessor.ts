@@ -1,7 +1,7 @@
 import type {HelperManager} from "./HelperManager";
 import type {Token} from "./parser/tokenizer";
 import type {ContextualKeyword} from "./parser/tokenizer/keywords";
-import {TokenType, TokenType as tt} from "./parser/tokenizer/types";
+import {type TokenType, TokenType as tt} from "./parser/tokenizer/types";
 import isAsyncOperation from "./util/isAsyncOperation";
 
 export interface TokenProcessorSnapshot {

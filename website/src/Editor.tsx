@@ -1,9 +1,10 @@
 import type {editor} from "monaco-editor";
 import {Component} from "react";
+import type MonacoEditor from "react-monaco-editor";
 import type {EditorDidMount} from "react-monaco-editor";
 
 interface EditorProps {
-  MonacoEditor: typeof import("react-monaco-editor").default;
+  MonacoEditor: typeof MonacoEditor;
   code: string;
   onChange?: (code: string) => void;
   isReadOnly?: boolean;

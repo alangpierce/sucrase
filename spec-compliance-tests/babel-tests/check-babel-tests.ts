@@ -6,7 +6,7 @@ import {join, relative, resolve} from "path";
 
 import run from "../../script/run";
 import {readFileContents, readJSONFileContents} from "../../script/util/readFileContents";
-import {transform, Transform} from "../../src";
+import {transform, type Transform} from "../../src";
 
 const BABEL_TESTS_DIR = "./spec-compliance-tests/babel-tests/babel-tests-checkout";
 const FIXTURES_DIR = `${BABEL_TESTS_DIR}/packages/babel-parser/test/fixtures`;

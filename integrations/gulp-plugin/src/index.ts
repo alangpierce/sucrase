@@ -5,9 +5,9 @@ import replaceExt = require("replace-ext");
 //  Keeping as-is to avoid unintended issues, but this could be resolved
 //  when revisiting this plugin.
 // eslint-disable-next-line import/no-import-module-exports
-import {Transform} from "stream";
+import {type Transform} from "stream";
 // eslint-disable-next-line import/no-import-module-exports
-import {Options, transform} from "sucrase";
+import {type Options, transform} from "sucrase";
 import through = require("through2");
 
 const PLUGIN_NAME = "@sucrase/gulp-plugin";

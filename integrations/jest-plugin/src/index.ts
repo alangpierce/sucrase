@@ -1,6 +1,6 @@
 import type {TransformOptions} from "@jest/transform";
 import {extname} from "path";
-import {Transform, transform} from "sucrase";
+import {type Transform, transform} from "sucrase";
 
 import type {Options} from "../../../src/Options";
 

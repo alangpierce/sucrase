@@ -5,7 +5,7 @@ import {exists, mkdir, readdir, readFile, stat, writeFile} from "mz/fs";
 import {dirname, join, relative} from "path";
 import {promisify} from "util";
 
-import {Options, transform} from "./index";
+import {type Options, transform} from "./index";
 
 interface CLIOptions {
   outDirPath: string;

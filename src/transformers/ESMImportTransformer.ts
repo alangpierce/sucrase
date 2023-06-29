@@ -6,7 +6,7 @@ import {TokenType as tt} from "../parser/tokenizer/types";
 import type TokenProcessor from "../TokenProcessor";
 import elideImportEquals from "../util/elideImportEquals";
 import getDeclarationInfo, {
-  DeclarationInfo,
+  type DeclarationInfo,
   EMPTY_DECLARATION_INFO,
 } from "../util/getDeclarationInfo";
 import getImportExportSpecifierInfo from "../util/getImportExportSpecifierInfo";

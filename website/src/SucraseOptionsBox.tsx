@@ -3,7 +3,7 @@ import {useState} from "react";
 import type {Transform} from "sucrase";
 
 import CheckBox from "./CheckBox";
-import {HydratedOptions, TRANSFORMS} from "./Constants";
+import {type HydratedOptions, TRANSFORMS} from "./Constants";
 import OptionsBox from "./OptionsBox";
 import SimpleSelect from "./SimpleSelect";
 import TextInput from "./TextInput";

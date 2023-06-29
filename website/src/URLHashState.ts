@@ -4,14 +4,15 @@ import {produce} from "immer";
 import type {Transform} from "sucrase";
 
 import {
-  DebugOptions,
+  type DebugOptions,
   DEFAULT_DEBUG_OPTIONS,
   DEFAULT_COMPARE_OPTIONS,
   DEFAULT_OPTIONS,
-  CompareOptions,
-  HydratedOptions,
+  type CompareOptions,
+  type HydratedOptions,
   INITIAL_CODE,
 } from "./Constants";
+import {entriesExact, hasKeyExact} from "./Util";
 
 interface BaseHashState {
   code: string;
@@ -31,7 +32,7 @@ export function saveHashState({
 }: HashState): void {
   const components = [];
 
-  for (const [key, defaultValue] of Object.entries(DEFAULT_OPTIONS)) {
+  for (const [key, defaultValue] of entriesExact(DEFAULT_OPTIONS)) {
     const value = sucraseOptions[key];
     if (JSON.stringify(value) !== JSON.stringify(defaultValue)) {
       // Booleans, strings, and string arrays can all be formatted in a
@@ -40,13 +41,13 @@ export function saveHashState({
       components.push(`${key}=${encodeURIComponent(formattedValue)}`);
     }
   }
-  for (const [key, defaultValue] of Object.entries(DEFAULT_COMPARE_OPTIONS)) {
+  for (const [key, defaultValue] of entriesExact(DEFAULT_COMPARE_OPTIONS)) {
     const value = compareOptions[key];
     if (value !== defaultValue) {
       components.push(`${key}=${value}`);
     }
   }
-  for (const [key, defaultValue] of Object.entries(DEFAULT_DEBUG_OPTIONS)) {
+  for (const [key, defaultValue] of entriesExact(DEFAULT_DEBUG_OPTIONS)) {
     const value = debugOptions[key];
     if (value !== defaultValue) {
       components.push(`${key}=${value}`);
@@ -92,9 +93,11 @@ export function loadHashState(): BaseHashState | null {
         result = produce(result, (draft) => {
           draft.sucraseOptions.transforms = value.split(",") as Array<Transform>;
         });
-      } else if (Object.prototype.hasOwnProperty.call(DEFAULT_OPTIONS, key)) {
+      } else if (hasKeyExact(DEFAULT_OPTIONS, key)) {
         result = produce(result, (draft) => {
-          draft.sucraseOptions[key] = parseOptionValue(key, decodeURIComponent(value));
+          // TS gets the key type wrong here, so just use any.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (draft.sucraseOptions as any)[key] = parseOptionValue(key, decodeURIComponent(value));
         });
       } else if (key === "code") {
         result = produce(result, (draft) => {
@@ -104,11 +107,11 @@ export function loadHashState(): BaseHashState | null {
         result = produce(result, (draft) => {
           draft.code = decompressCode(decodeURIComponent(value));
         });
-      } else if (Object.prototype.hasOwnProperty.call(DEFAULT_COMPARE_OPTIONS, key)) {
+      } else if (hasKeyExact(DEFAULT_COMPARE_OPTIONS, key)) {
         result = produce(result, (draft) => {
           draft.compareOptions[key] = value === "true";
         });
-      } else if (Object.prototype.hasOwnProperty.call(DEFAULT_DEBUG_OPTIONS, key)) {
+      } else if (hasKeyExact(DEFAULT_DEBUG_OPTIONS, key)) {
         result = produce(result, (draft) => {
           draft.debugOptions[key] = value === "true";
         });
@@ -131,7 +134,10 @@ export function loadHashState(): BaseHashState | null {
 /**
  * Parse a raw value from URL by looking at the type of the default value.
  */
-function parseOptionValue(key: string, rawValue: string): string | boolean | Array<string> {
+function parseOptionValue(
+  key: keyof HydratedOptions,
+  rawValue: string,
+): string | boolean | Array<string> {
   const defaultValue = DEFAULT_OPTIONS[key];
   if (typeof defaultValue === "boolean") {
     return rawValue === "true";

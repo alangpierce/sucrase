@@ -1,6 +1,7 @@
 import {css, StyleSheet} from "aphrodite";
 import type {editor} from "monaco-editor";
 import {Component} from "react";
+import type MonacoEditor from "react-monaco-editor";
 import AutoSizer from "react-virtualized-auto-sizer";
 
 import Editor from "./Editor";
@@ -18,7 +19,7 @@ interface EditorWrapperProps {
 }
 
 interface State {
-  MonacoEditor: typeof import("react-monaco-editor").default | null;
+  MonacoEditor: typeof MonacoEditor | null;
 }
 
 export default class EditorWrapper extends Component<EditorWrapperProps, State> {

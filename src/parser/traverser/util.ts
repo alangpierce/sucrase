@@ -1,6 +1,6 @@
 import {eat, finishToken, lookaheadTypeAndKeyword, match, nextTokenStart} from "../tokenizer/index";
 import type {ContextualKeyword} from "../tokenizer/keywords";
-import {formatTokenType, TokenType, TokenType as tt} from "../tokenizer/types";
+import {formatTokenType, type TokenType, TokenType as tt} from "../tokenizer/types";
 import {charCodes} from "../util/charcodes";
 import {input, state} from "./base";
 

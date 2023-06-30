@@ -7,10 +7,11 @@ import type {DeclarationInfo} from "./getDeclarationInfo";
  */
 export default function shouldElideDefaultExport(
   isTypeScriptTransformEnabled: boolean,
+  keepUnusedImports: boolean,
   tokens: TokenProcessor,
   declarationInfo: DeclarationInfo,
 ): boolean {
-  if (!isTypeScriptTransformEnabled) {
+  if (!isTypeScriptTransformEnabled || keepUnusedImports) {
     return false;
   }
   const exportToken = tokens.currentToken();

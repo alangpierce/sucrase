@@ -39,6 +39,7 @@ export default class CJSImportTransformer extends Transformer {
     readonly isTypeScriptTransformEnabled: boolean,
     readonly isFlowTransformEnabled: boolean,
     readonly preserveDynamicImport: boolean,
+    readonly keepUnusedImports: boolean,
   ) {
     super();
     this.declarationInfo = isTypeScriptTransformEnabled
@@ -101,7 +102,7 @@ export default class CJSImportTransformer extends Transformer {
 
   private processImportEquals(): boolean {
     const importName = this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 1);
-    if (this.importProcessor.isTypeName(importName)) {
+    if (this.importProcessor.shouldAutomaticallyElideImportedName(importName)) {
       // If this name is only used as a type, elide the whole import.
       elideImportEquals(this.tokens);
     } else {
@@ -221,6 +222,9 @@ export default class CJSImportTransformer extends Transformer {
         }
       }
       this.tokens.removeToken();
+    }
+    if (this.keepUnusedImports) {
+      return false;
     }
     if (this.isTypeScriptTransformEnabled) {
       return !foundNonTypeImport;
@@ -546,7 +550,12 @@ export default class CJSImportTransformer extends Transformer {
       this.tokens.appendCode(` exports.default = ${name};`);
       // After this point, this is a plain "export default E" statement.
     } else if (
-      shouldElideDefaultExport(this.isTypeScriptTransformEnabled, this.tokens, this.declarationInfo)
+      shouldElideDefaultExport(
+        this.isTypeScriptTransformEnabled,
+        this.keepUnusedImports,
+        this.tokens,
+        this.declarationInfo,
+      )
     ) {
       // If the exported value is just an identifier and should be elided by TypeScript
       // rules, then remove it entirely. It will always have the form `export default e`,
@@ -898,6 +907,10 @@ export default class CJSImportTransformer extends Transformer {
   }
 
   private shouldElideExportedIdentifier(name: string): boolean {
-    return this.isTypeScriptTransformEnabled && !this.declarationInfo.valueDeclarations.has(name);
+    return (
+      this.isTypeScriptTransformEnabled &&
+      !this.keepUnusedImports &&
+      !this.declarationInfo.valueDeclarations.has(name)
+    );
   }
 }

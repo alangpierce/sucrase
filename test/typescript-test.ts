@@ -30,10 +30,14 @@ function assertTypeScriptESMResult(
 
 function assertTypeScriptImportResult(
   code: string,
-  {expectedCJSResult, expectedESMResult}: {expectedCJSResult: string; expectedESMResult: string},
+  {
+    expectedCJSResult,
+    expectedESMResult,
+    options = {},
+  }: {expectedCJSResult: string; expectedESMResult: string; options?: Partial<Options>},
 ): void {
-  assertTypeScriptResult(code, expectedCJSResult);
-  assertTypeScriptESMResult(code, expectedESMResult);
+  assertTypeScriptResult(code, expectedCJSResult, options);
+  assertTypeScriptESMResult(code, expectedESMResult, options);
 }
 
 describe("typescript transform", () => {
@@ -3817,6 +3821,140 @@ describe("typescript transform", () => {
         expectedCJSResult: `"use strict";
       
     `,
+      },
+    );
+  });
+
+  it("respects keepUnusedImports for import statements", () => {
+    assertTypeScriptImportResult(
+      `
+      import A, {b} from './module1';
+      import * as C from './module2';
+      import {type d, e, f, type g} from './module3';
+      import type {h} from './module4';
+      import type * as I from './module5';
+      import {type j} from './module6';
+      import {} from './module7';
+    `,
+      {
+        expectedESMResult: `
+      import A, {b} from './module1';
+      import * as C from './module2';
+      import { e, f,} from './module3';
+
+
+      import {} from './module6';
+      import {} from './module7';
+    `,
+        expectedCJSResult: `"use strict";${IMPORT_WILDCARD_PREFIX}${IMPORT_DEFAULT_PREFIX}
+      var _module1 = require('./module1'); var _module12 = _interopRequireDefault(_module1);
+      var _module2 = require('./module2'); var C = _interopRequireWildcard(_module2);
+      var _module3 = require('./module3');
+      
+      
+      require('./module6');
+      require('./module7');
+    `,
+        options: {keepUnusedImports: true},
+      },
+    );
+  });
+
+  it("respects keepUnusedImports for export statements", () => {
+    assertTypeScriptImportResult(
+      `
+      type T = number;
+      type U = number;
+      type V = number;
+      type W = number;
+      type X = number;
+      type Y = number;
+      type Z = number;
+      export {T};
+      export {type U};
+      export type {V};
+      export {type W, X, type Y};
+      export default Z;
+    `,
+      {
+        expectedESMResult: `
+      
+
+
+
+
+
+
+      export {T};
+      export {};
+      ;
+      export { X,};
+      export default Z;
+    `,
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}
+      
+
+
+
+
+
+
+      exports.T = T;
+      
+      ;
+      exports.X = X;
+      exports. default = Z;
+    `,
+        options: {keepUnusedImports: true},
+      },
+    );
+  });
+
+  it("respects keepUnusedImports for re-export statements", () => {
+    assertTypeScriptImportResult(
+      `
+      export {type T} from './module1';
+      export type {U} from './module2';
+      export {} from './module3';
+      export {type V, W} from './module4';
+      export * as foo from './module5';
+      export type * as bar from './module6';
+    `,
+      {
+        expectedESMResult: `
+      export {} from './module1';
+      ;
+      export {} from './module3';
+      export { W} from './module4';
+      export * as foo from './module5';
+      ;
+    `,
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}${IMPORT_WILDCARD_PREFIX}${CREATE_NAMED_EXPORT_FROM_PREFIX}
+      require('./module1');
+      ;
+      require('./module3');
+      var _module4 = require('./module4'); _createNamedExportFrom(_module4, 'W', 'W');
+      var _module5 = require('./module5'); var _module52 = _interopRequireWildcard(_module5); exports.foo = _module52;
+      ;
+    `,
+        options: {keepUnusedImports: true},
+      },
+    );
+  });
+
+  it("respects keepUnusedImports for import = require syntax", () => {
+    assertTypeScriptImportResult(
+      `
+      import A = require("./A");
+    `,
+      {
+        expectedESMResult: `${CREATE_REQUIRE_PREFIX}
+      const A = _require("./A");
+    `,
+        expectedCJSResult: `"use strict";
+      const A = require("./A");
+    `,
+        options: {keepUnusedImports: true, injectCreateRequireForImportRequire: true},
       },
     );
   });

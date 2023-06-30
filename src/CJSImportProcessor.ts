@@ -43,6 +43,7 @@ export default class CJSImportProcessor {
     readonly enableLegacyTypeScriptModuleInterop: boolean,
     readonly options: Options,
     readonly isTypeScriptTransformEnabled: boolean,
+    readonly keepUnusedImports: boolean,
     readonly helperManager: HelperManager,
   ) {}
 
@@ -65,8 +66,8 @@ export default class CJSImportProcessor {
   }
 
   /**
-   * In TypeScript, import statements that only import types should be removed. This does not count
-   * bare imports.
+   * In TypeScript, import statements that only import types should be removed.
+   * This includes `import {} from 'foo';`, but not `import 'foo';`.
    */
   pruneTypeOnlyImports(): void {
     this.nonTypeIdentifiers = getNonTypeIdentifiers(this.tokens, this.options);
@@ -84,14 +85,18 @@ export default class CJSImportProcessor {
         ...importInfo.wildcardNames,
         ...importInfo.namedImports.map(({localName}) => localName),
       ];
-      if (names.every((name) => this.isTypeName(name))) {
+      if (names.every((name) => this.shouldAutomaticallyElideImportedName(name))) {
         this.importsToReplace.set(path, "");
       }
     }
   }
 
-  isTypeName(name: string): boolean {
-    return this.isTypeScriptTransformEnabled && !this.nonTypeIdentifiers.has(name);
+  shouldAutomaticallyElideImportedName(name: string): boolean {
+    return (
+      this.isTypeScriptTransformEnabled &&
+      !this.keepUnusedImports &&
+      !this.nonTypeIdentifiers.has(name)
+    );
   }
 
   private generateImportReplacements(): void {

@@ -73,7 +73,9 @@ transforms are available:
   annotations and handling features like enums. Does not check types. Sucrase
   transforms each file independently, so you should enable the `isolatedModules`
   TypeScript flag so that the typechecker will disallow the few features like
-  `const enum`s that need cross-file compilation.
+  `const enum`s that need cross-file compilation. The Sucrase option `keepUnusedImports`
+  can be used to disable all automatic removal of imports and exports, analogous to TS
+  `verbatimModuleSyntax`.
 * **flow**:  Removes Flow type annotations. Does not check types.
 * **imports**: Transforms ES Modules (`import`/`export`) to CommonJS
   (`require`/`module.exports`) using the same approach as Babel and TypeScript

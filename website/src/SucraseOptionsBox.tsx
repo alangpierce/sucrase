@@ -33,6 +33,7 @@ interface BooleanOptionProps {
     | "enableLegacyBabel5ModuleInterop"
     | "production"
     | "disableESTransforms"
+    | "keepUnusedImports"
     | "preserveDynamicImport"
     | "injectCreateRequireForImportRequire";
   options: HydratedOptions;
@@ -200,6 +201,13 @@ export default function SucraseOptionsBox({
               )}
             </div>
             <div className={css(styles.secondaryOptionColumn)}>
+              {options.transforms.includes("typescript") && (
+                <BooleanOption
+                  optionName="keepUnusedImports"
+                  options={options}
+                  onUpdateOptions={onUpdateOptions}
+                />
+              )}
               {options.transforms.includes("imports") && (
                 <>
                   <BooleanOption

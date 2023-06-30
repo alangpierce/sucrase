@@ -20,6 +20,7 @@ function assertHasShadowedGlobals(code: string, expected: boolean): void {
       transforms: [],
     },
     false,
+    false,
     helperManager,
   );
   importProcessor.preprocessTokens();

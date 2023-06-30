@@ -115,16 +115,18 @@ function getSucraseContext(code: string, options: Options): SucraseContext {
       enableLegacyTypeScriptModuleInterop,
       options,
       options.transforms.includes("typescript"),
+      Boolean(options.keepUnusedImports),
       helperManager,
     );
     importProcessor.preprocessTokens();
     // We need to mark shadowed globals after processing imports so we know that the globals are,
     // but before type-only import pruning, since that relies on shadowing information.
     identifyShadowedGlobals(tokenProcessor, scopes, importProcessor.getGlobalNames());
-    if (options.transforms.includes("typescript")) {
+    if (options.transforms.includes("typescript") && !options.keepUnusedImports) {
       importProcessor.pruneTypeOnlyImports();
     }
-  } else if (options.transforms.includes("typescript")) {
+  } else if (options.transforms.includes("typescript") && !options.keepUnusedImports) {
+    // Shadowed global detection is needed for TS implicit elision of imported names.
     identifyShadowedGlobals(tokenProcessor, scopes, getTSImportedNames(tokenProcessor));
   }
   return {tokenProcessor, scopes, nameManager, importProcessor, helperManager};

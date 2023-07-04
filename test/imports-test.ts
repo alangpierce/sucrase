@@ -373,17 +373,6 @@ return obj && obj.__esModule ? obj : { default: obj }; }
     );
   });
 
-  it("allows an import statement with no import bindings", () => {
-    assertResult(
-      `
-      import {} from 'moduleName';
-    `,
-      `"use strict";
-      
-    `,
-    );
-  });
-
   it("handles trailing commas in named imports", () => {
     assertResult(
       `
@@ -1521,6 +1510,54 @@ module.exports = exports.default;
       @dec1  @dec2 class Foo {} exports.Foo = Foo;
       @dec3  @dec4 class Bar {} exports.default = Bar;
        @(1 + 1) @(foo.bar()) @a.b.c @d.e() @g.h(1, 2, 3) class Baz {} exports.default = Baz;
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
+  it("does not elide `import {}` with TS transform disabled when targeting ESM", () => {
+    assertResult(
+      `
+      import {} from './a';
+    `,
+      `
+      import {} from './a';
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("does not elide `import {}` with TS transform disabled when targeting CJS", () => {
+    assertResult(
+      `
+      import {} from './a';
+    `,
+      `"use strict";
+      require('./a');
+    `,
+      {transforms: ["imports"]},
+    );
+  });
+
+  it("does not elide `export {}` with TS transform disabled when targeting ESM", () => {
+    assertResult(
+      `
+      export {} from './a';
+    `,
+      `
+      export {} from './a';
+    `,
+      {transforms: []},
+    );
+  });
+
+  it("does not elide `export {}` with TS transform disabled when targeting CJS", () => {
+    assertResult(
+      `
+      export {} from './a';
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      require('./a');
     `,
       {transforms: ["imports"]},
     );

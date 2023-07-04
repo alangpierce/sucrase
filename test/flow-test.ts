@@ -42,6 +42,50 @@ describe("transform flow", () => {
     );
   });
 
+  it("preserves import {} statements when targeting CJS", () => {
+    assertFlowResult(
+      `
+      import {} from 'a';
+    `,
+      `"use strict";
+      require('a');
+    `,
+    );
+  });
+
+  it("preserves import {} statements when targeting ESM", () => {
+    assertFlowESMResult(
+      `
+      import {} from 'a';
+    `,
+      `
+      import {} from 'a';
+    `,
+    );
+  });
+
+  it("preserves re-export {} statements when targeting CJS", () => {
+    assertFlowResult(
+      `
+      export {} from 'a';
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      require('a');
+    `,
+    );
+  });
+
+  it("preserves re-export {} statements when targeting ESM", () => {
+    assertFlowESMResult(
+      `
+      export {} from 'a';
+    `,
+      `
+      export {} from 'a';
+    `,
+    );
+  });
+
   it("does not mistake ? in types for a ternary operator", () => {
     assertFlowResult(
       `
@@ -231,10 +275,14 @@ describe("transform flow", () => {
       `
       import a, {type n as b, m as c, type d} from './e';
       import type f from './g';
+      import {type h} from './i';
+      import j, {} from './k';
     `,
       `
       import a, { m as c,} from './e';
 
+
+      import j, {} from './k';
     `,
     );
   });

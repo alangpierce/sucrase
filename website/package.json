@@ -4,7 +4,7 @@
   "private": true,
   "homepage": "https://sucrase.io",
   "dependencies": {
-    "@babel/standalone": "^7.18.5",
+    "@babel/standalone": "^7.22.5",
     "@jridgewell/trace-mapping": "^0.3.17",
     "@sucrase/webpack-loader": "^2.0.0",
     "@types/base64-js": "^1.2.5",
@@ -36,7 +36,7 @@
     "react-virtualized-auto-sizer": "^1.0.6",
     "style-loader": "^1.0.0",
     "sucrase": "^3.32.0",
-    "typescript": "^4.7.4",
+    "typescript": "^5.1.6",
     "url-loader": "^2.2.0",
     "webpack": "^5.73.0",
     "webpack-dev-server": "^4.9.2"

@@ -771,16 +771,20 @@ module.exports = exports.default;
 
     assertResult(
       `
-      const x = 1;
-      export { x as default };
+      export { x as default } from './foo'
+      export {}
+      export type A = string
+      export { type A as B }
     `,
-      `"use strict";${ESMODULE_PREFIX}
-      const x = 1;
-      exports.default = x;
+      `"use strict";${ESMODULE_PREFIX}${CREATE_NAMED_EXPORT_FROM_PREFIX}
+      var _foo = require('./foo'); _createNamedExportFrom(_foo, 'default', 'x');
+      
+      
+      
     
 module.exports = exports.default;
 `,
-      {transforms: ["imports"], enableLegacyBabel5ModuleInterop: true},
+      {transforms: ["imports", "typescript"], enableLegacyBabel5ModuleInterop: true},
     );
   });
 

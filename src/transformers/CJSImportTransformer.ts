@@ -292,6 +292,9 @@ export default class CJSImportTransformer extends Transformer {
       }
       this.processExportDefault();
       return true;
+    } else if (this.tokens.matches2(tt._export, tt.braceL)) {
+      this.processExportBindings();
+      return true;
     }
     this.hadNamedExport = true;
     if (
@@ -314,9 +317,6 @@ export default class CJSImportTransformer extends Transformer {
       this.tokens.matches2(tt._export, tt.at)
     ) {
       this.processExportClass();
-      return true;
-    } else if (this.tokens.matches2(tt._export, tt.braceL)) {
-      this.processExportBindings();
       return true;
     } else if (this.tokens.matches2(tt._export, tt.star)) {
       this.processExportStar();
@@ -798,6 +798,7 @@ export default class CJSImportTransformer extends Transformer {
       }
 
       const specifierInfo = getImportExportSpecifierInfo(this.tokens);
+
       while (this.tokens.currentIndex() < specifierInfo.endIndex) {
         this.tokens.removeToken();
       }
@@ -806,6 +807,12 @@ export default class CJSImportTransformer extends Transformer {
         const exportedName = specifierInfo.rightName;
         const newLocalName = this.importProcessor.getIdentifierReplacement(localName);
         exportStatements.push(`exports.${exportedName} = ${newLocalName || localName};`);
+
+        if (exportedName === "default") {
+          this.hadDefaultExport = true;
+        } else {
+          this.hadNamedExport = true;
+        }
       }
 
       if (this.tokens.matches1(tt.braceR)) {

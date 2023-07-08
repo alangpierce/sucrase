@@ -768,6 +768,20 @@ module.exports = exports.default;
 `,
       {transforms: ["imports"], enableLegacyBabel5ModuleInterop: true},
     );
+
+    assertResult(
+      `
+      const x = 1;
+      export { x as default };
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      const x = 1;
+      exports.default = x;
+    
+module.exports = exports.default;
+`,
+      {transforms: ["imports"], enableLegacyBabel5ModuleInterop: true},
+    );
   });
 
   it("does not add module exports suffix when there is a named export", () => {

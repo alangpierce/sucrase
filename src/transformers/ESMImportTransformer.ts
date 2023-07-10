@@ -314,8 +314,14 @@ export default class ESMImportTransformer extends Transformer {
   }
 
   /**
-   * In TypeScript, we need to remove named exports that were never declared or only declared as a
-   * type.
+   * Handle a statement with one of these forms:
+   * export {a, type b};
+   * export {c, type d} from 'foo';
+   *
+   * In both cases, any explicit type exports should be removed. In the first
+   * case, we also need to handle implicit export elision for names declared as
+   * types. In the second case, we must NOT do implicit named export elision,
+   * but we must remove the runtime import if all exports are type exports.
    */
   private processNamedExports(): boolean {
     if (!this.isTypeScriptTransformEnabled) {
@@ -324,9 +330,14 @@ export default class ESMImportTransformer extends Transformer {
     this.tokens.copyExpectedToken(tt._export);
     this.tokens.copyExpectedToken(tt.braceL);
 
+    const isReExport = this.isReExport();
+    let foundNonTypeExport = false;
     while (!this.tokens.matches1(tt.braceR)) {
       const specifierInfo = getImportExportSpecifierInfo(this.tokens);
-      if (specifierInfo.isType || this.shouldElideExportedName(specifierInfo.leftName)) {
+      if (
+        specifierInfo.isType ||
+        (!isReExport && this.shouldElideExportedName(specifierInfo.leftName))
+      ) {
         // Type export, so remove all tokens, including any comma.
         while (this.tokens.currentIndex() < specifierInfo.endIndex) {
           this.tokens.removeToken();
@@ -336,6 +347,7 @@ export default class ESMImportTransformer extends Transformer {
         }
       } else {
         // Non-type export, so copy all tokens, including any comma.
+        foundNonTypeExport = true;
         while (this.tokens.currentIndex() < specifierInfo.endIndex) {
           this.tokens.copyToken();
         }
@@ -345,7 +357,31 @@ export default class ESMImportTransformer extends Transformer {
       }
     }
     this.tokens.copyExpectedToken(tt.braceR);
+
+    if (isReExport && !foundNonTypeExport) {
+      // This is a type-only re-export, so skip evaluating the other module. Technically this
+      // leaves the statement as `export {}`, but that's ok since that's a no-op.
+      this.tokens.removeToken();
+      this.tokens.removeToken();
+      removeMaybeImportAttributes(this.tokens);
+    }
+
     return true;
+  }
+
+  /**
+   * Starting at `export {`, look ahead and return `true` if this is an
+   * `export {...} from` statement and `false` if this is a plain multi-export.
+   */
+  private isReExport(): boolean {
+    let closeBraceIndex = this.tokens.currentIndex();
+    while (!this.tokens.matches1AtIndex(closeBraceIndex, tt.braceR)) {
+      closeBraceIndex++;
+    }
+    return (
+      this.tokens.matchesContextualAtIndex(closeBraceIndex + 1, ContextualKeyword._from) &&
+      this.tokens.matches1AtIndex(closeBraceIndex + 2, tt.string)
+    );
   }
 
   /**

@@ -768,7 +768,9 @@ module.exports = exports.default;
 `,
       {transforms: ["imports"], enableLegacyBabel5ModuleInterop: true},
     );
+  });
 
+  it("properly treats `as default` as a default export when adding module exports suffix", () => {
     assertResult(
       `
       export { x as default } from './foo'
@@ -788,6 +790,34 @@ module.exports = exports.default;
     );
   });
 
+  it("properly ignores regular default-exported types when deciding to add module exports suffix", () => {
+    assertResult(
+      `
+      type T = number;
+      export default T;
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      
+      ;
+    `,
+      {transforms: ["imports", "typescript"], enableLegacyBabel5ModuleInterop: true},
+    );
+  });
+
+  it("properly ignores `{T as default}` when deciding to add module exports suffix", () => {
+    assertResult(
+      `
+      type T = number;
+      export { T as default };
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      
+      
+    `,
+      {transforms: ["imports", "typescript"], enableLegacyBabel5ModuleInterop: true},
+    );
+  });
+
   it("does not add module exports suffix when there is a named export", () => {
     assertResult(
       `
@@ -799,6 +829,20 @@ module.exports = exports.default;
       exports. default = 4;
     `,
       {transforms: ["imports"], enableLegacyBabel5ModuleInterop: true},
+    );
+  });
+
+  it("properly treats exported TS enums as a named export when adding module exports suffix", () => {
+    assertResult(
+      `
+      export enum E {}
+      export default 4;
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      var E; (function (E) {})(E || (exports.E = E = {}));
+      exports. default = 4;
+    `,
+      {transforms: ["imports", "typescript"], enableLegacyBabel5ModuleInterop: true},
     );
   });
 

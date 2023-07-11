@@ -11,6 +11,7 @@ import getDeclarationInfo, {
   EMPTY_DECLARATION_INFO,
 } from "../util/getDeclarationInfo";
 import getImportExportSpecifierInfo from "../util/getImportExportSpecifierInfo";
+import isExportFrom from "../util/isExportFrom";
 import {removeMaybeImportAttributes} from "../util/removeMaybeImportAttributes";
 import shouldElideDefaultExport from "../util/shouldElideDefaultExport";
 import type ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
@@ -280,12 +281,13 @@ export default class CJSImportTransformer extends Transformer {
       this.tokens.matches2(tt._export, tt._enum) ||
       this.tokens.matches3(tt._export, tt._const, tt._enum)
     ) {
+      this.hadNamedExport = true;
       // Let the TypeScript transform handle it.
       return false;
     }
     if (this.tokens.matches2(tt._export, tt._default)) {
-      this.hadDefaultExport = true;
       if (this.tokens.matches3(tt._export, tt._default, tt._enum)) {
+        this.hadDefaultExport = true;
         // Flow export default enums need some special handling, so handle them
         // in that tranform rather than this one.
         return false;
@@ -488,6 +490,7 @@ export default class CJSImportTransformer extends Transformer {
   }
 
   private processExportDefault(): void {
+    let exportedRuntimeValue = true;
     if (
       this.tokens.matches4(tt._export, tt._default, tt._function, tt.name) ||
       // export default async function
@@ -523,6 +526,7 @@ export default class CJSImportTransformer extends Transformer {
       // If the exported value is just an identifier and should be elided by TypeScript
       // rules, then remove it entirely. It will always have the form `export default e`,
       // where `e` is an identifier.
+      exportedRuntimeValue = false;
       this.tokens.removeInitialToken();
       this.tokens.removeToken();
       this.tokens.removeToken();
@@ -539,6 +543,9 @@ export default class CJSImportTransformer extends Transformer {
       this.tokens.replaceToken("exports.");
       this.tokens.copyToken();
       this.tokens.appendCode(" =");
+    }
+    if (exportedRuntimeValue) {
+      this.hadDefaultExport = true;
     }
   }
 
@@ -790,6 +797,8 @@ export default class CJSImportTransformer extends Transformer {
     this.tokens.removeInitialToken();
     this.tokens.removeToken();
 
+    const isReExport = isExportFrom(this.tokens);
+
     const exportStatements: Array<string> = [];
     while (true) {
       if (this.tokens.matches1(tt.braceR)) {
@@ -803,18 +812,19 @@ export default class CJSImportTransformer extends Transformer {
         this.tokens.removeToken();
       }
 
-      if (!specifierInfo.isType) {
+      const shouldRemoveExport =
+        specifierInfo.isType ||
+        (!isReExport && this.shouldElideExportedIdentifier(specifierInfo.leftName));
+      if (!shouldRemoveExport) {
         const exportedName = specifierInfo.rightName;
         if (exportedName === "default") {
           this.hadDefaultExport = true;
         } else {
           this.hadNamedExport = true;
         }
-        if (!this.shouldElideExportedIdentifier(specifierInfo.leftName)) {
-          const localName = specifierInfo.leftName;
-          const newLocalName = this.importProcessor.getIdentifierReplacement(localName);
-          exportStatements.push(`exports.${exportedName} = ${newLocalName || localName};`);
-        }
+        const localName = specifierInfo.leftName;
+        const newLocalName = this.importProcessor.getIdentifierReplacement(localName);
+        exportStatements.push(`exports.${exportedName} = ${newLocalName || localName};`);
       }
 
       if (this.tokens.matches1(tt.braceR)) {

@@ -790,7 +790,7 @@ export default class CJSImportTransformer extends Transformer {
     this.tokens.removeInitialToken();
     this.tokens.removeToken();
 
-    const exportStatements = [];
+    const exportStatements: Array<string> = [];
     while (true) {
       if (this.tokens.matches1(tt.braceR)) {
         this.tokens.removeToken();

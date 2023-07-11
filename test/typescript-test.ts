@@ -3736,4 +3736,51 @@ describe("typescript transform", () => {
       {transforms: ["typescript"]},
     );
   });
+
+  it("fully elides type-only re-exports", () => {
+    assertTypeScriptImportResult(
+      `
+      export {A} from 'module1';
+      export type {B} from 'module2';
+      export {type C} from 'module3';
+      export {} from 'module4';
+      export {D, type E} from 'module5';
+    `,
+      {
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}${CREATE_NAMED_EXPORT_FROM_PREFIX}
+      var _module1 = require('module1'); _createNamedExportFrom(_module1, 'A', 'A');
+      ;
+      
+      
+      var _module5 = require('module5'); _createNamedExportFrom(_module5, 'D', 'D');
+    `,
+        expectedESMResult: `
+      export {A} from 'module1';
+      ;
+      export {};
+      export {};
+      export {D,} from 'module5';
+    `,
+      },
+    );
+  });
+
+  it("does not elide re-exports of names that happen to be type names", () => {
+    assertTypeScriptImportResult(
+      `
+      type T = number;
+      export {T} from 'module1';
+    `,
+      {
+        expectedCJSResult: `"use strict";${ESMODULE_PREFIX}${CREATE_NAMED_EXPORT_FROM_PREFIX}
+      
+      var _module1 = require('module1'); _createNamedExportFrom(_module1, 'T', 'T');
+    `,
+        expectedESMResult: `
+      
+      export {T} from 'module1';
+    `,
+      },
+    );
+  });
 });

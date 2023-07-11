@@ -292,34 +292,8 @@ export default class CJSImportTransformer extends Transformer {
       }
       this.processExportDefault();
       return true;
-    }
-    this.hadNamedExport = true;
-    if (
-      this.tokens.matches2(tt._export, tt._var) ||
-      this.tokens.matches2(tt._export, tt._let) ||
-      this.tokens.matches2(tt._export, tt._const)
-    ) {
-      this.processExportVar();
-      return true;
-    } else if (
-      this.tokens.matches2(tt._export, tt._function) ||
-      // export async function
-      this.tokens.matches3(tt._export, tt.name, tt._function)
-    ) {
-      this.processExportFunction();
-      return true;
-    } else if (
-      this.tokens.matches2(tt._export, tt._class) ||
-      this.tokens.matches3(tt._export, tt._abstract, tt._class) ||
-      this.tokens.matches2(tt._export, tt.at)
-    ) {
-      this.processExportClass();
-      return true;
     } else if (this.tokens.matches2(tt._export, tt.braceL)) {
       this.processExportBindings();
-      return true;
-    } else if (this.tokens.matches2(tt._export, tt.star)) {
-      this.processExportStar();
       return true;
     } else if (
       this.tokens.matches2(tt._export, tt.name) &&
@@ -356,6 +330,32 @@ export default class CJSImportTransformer extends Transformer {
         this.tokens.removeToken();
         removeMaybeImportAttributes(this.tokens);
       }
+      return true;
+    }
+    this.hadNamedExport = true;
+    if (
+      this.tokens.matches2(tt._export, tt._var) ||
+      this.tokens.matches2(tt._export, tt._let) ||
+      this.tokens.matches2(tt._export, tt._const)
+    ) {
+      this.processExportVar();
+      return true;
+    } else if (
+      this.tokens.matches2(tt._export, tt._function) ||
+      // export async function
+      this.tokens.matches3(tt._export, tt.name, tt._function)
+    ) {
+      this.processExportFunction();
+      return true;
+    } else if (
+      this.tokens.matches2(tt._export, tt._class) ||
+      this.tokens.matches3(tt._export, tt._abstract, tt._class) ||
+      this.tokens.matches2(tt._export, tt.at)
+    ) {
+      this.processExportClass();
+      return true;
+    } else if (this.tokens.matches2(tt._export, tt.star)) {
+      this.processExportStar();
       return true;
     } else {
       throw new Error("Unrecognized export syntax.");
@@ -798,14 +798,23 @@ export default class CJSImportTransformer extends Transformer {
       }
 
       const specifierInfo = getImportExportSpecifierInfo(this.tokens);
+
       while (this.tokens.currentIndex() < specifierInfo.endIndex) {
         this.tokens.removeToken();
       }
-      if (!specifierInfo.isType && !this.shouldElideExportedIdentifier(specifierInfo.leftName)) {
-        const localName = specifierInfo.leftName;
+
+      if (!specifierInfo.isType) {
         const exportedName = specifierInfo.rightName;
-        const newLocalName = this.importProcessor.getIdentifierReplacement(localName);
-        exportStatements.push(`exports.${exportedName} = ${newLocalName || localName};`);
+        if (exportedName === "default") {
+          this.hadDefaultExport = true;
+        } else {
+          this.hadNamedExport = true;
+        }
+        if (!this.shouldElideExportedIdentifier(specifierInfo.leftName)) {
+          const localName = specifierInfo.leftName;
+          const newLocalName = this.importProcessor.getIdentifierReplacement(localName);
+          exportStatements.push(`exports.${exportedName} = ${newLocalName || localName};`);
+        }
       }
 
       if (this.tokens.matches1(tt.braceR)) {

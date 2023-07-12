@@ -11,6 +11,7 @@ import getDeclarationInfo, {
 } from "../util/getDeclarationInfo";
 import getImportExportSpecifierInfo from "../util/getImportExportSpecifierInfo";
 import {getNonTypeIdentifiers} from "../util/getNonTypeIdentifiers";
+import isExportFrom from "../util/isExportFrom";
 import {removeMaybeImportAttributes} from "../util/removeMaybeImportAttributes";
 import shouldElideDefaultExport from "../util/shouldElideDefaultExport";
 import type ReactHotLoaderTransformer from "./ReactHotLoaderTransformer";
@@ -330,7 +331,7 @@ export default class ESMImportTransformer extends Transformer {
     this.tokens.copyExpectedToken(tt._export);
     this.tokens.copyExpectedToken(tt.braceL);
 
-    const isReExport = this.isReExport();
+    const isReExport = isExportFrom(this.tokens);
     let foundNonTypeExport = false;
     while (!this.tokens.matches1(tt.braceR)) {
       const specifierInfo = getImportExportSpecifierInfo(this.tokens);
@@ -367,21 +368,6 @@ export default class ESMImportTransformer extends Transformer {
     }
 
     return true;
-  }
-
-  /**
-   * Starting at `export {`, look ahead and return `true` if this is an
-   * `export {...} from` statement and `false` if this is a plain multi-export.
-   */
-  private isReExport(): boolean {
-    let closeBraceIndex = this.tokens.currentIndex();
-    while (!this.tokens.matches1AtIndex(closeBraceIndex, tt.braceR)) {
-      closeBraceIndex++;
-    }
-    return (
-      this.tokens.matchesContextualAtIndex(closeBraceIndex + 1, ContextualKeyword._from) &&
-      this.tokens.matches1AtIndex(closeBraceIndex + 2, tt.string)
-    );
   }
 
   /**

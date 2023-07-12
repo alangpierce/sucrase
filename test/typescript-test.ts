@@ -1614,6 +1614,27 @@ describe("typescript transform", () => {
     );
   });
 
+  it("does not consider parameter lists in types to shadow names", () => {
+    assertTypeScriptESMResult(
+      `
+      import { someVariable } from './someFile';
+      import { otherVariable } from './otherFile';
+      
+      function Foo(arg: (someVariable: any) => void, otherVariable) {
+        console.log(arg, someVariable, otherVariable);
+      }
+    `,
+      `
+      import { someVariable } from './someFile';
+
+      
+      function Foo(arg, otherVariable) {
+        console.log(arg, someVariable, otherVariable);
+      }
+    `,
+    );
+  });
+
   it("produces proper import statements when eliding ESM imported names", () => {
     assertTypeScriptESMResult(
       `

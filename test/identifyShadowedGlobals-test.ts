@@ -8,7 +8,7 @@ import {parse} from "../src/parser";
 import TokenProcessor from "../src/TokenProcessor";
 
 function assertHasShadowedGlobals(code: string, expected: boolean): void {
-  const file = parse(code, false, false, false);
+  const file = parse(code, false, true, false);
   const nameManager = new NameManager(code, file.tokens);
   const helperManager = new HelperManager(nameManager);
   const tokenProcessor = new TokenProcessor(code, file.tokens, false, false, helperManager);
@@ -30,7 +30,7 @@ function assertHasShadowedGlobals(code: string, expected: boolean): void {
 }
 
 describe("identifyShadowedGlobals", () => {
-  it("properly does an up-front that there are any shadowed globals", () => {
+  it("properly does an up-front check that there are any shadowed globals", () => {
     assertHasShadowedGlobals(
       `
       import a from 'a';
@@ -49,6 +49,19 @@ describe("identifyShadowedGlobals", () => {
       import a from 'a';
       
       export const b = 3;
+    `,
+      false,
+    );
+  });
+
+  it("does not treat parameters within types as real declarations", () => {
+    assertHasShadowedGlobals(
+      `
+      import a from 'a';
+      
+      function foo(f: (a: number) => void) {
+        console.log(a);
+      }
     `,
       false,
     );

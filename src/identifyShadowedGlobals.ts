@@ -31,6 +31,7 @@ export function hasShadowedGlobals(tokens: TokenProcessor, globalNames: Set<stri
   for (const token of tokens.tokens) {
     if (
       token.type === tt.name &&
+      !token.isType &&
       isNonTopLevelDeclaration(token) &&
       globalNames.has(tokens.identifierNameForToken(token))
     ) {
@@ -64,7 +65,7 @@ function markShadowedGlobals(
 
     const token = tokens.tokens[i];
     const name = tokens.identifierNameForToken(token);
-    if (scopeStack.length > 1 && token.type === tt.name && globalNames.has(name)) {
+    if (scopeStack.length > 1 && !token.isType && token.type === tt.name && globalNames.has(name)) {
       if (isBlockScopedDeclaration(token)) {
         markShadowedForScope(scopeStack[scopeStack.length - 1], tokens, name);
       } else if (isFunctionScopedDeclaration(token)) {

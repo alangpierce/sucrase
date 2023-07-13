@@ -3804,4 +3804,20 @@ describe("typescript transform", () => {
       },
     );
   });
+
+  it("removes `import {}` statements when targeting TypeScript", () => {
+    assertTypeScriptImportResult(
+      `
+      import {} from 'a';
+    `,
+      {
+        expectedESMResult: `
+
+    `,
+        expectedCJSResult: `"use strict";
+      
+    `,
+      },
+    );
+  });
 });

@@ -37,6 +37,7 @@ export default class CJSImportTransformer extends Transformer {
     readonly enableLegacyBabel5ModuleInterop: boolean,
     readonly enableLegacyTypeScriptModuleInterop: boolean,
     readonly isTypeScriptTransformEnabled: boolean,
+    readonly isFlowTransformEnabled: boolean,
     readonly preserveDynamicImport: boolean,
   ) {
     super();
@@ -142,9 +143,8 @@ export default class CJSImportTransformer extends Transformer {
       return;
     }
 
-    const wasOnlyTypes = this.removeImportAndDetectIfType();
-
-    if (wasOnlyTypes) {
+    const shouldElideImport = this.removeImportAndDetectIfShouldElide();
+    if (shouldElideImport) {
       this.tokens.removeToken();
     } else {
       const path = this.tokens.stringValue();
@@ -158,12 +158,23 @@ export default class CJSImportTransformer extends Transformer {
   }
 
   /**
-   * Erase this import, and return true if it was either of the form "import type" or contained only
-   * "type" named imports. Such imports should not even do a side-effect import.
+   * Erase this import (since any CJS output would be completely different), and
+   * return true if this import is should be elided due to being a type-only
+   * import. Such imports will not be emitted at all to avoid side effects.
+   *
+   * Import elision only happens with the TypeScript or Flow transforms enabled.
+   *
+   * TODO: This function has some awkward overlap with
+   *  CJSImportProcessor.pruneTypeOnlyImports , and the two should be unified.
+   *  That function handles TypeScript implicit import name elision, and removes
+   *  an import if all typical imported names (without `type`) are removed due
+   *  to being type-only imports. This function handles Flow import removal and
+   *  properly distinguishes `import 'foo'` from `import {} from 'foo'` for TS
+   *  purposes.
    *
    * The position should end at the import string.
    */
-  private removeImportAndDetectIfType(): boolean {
+  private removeImportAndDetectIfShouldElide(): boolean {
     this.tokens.removeInitialToken();
     if (
       this.tokens.matchesContextual(ContextualKeyword._type) &&
@@ -187,24 +198,38 @@ export default class CJSImportTransformer extends Transformer {
       return false;
     }
 
-    let foundNonType = false;
+    let foundNonTypeImport = false;
+    let foundAnyNamedImport = false;
     while (!this.tokens.matches1(tt.string)) {
       // Check if any named imports are of the form "foo" or "foo as bar", with
       // no leading "type".
-      if ((!foundNonType && this.tokens.matches1(tt.braceL)) || this.tokens.matches1(tt.comma)) {
+      if (
+        (!foundNonTypeImport && this.tokens.matches1(tt.braceL)) ||
+        this.tokens.matches1(tt.comma)
+      ) {
         this.tokens.removeToken();
+        if (!this.tokens.matches1(tt.braceR)) {
+          foundAnyNamedImport = true;
+        }
         if (
           this.tokens.matches2(tt.name, tt.comma) ||
           this.tokens.matches2(tt.name, tt.braceR) ||
           this.tokens.matches4(tt.name, tt.name, tt.name, tt.comma) ||
           this.tokens.matches4(tt.name, tt.name, tt.name, tt.braceR)
         ) {
-          foundNonType = true;
+          foundNonTypeImport = true;
         }
       }
       this.tokens.removeToken();
     }
-    return !foundNonType;
+    if (this.isTypeScriptTransformEnabled) {
+      return !foundNonTypeImport;
+    } else if (this.isFlowTransformEnabled) {
+      // In Flow, unlike TS, `import {} from 'foo';` preserves the import.
+      return foundAnyNamedImport && !foundNonTypeImport;
+    } else {
+      return false;
+    }
   }
 
   private removeRemainingImport(): void {

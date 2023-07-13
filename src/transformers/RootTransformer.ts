@@ -95,6 +95,7 @@ export default class RootTransformer {
           enableLegacyBabel5ModuleInterop,
           Boolean(options.enableLegacyTypeScriptModuleInterop),
           transforms.includes("typescript"),
+          transforms.includes("flow"),
           Boolean(options.preserveDynamicImport),
         ),
       );
@@ -106,6 +107,7 @@ export default class RootTransformer {
           this.helperManager,
           reactHotLoaderTransformer,
           transforms.includes("typescript"),
+          transforms.includes("flow"),
           options,
         ),
       );

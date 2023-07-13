@@ -32,6 +32,7 @@ export default class ESMImportTransformer extends Transformer {
     readonly helperManager: HelperManager,
     readonly reactHotLoaderTransformer: ReactHotLoaderTransformer | null,
     readonly isTypeScriptTransformEnabled: boolean,
+    readonly isFlowTransformEnabled: boolean,
     options: Options,
   ) {
     super();
@@ -128,7 +129,7 @@ export default class ESMImportTransformer extends Transformer {
 
   private processImportEquals(): boolean {
     const importName = this.tokens.identifierNameAtIndex(this.tokens.currentIndex() + 1);
-    if (this.isTypeName(importName)) {
+    if (this.shouldAutomaticallyElideImportedName(importName)) {
       // If this name is only used as a type, elide the whole import.
       elideImportEquals(this.tokens);
     } else if (this.injectCreateRequireForImportRequire) {
@@ -203,10 +204,12 @@ export default class ESMImportTransformer extends Transformer {
     }
 
     let foundNonTypeImport = false;
+    let foundAnyNamedImport = false;
     let needsComma = false;
 
+    // Handle default import.
     if (this.tokens.matches1(tt.name)) {
-      if (this.isTypeName(this.tokens.identifierName())) {
+      if (this.shouldAutomaticallyElideImportedName(this.tokens.identifierName())) {
         this.tokens.removeToken();
         if (this.tokens.matches1(tt.comma)) {
           this.tokens.removeToken();
@@ -230,7 +233,7 @@ export default class ESMImportTransformer extends Transformer {
     }
 
     if (this.tokens.matches1(tt.star)) {
-      if (this.isTypeName(this.tokens.identifierNameAtRelativeIndex(2))) {
+      if (this.shouldAutomaticallyElideImportedName(this.tokens.identifierNameAtRelativeIndex(2))) {
         this.tokens.removeToken();
         this.tokens.removeToken();
         this.tokens.removeToken();
@@ -249,8 +252,12 @@ export default class ESMImportTransformer extends Transformer {
       }
       this.tokens.copyToken();
       while (!this.tokens.matches1(tt.braceR)) {
+        foundAnyNamedImport = true;
         const specifierInfo = getImportExportSpecifierInfo(this.tokens);
-        if (specifierInfo.isType || this.isTypeName(specifierInfo.rightName)) {
+        if (
+          specifierInfo.isType ||
+          this.shouldAutomaticallyElideImportedName(specifierInfo.rightName)
+        ) {
           while (this.tokens.currentIndex() < specifierInfo.endIndex) {
             this.tokens.removeToken();
           }
@@ -270,10 +277,17 @@ export default class ESMImportTransformer extends Transformer {
       this.tokens.copyExpectedToken(tt.braceR);
     }
 
-    return !foundNonTypeImport;
+    if (this.isTypeScriptTransformEnabled) {
+      return !foundNonTypeImport;
+    } else if (this.isFlowTransformEnabled) {
+      // In Flow, unlike TS, `import {} from 'foo';` preserves the import.
+      return foundAnyNamedImport && !foundNonTypeImport;
+    } else {
+      return false;
+    }
   }
 
-  private isTypeName(name: string): boolean {
+  private shouldAutomaticallyElideImportedName(name: string): boolean {
     return this.isTypeScriptTransformEnabled && !this.nonTypeIdentifiers.has(name);
   }
 

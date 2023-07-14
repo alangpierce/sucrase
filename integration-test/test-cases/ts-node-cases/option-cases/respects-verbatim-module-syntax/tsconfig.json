@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "target": "ESNext",
+    "esModuleInterop": true,
+    "verbatimModuleSyntax": true
+  },
+  "ts-node": {
+    "experimentalResolver": true
+  }
+}

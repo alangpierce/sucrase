@@ -56,6 +56,12 @@ export interface Options {
    */
   jsxFragmentPragma?: string;
   /**
+   * If specified, disable automatic removal of type-only import and export
+   * statements and names. Only statements and names that explicitly use the
+   * `type` keyword are removed.
+   */
+  keepUnusedImports?: boolean;
+  /**
    * If specified, the imports transform does not attempt to change dynamic
    * import() expressions into require() calls.
    */

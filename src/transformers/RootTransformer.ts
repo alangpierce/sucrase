@@ -97,6 +97,7 @@ export default class RootTransformer {
           transforms.includes("typescript"),
           transforms.includes("flow"),
           Boolean(options.preserveDynamicImport),
+          Boolean(options.keepUnusedImports),
         ),
       );
     } else {
@@ -108,6 +109,7 @@ export default class RootTransformer {
           reactHotLoaderTransformer,
           transforms.includes("typescript"),
           transforms.includes("flow"),
+          Boolean(options.keepUnusedImports),
           options,
         ),
       );

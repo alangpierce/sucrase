@@ -33,15 +33,18 @@ export default class ESMImportTransformer extends Transformer {
     readonly reactHotLoaderTransformer: ReactHotLoaderTransformer | null,
     readonly isTypeScriptTransformEnabled: boolean,
     readonly isFlowTransformEnabled: boolean,
+    readonly keepUnusedImports: boolean,
     options: Options,
   ) {
     super();
-    this.nonTypeIdentifiers = isTypeScriptTransformEnabled
-      ? getNonTypeIdentifiers(tokens, options)
-      : new Set();
-    this.declarationInfo = isTypeScriptTransformEnabled
-      ? getDeclarationInfo(tokens)
-      : EMPTY_DECLARATION_INFO;
+    this.nonTypeIdentifiers =
+      isTypeScriptTransformEnabled && !keepUnusedImports
+        ? getNonTypeIdentifiers(tokens, options)
+        : new Set();
+    this.declarationInfo =
+      isTypeScriptTransformEnabled && !keepUnusedImports
+        ? getDeclarationInfo(tokens)
+        : EMPTY_DECLARATION_INFO;
     this.injectCreateRequireForImportRequire = Boolean(options.injectCreateRequireForImportRequire);
   }
 
@@ -277,6 +280,9 @@ export default class ESMImportTransformer extends Transformer {
       this.tokens.copyExpectedToken(tt.braceR);
     }
 
+    if (this.keepUnusedImports) {
+      return false;
+    }
     if (this.isTypeScriptTransformEnabled) {
       return !foundNonTypeImport;
     } else if (this.isFlowTransformEnabled) {
@@ -288,12 +294,21 @@ export default class ESMImportTransformer extends Transformer {
   }
 
   private shouldAutomaticallyElideImportedName(name: string): boolean {
-    return this.isTypeScriptTransformEnabled && !this.nonTypeIdentifiers.has(name);
+    return (
+      this.isTypeScriptTransformEnabled &&
+      !this.keepUnusedImports &&
+      !this.nonTypeIdentifiers.has(name)
+    );
   }
 
   private processExportDefault(): boolean {
     if (
-      shouldElideDefaultExport(this.isTypeScriptTransformEnabled, this.tokens, this.declarationInfo)
+      shouldElideDefaultExport(
+        this.isTypeScriptTransformEnabled,
+        this.keepUnusedImports,
+        this.tokens,
+        this.declarationInfo,
+      )
     ) {
       // If the exported value is just an identifier and should be elided by TypeScript
       // rules, then remove it entirely. It will always have the form `export default e`,
@@ -373,7 +388,7 @@ export default class ESMImportTransformer extends Transformer {
     }
     this.tokens.copyExpectedToken(tt.braceR);
 
-    if (isReExport && !foundNonTypeExport) {
+    if (!this.keepUnusedImports && isReExport && !foundNonTypeExport) {
       // This is a type-only re-export, so skip evaluating the other module. Technically this
       // leaves the statement as `export {}`, but that's ok since that's a no-op.
       this.tokens.removeToken();
@@ -392,6 +407,7 @@ export default class ESMImportTransformer extends Transformer {
   private shouldElideExportedName(name: string): boolean {
     return (
       this.isTypeScriptTransformEnabled &&
+      !this.keepUnusedImports &&
       this.declarationInfo.typeDeclarations.has(name) &&
       !this.declarationInfo.valueDeclarations.has(name)
     );

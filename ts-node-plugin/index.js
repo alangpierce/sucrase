@@ -21,14 +21,20 @@ const JsxEmitReactJSXDev = 5;
  * JS syntax downleveling (at least not in a way that is useful for Node).
  *
  * One notable caveat is that importsNotUsedAsValues and preserveValueImports
- * are ignored right now, and Sucrase uses TypeScript's default behavior of
- * eliding imports only used as types. This usually makes no difference when
- * running the code, so for now we ignore these options without a warning.
+ * are ignored right now, since they are deprecated and don't have exact Sucrase
+ * equivalents. To preserve imports and exports, use verbatimModuleSyntax.
  */
 function create(createOptions) {
   const {nodeModuleEmitKind} = createOptions;
-  const {module, jsx, jsxFactory, jsxFragmentFactory, jsxImportSource, esModuleInterop} =
-    createOptions.service.config.options;
+  const {
+    module,
+    jsx,
+    jsxFactory,
+    jsxFragmentFactory,
+    jsxImportSource,
+    esModuleInterop,
+    verbatimModuleSyntax,
+  } = createOptions.service.config.options;
 
   return {
     transpile(input, transpileOptions) {
@@ -59,6 +65,7 @@ function create(createOptions) {
         jsxImportSource,
         jsxPragma: jsxFactory,
         jsxFragmentPragma: jsxFragmentFactory,
+        keepUnusedImports: verbatimModuleSyntax,
         preserveDynamicImport: nodeModuleEmitKind === "nodecjs",
         injectCreateRequireForImportRequire: nodeModuleEmitKind === "nodeesm",
         enableLegacyTypeScriptModuleInterop: !esModuleInterop,

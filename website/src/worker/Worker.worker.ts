@@ -159,7 +159,10 @@ function runBabel(): {code: string; time: number | null} {
     }
   }
   if (sucraseOptions.transforms.includes("typescript")) {
-    presets.push(["typescript", {allowDeclareFields: true}]);
+    presets.push([
+      "typescript",
+      {allowDeclareFields: true, onlyRemoveTypeImports: sucraseOptions.keepUnusedImports},
+    ]);
   }
   if (sucraseOptions.transforms.includes("flow")) {
     presets.push("flow");
@@ -257,6 +260,7 @@ function runTypeScript(): {code: string; time: number | null} {
           esModuleInterop: !sucraseOptions.enableLegacyTypeScriptModuleInterop,
           jsxFactory: sucraseOptions.jsxPragma,
           jsxFragmentFactory: sucraseOptions.jsxFragmentPragma,
+          verbatimModuleSyntax: sucraseOptions.keepUnusedImports,
         },
       }).outputText,
   );

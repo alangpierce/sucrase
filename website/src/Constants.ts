@@ -59,6 +59,7 @@ export const DEFAULT_OPTIONS: HydratedOptions = {
   jsxImportSource: "react",
   jsxPragma: "React.createElement",
   jsxFragmentPragma: "React.Fragment",
+  keepUnusedImports: false,
   preserveDynamicImport: false,
   injectCreateRequireForImportRequire: false,
   enableLegacyTypeScriptModuleInterop: false,

@@ -21,7 +21,7 @@ function assertFlowESMResult(
 }
 
 describe("transform flow", () => {
-  it("removes `import type` statements", () => {
+  it("removes `import type` statements when targeting CJS", () => {
     assertFlowResult(
       `
       import type {a} from 'b';
@@ -39,6 +39,47 @@ describe("transform flow", () => {
       
       
     `,
+    );
+  });
+
+  it("properly prunes flow imported names when when targeting ESM", () => {
+    assertFlowESMResult(
+      `
+      import a, {type n as b, m as c, type d} from './e';
+      import type f from './g';
+      import {type h} from './i';
+      import j, {} from './k';
+    `,
+      `
+      import a, { m as c,} from './e';
+
+
+      import j, {} from './k';
+    `,
+    );
+  });
+
+  it("respects keepUnusedImports when targeting CJS", () => {
+    assertFlowResult(
+      `
+      import {type T} from 'a';
+    `,
+      `"use strict";
+      require('a');
+    `,
+      {keepUnusedImports: true},
+    );
+  });
+
+  it("respects keepUnusedImports when targeting ESM", () => {
+    assertFlowESMResult(
+      `
+      import {type T} from 'a';
+    `,
+      `
+      import {} from 'a';
+    `,
+      {keepUnusedImports: true},
     );
   });
 
@@ -266,23 +307,6 @@ describe("transform flow", () => {
     `,
       `"use strict";
       
-    `,
-    );
-  });
-
-  it("properly prunes flow imported names", () => {
-    assertFlowESMResult(
-      `
-      import a, {type n as b, m as c, type d} from './e';
-      import type f from './g';
-      import {type h} from './i';
-      import j, {} from './k';
-    `,
-      `
-      import a, { m as c,} from './e';
-
-
-      import j, {} from './k';
     `,
     );
   });

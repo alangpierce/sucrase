@@ -71,7 +71,7 @@ describe("transform flow", () => {
     );
   });
 
-  it("properly prunes flow imported names when when targeting ESM", () => {
+  it("respects keepUnusedImports when targeting ESM", () => {
     assertFlowESMResult(
       `
       import {type T} from 'a';

@@ -201,7 +201,8 @@ export default function SucraseOptionsBox({
               )}
             </div>
             <div className={css(styles.secondaryOptionColumn)}>
-              {options.transforms.includes("typescript") && (
+              {(options.transforms.includes("typescript") ||
+                options.transforms.includes("flow")) && (
                 <BooleanOption
                   optionName="keepUnusedImports"
                   options={options}

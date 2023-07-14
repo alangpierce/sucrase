@@ -1,3 +1,18 @@
+# 3.33.0 (2023-07-14)
+
+* Add an option `keepUnusedImports` that disables all automatic import/export
+  elision, equivalent to the TypeScript option `verbatimModuleSyntax`. ([#811], [#615]) (Kotaro Chikuba, Alan Pierce)
+* Add support for the `await using` proposal and the updated import attributes proposal.
+  Both are preserved in the output code, not transformed. ([#798])
+* Fix some issues with TypeScript automatic export elision in `export {...} from` statements. ([#806])
+  * Type names from the current file are no longer removed.
+  * When all exports are type exports, the entire statement is now removed.
+* Fix bug where `fn(x < y, x >= y)` was incorrectly parsed as type arguments. ([#798])
+* Fix a few bugs in `enableLegacyBabel5ModuleInterop`: properly handle `as default`, and properly ignore type exports. ([#804], [#807]) (三咲智子 Kevin Deng, Alan Pierce)
+* Fix bug where parameters inside function types could be misinterpreted as declarations and result in imports being incorrectly marked as unused. ([#809])
+* Fix bug where `import {}` and `export {}` statements were removed with the TypeScript transform disabled. ([#810])
+* Make the transform behavior more forgiving when code accidentally has a return type annotation on a constructor. ([#800])
+
 # 3.32.0 (2023-04-08)
 
 * Improve source map quality by adding column information. This fixes several
@@ -482,6 +497,7 @@
 [#604]: https://github.com/alangpierce/sucrase/pull/604
 [#610]: https://github.com/alangpierce/sucrase/pull/610
 [#614]: https://github.com/alangpierce/sucrase/pull/614
+[#615]: https://github.com/alangpierce/sucrase/pull/615
 [#619]: https://github.com/alangpierce/sucrase/pull/619
 [#621]: https://github.com/alangpierce/sucrase/pull/621
 [#623]: https://github.com/alangpierce/sucrase/pull/623
@@ -526,3 +542,11 @@
 [#788]: https://github.com/alangpierce/sucrase/pull/788
 [#789]: https://github.com/alangpierce/sucrase/pull/789
 [#790]: https://github.com/alangpierce/sucrase/pull/790
+[#798]: https://github.com/alangpierce/sucrase/pull/798
+[#800]: https://github.com/alangpierce/sucrase/pull/800
+[#804]: https://github.com/alangpierce/sucrase/pull/804
+[#806]: https://github.com/alangpierce/sucrase/pull/806
+[#807]: https://github.com/alangpierce/sucrase/pull/807
+[#809]: https://github.com/alangpierce/sucrase/pull/809
+[#810]: https://github.com/alangpierce/sucrase/pull/810
+[#811]: https://github.com/alangpierce/sucrase/pull/811

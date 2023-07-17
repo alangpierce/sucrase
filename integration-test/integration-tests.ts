@@ -1,11 +1,16 @@
 import assert from "assert";
 import {exec} from "child_process";
 import {readdirSync, statSync} from "fs";
-import {writeFile} from "fs/promises";
-import {join, dirname} from "path";
+import {rm, writeFile} from "fs/promises";
+import {join, dirname, resolve} from "path";
 import {promisify} from "util";
 
-import {readFileContents, readJSONFileContentsIfExists} from "../script/util/readFileContents";
+import {
+  readFileContents,
+  readJSONFileContents,
+  readJSONFileContentsIfExists,
+} from "../script/util/readFileContents";
+import assertDirectoriesEqual from "./util/assertDirectoriesEqual";
 
 const execPromise = promisify(exec);
 
@@ -99,6 +104,26 @@ describe("integration tests", () => {
       await execPromise(
         `npx ts-node --esm --transpiler ${__dirname}/../ts-node-plugin ${testFile}`,
       );
+    });
+  }
+
+  /**
+   * Find CLI integration tests.
+   *
+   * Each test must have a test.json file and directories "src" and
+   * "dist-expected". The Sucrase CLI is invoked with cliOptions and the result
+   * is expected to exactly match dist-expected.
+   */
+  for (const testFile of discoverTests("test-cases/cli-cases", "test.json")) {
+    const testDir = dirname(testFile);
+    it(testDir, async () => {
+      process.chdir(testDir);
+      const testConfig = await readJSONFileContents("./test.json");
+      await rm("./dist-actual", {recursive: true, force: true});
+      await execPromise(
+        `${__dirname}/../bin/sucrase ./src --out-dir ./dist-actual ${testConfig.cliOptions}`,
+      );
+      await assertDirectoriesEqual(resolve("./dist-actual"), resolve("./dist-expected"));
     });
   }
 });

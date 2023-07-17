@@ -1,0 +1,3 @@
+{
+  "cliOptions": "--transforms imports --preserve-dynamic-import"
+}

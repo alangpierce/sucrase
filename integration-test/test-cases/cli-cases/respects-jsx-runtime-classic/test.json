@@ -1,0 +1,3 @@
+{
+  "cliOptions": "--transforms jsx --production --jsx-pragma h jsx-fragment-pragma Frag"
+}

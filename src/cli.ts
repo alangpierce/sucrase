@@ -35,7 +35,7 @@ export default function run(): void {
     .option("--exclude-dirs <paths>", "Names of directories that should not be traversed.")
     .option("-q, --quiet", "Don't print the names of converted files.")
     .option("-t, --transforms <transforms>", "Comma-separated list of transforms to run.")
-    .option("--disable-es-transforms", "Opts out of all ES syntax transforms.")
+    .option("--disable-es-transforms", "Opt out of all ES syntax transforms.")
     .option("--jsx-runtime <string>", "Transformation mode for the JSX transform.")
     .option("--production", "Disable debugging information from JSX in output.")
     .option(

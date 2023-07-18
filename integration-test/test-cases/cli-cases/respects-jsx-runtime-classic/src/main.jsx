@@ -1,0 +1,4 @@
+
+function Foo() {
+  return <><div /></>;
+}

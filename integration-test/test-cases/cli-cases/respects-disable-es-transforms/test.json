@@ -1,0 +1,3 @@
+{
+  "cliOptions": "--transforms typescript --disable-es-transforms"
+}

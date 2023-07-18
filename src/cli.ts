@@ -33,16 +33,34 @@ export default function run(): void {
     )
     .option("--out-extension <extension>", "File extension to use for all output files.", "js")
     .option("--exclude-dirs <paths>", "Names of directories that should not be traversed.")
-    .option("-t, --transforms <transforms>", "Comma-separated list of transforms to run.")
     .option("-q, --quiet", "Don't print the names of converted files.")
+    .option("-t, --transforms <transforms>", "Comma-separated list of transforms to run.")
+    .option("--disable-es-transforms", "Opt out of all ES syntax transforms.")
+    .option("--jsx-runtime <string>", "Transformation mode for the JSX transform.")
+    .option("--production", "Disable debugging information from JSX in output.")
+    .option(
+      "--jsx-import-source <string>",
+      "Automatic JSX transform import path prefix, defaults to `React.Fragment`.",
+    )
+    .option(
+      "--jsx-pragma <string>",
+      "Classic JSX transform element creation function, defaults to `React.createElement`.",
+    )
+    .option(
+      "--jsx-fragment-pragma <string>",
+      "Classic JSX transform fragment component, defaults to `React.Fragment`.",
+    )
+    .option("--keep-unused-imports", "Disable automatic removal of type-only imports/exports.")
+    .option("--preserve-dynamic-import", "Don't transpile dynamic import() to require.")
+    .option(
+      "--inject-create-require-for-import-require",
+      "Use `createRequire` when transpiling TS `import = require` to ESM.",
+    )
     .option(
       "--enable-legacy-typescript-module-interop",
       "Use default TypeScript ESM/CJS interop strategy.",
     )
     .option("--enable-legacy-babel5-module-interop", "Use Babel 5 ESM/CJS interop strategy.")
-    .option("--jsx-pragma <string>", "Element creation function, defaults to `React.createElement`")
-    .option("--jsx-fragment-pragma <string>", "Fragment component, defaults to `React.Fragment`")
-    .option("--production", "Disable debugging information from JSX in output.")
     .parse(process.argv);
 
   if (commander.project) {
@@ -84,11 +102,17 @@ export default function run(): void {
     quiet: commander.quiet,
     sucraseOptions: {
       transforms: commander.transforms ? commander.transforms.split(",") : [],
-      enableLegacyTypeScriptModuleInterop: commander.enableLegacyTypescriptModuleInterop,
-      enableLegacyBabel5ModuleInterop: commander.enableLegacyBabel5ModuleInterop,
+      disableESTransforms: commander.disableEsTransforms,
+      jsxRuntime: commander.jsxRuntime,
+      production: commander.production,
+      jsxImportSource: commander.jsxImportSource,
       jsxPragma: commander.jsxPragma || "React.createElement",
       jsxFragmentPragma: commander.jsxFragmentPragma || "React.Fragment",
-      production: commander.production,
+      keepUnusedImports: commander.keepUnusedImports,
+      preserveDynamicImport: commander.preserveDynamicImport,
+      injectCreateRequireForImportRequire: commander.injectCreateRequireForImportRequire,
+      enableLegacyTypeScriptModuleInterop: commander.enableLegacyTypescriptModuleInterop,
+      enableLegacyBabel5ModuleInterop: commander.enableLegacyBabel5ModuleInterop,
     },
   };
 

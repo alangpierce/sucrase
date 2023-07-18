@@ -1,0 +1,3 @@
+{
+  "cliOptions": "--transforms jsx,typescript --jsx-runtime automatic --jsx-import-source preact"
+}

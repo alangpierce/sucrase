@@ -11,13 +11,18 @@ export type RevertFunction = () => void;
 
 export function addHook(
   extension: string,
-  options: Options,
+  sucraseOptions: Options,
   hookOptions?: HookOptions,
 ): RevertFunction {
+  let mergedSucraseOptions = sucraseOptions;
+  const sucraseOptionsEnvJSON = process.env.SUCRASE_OPTIONS;
+  if (sucraseOptionsEnvJSON) {
+    mergedSucraseOptions = {...mergedSucraseOptions, ...JSON.parse(sucraseOptionsEnvJSON)};
+  }
   return pirates.addHook(
     (code: string, filePath: string): string => {
       const {code: transformedCode, sourceMap} = transform(code, {
-        ...options,
+        ...mergedSucraseOptions,
         sourceMapOptions: {compiledFilename: filePath},
         filePath,
       });

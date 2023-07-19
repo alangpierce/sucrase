@@ -2,7 +2,7 @@ import assert from "assert";
 import {exec} from "child_process";
 import {readdirSync, statSync} from "fs";
 import {rm, writeFile} from "fs/promises";
-import {join, dirname, resolve} from "path";
+import {join, dirname, resolve, basename} from "path";
 import {promisify} from "util";
 
 import {
@@ -44,8 +44,15 @@ describe("integration tests", () => {
    * in such a way that the execution throws an exception if the test fails.
    */
   for (const testFile of discoverTests("test-cases/register-cases", "main")) {
-    it(testFile, async () => {
-      await execPromise(`node -r ${__dirname}/../register ${testFile}`);
+    const testDir = dirname(testFile);
+    it(testDir, async () => {
+      process.chdir(testDir);
+      const testConfig = await readJSONFileContentsIfExists("./test.json");
+      let envPrefix = "";
+      if (testConfig?.sucraseOptions) {
+        envPrefix = `SUCRASE_OPTIONS='${JSON.stringify(testConfig.sucraseOptions)}' `;
+      }
+      await execPromise(`${envPrefix}node -r ${__dirname}/../register ${basename(testFile)}`);
     });
   }
 

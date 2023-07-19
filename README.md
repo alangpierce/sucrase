@@ -191,6 +191,9 @@ reasonable defaults that can be accessed in a few ways:
 * When invoking Node: `node -r sucrase/register main.ts`
 * As a separate binary: `sucrase-node main.ts`
 
+Options can be passed to the require hook via a `SUCRASE_OPTIONS` environment
+variable holding a JSON string of options.
+
 ### Compiling a project to JS
 
 For simple use cases, Sucrase comes with a `sucrase` CLI that mirrors your

@@ -1,3 +1,11 @@
+# 3.34.0 (2023-07-19)
+
+* Add CLI options for all remaining Sucrase options, e.g. `--disable-es-transforms` for
+  `disableESTransforms`. (<<-ArS, Alan Pierce) ([#670], [#812])
+* Add `SUCRASE_OPTIONS` environment variable for configuring `sucrase/register`, `sucrase-node`,
+  and any programmatic require hook usages. The value must be a valid JSON object of Sucrase
+  options that will be merged with the usual options. ([#813])
+
 # 3.33.0 (2023-07-14)
 
 * Add an option `keepUnusedImports` that disables all automatic import/export
@@ -485,6 +493,7 @@
 [#532]: https://github.com/alangpierce/sucrase/pull/532
 [#533]: https://github.com/alangpierce/sucrase/pull/533
 [#537]: https://github.com/alangpierce/sucrase/pull/537
+[#540]: https://github.com/alangpierce/sucrase/pull/540
 [#556]: https://github.com/alangpierce/sucrase/pull/556
 [#564]: https://github.com/alangpierce/sucrase/pull/564
 [#567]: https://github.com/alangpierce/sucrase/pull/567
@@ -493,7 +502,6 @@
 [#574]: https://github.com/alangpierce/sucrase/pull/574
 [#575]: https://github.com/alangpierce/sucrase/pull/575
 [#593]: https://github.com/alangpierce/sucrase/pull/593
-[#540]: https://github.com/alangpierce/sucrase/pull/540
 [#604]: https://github.com/alangpierce/sucrase/pull/604
 [#610]: https://github.com/alangpierce/sucrase/pull/610
 [#614]: https://github.com/alangpierce/sucrase/pull/614
@@ -512,6 +520,7 @@
 [#656]: https://github.com/alangpierce/sucrase/pull/656
 [#657]: https://github.com/alangpierce/sucrase/pull/657
 [#658]: https://github.com/alangpierce/sucrase/pull/658
+[#670]: https://github.com/alangpierce/sucrase/pull/670
 [#673]: https://github.com/alangpierce/sucrase/pull/673
 [#684]: https://github.com/alangpierce/sucrase/pull/684
 [#698]: https://github.com/alangpierce/sucrase/pull/698
@@ -550,3 +559,5 @@
 [#809]: https://github.com/alangpierce/sucrase/pull/809
 [#810]: https://github.com/alangpierce/sucrase/pull/810
 [#811]: https://github.com/alangpierce/sucrase/pull/811
+[#812]: https://github.com/alangpierce/sucrase/pull/812
+[#813]: https://github.com/alangpierce/sucrase/pull/813

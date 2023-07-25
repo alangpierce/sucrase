@@ -14,7 +14,7 @@ import {
 } from "./Constants";
 import {entriesExact, hasKeyExact} from "./Util";
 
-interface BaseHashState {
+export interface BaseHashState {
   code: string;
   sucraseOptions: HydratedOptions;
   compareOptions: CompareOptions;

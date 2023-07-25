@@ -1,5 +1,5 @@
 import {css, StyleSheet} from "aphrodite";
-import {Component} from "react";
+import {useEffect, useRef, useState} from "react";
 import {hot} from "react-hot-loader/root";
 
 import CompareOptionsBox from "./CompareOptionsBox";
@@ -9,211 +9,179 @@ import {
   DEFAULT_COMPARE_OPTIONS,
   DEFAULT_OPTIONS,
   type CompareOptions,
-  type HydratedOptions,
   INITIAL_CODE,
 } from "./Constants";
 import DebugOptionsBox from "./DebugOptionsBox";
 import EditorWrapper from "./EditorWrapper";
 import SucraseOptionsBox from "./SucraseOptionsBox";
-import {loadHashState, saveHashState} from "./URLHashState";
+import {type BaseHashState, loadHashState, saveHashState} from "./URLHashState";
 import * as WorkerClient from "./WorkerClient";
+import {type StateUpdate} from "./WorkerClient";
 
-interface State {
-  code: string;
-  sucraseOptions: HydratedOptions;
-  compareOptions: CompareOptions;
-  debugOptions: DebugOptions;
-  sucraseCode: string;
-  sucraseTimeMs: number | null | "LOADING";
-  babelCode: string;
-  babelTimeMs: number | null | "LOADING";
-  typeScriptCode: string;
-  typeScriptTimeMs: number | null | "LOADING";
-  tokensStr: string;
-  sourceMapStr: string;
-  showMore: boolean;
-  babelLoaded: boolean;
-  typeScriptLoaded: boolean;
-}
-
-class App extends Component<unknown, State> {
-  constructor(props: unknown) {
-    super(props);
-    this.state = {
-      code: INITIAL_CODE,
-      sucraseOptions: DEFAULT_OPTIONS,
-      compareOptions: DEFAULT_COMPARE_OPTIONS,
-      debugOptions: DEFAULT_DEBUG_OPTIONS,
-      sucraseCode: "",
-      sucraseTimeMs: null,
-      babelCode: "",
-      babelTimeMs: null,
-      typeScriptCode: "",
-      typeScriptTimeMs: null,
-      tokensStr: "",
-      sourceMapStr: "",
-      showMore: false,
-      babelLoaded: false,
-      typeScriptLoaded: false,
-    };
-    const hashState = loadHashState();
-    if (hashState) {
-      this.state = {...this.state, ...hashState};
+function App(): JSX.Element {
+  const cachedHashState = useRef<BaseHashState | null | "NOT_LOADED">("NOT_LOADED");
+  function hashState(): BaseHashState | null {
+    if (cachedHashState.current === "NOT_LOADED") {
+      cachedHashState.current = loadHashState();
     }
+    return cachedHashState.current;
   }
 
-  componentDidMount(): void {
-    WorkerClient.subscribe({
+  const [code, setCode] = useState(hashState()?.code ?? INITIAL_CODE);
+  const [sucraseOptions, setSucraseOptions] = useState(
+    hashState()?.sucraseOptions ?? DEFAULT_OPTIONS,
+  );
+  const [compareOptions, setCompareOptions] = useState(
+    hashState()?.compareOptions ?? DEFAULT_COMPARE_OPTIONS,
+  );
+  const [debugOptions, setDebugOptions] = useState(
+    hashState()?.debugOptions ?? DEFAULT_DEBUG_OPTIONS,
+  );
+  const [sucraseCode, setSucraseCode] = useState("");
+  const [sucraseTimeMs, setSucraseTimeMs] = useState<number | null | "LOADING">(null);
+  const [babelCode, setBabelCode] = useState("");
+  const [babelTimeMs, setBabelTimeMs] = useState<number | null | "LOADING">(null);
+  const [typeScriptCode, setTypeScriptCode] = useState("");
+  const [typeScriptTimeMs, setTypeScriptTimeMs] = useState<number | null | "LOADING">(null);
+  const [tokensStr, setTokensStr] = useState("");
+  const [sourceMapStr, setSourceMapStr] = useState("");
+  const [babelLoaded, setBabelLoaded] = useState(false);
+  const [typeScriptLoaded, setTypeScriptLoaded] = useState(false);
+
+  useEffect(() => {
+    WorkerClient.updateHandlers({
       updateState: (stateUpdate) => {
-        this.setState((state) => ({...state, ...stateUpdate}));
+        const setters: {
+          [k in keyof StateUpdate]-?: (newValue: Exclude<StateUpdate[k], undefined>) => void;
+        } = {
+          sucraseCode: setSucraseCode,
+          babelCode: setBabelCode,
+          typeScriptCode: setTypeScriptCode,
+          tokensStr: setTokensStr,
+          sourceMapStr: setSourceMapStr,
+          sucraseTimeMs: setSucraseTimeMs,
+          babelTimeMs: setBabelTimeMs,
+          typeScriptTimeMs: setTypeScriptTimeMs,
+          babelLoaded: setBabelLoaded,
+          typeScriptLoaded: setTypeScriptLoaded,
+        };
+        // The above mapping ensures we list all properties in StateUpdate with the right types.
+        // Use escape hatches for actually setting the properties.
+        for (const [key, setter] of Object.entries(setters)) {
+          if (stateUpdate[key as keyof StateUpdate] !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (setter as any)(stateUpdate[key as keyof StateUpdate]);
+          }
+        }
       },
       handleCompressedCode: (compressedCode) => {
         saveHashState({
-          code: this.state.code,
+          code,
           compressedCode,
-          sucraseOptions: this.state.sucraseOptions,
-          compareOptions: this.state.compareOptions,
-          debugOptions: this.state.debugOptions,
+          sucraseOptions,
+          compareOptions,
+          debugOptions,
         });
       },
     });
-    this.postConfigToWorker();
-  }
+  }, [code, sucraseOptions, compareOptions, debugOptions]);
 
-  componentDidUpdate(prevProps: unknown, prevState: State): void {
-    if (
-      this.state.code !== prevState.code ||
-      this.state.sucraseOptions !== prevState.sucraseOptions ||
-      this.state.compareOptions !== prevState.compareOptions ||
-      this.state.debugOptions !== prevState.debugOptions ||
-      this.state.babelLoaded !== prevState.babelLoaded ||
-      this.state.typeScriptLoaded !== prevState.typeScriptLoaded
-    ) {
-      this.postConfigToWorker();
-    }
-  }
+  // On any change to code, config, or loading state, kick off a worker task to re-calculate.
+  useEffect(() => {
+    setSucraseTimeMs("LOADING");
+    setBabelTimeMs("LOADING");
+    setTypeScriptTimeMs("LOADING");
+    WorkerClient.updateConfig({code, sucraseOptions, compareOptions, debugOptions});
+  }, [code, sucraseOptions, compareOptions, debugOptions, babelLoaded, typeScriptLoaded]);
 
-  postConfigToWorker(): void {
-    this.setState({sucraseTimeMs: "LOADING", babelTimeMs: "LOADING", typeScriptTimeMs: "LOADING"});
-    WorkerClient.updateConfig({
-      code: this.state.code,
-      sucraseOptions: this.state.sucraseOptions,
-      compareOptions: this.state.compareOptions,
-      debugOptions: this.state.debugOptions,
-    });
-  }
-
-  _handleCodeChange = (newCode: string): void => {
-    this.setState({
-      code: newCode,
-    });
-  };
-
-  render(): JSX.Element {
-    const {
-      sucraseCode,
-      sucraseTimeMs,
-      babelCode,
-      babelTimeMs,
-      typeScriptCode,
-      typeScriptTimeMs,
-      tokensStr,
-      sourceMapStr,
-    } = this.state;
-    return (
-      <div className={css(styles.app)}>
-        <span className={css(styles.title)}>Sucrase</span>
-        <span className={css(styles.subtitle)}>
-          <span>Super-fast Babel alternative</span>
-          {" | "}
-          <a className={css(styles.link)} href="https://github.com/alangpierce/sucrase">
-            GitHub
-          </a>
-        </span>
-        <div className={css(styles.options)}>
-          <SucraseOptionsBox
-            options={this.state.sucraseOptions}
-            onUpdateOptions={(sucraseOptions) => {
-              this.setState({sucraseOptions});
-            }}
-          />
-          <CompareOptionsBox
-            compareOptions={this.state.compareOptions}
-            onUpdateCompareOptions={(compareOptions: CompareOptions) => {
-              this.setState({compareOptions});
-            }}
-          />
-          <DebugOptionsBox
-            debugOptions={this.state.debugOptions}
-            onUpdateDebugOptions={(debugOptions: DebugOptions) => {
-              this.setState({debugOptions});
-            }}
-          />
-        </div>
-
-        <div className={css(styles.editors)}>
-          <EditorWrapper
-            label="Your code"
-            code={this.state.code}
-            onChange={this._handleCodeChange}
-            babelLoaded={this.state.babelLoaded}
-          />
-          <EditorWrapper
-            label="Transformed with Sucrase"
-            code={sucraseCode}
-            timeMs={sucraseTimeMs}
-            isReadOnly={true}
-            babelLoaded={this.state.babelLoaded}
-          />
-          {this.state.compareOptions.compareWithBabel && (
-            <EditorWrapper
-              label="Transformed with Babel"
-              code={babelCode}
-              timeMs={babelTimeMs}
-              isReadOnly={true}
-              babelLoaded={this.state.babelLoaded}
-            />
-          )}
-          {this.state.compareOptions.compareWithTypeScript && (
-            <EditorWrapper
-              label="Transformed with TypeScript"
-              code={typeScriptCode}
-              timeMs={typeScriptTimeMs}
-              isReadOnly={true}
-              babelLoaded={this.state.babelLoaded}
-            />
-          )}
-          {this.state.debugOptions.showTokens && (
-            <EditorWrapper
-              label="Tokens"
-              code={tokensStr}
-              isReadOnly={true}
-              isPlaintext={true}
-              options={{
-                lineNumbers: (n) => (n > 1 ? String(n - 2) : ""),
-              }}
-              babelLoaded={this.state.babelLoaded}
-            />
-          )}
-          {this.state.debugOptions.showSourceMap && (
-            <EditorWrapper
-              label="Source Map"
-              code={sourceMapStr}
-              isReadOnly={true}
-              isPlaintext={true}
-              babelLoaded={this.state.babelLoaded}
-            />
-          )}
-        </div>
-        <span className={css(styles.footer)}>
-          <a className={css(styles.link)} href="https://www.npmjs.com/package/sucrase">
-            sucrase
-          </a>{" "}
-          {process.env.SUCRASE_VERSION}
-        </span>
+  return (
+    <div className={css(styles.app)}>
+      <span className={css(styles.title)}>Sucrase</span>
+      <span className={css(styles.subtitle)}>
+        <span>Super-fast Babel alternative</span>
+        {" | "}
+        <a className={css(styles.link)} href="https://github.com/alangpierce/sucrase">
+          GitHub
+        </a>
+      </span>
+      <div className={css(styles.options)}>
+        <SucraseOptionsBox
+          options={sucraseOptions}
+          onUpdateOptions={(newSucraseOptions) => {
+            setSucraseOptions(newSucraseOptions);
+          }}
+        />
+        <CompareOptionsBox
+          compareOptions={compareOptions}
+          onUpdateCompareOptions={(newCompareOptions: CompareOptions) => {
+            setCompareOptions(newCompareOptions);
+          }}
+        />
+        <DebugOptionsBox
+          debugOptions={debugOptions}
+          onUpdateDebugOptions={(newDebugOptions: DebugOptions) => {
+            setDebugOptions(newDebugOptions);
+          }}
+        />
       </div>
-    );
-  }
+
+      <div className={css(styles.editors)}>
+        <EditorWrapper label="Your code" code={code} onChange={setCode} babelLoaded={babelLoaded} />
+        <EditorWrapper
+          label="Transformed with Sucrase"
+          code={sucraseCode}
+          timeMs={sucraseTimeMs}
+          isReadOnly={true}
+          babelLoaded={babelLoaded}
+        />
+        {compareOptions.compareWithBabel && (
+          <EditorWrapper
+            label="Transformed with Babel"
+            code={babelCode}
+            timeMs={babelTimeMs}
+            isReadOnly={true}
+            babelLoaded={babelLoaded}
+          />
+        )}
+        {compareOptions.compareWithTypeScript && (
+          <EditorWrapper
+            label="Transformed with TypeScript"
+            code={typeScriptCode}
+            timeMs={typeScriptTimeMs}
+            isReadOnly={true}
+            babelLoaded={babelLoaded}
+          />
+        )}
+        {debugOptions.showTokens && (
+          <EditorWrapper
+            label="Tokens"
+            code={tokensStr}
+            isReadOnly={true}
+            isPlaintext={true}
+            options={{
+              lineNumbers: (n) => (n > 1 ? String(n - 2) : ""),
+            }}
+            babelLoaded={babelLoaded}
+          />
+        )}
+        {debugOptions.showSourceMap && (
+          <EditorWrapper
+            label="Source Map"
+            code={sourceMapStr}
+            isReadOnly={true}
+            isPlaintext={true}
+            babelLoaded={babelLoaded}
+          />
+        )}
+      </div>
+      <span className={css(styles.footer)}>
+        <a className={css(styles.link)} href="https://www.npmjs.com/package/sucrase">
+          sucrase
+        </a>{" "}
+        {process.env.SUCRASE_VERSION}
+      </span>
+    </div>
+  );
 }
 
 export default hot(App);

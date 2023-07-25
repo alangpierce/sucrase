@@ -1,7 +1,7 @@
 import {css, StyleSheet} from "aphrodite";
 import type {editor} from "monaco-editor";
-import {Component} from "react";
-import type MonacoEditor from "react-monaco-editor";
+import {useEffect, useRef, useState} from "react";
+import type * as MonacoEditorModule from "react-monaco-editor";
 import AutoSizer from "react-virtualized-auto-sizer";
 
 import Editor from "./Editor";
@@ -18,31 +18,32 @@ interface EditorWrapperProps {
   babelLoaded: boolean;
 }
 
-interface State {
-  MonacoEditor: typeof MonacoEditor | null;
-}
+export default function EditorWrapper({
+  label,
+  code,
+  onChange,
+  isReadOnly,
+  isPlaintext,
+  options,
+  timeMs,
+  babelLoaded,
+}: EditorWrapperProps): JSX.Element {
+  const innerEditor = useRef<editor.IStandaloneCodeEditor | null>(null);
 
-export default class EditorWrapper extends Component<EditorWrapperProps, State> {
-  state: State = {
-    MonacoEditor: null,
-  };
+  const [monacoEditorModule, setMonacoEditorModule] = useState<typeof MonacoEditorModule | null>(
+    null,
+  );
 
-  editor: Editor | null = null;
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    (async () => {
+      if (babelLoaded && !monacoEditorModule) {
+        setMonacoEditorModule(await import("react-monaco-editor"));
+      }
+    })();
+  }, [babelLoaded, monacoEditorModule]);
 
-  async componentDidUpdate(prevProps: EditorWrapperProps): Promise<void> {
-    if (this.props.babelLoaded && !this.state.MonacoEditor) {
-      this.setState({MonacoEditor: (await import("react-monaco-editor")).default});
-    }
-  }
-
-  invalidate = (): void => {
-    if (this.editor) {
-      this.editor.invalidate();
-    }
-  };
-
-  _formatTime(): string {
-    const {timeMs} = this.props;
+  function formatTime(): string {
     if (timeMs == null) {
       return "";
     } else if (timeMs === "LOADING") {
@@ -52,50 +53,50 @@ export default class EditorWrapper extends Component<EditorWrapperProps, State> 
     }
   }
 
-  render(): JSX.Element {
-    const {MonacoEditor} = this.state;
-    const {label, code, onChange, isReadOnly, isPlaintext, options} = this.props;
-    return (
-      <div className={css(styles.editor)}>
-        <span className={css(styles.label)}>
-          {label}
-          {this._formatTime()}
-        </span>
-        <span className={css(styles.container)}>
-          <AutoSizer onResize={this.invalidate} defaultWidth={300} defaultHeight={300}>
-            {
-              // TODO: The explicit type params can be removed once we're on TS 5.1
-              //  https://github.com/bvaughn/react-virtualized-auto-sizer/issues/63
-              ({width, height}: {width: number; height: number}) =>
-                MonacoEditor ? (
-                  <Editor
-                    ref={(e) => {
-                      this.editor = e;
-                    }}
-                    MonacoEditor={MonacoEditor}
-                    width={width}
-                    height={height - 30}
-                    code={code}
-                    onChange={onChange}
-                    isPlaintext={isPlaintext}
-                    isReadOnly={isReadOnly}
-                    options={options}
-                  />
-                ) : (
-                  <FallbackEditor
-                    width={width}
-                    height={height - 30}
-                    code={code}
-                    onChange={onChange}
-                    isReadOnly={isReadOnly}
-                  />
-                )
-            }
-          </AutoSizer>
-        </span>
-      </div>
-    );
+  function invalidate(): void {
+    innerEditor.current?.layout();
   }
+
+  return (
+    <div className={css(styles.editor)}>
+      <span className={css(styles.label)}>
+        {label}
+        {formatTime()}
+      </span>
+      <span className={css(styles.container)}>
+        <AutoSizer onResize={invalidate} defaultWidth={300} defaultHeight={300}>
+          {
+            // TODO: The explicit type params can be removed once we're on TS 5.1
+            //  https://github.com/bvaughn/react-virtualized-auto-sizer/issues/63
+            ({width, height}: {width: number; height: number}) =>
+              monacoEditorModule ? (
+                <Editor
+                  onMount={(editor) => {
+                    innerEditor.current = editor;
+                  }}
+                  MonacoEditor={monacoEditorModule.default}
+                  width={width}
+                  height={height - 30}
+                  code={code}
+                  onChange={onChange}
+                  isPlaintext={isPlaintext}
+                  isReadOnly={isReadOnly}
+                  options={options}
+                />
+              ) : (
+                <FallbackEditor
+                  width={width}
+                  height={height - 30}
+                  code={code}
+                  onChange={onChange}
+                  isReadOnly={isReadOnly}
+                />
+              )
+          }
+        </AutoSizer>
+      </span>
+    </div>
+  );
 }
 
 const styles = StyleSheet.create({

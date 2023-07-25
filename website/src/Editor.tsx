@@ -1,7 +1,6 @@
 import type {editor} from "monaco-editor";
-import {Component} from "react";
+import {useCallback, useEffect, useRef} from "react";
 import type MonacoEditor from "react-monaco-editor";
-import type {EditorDidMount} from "react-monaco-editor";
 
 interface EditorProps {
   MonacoEditor: typeof MonacoEditor;
@@ -12,49 +11,51 @@ interface EditorProps {
   options?: editor.IEditorConstructionOptions;
   width: number;
   height: number;
+  onMount: (editor: editor.IStandaloneCodeEditor) => void;
 }
 
-export default class Editor extends Component<EditorProps> {
-  editor: editor.IStandaloneCodeEditor | null = null;
+export default function Editor({
+  MonacoEditor,
+  code,
+  onChange,
+  isReadOnly,
+  isPlaintext,
+  options,
+  width,
+  height,
+}: EditorProps): JSX.Element {
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
-  componentDidMount(): void {
-    setTimeout(this.invalidate, 0);
-  }
-
-  _editorDidMount: EditorDidMount = (monacoEditor, monaco) => {
-    this.editor = monacoEditor;
+  const editorDidMount = useCallback((monacoEditor, monaco) => {
+    editorRef.current = monacoEditor;
     monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
       noSemanticValidation: true,
       noSyntaxValidation: true,
       noSuggestionDiagnostics: true,
     });
-    this.invalidate();
-  };
+    monacoEditor.layout();
+  }, []);
 
-  invalidate = (): void => {
-    if (this.editor) {
-      this.editor.layout();
-    }
-  };
+  useEffect(() => {
+    setTimeout(() => {
+      editorRef.current?.layout();
+    }, 0);
+  }, []);
 
-  render(): JSX.Element {
-    const {MonacoEditor, code, onChange, isReadOnly, isPlaintext, options, width, height} =
-      this.props;
-    return (
-      <MonacoEditor
-        editorDidMount={this._editorDidMount}
-        width={width}
-        height={height}
-        language={isPlaintext ? undefined : "typescript"}
-        theme="vs-dark"
-        value={code}
-        onChange={onChange}
-        options={{
-          minimap: {enabled: false},
-          readOnly: isReadOnly,
-          ...options,
-        }}
-      />
-    );
-  }
+  return (
+    <MonacoEditor
+      editorDidMount={editorDidMount}
+      width={width}
+      height={height}
+      language={isPlaintext ? undefined : "typescript"}
+      theme="vs-dark"
+      value={code}
+      onChange={onChange}
+      options={{
+        minimap: {enabled: false},
+        readOnly: isReadOnly,
+        ...options,
+      }}
+    />
+  );
 }

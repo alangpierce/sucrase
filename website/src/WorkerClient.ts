@@ -18,7 +18,7 @@ let nextConfig: WorkerConfig | null = null;
 // Function to be called when the config is set.
 let notifyConfig: (() => void) | null = null;
 
-type UpdateStateFunc = (values: {
+export interface StateUpdate {
   sucraseCode?: string;
   babelCode?: string;
   typeScriptCode?: string;
@@ -29,7 +29,9 @@ type UpdateStateFunc = (values: {
   typeScriptTimeMs?: number | null;
   babelLoaded?: boolean;
   typeScriptLoaded?: boolean;
-}) => void;
+}
+
+type UpdateStateFunc = (stateUpdate: StateUpdate) => void;
 
 // Callback function to update the main app state. Just forwards the object to
 // setState in the App component.
@@ -231,7 +233,7 @@ export function updateConfig(config: WorkerConfig): void {
   }
 }
 
-export function subscribe({
+export function updateHandlers({
   updateState,
   handleCompressedCode,
 }: {

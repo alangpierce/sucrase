@@ -1,9 +1,8 @@
 /* eslint-disable no-console */
 import commander from "commander";
-import globCb from "glob";
+import {glob} from "glob";
 import {exists, mkdir, readdir, readFile, stat, writeFile} from "mz/fs";
 import {dirname, join, relative} from "path";
-import {promisify} from "util";
 
 import {type Options, transform} from "./index";
 
@@ -16,8 +15,6 @@ interface CLIOptions {
   quiet: boolean;
   sucraseOptions: Options;
 }
-
-const glob = promisify(globCb);
 
 export default function run(): void {
   commander

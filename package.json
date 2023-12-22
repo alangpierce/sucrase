@@ -50,7 +50,6 @@
   "devDependencies": {
     "@babel/core": "^7.22.5",
     "@jridgewell/trace-mapping": "^0.3.18",
-    "@types/glob": "^7",
     "@types/mocha": "^9.1.1",
     "@types/mz": "^2.7.4",
     "@types/node": "^20.3.2",
@@ -74,7 +73,7 @@
   "dependencies": {
     "@jridgewell/gen-mapping": "^0.3.2",
     "commander": "^4.0.0",
-    "glob": "7.1.6",
+    "glob": "^10.3.10",
     "lines-and-columns": "^1.1.6",
     "mz": "^2.7.0",
     "pirates": "^4.0.1",

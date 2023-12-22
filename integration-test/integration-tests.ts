@@ -127,9 +127,13 @@ describe("integration tests", () => {
       process.chdir(testDir);
       const testConfig = await readJSONFileContents("./test.json");
       await rm("./dist-actual", {recursive: true, force: true});
-      await execPromise(
-        `${__dirname}/../bin/sucrase ./src --out-dir ./dist-actual ${testConfig.cliOptions}`,
-      );
+      if (testConfig.disableAutomaticInputOutputDirs) {
+        await execPromise(`${__dirname}/../bin/sucrase ${testConfig.cliOptions}`);
+      } else {
+        await execPromise(
+          `${__dirname}/../bin/sucrase ./src --out-dir ./dist-actual ${testConfig.cliOptions}`,
+        );
+      }
       await assertDirectoriesEqual(resolve("./dist-actual"), resolve("./dist-expected"));
     });
   }

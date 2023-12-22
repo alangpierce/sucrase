@@ -1,0 +1,8 @@
+{
+  "short_name": "Sucrase",
+  "name": "Sucrase",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#222222"
+}

@@ -1,3 +1,15 @@
+# 3.35.0 (2023-12-21)
+
+* Upgrade `glob` to fix a security vulnerability in the `inflight` package. ([#822]) (Patrick Nappa)
+  * **Note that the `sucrase` CLI no longer works in Node.js versions before 14.7.**
+    * If you use the `sucrase` CLI, you should pin to Sucrase 3.34.0 until you're able to upgrade
+      Node.js to a supported version. Note that all Node.js versions before 18 are end-of-life.
+    * If you don't use the `sucrase` CLI, you may need to silence errors related to package.json
+      `engines`, e.g. `yarn --ignore-engines`.
+  * This change is being released in a semver-minor release since it fixes a security vulnerability
+    and the breaking change impact is expected to be small. See [this PR comment](https://github.com/alangpierce/sucrase/pull/822#issuecomment-1867087904)
+    for a rationale on the release strategy.
+
 # 3.34.0 (2023-07-19)
 
 * Add CLI options for all remaining Sucrase options, e.g. `--disable-es-transforms` for
@@ -561,3 +573,4 @@
 [#811]: https://github.com/alangpierce/sucrase/pull/811
 [#812]: https://github.com/alangpierce/sucrase/pull/812
 [#813]: https://github.com/alangpierce/sucrase/pull/813
+[#822]: https://github.com/alangpierce/sucrase/pull/822

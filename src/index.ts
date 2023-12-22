@@ -29,7 +29,7 @@ export type {Options, SourceMapOptions, Transform};
 
 export function getVersion(): string {
   /* istanbul ignore next */
-  return "3.34.0";
+  return "3.35.0";
 }
 
 export function transform(code: string, options: Options): TransformResult {

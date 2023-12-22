@@ -1,6 +1,6 @@
 {
   "name": "sucrase",
-  "version": "3.34.0",
+  "version": "3.35.0",
   "description": "Super-fast alternative to Babel for when you can target modern JS runtimes",
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
@@ -65,7 +65,7 @@
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
     "prettier": "^2.8.8",
-    "sucrase": "^3.34.0",
+    "sucrase": "^3.35.0",
     "test262-harness": "^10.0.0",
     "ts-interface-builder": "^0.3.3",
     "typescript": "~5.0"
@@ -80,7 +80,7 @@
     "ts-interface-checker": "^0.1.9"
   },
   "engines": {
-    "node": ">=8"
+    "node": ">=16 || 14 >=14.17"
   },
   "resolutions": {
     "**/eshost/socket.io": "4.7.0"

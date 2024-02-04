@@ -44,7 +44,8 @@ more concrete suggestions.
 
 ## Getting started
 
-Sucrase uses `yarn` for everything.
+Sucrase uses `yarn` for everything. On Windows, either use `Git Bash` or
+build from Windows Subsystem for Linux (WSL).
 
 ```bash
 git clone git@github.com:alangpierce/sucrase.git

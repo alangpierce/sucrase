@@ -2,7 +2,6 @@ import {GenMapping, maybeAddSegment, toEncodedMap} from "@jridgewell/gen-mapping
 
 import type {SourceMapOptions} from "./index";
 import type {Token} from "./parser/tokenizer";
-import {TokenType as tt} from "./parser/tokenizer/types";
 import {charCodes} from "./parser/util/charcodes";
 import type {RootTransformerResult} from "./transformers/RootTransformer";
 
@@ -72,14 +71,13 @@ export default function computeSourceMap(
  * position of the token.
  */
 function computeSourceColumns(code: string, tokens: Array<Token>): Array<number> {
-  tokens = tokens.filter((token) => token.end > token.start || token.type === tt.eof);
-
   const sourceColumns: Array<number> = new Array(tokens.length);
   let tokenIndex = 0;
   let currentMapping = tokens[tokenIndex].start;
   let lineStart = 0;
   for (let i = 0; i < code.length; i++) {
-    if (i === currentMapping) {
+    // Replaced === with >= to fix #825
+    if (i >= currentMapping) {
       sourceColumns[tokenIndex] = currentMapping - lineStart;
       tokenIndex++;
       currentMapping = tokens[tokenIndex].start;

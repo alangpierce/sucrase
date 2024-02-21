@@ -1259,13 +1259,13 @@ module.exports = exports.default;
       export let {y}: Foo = z;
     `,
       `"use strict";${ESMODULE_PREFIX}
-      ( {a: exports.a = 2, b: [exports.c, exports.d], ...exports.e} = f);
-       [exports.g = 3, ...exports.h] = i;
-      ( {j: exports.j} = k);
-      ( {l: exports.l = () => {const m = 3;}} = {});
+      ;( {a: exports.a = 2, b: [exports.c, exports.d], ...exports.e} = f);
+      ; [exports.g = 3, ...exports.h] = i;
+      ;( {j: exports.j} = k);
+      ;( {l: exports.l = () => {const m = 3;}} = {});
        exports.x;
       exports.x = 2;
-      ( {y: exports.y} = z);
+      ;( {y: exports.y} = z);
     `,
       {transforms: ["imports", "typescript"]},
     );

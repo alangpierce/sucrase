@@ -678,14 +678,16 @@ export default class CJSImportTransformer extends Transformer {
    * For example, this:
    * export const {x: [a = 2, b], c} = d;
    * becomes this:
-   * ({x: [exports.a = 2, exports.b], c: exports.c} = d;)
+   * ;({x: [exports.a = 2, exports.b], c: exports.c} = d;)
    */
   private processComplexExportVar(): void {
     this.tokens.removeInitialToken();
     this.tokens.removeToken();
     const needsParens = this.tokens.matches1(tt.braceL);
     if (needsParens) {
-      this.tokens.appendCode("(");
+      this.tokens.appendCode(";(");
+    } else if (this.tokens.matches1(tt.bracketL)) {
+      this.tokens.appendCode(";");
     }
 
     let depth = 0;

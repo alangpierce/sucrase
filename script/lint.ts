@@ -1,6 +1,6 @@
 #!./node_modules/.bin/sucrase-node
 /* eslint-disable no-console */
-import {exists} from "mz/fs";
+import {existsSync} from "fs";
 
 import run from "./run";
 
@@ -13,7 +13,7 @@ function isFix(): boolean {
 
 async function main(): Promise<void> {
   // Linting sub-projects requires the latest Sucrase types, so require a build first.
-  if (!(await exists("./dist"))) {
+  if (!existsSync("./dist")) {
     console.log("Must run build before lint, running build...");
     await run("yarn build");
   }

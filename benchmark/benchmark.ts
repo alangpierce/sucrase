@@ -4,8 +4,7 @@
 import * as babel from "@babel/core";
 import * as swc from "@swc/core";
 import * as esbuild from "esbuild";
-import {fs} from "mz";
-import {exists} from "mz/fs";
+import fs from "fs";
 import * as TypeScript from "typescript";
 
 import run from "../script/run";
@@ -86,7 +85,7 @@ async function benchmarkJest(): Promise<void> {
 }
 
 async function getJestFiles(): Promise<Array<FileInfo>> {
-  if (!(await exists("./sample/jest"))) {
+  if (!fs.existsSync("./sample/jest")) {
     await run("git clone https://github.com/facebook/jest.git ./sample/jest");
     process.chdir("./sample/jest");
     await run("git checkout 7430a7824421c122cd07035d800d22e1007408fa");

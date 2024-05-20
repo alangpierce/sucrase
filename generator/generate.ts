@@ -1,6 +1,6 @@
 #!./node_modules/.bin/sucrase-node
 /* eslint-disable no-console */
-import {writeFile} from "mz/fs";
+import {writeFile} from "fs/promises";
 
 import run from "../script/run";
 import generateReadWordTree from "./generateReadWordTree";

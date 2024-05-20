@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
 import commander from "commander";
+import {existsSync} from "fs";
+import {mkdir, readdir, readFile, stat, writeFile} from "fs/promises";
 import {glob} from "glob";
-import {exists, mkdir, readdir, readFile, stat, writeFile} from "mz/fs";
 import {dirname, join, relative} from "path";
 
 import {type Options, transform} from "./index";
@@ -132,7 +133,7 @@ async function findFiles(options: CLIOptions): Promise<Array<FileInfo>> {
     ? [".ts", ".tsx"]
     : [".js", ".jsx"];
 
-  if (!(await exists(outDirPath))) {
+  if (!existsSync(outDirPath)) {
     await mkdir(outDirPath);
   }
 
@@ -183,7 +184,7 @@ async function runGlob(options: CLIOptions): Promise<Array<FileInfo>> {
   const absProject = join(process.cwd(), options.project);
   const outDirs: Array<string> = [];
 
-  if (!(await exists(options.outDirPath))) {
+  if (!existsSync(options.outDirPath)) {
     await mkdir(options.outDirPath);
   }
 
@@ -240,7 +241,7 @@ async function runGlob(options: CLIOptions): Promise<Array<FileInfo>> {
   }
 
   for (const outDirPath of outDirs) {
-    if (!(await exists(outDirPath))) {
+    if (!existsSync(outDirPath)) {
       await mkdir(outDirPath);
     }
   }

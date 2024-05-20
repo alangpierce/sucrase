@@ -1,10 +1,13 @@
 #!./node_modules/.bin/sucrase-node
 /* eslint-disable no-console */
 import chalk from "chalk";
-import {exec} from "mz/child_process";
-import {exists} from "mz/fs";
+import * as childProcess from "child_process";
+import {existsSync} from "fs";
+import {promisify} from "util";
 
 import run from "../../script/run";
+
+const exec = promisify(childProcess.exec);
 
 const TEST262_HARNESS = "./node_modules/.bin/test262-harness";
 const TEST262_DIR = "./spec-compliance-tests/test262/test262-checkout";
@@ -25,7 +28,7 @@ const SKIPPED_TESTS = [
  * Run the test262 suite on some tests that we know are useful.
  */
 async function main(): Promise<void> {
-  if (!(await exists(TEST262_DIR))) {
+  if (!existsSync(TEST262_DIR)) {
     console.log(`Directory ${TEST262_DIR} not found, cloning a new one.`);
     await run(`git clone ${TEST262_REPO_URL} ${TEST262_DIR}`);
   }
@@ -51,7 +54,7 @@ async function main(): Promise<void> {
     --reporter "json" \
     "${TEST262_DIR}/test/language/expressions/coalesce/**/*.js" \
     "${TEST262_DIR}/test/language/expressions/optional-chaining/**/*.js"`)
-  )[0].toString();
+  ).stdout.toString();
 
   const harnessOutput = JSON.parse(harnessStdout);
   let numPassed = 0;

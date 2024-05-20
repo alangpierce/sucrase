@@ -1,11 +1,12 @@
-import {copyFile, exists, mkdir, readdir, stat} from "mz/fs";
+import {existsSync} from "fs";
+import {copyFile, mkdir, readdir, stat} from "fs/promises";
 import {join} from "path";
 
 export default async function mergeDirectoryContents(
   srcDirPath: string,
   destDirPath: string,
 ): Promise<void> {
-  if (!(await exists(destDirPath))) {
+  if (!existsSync(destDirPath)) {
     await mkdir(destDirPath);
   }
   for (const child of await readdir(srcDirPath)) {

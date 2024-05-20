@@ -1,6 +1,7 @@
 #!./node_modules/.bin/sucrase-node
 /* eslint-disable no-console */
-import {exists, readFile} from "mz/fs";
+import {existsSync} from "fs";
+import {readFile} from "fs/promises";
 
 import run from "../script/run";
 
@@ -64,7 +65,7 @@ async function runProject(project: string, shouldSave: boolean): Promise<boolean
   const originalCwd = process.cwd();
   const repoDir = `./example-runner/example-repos/${project}`;
 
-  if (!(await exists(repoDir))) {
+  if (!existsSync(repoDir)) {
     console.log(`Directory ${repoDir} not found, cloning a new one.`);
     await run(`git clone ${repoURL} ${repoDir}`);
   }
@@ -72,7 +73,7 @@ async function runProject(project: string, shouldSave: boolean): Promise<boolean
 
   const revPath = `../../example-configs/${project}.revision`;
   const patchPath = `../../example-configs/${project}.patch`;
-  if (!(await exists(revPath)) || !(await exists(patchPath)) || shouldSave) {
+  if (!existsSync(revPath) || !existsSync(patchPath) || shouldSave) {
     console.log(`Generating metadata for ${project}`);
     await run(`git rev-parse HEAD > ${revPath}`);
     await run(`git diff HEAD > ${patchPath}`);

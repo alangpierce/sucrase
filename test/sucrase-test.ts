@@ -1158,6 +1158,22 @@ describe("sucrase", () => {
     );
   });
 
+  it("correctly transforms async functions using await without spaces in an optional chain", () => {
+    assertResult(
+      `
+      async function foo() {
+        await(await{})?.a
+      }
+    `,
+      `${ASYNC_OPTIONAL_CHAIN_PREFIX}
+      async function foo() {
+        await await _asyncOptionalChain([(await{}), 'optionalAccess', async _ => _.a])
+      }
+    `,
+      {transforms: []},
+    );
+  });
+
   it("correctly transforms async functions using await in nullish coalescing", () => {
     assertResult(
       `

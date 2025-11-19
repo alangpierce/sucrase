@@ -76,7 +76,8 @@ function computeSourceColumns(code: string, tokens: Array<Token>): Array<number>
   let currentMapping = tokens[tokenIndex].start;
   let lineStart = 0;
   for (let i = 0; i < code.length; i++) {
-    if (i === currentMapping) {
+    // Replaced === with >= to fix #825
+    if (i >= currentMapping) {
       sourceColumns[tokenIndex] = currentMapping - lineStart;
       tokenIndex++;
       currentMapping = tokens[tokenIndex].start;

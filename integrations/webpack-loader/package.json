@@ -4,6 +4,10 @@
   "description": "Webpack loader for Sucrase",
   "main": "dist/index.js",
   "repository": "https://github.com/alangpierce/sucrase/tree/main/integrations/webpack-loader",
+  "homepage": "https://github.com/alangpierce/sucrase/tree/main/integrations/webpack-loader#readme",
+  "bugs": {
+    "url": "https://github.com/alangpierce/sucrase/issues"
+  },
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
   "peerDependencies": {

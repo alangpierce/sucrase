@@ -4,6 +4,10 @@
   "description": "Jest plugin for Sucrase",
   "main": "dist/index.js",
   "repository": "https://github.com/alangpierce/sucrase/tree/main/integrations/jest-plugin",
+  "bugs": {
+    "url": "https://github.com/alangpierce/sucrase/issues"
+  },
+  "homepage": "https://github.com/alangpierce/sucrase/tree/main/integrations/jest-plugin#readme",
   "author": "Alan Pierce <alangpierce@gmail.com>",
   "license": "MIT",
   "devDependencies": {

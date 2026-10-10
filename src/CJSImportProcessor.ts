@@ -274,6 +274,7 @@ export default class CJSImportProcessor {
   private preprocessVarExportAtIndex(index: number): void {
     let depth = 0;
     // Handle cases like `export let {x} = y;`, starting at the open-brace in that case.
+    // Also handle declarator lists like `export let a = 1, b;`, where each name is exported.
     for (let i = index + 2; ; i++) {
       if (
         this.tokens.matches1AtIndex(i, tt.braceL) ||
@@ -286,14 +287,28 @@ export default class CJSImportProcessor {
         this.tokens.matches1AtIndex(i, tt.bracketR)
       ) {
         depth--;
-      } else if (depth === 0 && !this.tokens.matches1AtIndex(i, tt.name)) {
-        break;
-      } else if (this.tokens.matches1AtIndex(1, tt.eq)) {
-        const endIndex = this.tokens.currentToken().rhsEndIndex;
+      } else if (depth === 0 && this.tokens.matches1AtIndex(i, tt.eq)) {
+        // Skip the initializer, then continue with the next declarator if there is one.
+        const endIndex = this.tokens.tokens[i].rhsEndIndex;
         if (endIndex == null) {
           throw new Error("Expected = token with an end index.");
         }
-        i = endIndex - 1;
+        if (
+          endIndex >= this.tokens.tokens.length ||
+          !this.tokens.matches1AtIndex(endIndex, tt.comma)
+        ) {
+          break;
+        }
+        i = endIndex;
+      } else if (depth === 0 && this.tokens.matches1AtIndex(i, tt.comma)) {
+        // A declarator without an initializer, followed by another declarator.
+        continue;
+      } else if (
+        depth === 0 &&
+        !this.tokens.matches1AtIndex(i, tt.name) &&
+        !this.tokens.tokens[i].isType
+      ) {
+        break;
       } else {
         const token = this.tokens.tokens[i];
         if (isDeclaration(token)) {

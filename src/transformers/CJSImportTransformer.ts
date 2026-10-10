@@ -620,6 +620,12 @@ export default class CJSImportTransformer extends Transformer {
    * Determine if the export is of the form:
    * export var/let/const [varName] = [expr];
    * In other words, determine if function name inference might apply.
+   *
+   * A list of declarators also counts if every declarator binds a plain name,
+   * with or without an initializer:
+   * export var/let/const [varName1] = [expr1], [varName2], [varName3] = [expr3];
+   * A single declarator with no initializer (e.g. `export let x;`) is left to
+   * the general case below.
    */
   private isSimpleExportVar(): boolean {
     let tokenIndex = this.tokens.currentIndex();
@@ -627,17 +633,38 @@ export default class CJSImportTransformer extends Transformer {
     tokenIndex++;
     // var/let/const
     tokenIndex++;
-    if (!this.tokens.matches1AtIndex(tokenIndex, tt.name)) {
-      return false;
-    }
-    tokenIndex++;
-    while (tokenIndex < this.tokens.tokens.length && this.tokens.tokens[tokenIndex].isType) {
+    let numDeclarators = 0;
+    let hasInitializer = false;
+    while (true) {
+      if (!this.tokens.matches1AtIndex(tokenIndex, tt.name)) {
+        return false;
+      }
+      numDeclarators++;
+      tokenIndex++;
+      while (tokenIndex < this.tokens.tokens.length && this.tokens.tokens[tokenIndex].isType) {
+        tokenIndex++;
+      }
+      if (
+        tokenIndex < this.tokens.tokens.length &&
+        this.tokens.matches1AtIndex(tokenIndex, tt.eq)
+      ) {
+        const endIndex = this.tokens.tokens[tokenIndex].rhsEndIndex;
+        if (endIndex == null) {
+          throw new Error("Expected = token with an end index.");
+        }
+        hasInitializer = true;
+        tokenIndex = endIndex;
+      }
+      if (
+        tokenIndex >= this.tokens.tokens.length ||
+        !this.tokens.matches1AtIndex(tokenIndex, tt.comma)
+      ) {
+        break;
+      }
+      // ,
       tokenIndex++;
     }
-    if (!this.tokens.matches1AtIndex(tokenIndex, tt.eq)) {
-      return false;
-    }
-    return true;
+    return numDeclarators > 1 || hasInitializer;
   }
 
   /**
@@ -652,25 +679,42 @@ export default class CJSImportTransformer extends Transformer {
    * We need to produce an assignment of this form so that the function will
    * have an inferred name of "f", which wouldn't happen in the more general
    * case below.
+   *
+   * A list of declarators is split into one declaration per variable, each
+   * exported before the next one starts, since later initializers may refer
+   * to earlier variables through their exports. For example, this:
+   * export const a = 1, b = a;
+   * becomes this:
+   * const a = 1; exports.a = a; const b = exports.a; exports.b = b;
    */
   private processSimpleExportVar(): void {
     // export
     this.tokens.removeInitialToken();
     // var/let/const
+    const declarationKind = this.tokens.currentTokenCode();
     this.tokens.copyToken();
-    const varName = this.tokens.identifierName();
-    // x: number  ->  x
-    while (!this.tokens.matches1(tt.eq)) {
+    while (true) {
+      const varName = this.tokens.identifierName();
       this.rootTransformer.processToken();
+      // x: number  ->  x
+      while (!this.tokens.isAtEnd() && this.tokens.currentToken().isType) {
+        this.rootTransformer.processToken();
+      }
+      if (!this.tokens.isAtEnd() && this.tokens.matches1(tt.eq)) {
+        const endIndex = this.tokens.currentToken().rhsEndIndex;
+        if (endIndex == null) {
+          throw new Error("Expected = token with an end index.");
+        }
+        while (this.tokens.currentIndex() < endIndex) {
+          this.rootTransformer.processToken();
+        }
+      }
+      if (this.tokens.isAtEnd() || !this.tokens.matches1(tt.comma)) {
+        this.tokens.appendCode(`; exports.${varName} = ${varName}`);
+        break;
+      }
+      this.tokens.replaceToken(`; exports.${varName} = ${varName}; ${declarationKind}`);
     }
-    const endIndex = this.tokens.currentToken().rhsEndIndex;
-    if (endIndex == null) {
-      throw new Error("Expected = token with an end index.");
-    }
-    while (this.tokens.currentIndex() < endIndex) {
-      this.rootTransformer.processToken();
-    }
-    this.tokens.appendCode(`; exports.${varName} = ${varName}`);
   }
 
   /**

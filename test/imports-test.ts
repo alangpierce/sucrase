@@ -1285,6 +1285,116 @@ module.exports = exports.default;
     );
   });
 
+  it("exports every variable in a const declaration list", () => {
+    assertResult(
+      `
+      export const a = 1, b = 2;
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       const a = 1; exports.a = a; const b = 2; exports.b = b;
+    `,
+    );
+  });
+
+  it("exports every variable in let and var declaration lists", () => {
+    assertResult(
+      `
+      export let a = 1, b = 2;
+      export var c = 3, d = 4;
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       let a = 1; exports.a = a; let b = 2; exports.b = b;
+       var c = 3; exports.c = c; var d = 4; exports.d = d;
+    `,
+    );
+  });
+
+  it("exports each variable in a declaration list before the next initializer runs", () => {
+    assertResult(
+      `
+      export const BPM = 128, BEAT = 60 / BPM, BAR = 4 * BEAT;
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       const BPM = 128; exports.BPM = BPM; const BEAT = 60 / exports.BPM; exports.BEAT = BEAT; const BAR = 4 * exports.BEAT; exports.BAR = BAR;
+    `,
+    );
+  });
+
+  it("exports variables without initializers in a declaration list", () => {
+    assertResult(
+      `
+      export let a, b = 2;
+      export var c = 3, d;
+      a = 4;
+      d = 5;
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       let a; exports.a = a; let b = 2; exports.b = b;
+       var c = 3; exports.c = c; var d; exports.d = d;
+      exports.a = 4;
+      exports.d = 5;
+    `,
+    );
+  });
+
+  it("splits a multiline declaration list without changing line numbers", () => {
+    assertResult(
+      `
+      export const a = 1,
+        b = 2;
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       const a = 1; exports.a = a; const
+        b = 2; exports.b = b;
+    `,
+    );
+  });
+
+  it("exports every variable in a typed declaration list", () => {
+    assertResult(
+      `
+      export const a: number = 1, b: string = "x";
+      export let c: number, d!: string, e: Array<number> = [];
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+       const a = 1; exports.a = a; const b = "x"; exports.b = b;
+       let c; exports.c = c; let d; exports.d = d; let e = []; exports.e = e;
+    `,
+      {transforms: ["imports", "typescript"]},
+    );
+  });
+
+  it("does not change declaration lists containing a destructuring pattern", () => {
+    assertResult(
+      `
+      export const {a} = x, b = 2;
+    `,
+      `"use strict";${ESMODULE_PREFIX}
+      ( {a: exports.a} = x), b = 2;
+    `,
+    );
+  });
+
+  it("implements live bindings for every variable in a declaration list", () => {
+    assertMultiFileOutput(
+      {
+        main: `
+          import {BAR, y, setY} from 'otherFile';
+          setY();
+          export const output = BAR + "," + y;
+      `,
+        otherFile: `
+          export const BPM = 120, BEAT = 60 / BPM, BAR = 4 * BEAT;
+          export let x = 3, y;
+          export function setY() {
+            y = x + 1;
+          }
+      `,
+      },
+      "2,4",
+    );
+  });
+
   // Skipping since this is reasonably obscure and seems hard to implement right in Sucrase.
   // Babel fix: https://github.com/babel/babel/pull/8698
   it.skip("treats 'export default async' as a complete statement", () => {

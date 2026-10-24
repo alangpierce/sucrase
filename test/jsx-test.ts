@@ -537,6 +537,56 @@ describe("transform JSX", () => {
     );
   });
 
+  it("handles namespaced tag names", () => {
+    assertJSXResult(
+      `
+      <a:b>x</a:b>
+    `,
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
+      React.createElement('a:b', {${devProps(2)}}, "x")
+    `,
+        expectedAutomaticProdESMResult: `import {jsx as _jsx} from "react/jsx-runtime";
+      _jsx('a:b', { children: "x"})
+    `,
+      },
+    );
+  });
+
+  it("handles namespaced property keys", () => {
+    assertJSXResult(
+      `
+      <svg xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href={href} />
+    `,
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
+      React.createElement('svg', { 'xmlns:xlink': "http://www.w3.org/1999/xlink", 'xlink:href': href, ${devProps(
+        2,
+      )}} )
+    `,
+        expectedAutomaticProdESMResult: `import {jsx as _jsx} from "react/jsx-runtime";
+      _jsx('svg', { 'xmlns:xlink': "http://www.w3.org/1999/xlink", 'xlink:href': href,} )
+    `,
+      },
+    );
+  });
+
+  it("handles namespaced names whose second half has a dash or is a keyword", () => {
+    assertJSXResult(
+      `
+      <a:b-c d:class={1} e:f-g />
+    `,
+      {
+        expectedClassicDevESMResult: `${JSX_PREFIX}
+      React.createElement('a:b-c', { 'd:class': 1, 'e:f-g': true, ${devProps(2)}} )
+    `,
+        expectedAutomaticProdESMResult: `import {jsx as _jsx} from "react/jsx-runtime";
+      _jsx('a:b-c', { 'd:class': 1, 'e:f-g': true,} )
+    `,
+      },
+    );
+  });
+
   it("handles inline comments", () => {
     assertJSXResult(
       `

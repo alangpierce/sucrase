@@ -117,11 +117,14 @@ function jsxParseIdentifier(): void {
 // Parse namespaced identifier.
 function jsxParseNamespacedName(identifierRole: IdentifierRole): void {
   jsxParseIdentifier();
-  if (!eat(tt.colon)) {
+  if (!match(tt.colon)) {
     // Plain identifier, so this is an access.
     state.tokens[state.tokens.length - 1].identifierRole = identifierRole;
     return;
   }
+  // Read the second half as a JSX name too, so that it may contain dashes (`a:b-c`) or be a
+  // keyword (`a:class`).
+  nextJSXTagToken();
   // Process the second half of the namespaced name.
   jsxParseIdentifier();
 }

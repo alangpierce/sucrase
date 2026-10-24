@@ -320,6 +320,12 @@ export default class JSXTransformer extends Transformer {
    * Process the first part of a tag, before any props.
    */
   processTagIntro(): void {
+    // A namespaced tag name like `<a:b>` becomes the string "a:b", like Babel, TypeScript and esbuild.
+    const namespacedName = this.getNamespacedNameAtIndex(this.tokens.currentIndex());
+    if (namespacedName !== null) {
+      this.replaceNamespacedName(namespacedName);
+      return;
+    }
     // Walk forward until we see one of these patterns:
     // jsxName to start the first prop, preceded by another jsxName to end the tag name.
     // jsxName to start the first prop, preceded by greaterThan to end the type argument.
@@ -386,7 +392,17 @@ export default class JSXTransformer extends Transformer {
   processProps(extractKeyCode: boolean): string | null {
     let keyCode = null;
     while (true) {
-      if (this.tokens.matches2(tt.jsxName, tt.eq)) {
+      const namespacedName = this.getNamespacedNameAtIndex(this.tokens.currentIndex());
+      if (namespacedName !== null) {
+        // A namespaced prop name like `a:b="c"` becomes the key "a:b".
+        this.replaceNamespacedName(namespacedName);
+        if (this.tokens.matches1(tt.eq)) {
+          this.tokens.replaceToken(": ");
+          this.processPropValue();
+        } else {
+          this.tokens.appendCode(": true");
+        }
+      } else if (this.tokens.matches2(tt.jsxName, tt.eq)) {
         // This is a regular key={value} or key="value" prop.
         const propName = this.tokens.identifierName();
         if (extractKeyCode && propName === "key") {
@@ -434,6 +450,27 @@ export default class JSXTransformer extends Transformer {
       this.tokens.appendCode(",");
     }
     return keyCode;
+  }
+
+  /**
+   * If the tokens at the given index are a namespaced name (`a:b`), return it as a string.
+   */
+  getNamespacedNameAtIndex(index: number): string | null {
+    if (!this.tokens.matches3AtIndex(index, tt.jsxName, tt.colon, tt.jsxName)) {
+      return null;
+    }
+    const namespace = this.tokens.identifierNameAtIndex(index);
+    const name = this.tokens.identifierNameAtIndex(index + 2);
+    return `${namespace}:${name}`;
+  }
+
+  /**
+   * Replace the three tokens of a namespaced name with the name as a string literal.
+   */
+  replaceNamespacedName(namespacedName: string): void {
+    this.tokens.replaceToken(`'${namespacedName}'`);
+    this.tokens.removeToken();
+    this.tokens.removeToken();
   }
 
   processPropName(propName: string): void {
